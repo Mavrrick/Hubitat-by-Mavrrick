@@ -209,9 +209,9 @@ def setColor(hsv) {
     def rgb
     rgb = hubitat.helper.ColorUtils.hsvToRGB([hsv.hue, hsv.saturation, hsv.level])
         if (logEnable) log.debug "RGB value is  : ${rgb}"
-    put.clrmap("r", rgb[0])
-    put.clrmap("g", rgb[1])
-    put.clrmap("b", rgb[2])
+    clrmap.put("r", rgb[0])
+    clrmap.put("g", rgb[1])
+    clrmap.put("b", rgb[2])
     gvCmd.put("value", clrmap)
     body.put("cmd",gvCmd)
     if (logEnable) log.debug "Sending on put request to [${goveeUrl}] to turn on device"
@@ -227,7 +227,7 @@ def setColor(hsv) {
     } catch (Exception e) {
         log.warn "Call to off failed: ${e.message}"
     }
-//    WizCommandSet(["r":rgb[0],"g":rgb[1],"b":rgb[2]]) 
+//    CommandSet(["r":rgb[0],"g":rgb[1],"b":rgb[2]]) 
     
 //    updateCurrentStatus(hsv,null,null)
 }
