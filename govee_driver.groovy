@@ -12,7 +12,7 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
 
 metadata {
-    definition(name: "Govee Light Driver", namespace: "mavrrick", author: "mavrrick", importUrl: "https://raw.githubusercontent.com/hubitat/HubitatPublic/master/examples/drivers/httpGetSwitch.groovy") {
+    definition(name: "Govee Light Driver", namespace: "mavrrick", author: "mavrrick", importUrl: "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/govee_driver.groovy") {
         capability "Actuator"
         capability "Switch"
         capability "SwitchLevel"
