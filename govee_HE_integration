@@ -1,0 +1,428 @@
+/**
+ *  Govee Integration
+ *
+ *  Copyright 2018 CRAIG KING
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ */
+definition(
+    name: "Govee Integration ",
+    namespace: "Mavrrick",
+    author: "CRAIG KING",
+    description: "Govee Integration for HE",
+    category: "Lighting",
+    iconUrl: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg",
+    iconX2Url: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg",
+    iconX3Url: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg",
+    singleInstance: true)
+
+/* 
+* Initial release v1.0.0
+*
+*
+*/
+
+preferences
+{
+	page (name: "mainPage", title: "Govee Integration")
+	page (name: "deviceSelect", title: "Select devices")
+/*	page (name: "adtModeChange", title: "Setup mode change settings")
+	page (name: "adtModeAction", title: "Setup Action on Mode Change")    
+	page (name: "adtAlertActions", title: "Work with ADT alarm alert actions")
+   	page (name: "optionalSettings", title: "Optional Setup")
+    page (name: "about", title: "About ADT Tools")
+*/
+}
+
+
+def initialize() {
+    // nothing needed here, since the child apps will handle preferences/subscriptions
+    // this just logs some messages for demo/information purposes
+//    log.debug "there are ${getChildDevice.size()} child smartapps"
+    getChildDevice.each {child ->
+        log.debug "initialize() child device: ${it.label}"
+    }
+//    getKnownDevices()
+    
+//    def enabledDevices = getKnownDevices()
+//    def deviceLabels = [:]
+//    enabledDevices.each { mac, data -> deviceLabels[mac] = data.label } 
+//    log.debug("getKnownDevices: Known devices: ${enabledDevices}")
+//    def child = getChildDevice(dni)
+//    log.debug "${child}"
+//    if (!child) {
+    if (settings.goveeDev) {
+                    def devices = settings.goveeDev
+    				log.debug "initialize() $devices are selcted to be integrated"
+            log.debug "initialize() DEVICE INFORMATION"
+	     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/devices',
+			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+        ]
+    
+
+
+try {
+
+			httpGet(params) { resp ->
+
+				//List each device assigned to current API key
+				//log.debug resp.data
+				resp.data.data.devices.each{
+					deviceID = it.device
+					deviceModel = it.model
+					deviceName = it.deviceName
+                    controllable = it.controllable
+                    retrievable = it.retrievable
+                    ctMin = it.properties.colorTem.range.min
+                    ctMax = it.properties.colorTem.range.max
+					log.debug " initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
+                    devices.findAll{it == deviceName} .each { 
+//                        log.debug " installed device ${enabledDevices} ${enabledDevices.mac}:${mapName}"
+//                        if (deviceName == mac) {log.debug "already-installed device ${mac}:${name}" }
+//                        else {
+                    log.debug "Found device match ${deviceName}"
+                    addChildDevice("Obi2000", "Govee Immersion LED Strip", "${deviceID}" , location.hubs[0].id, [
+					            "name": "Govee Immersion LED Strip",
+					            "label": deviceName,
+                                'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                'retrievable': retrievable,
+                                'apiKey': settings.APIKey                             
+                            ],
+					"completedSetup": true, 					
+				])
+			}
+ //                   }
+            }
+            }                                                          
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+		
+		return 'unknown'
+	}
+                state?.crtVrtButton = true
+                log.debug "initialize() Govee devices integrated"
+                }
+//		}
+      	else {
+        state?.crtVrtButton = false
+		}
+//    }
+}   
+
+
+/*
+	mainPage
+
+	UI Page: Main menu for the app.
+*/
+def mainPage()
+{
+//    DeviceInfo()
+	dynamicPage(name: "mainPage", title: "Govee integration Main menu", uninstall: true, install: true, submitOnChange: true)
+	{
+		section("Insert API ")
+		{
+			paragraph "The Govee APi is required for this integration. Please obtain this value befor moving forward. You can obtain the Govee APi from the Govee Home app about us section."
+            input "APIKey", "string", title: "Enter Your API Key", required: true
+		}
+	    section("Minimum time between messages (optional, defaults to every message)") {
+			href "deviceSelect", title: "Device selection", description: "Select govee devices to integrate"
+	    }
+
+		section("ADT Tools basic setup")
+		{
+			href "optionalSettings", title: "Optional setup steps", description: "Setup ADT Automation standard buttons."
+			href "about", title: "About ADT Tools ", description: "Support the project...  Consider making a small contribution today!"
+		}
+	}
+}
+
+def deviceSelect()
+{
+    def options = [:]
+//    DeviceInfo()
+//    def options = DeviceInfo() ?: [:]
+//    log.debug "$resp(data) $options"
+    log.debug "DEVICE INFORMATION"
+	     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/devices',
+			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+        ]
+    
+
+
+try {
+
+			httpGet(params) { resp ->
+
+				//List each device assigned to current API key
+				//log.debug resp.data
+				resp.data.data.devices.each{
+					deviceID = it.device
+					deviceModel = it.model
+					deviceName = it.deviceName
+                    controllable = it.controllable
+                    retrievable = it.retrievable
+                    ctMin = it.properties.colorTem.range.min
+                    ctMax = it.properties.colorTem.range.max
+					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
+                    options["${deviceName}"] = deviceName
+//                    options.name = deviceName
+                    log.debug "$options"
+				}
+
+				//Save the last device to preferences
+//				curDeviceID = resp.data.data.devices.last().device
+//				curDeviceModel = resp.data.data.devices.last().model
+
+//				device.updateSetting("Model",[value:curDeviceModel, type:"text"])
+//				device.updateSetting("MACAddr",[value:curDeviceID, type:"text"])
+
+//				runIn(2, 'setupDevice')
+//				return resp.data
+//                return options
+			}
+			
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+		
+		return 'unknown'
+	}    
+	dynamicPage(name: "deviceSelect", title: "Select Devices page", uninstall: false, install: false)
+	{
+		section("Device Discovery")
+		{
+                input(name: "goveeDev", type: "enum", required:false, description: " to choose", multiple:true, 
+			    options: options, width: 8, height: 1)
+		}
+    section ("Return to Govee Integration Main page"){
+        href "mainPage", title: "Govee Integration Main Page", description: "Return to Govee Integration Main Menu"            
+    }
+	}
+}
+
+def adtModeChange()
+{
+	dynamicPage(name: "adtModeChange", title: "ADT Mode Change Integration", uninstall: false, install: false)
+    {
+	section("Select what button you want for each mode..."){
+        input "myDisarmButton", "capability.momentary", title: "What Button will disarm the alarm?", required: false, multiple: false
+        input "myArmStay", "capability.momentary", title: "What button will put the alarm in Armed/Stay?", required: false, multiple: false
+        input "myArmAway", "capability.momentary", title: "What button will put the alarm in Armed/Away?", required: false, multiple: false
+        href "adtModeAction", title: "Mode Change action", description: "Enables various functions around Mode change integration."
+	
+    }
+   section("Smartthings location alarm state setup. These must be configured to use the Any Sensory Child App."){
+   		input "locAlarmSync", "bool", title: "Maintain synchronization between Smartthings ADT alarm panel and location cloud alarm state", description: "This switch will tell ADT Tools if it needs to kep the ADT Alarm and the Smarthings location alarm status in sync.", defaultValue: false, required: true, multiple: false
+		input "delay", "number", range: "1..120", title: "Please specify your Alarm Delay", required: true, defaultValue: 0
+	}
+    
+	section("Select your ADT Smart Panel..."){
+		input "panel", "capability.securityKeypad", title: "Select Keypad for Alarm Status", required: true
+	}
+    section ("Return to ADT Tools Main page"){
+            href "mainPage", title: "ADT Tools Main Menu", description: "Return to main ADT Tools Main Menu"            
+		}
+    }
+}
+
+def adtModeAction()
+{
+	dynamicPage(name: "adtModeAction", title: "ADT Mode Action Selection", uninstall: false, install: false)
+    {
+	section("Select actions for when alarm enters Disarmed"){
+        input "disarmedOn", "capability.switch", title: "What switch to turn on when disarmed?", required: false, multiple: false
+        input "disarmedOff", "capability.switch", title: "What switch to turn off when disarmed?", required: false, multiple: false
+	}
+   section("Select action for when alarm enters Armed/Stay"){
+   		input "armedStayOn", "capability.switch", title: "What switch to turn on when armed/stay?", required: false, multiple: false
+		input "armedStayOff", "capability.switch", title: "What swtich to turn off when armed/stay?", required: false, multiple: false
+	} 
+   section("Select action for when alarm enters Armed/Away"){
+   		input "armedAwayOn", "capability.switch", title: "What switch to turn on when armed/away?", required: false, multiple: false
+		input "armedAwayOff", "capability.switch", title: "What switch to turn off when armed/away?", required: false, multiple: false
+	} 
+    section ("Return to ADT Tools Main page"){
+            href "adtModeChange", title: "ADT Tools Main Menu", description: "Return to main ADT Tools Main Menu"            
+		}
+    }
+}
+
+def adtAlertActions()
+{
+	dynamicPage(name: "adtAlertActions", title: "ADT Alert Actions ", uninstall: false, install: false)
+    {
+        section ("Alarm Event Action Apps"){
+            app(name: "adtAlertAction", appName: "ADT Alert Action", namespace: "Mavrrick", title: "Security Alert Action apps", multiple: true)
+            app(name: "adtHomeAction", appName: "ADT Home-Life Alert Action", namespace: "Mavrrick", title: "Home/Life Alert Action apps", multiple: true)
+            app(name: "adtPanicAction", appName: "ADT Panic Alert Action", namespace: "Mavrrick", title: "Panic Alert Action apps", multiple: true)
+		}
+        section ("Return to ADT Tools Main page"){
+            href "mainPage", title: "ADT Tools Main Menu", description: "Return to main ADT Tools Main Menu"            
+		}
+    }
+}
+
+def optionalSettings()
+{
+	dynamicPage(name: "optionalSettings", title: "Optional settings", uninstall: false, install: false)
+	{
+        section ("Virtual Button Setup"){
+	   		input "createVirtButton", "bool", title: "Would you like ADT Tools to create your virtual buttons for Mode change functianlity", description: "ADT Tools will attempt to create virtual devices for the mode change functinality", defaultValue: false, required: true, multiple: false
+		}
+        section ("Return to ADT Tools Main page"){
+            href "mainPage", title: "ADT Tools Main Menu", description: "Return to main ADT Tools Main Menu"            
+		}
+	}
+}
+
+def about()
+{
+	dynamicPage(name: "about", title: "About ADT Tools", uninstall: false, install: false)
+	{
+		section()
+		{
+			paragraph image: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg", "ADT Tools 2"
+		}
+        section("Support locations")
+		{
+			href (name: "thingsAreSmart", style:"embedded", title: "Things That Are Smart Support Page", url: "http://thingsthataresmart.wiki/index.php?title=ADT_tools_2")
+			href (name: "smtReleaseThd", style:"embedded", title: "Smartthings Community Support Thread", url: "https://community.smartthings.com/t/released-adt-tools-2-for-smartthings-adt-alarm-sytsems/124951")
+		}
+        section("Support the Project")
+		{
+			paragraph "ADT Tools is provided free for personal and non-commercial use.  I have worked on this app in my free time to fill the needs I have found for myself and others like you.  I will continue to make improvements where I can. If you would like you can donate to continue to help with development please use the link below."
+			href (name: "donate", style:"embedded", title: "Consider making a \$5 or \$10 donation today.", image: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg", url: "https://www.paypal.me/mavrrick58")
+		}
+        section ("Return to ADT Tools Main page"){
+            href "mainPage", title: "ADT Tools Main Menu", description: "Return to main ADT Tools Main Menu"            
+		}
+	}
+}
+
+def installed() {
+	log.debug "Installed with settings: ${settings}"
+	subscribeToEvents()
+    state?.isInstalled = true
+    state.crtVrtButton = false
+    initialize()
+}
+
+def updated() {
+	log.debug "Updated with settings: ${settings}"
+	unsubscribe()
+	subscribeToEvents()
+    initialize()
+}
+
+def uninstalled() {
+    // external cleanup. No need to unsubscribe or remove scheduled jobs
+    	// 1.4 Remove dead virtual devices
+	getChildDevices()?.each
+	{childDevice ->
+			deleteChildDevice(childDevice.deviceNetworkId)
+		}
+	}
+
+def subscribeToEvents() {
+}
+
+def DeviceInfo(){
+        def options = [:]
+log.debug "DEVICE INFORMATION"
+	     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/devices',
+			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+        ]
+    
+
+
+try {
+
+			httpGet(params) { resp ->
+
+				//List each device assigned to current API key
+				//log.debug resp.data
+				resp.data.data.devices.each{
+					deviceID = it.device
+					deviceModel = it.model
+					deviceName = it.deviceName
+                    controllable = it.controllable
+                    retrievable = it.retrievable
+                    ctMin = it.properties.colorTem.range.min
+                    ctMax = it.properties.colorTem.range.max
+					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
+                    options.put("deviceID", deviceID)
+                    options.put ("Name", deviceName)
+                    log.debug "$options"
+				}
+
+				//Save the last device to preferences
+//				curDeviceID = resp.data.data.devices.last().device
+//				curDeviceModel = resp.data.data.devices.last().model
+
+//				device.updateSetting("Model",[value:curDeviceModel, type:"text"])
+//				device.updateSetting("MACAddr",[value:curDeviceID, type:"text"])
+
+//				runIn(2, 'setupDevice')
+				return resp.data
+                return options
+			}
+			
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+		
+		return 'unknown'
+	}    
+}
+
+private getKnownDevices() {
+    log.debug('getKnownDevices() getKnownDevices: Creating list of known devices')
+
+    def map = [:]
+
+    def existingDevices = getChildDevices()
+    existingDevices.each { device ->
+        def mac = device.deviceNetworkId
+        def name = device.label ?: device.name
+        map[mac] = [
+            mac: mac,
+            name: name,
+            typeName: device.typeName,
+//            needsUpdate: device.getDriverVersion() < state.minDriverVersion
+        ]
+        log.debug(" getKnownDevices() getKnownDevices: Added already-installed device ${mac}:${name}")
+    }
+       log.debug("getKnownDevices() getKnownDevices: Known devices: ${map}")
+
+    map.each { mac, data ->
+//        def address = "${hexToIp(data.ip)}:${hexToInt(data.port)}"
+        def text = "${data.name} [MAC: ${mac}, IP: ${address}"
+        if (data.typeName) {
+            text += ", Driver: ${data.typeName}] ${data.needsUpdate ? '&nbsp;&nbsp;<< Driver needs update >>' : ''}"
+        } else {
+            text += ']'
+        }
+        map[mac].label = "<li>${text}</li>"
+    }
+
+    map
+} 
+
