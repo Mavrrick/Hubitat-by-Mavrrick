@@ -1,0 +1,162 @@
+// Hubitat driver for Govee Appliances using Cloud API
+// Version 1.1.0
+//
+// 2022-09-22 -	Initial Driver release for Govee Appliance devices
+
+metadata {
+	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
+		capability "Switch"
+		
+		attribute "colorName", "string"
+        
+		command "gear" , [[name: gearNum, type: 'NUMBER']]
+		command "mode" , [[name: modeValue, type: 'NUMBER']]
+        
+    }
+
+	preferences {		
+		section("Device Info") {
+		}
+		
+	}
+}
+
+def parse(String description) {
+
+}
+
+def on() {
+	sendEvent(name: "switch", value: "on")
+	sendCommand("turn", "on")
+}
+
+def off() {
+	sendEvent(name: "switch", value: "off")
+	sendCommand("turn", "off")
+}
+
+def gear(gearNum){
+    sendEvent(name: "gear", value:gearNum)
+    sendCommand("gear", gearNum)
+}
+
+def mode(modeValue){
+    sendEvent(name: "mode", value:modeValue)
+    sendCommand("mode", modeValue)
+}    
+
+private def sendCommand(String command, payload) {
+
+
+     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/appliance/devices/control',
+			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+            contentType: "application/json",      
+			body: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel"), cmd: ["name": command, "value": payload]],
+        ]
+    
+
+try {
+
+			httpPut(params) { resp ->
+				
+				//log.debug "response.data="+resp.data
+                // if (resp.header) log.debug "${resp.header}"
+				return resp.data
+		        return resp.header
+		}
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+//        log.debug "${resp.header}"
+    
+		return 'unknown'
+	}
+}
+
+/*
+def getDeviceState(){
+	
+		def params = [
+			uri   : "https://developer-api.govee.com",
+			path  : '/v1/devices/state',
+			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+			query: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel")],
+        ]
+    
+
+
+try {
+
+			httpGet(params) { resp ->
+
+				log.debug resp.data.data.properties
+				varPower = resp.data.data.properties.find({it.powerState})?.powerState
+				varBrightness = resp.data.data.properties.find({it.brightness})?.brightness
+				mapColor = resp.data.data.properties.find({it.color})?.color                
+				varCT = resp.data.data.properties.find({it.colorTemInKelvin})?.colorTemInKelvin
+
+                //if(aRngBright){varBrightness=decBrightnessRange(varBrightness)}
+				//log.debug "Recvd Brightness = ${varBrightness}"
+				
+				sendEvent(name: "switch", value: varPower)
+				
+				
+				if(varBrightness){
+					sendEvent(name: "level", value: varBrightness)
+				}
+				
+				
+                if(varCT){
+					sendEvent(name: "colorTemperature", value: varCT)
+					sendEvent(name: "colorMode", value: "CT")
+					setCTColorName(varCT)					
+                }
+                
+				if(mapColor){
+					r=mapColor.r
+					g=mapColor.g
+					b=mapColor.b
+					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
+					hue=HSVlst[0].toInteger()
+					sat=HSVlst[1].toInteger()
+					sendEvent(name: "hue", value: hue)
+					sendEvent(name: "saturation", value: sat)
+					sendEvent(name: "colorMode", value: "RGB")
+				
+				}
+				
+				return resp.data
+			}
+			
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+		return 'unknown'
+	}
+} 
+
+
+def poll() {
+	refresh()
+}
+
+def refresh() {
+    if(device.getDataValue("retrievable") =='true'){
+        getDeviceState()
+    }
+}
+
+def updated() {
+//get devices or get specific device info
+
+}
+
+def setupDevice(){
+
+} */
+
+def installed(){
+  
+}
