@@ -1,4 +1,3 @@
-
 // Hubitat driver for Govee RGB Strips using Cloud API
 // Version 1.1.0
 //
@@ -8,7 +7,7 @@
 // 2021-02-11 - API Key Alone generates device list, Then auto sets to your preferences last device in list
 
 metadata {
-	definition(name: "Govee Immersion LED Strip", namespace: "Obi2000", author: "Obi2000") {
+	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		capability "ColorControl"
 		capability "ColorTemperature"
@@ -19,18 +18,11 @@ metadata {
 		
 		attribute "colorName", "string"
         
-//		command "white"
-//		command "ModeMusic"
-//		command "ModeVideo"
-//		command "DeviceInfo"
         
     }
 
 	preferences {		
 		section("Device Info") {
-//			input(name: "APIKey", type: "string", title: "User API Key", displayDuringSetup: true, required: true)
-//			input(name: "Model", type: "string", title: "Device Model Number", displayDuringSetup: true, required: false)
-//			input(name: "MACAddr", type: "string", title: "Device Mac address", displayDuringSetup: true, required: false)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
 		}
 		
@@ -172,7 +164,7 @@ def white() {
 }
 
 
-def DeviceInfo(){
+/* def DeviceInfo(){
 // device.getDataValue("deviceModel")    
 log.debug "DEVICE INFORMATION"
 	     def params = [
@@ -247,7 +239,7 @@ try {
 		return 'unknown'
 	}
 }
-
+*/
 
 
 private def sendCommand(String command, payload) {
@@ -354,18 +346,18 @@ def refresh() {
 
 def updated() {
 //get devices or get specific device info
-if(!settings.MACAddr || !settings.Model)
+/* if(!settings.MACAddr || !settings.Model)
 	{
 		DeviceInfo()
 	}
 	else{
 		setupDevice()
 	}
-
+*/ 
 }
 
 def setupDevice(){
-		getDeviceSupport()
+//		getDeviceSupport()
 		refresh()
 }
 
