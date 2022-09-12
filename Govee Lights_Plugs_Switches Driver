@@ -300,6 +300,13 @@ try {
 				mapColor = resp.data.data.properties.find({it.color})?.color                
 				varCT = resp.data.data.properties.find({it.colorTemInKelvin})?.colorTemInKelvin
 
+                resp.headers.each {
+//                    log.debug "${it.name}: ${it.value}"                    
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
+                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+                }
                 //if(aRngBright){varBrightness=decBrightnessRange(varBrightness)}
 				//log.debug "Recvd Brightness = ${varBrightness}"
 				
