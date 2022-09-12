@@ -1,10 +1,7 @@
-// Hubitat driver for Govee RGB Strips using Cloud API
-// Version 1.1.0
+// Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
+// Version 0.1.0
 //
-// 2021-01-07 -	Improved robustness of recalling device state
-//				Fixed error with inital hue/sat commands if no data returned from server
-// 2021-01-11 - Added option to use a 0-254 brightness range expected by some strips
-// 2021-02-11 - API Key Alone generates device list, Then auto sets to your preferences last device in list
+// 9-12-22  Initial release 
 
 metadata {
 	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -23,7 +20,9 @@ metadata {
 
 	preferences {		
 		section("Device Info") {
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
+            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
 		}
 		
 	}
@@ -45,8 +44,10 @@ def off() {
 
 def setColorTemperature(value)
 {
+    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
+    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
 	sendEvent(name: "colorMode", value: "CT")
-	log.debug "ColorTemp = " + value
+    if (debugLog) { log.debug "ColorTemp = " + value }
 	def intvalue = value.toInteger()
 	
 	sendEvent(name: "colorTemperature", value: intvalue)
@@ -83,14 +84,14 @@ def setCTColorName(value)
 
     
 def setColor(value) {
-	log.debug "HSBColor = "+ value
+    if (debugLog) { log.debug "HSBColor = "+ value }
 	if (value instanceof Map) {
 		def h = value.containsKey("hue") ? value.hue : null
 		def s = value.containsKey("saturation") ? value.saturation : null
 		def b = value.containsKey("level") ? value.level : null
 		setHsb(h, s, b)
 	} else {
-		log.warn "Invalid argument for setColor: ${value}"
+        if (debugLog) {log.warn "Invalid argument for setColor: ${value}"}
     }
 }
 
@@ -258,15 +259,20 @@ try {
 
 			httpPut(params) { resp ->
 				
-				//log.debug "response.data="+resp.data
-                // if (resp.header) log.debug "${resp.header}"
-				return resp.data
-		        return resp.header
+                if (debugLog) { log.debug "response.data="+resp.data}
+                resp.headers.each {
+//                    log.debug "${it.name}: ${it.value}"                    
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
+                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+            }
+                return resp.data
 		}
 	} catch (groovyx.net.http.HttpResponseException e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
-//        log.debug "${resp.header}"
+        if (debugLog) {log.debug "${resp.header}"}
     
 		return 'unknown'
 	}
@@ -288,7 +294,7 @@ try {
 
 			httpGet(params) { resp ->
 
-				log.debug resp.data.data.properties
+                if (debugLog) { log.debug resp.data.data.properties }
 				varPower = resp.data.data.properties.find({it.powerState})?.powerState
 				varBrightness = resp.data.data.properties.find({it.brightness})?.brightness
 				mapColor = resp.data.data.properties.find({it.color})?.color                
@@ -345,6 +351,8 @@ def refresh() {
 }
 
 def updated() {
+    runIn(pollRate,refresh)
+    if (logEnable) runIn(1800, logsOff)
 //get devices or get specific device info
 /* if(!settings.MACAddr || !settings.Model)
 	{
@@ -364,5 +372,11 @@ def setupDevice(){
 def installed(){
     sendEvent(name: "hue", value: 0)
     sendEvent(name: "saturation", value: 100)
-    sendEvent(name: "level", value: 100)   
+    sendEvent(name: "level", value: 100) 
+    runIn(pollRate,refresh)
+}
+
+def logsOff() {
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable", [value: "false", type: "bool"])
 }
