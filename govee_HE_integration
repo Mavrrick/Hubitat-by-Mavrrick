@@ -101,12 +101,12 @@ try {
 		
 		return 'unknown'
 	}
-                state?.crtVrtButton = true
+                state?.installDev = goveeDev
                 log.debug "initialize() Govee devices integrated"
                 }
 //		}
       	else {
-        state?.crtVrtButton = false
+//       state?.crtVrtButton = false
 		}
 // add appliances 
         if (settings.goveeApp) {
@@ -170,12 +170,12 @@ try {
 		
 		return 'unknown'
 	}
-                state?.crtVrtButton = true
+                state?.installedApp = goveeApp
                 log.debug "initialize() Govee devices integrated"
                 }
 //		}
       	else {
-        state?.crtVrtButton = false
+//        state?.crtVrtButton = false
 		}
     
 //    }
