@@ -1,7 +1,7 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.1.0
+// Version 0.1.0
 //
-// 2022-09-22 -	Initial Driver release for Govee Appliance devices
+// 2022-09-12 -	Initial Driver release for Govee Appliance devices
 
 metadata {
 	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -9,13 +9,15 @@ metadata {
 		
 		attribute "colorName", "string"
         
-		command "gear" , [[name: gearNum, type: 'NUMBER']]
-		command "mode" , [[name: modeValue, type: 'NUMBER']]
+		command "gear" , [[name: "Fan or Mist Speed", type: 'NUMBER', description: "Gear will adjust values for Fan speed or Misting depending on what device you have. Valid values are  "]]
+		command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the device operating mode. Valid values are   "]]
+
         
     }
 
 	preferences {		
 		section("Device Info") {
+            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
 		}
 		
 	}
@@ -35,9 +37,9 @@ def off() {
 	sendCommand("turn", "off")
 }
 
-def gear(gearNum){
-    sendEvent(name: "gear", value:gearNum)
-    sendCommand("gear", gearNum)
+def gear(gear){
+    sendEvent(name: "gear", value:gear)
+    sendCommand("gear", gear)
 }
 
 def mode(modeValue){
@@ -61,81 +63,26 @@ try {
 
 			httpPut(params) { resp ->
 				
-				//log.debug "response.data="+resp.data
-                // if (resp.header) log.debug "${resp.header}"
+				log.debug "response.data="+resp.data
+                resp.headers.each {
+//                    log.debug "${it.name}: ${it.value}"                    
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
+                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+            }
 				return resp.data
 		        return resp.header
 		}
 	} catch (groovyx.net.http.HttpResponseException e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
-//        log.debug "${resp.header}"
     
 		return 'unknown'
 	}
 }
 
 /*
-def getDeviceState(){
-	
-		def params = [
-			uri   : "https://developer-api.govee.com",
-			path  : '/v1/devices/state',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-			query: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel")],
-        ]
-    
-
-
-try {
-
-			httpGet(params) { resp ->
-
-				log.debug resp.data.data.properties
-				varPower = resp.data.data.properties.find({it.powerState})?.powerState
-				varBrightness = resp.data.data.properties.find({it.brightness})?.brightness
-				mapColor = resp.data.data.properties.find({it.color})?.color                
-				varCT = resp.data.data.properties.find({it.colorTemInKelvin})?.colorTemInKelvin
-
-                //if(aRngBright){varBrightness=decBrightnessRange(varBrightness)}
-				//log.debug "Recvd Brightness = ${varBrightness}"
-				
-				sendEvent(name: "switch", value: varPower)
-				
-				
-				if(varBrightness){
-					sendEvent(name: "level", value: varBrightness)
-				}
-				
-				
-                if(varCT){
-					sendEvent(name: "colorTemperature", value: varCT)
-					sendEvent(name: "colorMode", value: "CT")
-					setCTColorName(varCT)					
-                }
-                
-				if(mapColor){
-					r=mapColor.r
-					g=mapColor.g
-					b=mapColor.b
-					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
-					hue=HSVlst[0].toInteger()
-					sat=HSVlst[1].toInteger()
-					sendEvent(name: "hue", value: hue)
-					sendEvent(name: "saturation", value: sat)
-					sendEvent(name: "colorMode", value: "RGB")
-				
-				}
-				
-				return resp.data
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		return 'unknown'
-	}
-} 
 
 
 def poll() {
@@ -146,17 +93,24 @@ def refresh() {
     if(device.getDataValue("retrievable") =='true'){
         getDeviceState()
     }
-}
+} */
 
 def updated() {
-//get devices or get specific device info
+if (logEnable) runIn(1800, logsOff)
 
 }
 
+/*
 def setupDevice(){
 
 } */
 
 def installed(){
+//    state.gearmax=max(device.getDataValue("gearsMax"))
   
+}
+
+def logsOff() {
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable", [value: "false", type: "bool"])
 }
