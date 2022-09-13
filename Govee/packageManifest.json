@@ -1,0 +1,34 @@
+{
+  "packageName": "Govee Integration",
+  "author": "Mavrrick",
+  "version": "1.0",
+  "minimumHEVersion": "2.3.2",
+  "dateReleased": "2022-09-13",
+  "apps": [
+    {
+      "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
+      "name": "Govee Integration ",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_HE_integration",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    }
+  ],
+  "drivers": [
+    {
+      "id": "a197748e-a6df-492a-9162-1d495f8e10e9",
+      "name": "Govee Lights, Plugs, and Switches Driver",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Govee%20Lights_Plugs_Switches%20Driver",
+      "required": true
+    },
+    {
+      "id": "e222310a-5f06-4ab7-865a-de901df4c17c",
+      "name": "Govee Appliance Driver",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_appliance_Driver",
+      "required": true
+    }
+  ]
+}
