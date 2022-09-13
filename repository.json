@@ -7,7 +7,7 @@
       "id": "8564baba-9ede-42fe-adff-743c4a6722b0",
       "name": "Govee Integration",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/packageManifest.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/packageManifest.jsonn",
       "description": "This will provide Govee integration"
     }
   ]
