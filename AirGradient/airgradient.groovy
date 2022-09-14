@@ -1,4 +1,3 @@
-/**
  *  Air Gradient DIY to recieve commands from Node-red 
  *
  *  Copyright 2016 
@@ -37,7 +36,8 @@ metadata
 	{	
 		section
 		{
-			input "enableDebug", "bool", title: "Enables debug logging for 30 minutes", defaultValue: false, required: false
+			input "cOrF", "bool", title: "Turn on to show value in Farenhite", defaultValue: false, required: false		
+            input "enableDebug", "bool", title: "Enables debug logging for 30 minutes", defaultValue: false, required: false
 		}
 	}
 }
@@ -83,7 +83,9 @@ def update( carbonDioxide , pm, tvoc, temperature, humidity  ){
     sendEvent(name: "carbonDioxide ", value: carbonDioxide )
     sendEvent(name: "pm", value: pm)
     sendEvent(name: "tvoc", value: tvoc)
-    sendEvent(name: "temperature", value: temperature)
+    if (cOrF) { temperature=(temperature*9/5)+32 
+               sendEvent(name: "temperature", value: temperature)}
+    else sendEvent(name: "temperature", value: temperature)
     sendEvent(name: "humidity", value: humidity)
 //Calculate AQI from PM and TVOC
     if (pm <= 12.0) { aqicalc1 = ((50-0)/(12.0)*(pm)+ 0).toDouble() }
