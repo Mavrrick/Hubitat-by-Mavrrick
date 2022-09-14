@@ -1,4 +1,4 @@
- *  Air Gradient DIY to recieve commands from Node-red 
+ *  Air Gradient DIY to recieve commands device
  *
  *  Copyright 2016 
  *
