@@ -95,7 +95,7 @@ def update( carbonDioxide , pm, tvoc, temperature, humidity  ){
     else if (pm <= 500.4) { aqicalc1 = ((500 - 400) / (500.4 - 350.4) * (pm - 350.4) + 400).toDouble()}
     def aqi = aqicalc1+tvoc
     aqi = aqi.round(1)
-    log.debug "aqi value is : ${aqi}"
+//    log.debug "aqi value is : ${aqi}"
     if (aqi>=1) { sendEvent(name: "airQualityIndex", value: aqi )}
     else sendEvent(name: "airQualityIndex", value: 0 )
     }
