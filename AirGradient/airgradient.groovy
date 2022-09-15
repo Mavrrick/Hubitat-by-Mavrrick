@@ -1,4 +1,5 @@
- *  Air Gradient DIY to recieve commands device
+/**
+ *  Air Gradient DIY to recieve commands from Device 
  *
  *  Copyright 2016 
  *
@@ -23,6 +24,7 @@ metadata
 		capability "CarbonDioxideMeasurement"
 		
 		attribute "tvoc", "number"
+        attribute "pm", "number"
 
         command "update", [[name: "CO2 Mesurement", type: "NUMBER", description: "CO2 from Air Gradient"],
                           [name: "PM Mesurement", type: "NUMBER", description: "PM25 mesurement from Air Gradient"],
@@ -80,7 +82,7 @@ void initialize()
     Updates provided by Air Gradient
 */
 def update( carbonDioxide , pm, tvoc, temperature, humidity  ){
-    sendEvent(name: "carbonDioxide ", value: carbonDioxide )
+    sendEvent(name: "carbonDioxide", value: carbonDioxide )
     sendEvent(name: "pm", value: pm)
     sendEvent(name: "tvoc", value: tvoc)
     if (cOrF) { temperature=(temperature*9/5)+32 
