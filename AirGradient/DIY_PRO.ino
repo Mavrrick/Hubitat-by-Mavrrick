@@ -47,7 +47,10 @@ U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R2, /* reset=*/ U8X8_PIN_NONE);
 // CONFIGURATION START
 
 //set to the endpoint you would like to use
-String APIROOT = "http://hw.airgradient.com/";
+String APIROOT = "http://192.168.86.47/apps/api/###/devices/";
+String APITOKEN = "4274fe7c-xxx-xxx-xxx-cf02292f3850";
+String DEVID = "###";
+String AIRGRADROOT = "http://hw.airgradient.com/";
 
 // set to true to switch from Celcius to Fahrenheit
 boolean inF = true;
@@ -114,6 +117,7 @@ void loop()
   updatePm25();
   updateTempHum();
   sendToServer();
+  sendToServer2();
 }
 
 void updateTVOC()
@@ -186,6 +190,35 @@ void updateOLED2(String ln1, String ln2, String ln3) {
 
 void sendToServer() {
    if (currentMillis - previoussendToServer >= sendToServerInterval) {
+//     previoussendToServer += sendToServerInterval;
+      String values = String(Co2)
+      + "," + String(pm25)
+      + "," + String(TVOC)
+      + "," + String(temp)
+      + "," + String(hum);
+
+      if(WiFi.status()== WL_CONNECTED){
+//        Serial.println(payload);
+        String POSTURL = APIROOT + DEVID + "/update/" + values + "?access_token=" + APITOKEN;
+        Serial.println(POSTURL);
+        WiFiClient client;
+        HTTPClient http;
+        http.begin(client,POSTURL);
+//        http.addHeader("content-type", "application/json");
+        int httpCode = http.GET();
+        String response = http.getString();
+        Serial.println(httpCode);
+        Serial.println(response);
+        http.end();
+      }
+      else {
+        Serial.println("WiFi Disconnected");
+      }
+   }
+}
+
+void sendToServer2() {
+   if (currentMillis - previoussendToServer >= sendToServerInterval) {
      previoussendToServer += sendToServerInterval;
       String payload = "{\"wifi\":" + String(WiFi.RSSI())
       + ", \"rco2\":" + String(Co2)
@@ -197,7 +230,7 @@ void sendToServer() {
 
       if(WiFi.status()== WL_CONNECTED){
         Serial.println(payload);
-        String POSTURL = APIROOT + "sensors/airgradient:" + String(ESP.getChipId(), HEX) + "/measures";
+        String POSTURL = AIRGRADROOT + "sensors/airgradient:" + String(ESP.getChipId(), HEX) + "/measures";
         Serial.println(POSTURL);
         WiFiClient client;
         HTTPClient http;
@@ -222,9 +255,6 @@ void sendToServer() {
    String HOTSPOT = "AG-" + String(ESP.getChipId(), HEX);
    updateOLED2("120s to connect", "to Wifi Hotspot", HOTSPOT);
    wifiManager.setTimeout(120);
-   wifiManager.setScanDispPerc(true);
-   wifiManager.setMinimumSignalQuality(10);
-   wifiManager.setRemoveDuplicateAPs(false);
    if (!wifiManager.autoConnect((const char * ) HOTSPOT.c_str())) {
      updateOLED2("booting into", "offline mode", "");
      Serial.println("failed to connect and hit timeout");
