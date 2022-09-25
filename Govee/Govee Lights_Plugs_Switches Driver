@@ -158,91 +158,6 @@ def decBrightnessRange(v)
 }
 
 
-
-
-def white() {
-
-}
-
-
-/* def DeviceInfo(){
-// device.getDataValue("deviceModel")    
-log.debug "DEVICE INFORMATION"
-	     def params = [
-            uri   : "https://developer-api.govee.com",
-            path  : '/v1/devices',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-        ]
-    
-
-
-try {
-
-			httpGet(params) { resp ->
-
-				//List each device assigned to current API key
-				//log.debug resp.data
-				resp.data.data.devices.each{
-					deviceID = it.device
-					deviceModel = it.model
-					deviceName = it.deviceName
-                    controllable = it.controllable
-                    retrievable = it.retrievable
-                    ctMin = it.properties.colorTem.range.min
-                    ctMax = it.properties.colorTem.range.max
-					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
-				}
-
-				//Save the last device to preferences
-				curDeviceID = resp.data.data.devices.last().device
-				curDeviceModel = resp.data.data.devices.last().model
-
-				device.updateSetting("Model",[value:curDeviceModel, type:"text"])
-				device.updateSetting("MACAddr",[value:curDeviceID, type:"text"])
-
-				runIn(2, 'setupDevice')
-				return resp.data
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		
-		return 'unknown'
-	}    
-}
-
-
-
-def getDeviceSupport(){
-	    def params = [
-			uri   : "https://developer-api.govee.com",
-			path  : '/v1/devices',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-			query: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel")],
-		]
-    
-
-
-try {
-
-			httpGet(params) { resp ->
-
-				state.hasRetrievable = resp.data.data.devices.find({it.device==settings.MACAddr}).retrievable
-
-				return resp.data
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		
-		return 'unknown'
-	}
-}
-*/
-
-
 private def sendCommand(String command, payload) {
 
 
@@ -354,33 +269,42 @@ def poll() {
 def refresh() {
     if(device.getDataValue("retrievable") =='true'){
         getDeviceState()
+        runIn(pollRate,poll)
     }
 }
 
 def updated() {
-    runIn(pollRate,refresh)
-    if (logEnable) runIn(1800, logsOff)
-//get devices or get specific device info
-/* if(!settings.MACAddr || !settings.Model)
-	{
-		DeviceInfo()
-	}
-	else{
-		setupDevice()
-	}
-*/ 
+    if(device.getDataValue("retrievable") =='true'){
+        getDeviceState()
+        runIn(pollRate,poll)
+    }
+    if (logEnable) runIn(1800, logsOff) 
 }
 
-def setupDevice(){
-//		getDeviceSupport()
-		refresh()
+def configure() {
+    if(device.getDataValue("retrievable") =='true'){
+        getDeviceState()
+        runIn(pollRate,poll)
+    }
+    if (logEnable) runIn(1800, logsOff) 
 }
+
+def initialize(){
+    if(device.getDataValue("retrievable") =='true'){
+        getDeviceState()
+        runIn(pollRate,poll)
+    }
+}
+
 
 def installed(){
     sendEvent(name: "hue", value: 0)
     sendEvent(name: "saturation", value: 100)
     sendEvent(name: "level", value: 100) 
-    runIn(pollRate,refresh)
+    if(device.getDataValue("retrievable") =='true'){
+        getDeviceState()
+        runIn(pollRate,poll)
+    }
 }
 
 def logsOff() {
