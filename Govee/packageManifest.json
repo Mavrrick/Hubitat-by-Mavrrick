@@ -4,6 +4,7 @@
   "version": "1.0.1",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
+  "releaseNotes": "1.0.1 Improved Polling in Lights driver",
   "apps": [
     {
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
