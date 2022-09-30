@@ -1,7 +1,8 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
 // Version 0.1.0
 //
-// 9-12-22  Initial release 
+// 9-12-22  Initial release
+// 9-30-22  Resolve issue with polling, Enhance Debug Logging
 
 metadata {
 	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -12,6 +13,7 @@ metadata {
 		capability "SwitchLevel"
 		capability "ColorMode"
 		capability "Refresh"
+        capability "Initialize"
 		
 		attribute "colorName", "string"
         
@@ -91,7 +93,7 @@ def setColor(value) {
 		def b = value.containsKey("level") ? value.level : null
 		setHsb(h, s, b)
 	} else {
-        if (debugLog) {log.warn "Invalid argument for setColor: ${value}"}
+        if (debugLog) {log.warn "setColor(): Invalid argument for setColor: ${value}"}
     }
 }
 
@@ -209,7 +211,7 @@ try {
 
 			httpGet(params) { resp ->
 
-                if (debugLog) { log.debug resp.data.data.properties }
+                if (debugLog) { log.debug "getDeviceState():"+resp.data.data.properties }
 				varPower = resp.data.data.properties.find({it.powerState})?.powerState
 				varBrightness = resp.data.data.properties.find({it.brightness})?.brightness
 				mapColor = resp.data.data.properties.find({it.color})?.color                
@@ -263,47 +265,65 @@ try {
 }
 
 def poll() {
+    if (debugLog) {log.warn "poll(): Poll Initated"}
 	refresh()
 }
 
 def refresh() {
+    if (debugLog) {log.warn "refresh(): Performing refresh"}
     if(device.getDataValue("retrievable") =='true'){
-        getDeviceState()
+        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        unschedule()
         runIn(pollRate,poll)
+        getDeviceState()
     }
+    if (debugLog) runIn(1800, logsOff)
 }
 
 def updated() {
+    if (debugLog) {log.warn "updated(): Driver Udated"}
     if(device.getDataValue("retrievable") =='true'){
-        getDeviceState()
+        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        unschedule()
         runIn(pollRate,poll)
+        getDeviceState()
     }
-    if (logEnable) runIn(1800, logsOff) 
+    if (debugLog) runIn(1800, logsOff) 
 }
 
 def configure() {
+    if (debugLog) {log.warn "configure(): Configuration Changed"}
     if(device.getDataValue("retrievable") =='true'){
-        getDeviceState()
+        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        unschedule()
         runIn(pollRate,poll)
+        getDeviceState()
     }
-    if (logEnable) runIn(1800, logsOff) 
+    if (debugLog) runIn(1800, logsOff) 
 }
 
 def initialize(){
+    if (debugLog) {log.warn "initialize(): Driver Initializing"}
     if(device.getDataValue("retrievable") =='true'){
-        getDeviceState()
+        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        unschedule()
         runIn(pollRate,poll)
+        getDeviceState()
     }
+    if (debugLog) runIn(1800, logsOff)
 }
 
 
 def installed(){
+    if (debugLog) {log.warn "installed(): Driver Installed"}
     sendEvent(name: "hue", value: 0)
     sendEvent(name: "saturation", value: 100)
     sendEvent(name: "level", value: 100) 
     if(device.getDataValue("retrievable") =='true'){
-        getDeviceState()
+        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        unschedule()
         runIn(pollRate,poll)
+        getDeviceState()
     }
 }
 
