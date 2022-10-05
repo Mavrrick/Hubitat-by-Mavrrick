@@ -6,7 +6,7 @@
   "dateReleased": "2022-09-13",
   "releaseNotes": "1.0.1 Improved Polling in Lights driver",
   "releaseNotes": "1.0.2 Fix Polling, add debug logging",
-  "releaseNotes": "1.0.3 Fix Polling, add debug logging",
+  "releaseNotes": "1.0.3 Added Lan Control, added debug logging",
   "apps": [
     {
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
