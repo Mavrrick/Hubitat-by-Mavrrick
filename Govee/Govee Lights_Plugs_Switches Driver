@@ -3,6 +3,16 @@
 //
 // 9-12-22  Initial release
 // 9-30-22  Resolve issue with polling, Enhance Debug Logging
+// 10-5-22  Adding Lan Control options to driver. Additional Logging.
+
+import hubitat.helper.InterfaceUtils
+import hubitat.helper.HexUtils
+import groovy.transform.Field
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+import groovy.json.JsonBuilder
+
+def commandPort() { "4003" }
 
 metadata {
 	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -24,37 +34,52 @@ metadata {
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
+            input(name: "lanControl", type: "bool", title: "Enable Local lan control", description: "This is a advanced feature thta only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
+            if (lanControl) {
+            input("ip", "text", title: "IP Address", description: "IP address of Wiz light", required: false)}
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
 		}
 		
 	}
 }
 
-def parse(String description) {
-
-}
-
 def on() {
-	sendEvent(name: "switch", value: "on")
-	sendCommand("turn", "on")
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
+        sendEvent(name: "switch", value: "on")}
+    else {
+	    sendEvent(name: "switch", value: "on")
+	    sendCommand("turn", "on")
+        }
 }
 
 def off() {
-	sendEvent(name: "switch", value: "off")
-	sendCommand("turn", "off")
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
+        sendEvent(name: "switch", value: "off")}
+    else {
+	    sendEvent(name: "switch", value: "off")
+	    sendCommand("turn", "off")
+        }
 }
 
-def setColorTemperature(value)
+def setColorTemperature(value,level = null,transitionTime = null)
 {
+    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
 	sendEvent(name: "colorMode", value: "CT")
-    if (debugLog) { log.debug "ColorTemp = " + value }
+    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
 	def intvalue = value.toInteger()
-	
-	sendEvent(name: "colorTemperature", value: intvalue)
-    
+    sendEvent(name: "colorTemperature", value: intvalue)
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+        if (level != null) setLevel(level,transitionTime);
+        }
+    else { 
+        if (level != null) setLevel(level,transitionTime);
 		sendCommand("colorTem", intvalue)
+    }
 		setCTColorName(intvalue)
 }   
 
@@ -86,14 +111,14 @@ def setCTColorName(value)
 
     
 def setColor(value) {
-    if (debugLog) { log.debug "HSBColor = "+ value }
+    if (debugLog) { log.debug "setColor(): HSBColor = "+ value }
 	if (value instanceof Map) {
 		def h = value.containsKey("hue") ? value.hue : null
 		def s = value.containsKey("saturation") ? value.saturation : null
 		def b = value.containsKey("level") ? value.level : null
 		setHsb(h, s, b)
 	} else {
-        if (debugLog) {log.warn "setColor(): Invalid argument for setColor: ${value}"}
+        if (debugLog) {log.debug "setColor(): Invalid argument for setColor: ${value}"}
     }
 }
 
@@ -101,7 +126,7 @@ def setHsb(h,s,b)
 {
 
 	hsbcmd = [h,s,b]
-//	log.debug "Cmd = ${hsbcmd}"
+    if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
 
 	sendEvent(name: "hue", value: "${h}")
 	sendEvent(name: "saturation", value: "${s}")
@@ -117,8 +142,12 @@ def setHsb(h,s,b)
     
  
 		sendEvent(name: "colorMode", value: "RGB")
-		sendCommand("color", rgbmap)
-    
+    if (lanControl) {
+        if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
+        sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
+    } else {
+        sendCommand("color", rgbmap)
+    }
 }
 
 def setHue(h)
@@ -135,12 +164,16 @@ def setLevel(v,duration){
     setLevel(v)
 }
 
-def setLevel(v)
-{
+def setLevel(v){
+        if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        sendEvent(name: "level", value: v)}
+    else {
 		sendEvent(name: "level", value: v)
 		if(aRngBright){v=incBrightnessRange(v)}
-//		log.debug "Sent Brightness = ${v}"
+        if (debugLog) { log.debug "setLevel(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
+    }
 }
 
 
@@ -176,9 +209,9 @@ try {
 
 			httpPut(params) { resp ->
 				
-                if (debugLog) { log.debug "response.data="+resp.data}
+                if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
                 resp.headers.each {
-//                    log.debug "${it.name}: ${it.value}"                    
+                    if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
                     name = it.name
                     value=it.value
                     if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
@@ -189,7 +222,7 @@ try {
 	} catch (groovyx.net.http.HttpResponseException e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
-        if (debugLog) {log.debug "${resp.header}"}
+        if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
     
 		return 'unknown'
 	}
@@ -197,7 +230,11 @@ try {
 
 
 def getDeviceState(){
-	
+/*        if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("devStatus"," " ,"status"))
+            
+    } else {
+	*/ 
 		def params = [
 			uri   : "https://developer-api.govee.com",
 			path  : '/v1/devices/state',
@@ -218,7 +255,7 @@ try {
 				varCT = resp.data.data.properties.find({it.colorTemInKelvin})?.colorTemInKelvin
 
                 resp.headers.each {
-//                    log.debug "${it.name}: ${it.value}"                    
+                    if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
                     name = it.name
                     value=it.value
                     if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
@@ -262,6 +299,7 @@ try {
 		log.error "${e}"
 		return 'unknown'
 	}
+//        }
 }
 
 def poll() {
@@ -329,5 +367,98 @@ def installed(){
 
 def logsOff() {
     log.warn "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
+}
+
+def GoveeCommandBuilder(command1, value1, type) {   
+    if (type=="ct") {
+        if (debugLog) {log.debug "GoveeCommandBuilder(): Color temp action"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            color {
+            r 0
+            g 0
+            b 0
+        }
+            colorTemInKelvin value1}
+    }
+    def  command = cmd1.toString()
+        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+   else if (type=="rgb") {
+       if (debugLog) {log.debug "GoveeCommandBuilder(): rgb"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            color {
+            r value1.r
+            g value1.g
+            b value1.b
+                
+        }
+            colorTemInKelvin 0}
+    }
+    def  command = cmd1.toString()
+       if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+       else if (type=="status") {
+           if (debugLog) {log.debug "GoveeCommandBuilder():status"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            }
+    }
+    def  command = cmd1.toString()
+           if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+    else { 
+        if (debugLog) {log.debug "GoveeCommandBuilder():other action"}
+    JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            value value1}
+        }
+    def  command = cmd1.toString()
+        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command
+}
+}
+
+def sendCommandLan(String cmd) {
+  def addr = getIPString();
+    if (debugLog) {log.debug ("sendCommandLan(): ${cmd}")}
+
+  pkt = new hubitat.device.HubAction(cmd,
+                     hubitat.device.Protocol.LAN,
+                     [type: hubitat.device.HubAction.Type.LAN_TYPE_UDPCLIENT,
+                     ignoreResponse    : false,
+                     callback: parse,
+                     parseWarning: true,
+                     destinationAddress: addr])  
+  try {    
+      if (debugLog) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
+    sendHubCommand(pkt) 
+//    setLastCommandTime()    
+  }
+  catch (Exception e) {      
+      logDebug e
+  }      
+}
+
+def getIPString() {
+   return ip+":"+commandPort()
+}
+
+
+def parse(message) {  
+  log.error "Got something to parseUDP"
+  log.error "UDP Response -> ${message}"    
 }
