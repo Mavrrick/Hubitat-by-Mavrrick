@@ -1,9 +1,10 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 0.1.0
+// Version 1.0.2
 //
 // 9-12-22  Initial release
 // 9-30-22  Resolve issue with polling, Enhance Debug Logging
 // 10-5-22  Adding Lan Control options to driver. Additional Logging.
+// 10-12-22 Updated text verbiage on preferences
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -34,9 +35,9 @@ metadata {
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
-            input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature thta only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
+            input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
             if (lanControl) {
-            input("ip", "text", title: "IP Address", description: "IP address of Wiz light", required: false)}
+            input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)}
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
 		}
 		
