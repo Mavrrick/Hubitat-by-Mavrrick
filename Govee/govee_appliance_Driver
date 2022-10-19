@@ -1,13 +1,15 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 0.1.0
+// Version 0.2.0
 //
 // 2022-09-12 -	Initial Driver release for Govee Appliance devices
+// 2022-10-19 - Added Attributes to driver
 
 metadata {
 	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		
-		attribute "colorName", "string"
+		attribute "gear", "number"
+        attribute "mode", "number"
         
 		command "gear" , [[name: "Fan or Mist Speed", type: 'NUMBER', description: "Gear will adjust values for Fan speed or Misting depending on what device you have. Valid values are  "]]
 		command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the device operating mode. Valid values are   "]]
