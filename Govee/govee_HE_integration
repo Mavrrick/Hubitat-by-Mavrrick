@@ -26,7 +26,7 @@ definition(
 
 /* 
 * Initial release v1.0.0
-*
+* 1.0.1 Update to improve device support + Cleanup
 *
 */
 
@@ -39,13 +39,15 @@ preferences
 
 
 def initialize() {
-//    getChildDevice.each {child ->
-//        log.debug "initialize() child device: ${it.label}"
-//    }
-//    List child = getChildDevices()
-//    log.debug "Child device DNI's ${child}"
-    if (settings.goveeDev) {
-                    def devices = settings.goveeDev
+
+    List child = getChildDevices()
+    List childDNI = child.deviceNetworkId
+    def  goveeAdd = settings.goveeDev - child.label
+    def  goveeAdd2 = settings.goveeApp - child.label
+    log.debug "Child device ${child} DNI's ${childDNI}"
+    log.debug " Govee Light/Switch/Plugs to add ${goveeAdd}. Govee Appliances to add ${goveeAdd2} "
+    if (goveeAdd) {
+                    def devices = goveeAdd
     				log.debug "initialize() $devices are selcted to be integrated"
             log.debug "initialize() DEVICE INFORMATION"
 	     def params = [
@@ -60,8 +62,6 @@ try {
 
 			httpGet(params) { resp ->
 
-				//List each device assigned to current API key
-				//log.debug resp.data
 				resp.data.data.devices.each{
 					deviceID = it.device
 					deviceModel = it.model
@@ -71,11 +71,7 @@ try {
                     supportCmds = it.supportCmds
                     ctMin = it.properties.colorTem.range.min
                     ctMax = it.properties.colorTem.range.max
-//					log.debug " initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
                     devices.findAll{it == deviceName} .each {
-//                        log.debug " matchin device ${d} ${child} to ${deviceName} "
-//                        if (!deviceName) {log.debug "already-installed device ${child}" }
-//                        else {
                             log.debug "initialize()  configuring ${deviceName}"
                             addChildDevice("Mavrrick", "Govee Lights, Plugs, and Switches Driver", "${deviceID}" , location.hubs[0].id, [
 					            "name": "Govee Light_Plug_Switch",
@@ -109,8 +105,8 @@ try {
 //       state?.crtVrtButton = false
 		}
 // add appliances 
-        if (settings.goveeApp) {
-                    def devices = settings.goveeApp
+        if (goveeAdd2) {
+                    def devices = goveeAdd2
     				log.debug "initialize() $devices are selcted to be integrated"
             log.debug "initialize() Appliance INFORMATION"
 	     def params2 = [
@@ -126,7 +122,7 @@ try {
 			httpGet(params2) { resp ->
 
 				//List each device assigned to current API key
-				log.debug resp.data
+//				log.debug resp.data
 				resp.data.data.devices.each{
 					deviceID = it.device
 					deviceModel = it.model
@@ -136,13 +132,8 @@ try {
                     supportCmds = it.supportCmds
                     modes = it.properties.mode.options
                     gear = it.properties.gear.options.value
-//                    gearMin = Collections.max(it.properties.gear.options.value)
-//                    gearMax = Collections.max(it.properties.gear.options.value)
-					log.debug " initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear"
+//					log.debug " initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear"
                     devices.findAll{it == deviceName} .each {
-//                        log.debug " matchin device ${d} ${child} to ${deviceName} "
-//                        if (!deviceName) {log.debug "already-installed device ${child}" }
-//                        else {
                             log.debug "initialize()  configuring ${deviceName}"
                             addChildDevice("Mavrrick", "Govee Appliance Driver", "${deviceID}" , location.hubs[0].id, [
 					            "name": "Govee Appliance",
@@ -155,8 +146,6 @@ try {
                                 'commands': supportCmds,
                                 'modes' : modes,
                                 'gears' : gear
-//                                'gearsMin' : gearMin, 
-//                                'gearsMax' : gearMax
                             ],
 					"completedSetup": true, 					
 				])
@@ -173,12 +162,9 @@ try {
                 state?.installedApp = goveeApp
                 log.debug "initialize() Govee devices integrated"
                 }
-//		}
       	else {
-//        state?.crtVrtButton = false
 		}
     
-//    }
 }   
 
 
@@ -209,10 +195,7 @@ def mainPage()
 def deviceSelect()
 {
     def options = [:]
-    def options2 = [:]
-//    DeviceInfo()
-//    def options = DeviceInfo() ?: [:]
-//    log.debug "$resp(data) $options"
+    
     log.debug "DEVICE INFORMATION"
 	     def params = [
             uri   : "https://developer-api.govee.com",
@@ -229,7 +212,7 @@ try {
 				//List each device assigned to current API key
 				//log.debug resp.data
 				resp.data.data.devices.each{
-//					deviceID = it.device
+					deviceID = it.device
 //					deviceModel = it.model
 					deviceName = it.deviceName
 //                    controllable = it.controllable
@@ -238,9 +221,9 @@ try {
 //                    ctMax = it.properties.colorTem.range.max
 //					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
                     options["${deviceName}"] = deviceName
-//                    options.name = deviceName
-                    log.debug "$options"
+//                    options.name = deviceName                    
 				}
+                log.debug "$options"
 			}
 			
 	} catch (groovyx.net.http.HttpResponseException e) {
@@ -249,105 +232,22 @@ try {
 		
 		return 'unknown'
 	} 
-/*    log.debug "Appliance INFORMATION"
-	     def paramsApp = [
-            uri   : "https://developer-api.govee.com",
-            path  : '/v1/appliance/devices',
-			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
-        ]
-    
 
-
-try {
-
-			httpGet(paramsApp) { resp ->
-
-				//List each device assigned to current API key
-				//log.debug resp.data
-				resp.data.data.devices.each{
-					deviceID = it.device
-					deviceModel = it.model
-					deviceName = it.deviceName
-                    controllable = it.controllable
-                    retrievable = it.retrievable
-                    modes = it.properties.mode.opotions
-//                    ctMax = it.properties.colorTem.range.max
-					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel controllable: $controllable modes: $modes "
-                    options2["${deviceName}"] = deviceName
-//                    options.name = deviceName
-                    log.debug "$options"
-				}
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		
-		return 'unknown'
-	}    */
 	dynamicPage(name: "deviceSelect", title: "Add Devices page", uninstall: false, install: false)
 	{
 		section("Please select the Lights, Plugs, Switch you want to integrate")
 		{
-            paragraph "Please only select devices to be added at this time. If you have existing devices the add will likely fail."    
-            input(name: "goveeDev", type: "enum", required:false, description: "Choose only devices you wish to add. Existing devices will cause this to fail", multiple:true, 
+            paragraph "Please select the devices you wish to integrate."    
+            input(name: "goveeDev", type: "enum", required:false, description: "Please select the devices you wish to integrate.", multiple:true, 
 			    options: options, width: 8, height: 1)
 		}
-/*        section("Please select the Govee Appliances you want to integrate")
-		{
-            paragraph "Please only select devices to be added at this time. If you have existing devices the add will likely fail."    
-            input(name: "goveeApp", type: "enum", required:false, description: "Choose only devices you wish to add. Existing devices will cause this to fail", multiple:true, 
-			    options: options2, width: 8, height: 1)
-		} */
-//    section ("Return to Govee Integration Main page"){
-//        href "mainPage", title: "Govee Integration Main Page", description: "Return to Govee Integration Main Menu"            
-//    }
+
 	}
 }
 
 def deviceSelect2()
 {
-//    def options = [:]
     def options2 = [:]
-//    DeviceInfo()
-//    def options = DeviceInfo() ?: [:]
-//    log.debug "$resp(data) $options"
-/*    log.debug "DEVICE INFORMATION"
-	     def params = [
-            uri   : "https://developer-api.govee.com",
-            path  : '/v1/devices',
-			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
-        ]
-    
-
-
-try {
-
-			httpGet(params) { resp ->
-
-				//List each device assigned to current API key
-				//log.debug resp.data
-				resp.data.data.devices.each{
-//					deviceID = it.device
-//					deviceModel = it.model
-					deviceName = it.deviceName
-//                    controllable = it.controllable
-//                    retrievable = it.retrievable
-//                    ctMin = it.properties.colorTem.range.min
-//                    ctMax = it.properties.colorTem.range.max
-//					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
-                    options["${deviceName}"] = deviceName
-//                    options.name = deviceName
-                    log.debug "$options"
-				}
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		
-		return 'unknown'
-	} */
     log.debug "Appliance INFORMATION"
 	     def paramsApp = [
             uri   : "https://developer-api.govee.com",
@@ -370,12 +270,10 @@ try {
                     controllable = it.controllable
                     retrievable = it.retrievable
                     modes = it.properties.mode.opotions
-//                    ctMax = it.properties.colorTem.range.max
-					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel controllable: $controllable modes: $modes "
-                    options2["${deviceName}"] = deviceName
-//                    options.name = deviceName
-                    log.debug "$options"
+//					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel controllable: $controllable modes: $modes "
+                    options2["${deviceName}"] = deviceName                     
 				}
+                log.debug "$options2"
 			}
 			
 	} catch (groovyx.net.http.HttpResponseException e) {
@@ -386,21 +284,14 @@ try {
 	}    
 	dynamicPage(name: "deviceSelect", title: "Add Devices page", uninstall: false, install: false)
 	{
-/*		section("Please select the Lights, Plugs, Switch you want to integrate")
-		{
-            paragraph "Please only select devices to be added at this time. If you have existing devices the add will likely fail."    
-            input(name: "goveeDev", type: "enum", required:false, description: "Choose only devices you wish to add. Existing devices will cause this to fail", multiple:true, 
-			    options: options, width: 8, height: 1)
-		} */
+
         section("Please select the Govee Appliances you want to integrate")
 		{
-            paragraph "Please only select devices to be added at this time. If you have existing devices the add will likely fail."    
-            input(name: "goveeApp", type: "enum", required:false, description: "Choose only devices you wish to add. Existing devices will cause this to fail", multiple:true, 
+            paragraph "Please select the appliances you wish to add to the integration. "    
+            input(name: "goveeApp", type: "enum", required:false, description: "Please select the appliances you wish to add to the integration.", multiple:true, 
 			    options: options2, width: 8, height: 1)
 		}
-//    section ("Return to Govee Integration Main page"){
-//        href "mainPage", title: "Govee Integration Main Page", description: "Return to Govee Integration Main Menu"            
-//    }
+
 	}
 }
 
