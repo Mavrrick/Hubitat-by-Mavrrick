@@ -10,11 +10,11 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/packageManifest.json",
       "description": "This will provide Govee integration",
        "tags": [
-        "Govee",
+        "Misc. Devices",
         "Cloud",
-        "Lights",
+        "Lights & Switches",
         "Appliances",
-        "Strips"
+        "Integrations"
       ]
     }
   ]
