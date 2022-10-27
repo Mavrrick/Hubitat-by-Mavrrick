@@ -42,10 +42,10 @@ def initialize() {
 
     List child = getChildDevices()
     List childDNI = child.deviceNetworkId
-    def  goveeAdd = settings.goveeDev - child.label
-    def  goveeAdd2 = settings.goveeApp - child.label
+    if (goveeDev) { 
+        def  goveeAdd = settings.goveeDev - child.label 
     log.debug "Child device ${child} DNI's ${childDNI}"
-    log.debug " Govee Light/Switch/Plugs to add ${goveeAdd}. Govee Appliances to add ${goveeAdd2} "
+    log.debug " Govee Light/Switch/Plugs to add ${goveeAdd}. "
     if (goveeAdd) {
                     def devices = goveeAdd
     				log.debug "initialize() $devices are selcted to be integrated"
@@ -100,11 +100,14 @@ try {
                 state?.installDev = goveeDev
                 log.debug "initialize() Govee devices integrated"
                 }
-//		}
+		}
       	else {
 //       state?.crtVrtButton = false
 		}
-// add appliances 
+// add appliances
+       if (goveeApp) { 
+        def  goveeAdd2 = settings.goveeApp - child.label
+         log.debug " Govee Appliances to add ${goveeAdd2}. "
         if (goveeAdd2) {
                     def devices = goveeAdd2
     				log.debug "initialize() $devices are selcted to be integrated"
@@ -162,6 +165,7 @@ try {
                 state?.installedApp = goveeApp
                 log.debug "initialize() Govee devices integrated"
                 }
+    }
       	else {
 		}
     
