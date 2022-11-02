@@ -27,7 +27,11 @@ definition(
 /* 
 * Initial release v1.0.0
 * 1.0.1 Update to improve device support + Cleanup
-*
+* 1.0.2
+* 1.0.3
+* 1.0.4 Improved handeling of Govee Device Additions  
+* 1.0.5 Correct but that prevented device Additions if both Lights and appliances where added together.
+* 1.0.6 Updated process for appliance device creation to allow for devices without gear commands.
 */
 
 preferences
@@ -125,7 +129,7 @@ try {
 			httpGet(params2) { resp ->
 
 				//List each device assigned to current API key
-//				log.debug resp.data
+				log.debug resp.data
 				resp.data.data.devices.each{
 					deviceID = it.device
 					deviceModel = it.model
@@ -134,8 +138,11 @@ try {
                     retrievable = it.retrievable
                     supportCmds = it.supportCmds
                     modes = it.properties.mode.options
-                    gear = it.properties.gear.options.value
-//					log.debug " initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear"
+                    log.debug " $supportCmds "
+                    if (supportCmds.contains("gear")) {
+                        gear = it.properties.gear.options.value }
+                    else { gear = "N/A"} 
+					log.debug " initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear"
                     devices.findAll{it == deviceName} .each {
                             log.debug "initialize()  configuring ${deviceName}"
                             addChildDevice("Mavrrick", "Govee Appliance Driver", "${deviceID}" , location.hubs[0].id, [
@@ -153,7 +160,7 @@ try {
 					"completedSetup": true, 					
 				])
 			}
-                    }
+                    }      
             //        }  
             }                                                          
 	} catch (groovyx.net.http.HttpResponseException e) {
