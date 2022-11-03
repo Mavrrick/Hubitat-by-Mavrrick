@@ -215,7 +215,9 @@ def mainPage()
         section("Current Integrated Device Information") {
             paragraph "There are ${childCount} devices integrated"
             paragraph "Your current integrated devices are ${child.label}"
-            paragraph "With the number of devices have you can poll as frequently as every ${maxPoll} seconds"
+                if (childCount > 0) {def maxPoll = 86400/((10000-(50*childCount))/childCount).toDouble()
+                maxPoll = maxPoll.round(1)
+            paragraph "With the number of devices have you can poll as frequently as every ${maxPoll} seconds"}
             paragraph "Your have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
             paragraph "Your have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
         }
