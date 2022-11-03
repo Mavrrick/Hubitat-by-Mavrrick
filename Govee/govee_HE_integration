@@ -196,8 +196,8 @@ def mainPage()
 {
     List child = getChildDevices()
     def childCount = child.size()
-    if (isInstalled) {def maxPoll = 86400/((10000-(50*childCount))/childCount).toDouble()
-    maxPoll = maxPoll.round(1)}
+//    if (isInstalled) {def maxPoll = 86400/((10000-(50*childCount))/childCount).toDouble()
+//    maxPoll = maxPoll.round(1)}
 //    DeviceInfo()
 	dynamicPage(name: "mainPage", title: "Govee integration Main menu", uninstall: true, install: true, submitOnChange: true)
 	{
