@@ -5,6 +5,7 @@
 // 9-30-22  Resolve issue with polling, Enhance Debug Logging
 // 10-5-22  Adding Lan Control options to driver. Additional Logging.
 // 10-12-22 Updated text verbiage on preferences
+// 11-3-22  Send Rate Limits to Parent app and adjust to work with limited devices.
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -215,8 +216,14 @@ try {
                     if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
                     name = it.name
                     value=it.value
-                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
-                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+                    if (name == "X-RateLimit-Remaining") {
+                        state.DailyLimitRemaining = value
+                        parent.apiRateLimits("DailyLimitRemaining", value)
+                    }
+                    if (name == "API-RateLimit-Remaining") {
+                        state.MinRateLimitRemainig = value
+                        parent.apiRateLimits("MinRateLimitRemainig", value)
+                    }
             }
                 return resp.data
 		}
@@ -259,8 +266,14 @@ try {
                     if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
                     name = it.name
                     value=it.value
-                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
-                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+                    if (name == "X-RateLimit-Remaining") {
+                        state.DailyLimitRemaining = value
+                        parent.apiRateLimits("DailyLimitRemaining", value)
+                    }
+                    if (name == "API-RateLimit-Remaining") {
+                        state.MinRateLimitRemainig = value
+                        parent.apiRateLimits("MinRateLimitRemainig", value)
+                    }
                 }
                 //if(aRngBright){varBrightness=decBrightnessRange(varBrightness)}
 				//log.debug "Recvd Brightness = ${varBrightness}"
@@ -355,9 +368,10 @@ def initialize(){
 
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
-    sendEvent(name: "hue", value: 0)
-    sendEvent(name: "saturation", value: 100)
-    sendEvent(name: "level", value: 100) 
+    if(device.getDataValue("commands").contains("color")) {
+        sendEvent(name: "hue", value: 0)
+        sendEvent(name: "saturation", value: 100)
+        sendEvent(name: "level", value: 100) }
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
         unschedule()
