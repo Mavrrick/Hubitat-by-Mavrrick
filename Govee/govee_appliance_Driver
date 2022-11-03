@@ -1,8 +1,9 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 0.2.0
+// Version 1.0.7
 //
 // 2022-09-12 -	Initial Driver release for Govee Appliance devices
 // 2022-10-19 - Added Attributes to driver
+// 2022-11-3 - Send Rate Limits to parent.
 
 metadata {
 	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -70,8 +71,14 @@ try {
 //                    log.debug "${it.name}: ${it.value}"                    
                     name = it.name
                     value=it.value
-                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
-                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+                    if (name == "X-RateLimit-Remaining") {
+                        state.DailyLimitRemaining = value
+                        parent.apiRateLimits("DailyLimitRemainingV2", value)
+                    }
+                    if (name == "API-RateLimit-Remaining") {
+                        state.MinRateLimitRemainig = value
+                        parent.apiRateLimits("MinRateLimitRemainigV2", value)
+                    }
             }
 				return resp.data
 		        return resp.header
