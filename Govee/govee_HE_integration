@@ -32,6 +32,7 @@ definition(
 * 1.0.4 Improved handeling of Govee Device Additions  
 * 1.0.5 Correct but that prevented device Additions if both Lights and appliances where added together.
 * 1.0.6 Updated process for appliance device creation to allow for devices without gear commands.
+* 1.0.7 Enhanced Logging, Added rate limit tracking to app, Enhanced non RGB device handeling
 */
 
 preferences
@@ -43,17 +44,18 @@ preferences
 
 
 def initialize() {
+    state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
 
     List child = getChildDevices()
     List childDNI = child.deviceNetworkId
     if (goveeDev) { 
         def  goveeAdd = settings.goveeDev - child.label 
-    log.debug "Child device ${child} DNI's ${childDNI}"
-    log.debug " Govee Light/Switch/Plugs to add ${goveeAdd}. "
+    logger ("initialize() Child device ${child} DNI's ${childDNI}", "debug")
+    logger ("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.","info")
     if (goveeAdd) {
-                    def devices = goveeAdd
-    				log.debug "initialize() $devices are selcted to be integrated"
-            log.debug "initialize() DEVICE INFORMATION"
+         def devices = goveeAdd
+         logger ("initialize() $devices are selcted to be integrated","info")
+         logger ("initialize() DEVICE INFORMATION","info")
 	     def params = [
             uri   : "https://developer-api.govee.com",
             path  : '/v1/devices',
@@ -65,7 +67,8 @@ def initialize() {
 try {
 
 			httpGet(params) { resp ->
-
+                
+//                logger (${resp.data},"debug")
 				resp.data.data.devices.each{
 					deviceID = it.device
 					deviceModel = it.model
@@ -73,10 +76,16 @@ try {
                     controllable = it.controllable
                     retrievable = it.retrievable
                     supportCmds = it.supportCmds
+                    if (supportCmds.contains("colorTem")) {
                     ctMin = it.properties.colorTem.range.min
-                    ctMax = it.properties.colorTem.range.max
+                    ctMax = it.properties.colorTem.range.max 
+                        }
+                    else { 
+                        ctMin = "N/A"
+                        ctMax = "N/A" 
+                         }
                     devices.findAll{it == deviceName} .each {
-                            log.debug "initialize()  configuring ${deviceName}"
+                            logger ("initialize()  configuring ${deviceName}","info")
                             addChildDevice("Mavrrick", "Govee Lights, Plugs, and Switches Driver", "${deviceID}" , location.hubs[0].id, [
 					            "name": "Govee Light_Plug_Switch",
 					            "label": deviceName,
@@ -96,13 +105,13 @@ try {
             //        }  
             }                                                          
 	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
+		logger ("initialize() Error: e.statusCode ${e.statusCode}","error")
+		logger ("initialize() ${e}","error")
 		
 		return 'unknown'
 	}
                 state?.installDev = goveeDev
-                log.debug "initialize() Govee devices integrated"
+                logger ("initialize() Govee devices integrated","info")
                 }
 		}
       	else {
@@ -111,11 +120,11 @@ try {
 // add appliances
        if (goveeApp) { 
         def  goveeAdd2 = settings.goveeApp - child.label
-         log.debug " Govee Appliances to add ${goveeAdd2}. "
+         logger("initialize() Govee Appliances to add ${goveeAdd2}.","info")
         if (goveeAdd2) {
-                    def devices = goveeAdd2
-    				log.debug "initialize() $devices are selcted to be integrated"
-            log.debug "initialize() Appliance INFORMATION"
+            def devices = goveeAdd2
+    		logger ("initialize() $devices are selcted to be integrated","info")
+            logger ("initialize() Appliance INFORMATION","info")
 	     def params2 = [
             uri   : "https://developer-api.govee.com",
             path  : '/v1/appliance/devices',
@@ -129,7 +138,7 @@ try {
 			httpGet(params2) { resp ->
 
 				//List each device assigned to current API key
-				log.debug resp.data
+ //               logger ("initialize()" + ${resp.data},"debug")
 				resp.data.data.devices.each{
 					deviceID = it.device
 					deviceModel = it.model
@@ -138,13 +147,12 @@ try {
                     retrievable = it.retrievable
                     supportCmds = it.supportCmds
                     modes = it.properties.mode.options
-                    log.debug " $supportCmds "
                     if (supportCmds.contains("gear")) {
                         gear = it.properties.gear.options.value }
                     else { gear = "N/A"} 
-					log.debug " initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear"
+					logger ("initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear","debug")
                     devices.findAll{it == deviceName} .each {
-                            log.debug "initialize()  configuring ${deviceName}"
+                            logger ("initialize()  configuring ${deviceName}","info")
                             addChildDevice("Mavrrick", "Govee Appliance Driver", "${deviceID}" , location.hubs[0].id, [
 					            "name": "Govee Appliance",
 					            "label": deviceName,
@@ -164,13 +172,13 @@ try {
             //        }  
             }                                                          
 	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
+		logger ("initialize() Error: e.statusCode ${e.statusCode}","error")
+		logger ("initialize() ${e}","error")
 		
 		return 'unknown'
 	}
                 state?.installedApp = goveeApp
-                log.debug "initialize() Govee devices integrated"
+                logger ("initialize() Govee devices integrated","info")
                 }
     }
       	else {
@@ -186,6 +194,10 @@ try {
 */
 def mainPage()
 {
+    List child = getChildDevices()
+    def childCount = child.size()
+    if (isInstalled) {def maxPoll = 86400/((10000-(50*childCount))/childCount).toDouble()
+    maxPoll = maxPoll.round(1)}
 //    DeviceInfo()
 	dynamicPage(name: "mainPage", title: "Govee integration Main menu", uninstall: true, install: true, submitOnChange: true)
 	{
@@ -200,6 +212,31 @@ def mainPage()
         section("Govee Apliance Add Page") {
 			href "deviceSelect2", title: "Device selection", description: "Select Govee devices to add to your environment"
 	    }
+        section("Current Integrated Device Information") {
+            paragraph "There are ${childCount} devices integrated"
+            paragraph "Your current integrated devices are ${child.label}"
+            paragraph "With the number of devices have you can poll as frequently as every ${maxPoll} seconds"
+            paragraph "Your have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
+            paragraph "Your have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
+        }
+        section("Logging Options") {
+        input (
+        		name: "configLoggingLevelIDE",
+        		title: "IDE Live Logging Level:\nMessages with this level and higher will be logged to the IDE.",
+        		type: "enum",
+        		options: [
+	        	    "0" : "None",
+    	    	    "1" : "Error",
+        		    "2" : "Warning",
+        		    "3" : "Info",
+        	    	"4" : "Debug",
+	        	    "5" : "Trace"
+    	    	],
+        		defaultValue: "1",
+            	displayDuringSetup: true,
+	        	required: false
+    	    )
+        }
 	}
 }
 
@@ -207,7 +244,7 @@ def deviceSelect()
 {
     def options = [:]
     
-    log.debug "DEVICE INFORMATION"
+    logger ("deviceSelect() DEVICE INFORMATION","debug")
 	     def params = [
             uri   : "https://developer-api.govee.com",
             path  : '/v1/devices',
@@ -221,7 +258,7 @@ try {
 			httpGet(params) { resp ->
 
 				//List each device assigned to current API key
-				//log.debug resp.data
+//                logger ("deviceSelect()" + ${resp.data},"debug")
 				resp.data.data.devices.each{
 					deviceID = it.device
 //					deviceModel = it.model
@@ -230,16 +267,16 @@ try {
 //                    retrievable = it.retrievable
 //                    ctMin = it.properties.colorTem.range.min
 //                    ctMax = it.properties.colorTem.range.max
-//					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
+					logger ("deviceSelect() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax","debug")
                     options["${deviceName}"] = deviceName
 //                    options.name = deviceName                    
 				}
-                log.debug "$options"
+                logger (" deviceSelect() $options","debug")
 			}
 			
 	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
+		logger ("deviceSelect() Error: e.statusCode ${e.statusCode}","error")
+		logger ("deviceSelect() ${e}","error")
 		
 		return 'unknown'
 	} 
@@ -273,7 +310,7 @@ try {
 			httpGet(paramsApp) { resp ->
 
 				//List each device assigned to current API key
-				//log.debug resp.data
+//				logger ("deviceSelect2()" + ${resp.data},"debug")
 				resp.data.data.devices.each{
 					deviceID = it.device
 					deviceModel = it.model
@@ -281,15 +318,15 @@ try {
                     controllable = it.controllable
                     retrievable = it.retrievable
                     modes = it.properties.mode.opotions
-//					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel controllable: $controllable modes: $modes "
+					logger ("deviceSelect2() $deviceName	Address: $deviceID	Model: $deviceModel controllable: $controllable modes: $modes", "debug")
                     options2["${deviceName}"] = deviceName                     
 				}
-                log.debug "$options2"
+                logger ("deviceSelect2() $options2","debug")
 			}
 			
 	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
+		logger ("deviceSelect2() Error: e.statusCode ${e.statusCode}","error")
+		logger ("deviceSelect2() ${e}","error")
 		
 		return 'unknown'
 	}    
@@ -437,3 +474,48 @@ private getKnownDevices() {
 
     map
 } 
+
+/**
+ *  logger()
+ *
+ *  Wrapper function for all logging.
+ **/
+private logger(msg, level = "debug") {
+
+    switch(level) {
+        case "error":
+            if (state.loggingLevelIDE >= 1) log.error msg
+            break
+
+        case "warn":
+            if (state.loggingLevelIDE >= 2) log.warn msg
+            break
+
+        case "info":
+            if (state.loggingLevelIDE >= 3) log.info msg
+            break
+
+        case "debug":
+            if (state.loggingLevelIDE >= 4) log.debug msg
+            break
+
+        case "trace":
+            if (state.loggingLevelIDE >= 5) log.trace msg
+            break
+
+        default:
+            log.debug msg
+            break
+    }
+}
+
+def apiRateLimits(type, value){
+    logger ("apiRateLimits($type, $value)","info")
+    if (type == "DailyLimitRemaining") {
+        state.dailyLimit = value
+    }
+    else if (type == "DailyLimitRemainingV2") {
+        state.dailyAppLimit = value
+    }
+    
+}
