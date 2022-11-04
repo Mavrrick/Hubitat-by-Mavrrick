@@ -1,11 +1,12 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.7
+// Version 1.0.2
 //
 // 9-12-22  Initial release
 // 9-30-22  Resolve issue with polling, Enhance Debug Logging
 // 10-5-22  Adding Lan Control options to driver. Additional Logging.
 // 10-12-22 Updated text verbiage on preferences
 // 11-3-22  Send Rate Limits to Parent app and adjust to work with limited devices.
+// 11-4-22  Added methods for Lan control to have proper fade control. 
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -38,7 +39,9 @@ metadata {
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
             input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
             if (lanControl) {
-            input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)}
+            input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)
+            input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
+            }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
 		}
 		
@@ -162,21 +165,83 @@ def setSaturation(s)
 	setHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
 }
 
-def setLevel(v,duration){
-    setLevel(v)
+def setLevel(v,duration = 0){
+    if (lanControl && duration>0){
+        fade(v,duration)
+    }
+    else {
+    setLevel2(v)
+    }
 }
 
-def setLevel(v){
+def setLevel2(v){
         if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         sendEvent(name: "level", value: v)}
     else {
 		sendEvent(name: "level", value: v)
 		if(aRngBright){v=incBrightnessRange(v)}
-        if (debugLog) { log.debug "setLevel(): Sent Brightness = ${v}"}
+        if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
     }
 }
+
+def fade(v,duration){
+    curLevel = device.currentValue("level")
+    if (v<curLevel){
+    fadeRep = (curLevel-v)/fadeInc
+    fadeInt = (duration*1000)/fadeRep
+    fadeDown(curLevel, v, fadeRep, fadeInt)
+        }
+    else if (v>curLevel){
+    fadeRep = (v-curLevel)/fadeInc
+    fadeInt = (duration*1000)/fadeRep
+    fadeUp(curLevel, v, fadeRep, fadeInt)
+        }
+    else {
+        if (debugLog) {log.debug "fade(): Level is not changing"}
+    }
+}
+
+def fadeDown(curLevel,level,fadeInt,fadeRep) {
+    if (debugLog) {log.debug "fadeDown(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+        v= curLevel-fadeInc
+        curLevel = curLevel-fadeInc
+    log.debug "fadeDown(): v ${v}"
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        sendEvent(name: "level", value: v)
+    if (level==curLevel)    {
+        if (debugLog) {log.debug "fade completed"}
+    }
+    else {
+        if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
+        def int delay= fadeRep
+        if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
+        pauseExecution(delay)
+        if (debugLog) {log.debug "fadeDown(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+        fadeDown(curLevel,level, fadeInt,fadeRep)
+    }
+} 
+
+def fadeUp(curLevel,level,fadeInt,fadeRep) {
+    if (debugLog) {log.debug "fadeUp(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+        v= curLevel+fadeInc
+        curLevel = curLevel+fadeInc
+    log.debug "fadeUp(): v ${v}"
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        sendEvent(name: "level", value: v)
+    if (level==curLevel)    {
+        if (debugLog) {log.debug "fade completed"}
+    }
+    else {
+        if (debugLog) {log.debug "fadeUp(): continueing  fading to ${v}"}
+        def int delay= fadeRep
+        if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
+        pauseExecution(delay)
+        if (debugLog) {log.debug "fadeUp(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+        fadeUp(curLevel,level, fadeInt,fadeRep)
+    }
+} 
 
 
 //Turn Hubitat's 0-100 Brightness range to the 0-254 expected by some devices
@@ -324,7 +389,7 @@ def poll() {
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
     if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
         unschedule()
         runIn(pollRate,poll)
         getDeviceState()
@@ -335,7 +400,7 @@ def refresh() {
 def updated() {
     if (debugLog) {log.warn "updated(): Driver Udated"}
     if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        if (debugLog) {log.warn "updated(): Device is retrievable. Setting up Polling"}
         unschedule()
         runIn(pollRate,poll)
         getDeviceState()
@@ -346,7 +411,7 @@ def updated() {
 def configure() {
     if (debugLog) {log.warn "configure(): Configuration Changed"}
     if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        if (debugLog) {log.warn "configure(): Device is retrievable. Setting up Polling"}
         unschedule()
         runIn(pollRate,poll)
         getDeviceState()
@@ -373,7 +438,7 @@ def installed(){
         sendEvent(name: "saturation", value: 100)
         sendEvent(name: "level", value: 100) }
     if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        if (debugLog) {log.warn "installed(): Device is retrievable. Setting up Polling"}
         unschedule()
         runIn(pollRate,poll)
         getDeviceState()
