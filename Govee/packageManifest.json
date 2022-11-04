@@ -1,10 +1,10 @@
 {
   "packageName": "Govee Integration",
   "author": "Mavrrick",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
-  "releaseNotes": "1.0.7 Updated device handeling for Light, Switch, and Plug devices to work if RGB/Color Temp commands were not supported. Significant enhancements to logging. Adding addtional information to application setup screen.",
+  "releaseNotes": "1.0.8 Added Driver based fade over time control for LAN API devices only.",
   "apps": [
     {
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
