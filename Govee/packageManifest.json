@@ -1,7 +1,7 @@
 {
   "packageName": "Govee Integration",
   "author": "Mavrrick",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
   "releaseNotes": "1.0.8 Added Driver based fade over time control for LAN API devices only.",
