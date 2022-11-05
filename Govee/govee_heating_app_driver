@@ -1,0 +1,109 @@
+// Hubitat driver for Govee Appliances using Cloud API
+// Version 1.0.8
+//
+// 2022-11-03 -	Initial Driver release for Govee Heating Appliance devices
+
+metadata {
+	definition(name: "Govee Heating Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
+		capability "Switch"
+		
+        attribute "mode", "number"
+        
+		command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the heating level of your device."]]        
+    }
+
+	preferences {		
+		section("Device Info") {
+            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+		}
+		
+	}
+}
+
+def parse(String description) {
+
+}
+
+def on() {
+	sendEvent(name: "switch", value: "on")
+	sendCommand("turn", "on")
+}
+
+def off() {
+	sendEvent(name: "switch", value: "off")
+	sendCommand("turn", "off")
+} 
+
+def mode(modeValue){
+    sendEvent(name: "mode", value:modeValue)
+    sendEvent(name: "switch", value: "on")
+    sendCommand("mode", modeValue)
+}    
+
+private def sendCommand(String command, payload) {
+
+
+     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/appliance/devices/control',
+			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+            contentType: "application/json",      
+			body: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel"), cmd: ["name": command, "value": payload]],
+        ]
+    
+
+try {
+
+			httpPut(params) { resp ->
+				
+				log.debug "response.data="+resp.data
+                resp.headers.each {
+//                    log.debug "${it.name}: ${it.value}"                    
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
+                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+            }
+				return resp.data
+		        return resp.header
+		}
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+    
+		return 'unknown'
+	}
+}
+
+/*
+
+
+def poll() {
+	refresh()
+}
+
+def refresh() {
+    if(device.getDataValue("retrievable") =='true'){
+        getDeviceState()
+    }
+} */
+
+def updated() {
+if (logEnable) runIn(1800, logsOff)
+
+}
+
+/*
+def setupDevice(){
+
+} */
+
+def installed(){
+//    state.gearmax=max(device.getDataValue("gearsMax"))
+  
+}
+
+def logsOff() {
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable", [value: "false", type: "bool"])
+}
