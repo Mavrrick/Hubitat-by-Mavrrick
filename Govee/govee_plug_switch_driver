@@ -1,0 +1,458 @@
+// Hubitat driver for Govee Plug, Switch driver using Cloud API
+// Version 1.0.8
+//
+// 11-3-22  Initial release
+
+
+import hubitat.helper.InterfaceUtils
+import hubitat.helper.HexUtils
+import groovy.transform.Field
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+import groovy.json.JsonBuilder
+
+def commandPort() { "4003" }
+
+metadata {
+	definition(name: "Govee Plugs and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
+		capability "Switch"
+
+		capability "Refresh"
+        capability "Initialize"
+		
+
+        
+        
+    }
+
+	preferences {		
+		section("Device Info") {
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
+            input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
+            if (lanControl) {
+            input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)}
+            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+		}
+		
+	}
+}
+
+def on() {
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
+        sendEvent(name: "switch", value: "on")}
+    else {
+	    sendEvent(name: "switch", value: "on")
+	    sendCommand("turn", "on")
+        }
+}
+
+def off() {
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
+        sendEvent(name: "switch", value: "off")}
+    else {
+	    sendEvent(name: "switch", value: "off")
+	    sendCommand("turn", "off")
+        }
+}
+
+/* def setColorTemperature(value,level = null,transitionTime = null)
+{
+    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
+    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
+    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
+	sendEvent(name: "colorMode", value: "CT")
+    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
+	def intvalue = value.toInteger()
+    sendEvent(name: "colorTemperature", value: intvalue)
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+        if (level != null) setLevel(level,transitionTime);
+        }
+    else { 
+        if (level != null) setLevel(level,transitionTime);
+		sendCommand("colorTem", intvalue)
+    }
+		setCTColorName(intvalue)
+}   
+
+
+
+def setCTColorName(value)
+{
+		if (value < 2600) {
+			sendEvent(name: "colorName", value: "Warm White")
+		}
+		else if (value < 3500) {
+			sendEvent(name: "colorName", value: "Incandescent")
+		}
+		else if (value < 4500) {
+			sendEvent(name: "colorName", value: "White")
+		}
+		else if (value < 5500) {
+			sendEvent(name: "colorName", value: "Daylight")
+		}
+		else if (value >=  5500) {
+			sendEvent(name: "colorName", value: "Cool White")
+		}
+	
+}
+
+
+
+
+
+    
+def setColor(value) {
+    if (debugLog) { log.debug "setColor(): HSBColor = "+ value }
+	if (value instanceof Map) {
+		def h = value.containsKey("hue") ? value.hue : null
+		def s = value.containsKey("saturation") ? value.saturation : null
+		def b = value.containsKey("level") ? value.level : null
+		setHsb(h, s, b)
+	} else {
+        if (debugLog) {log.debug "setColor(): Invalid argument for setColor: ${value}"}
+    }
+}
+
+def setHsb(h,s,b)
+{
+
+	hsbcmd = [h,s,b]
+    if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
+
+	sendEvent(name: "hue", value: "${h}")
+	sendEvent(name: "saturation", value: "${s}")
+	if(b!= device.currentValue("level")?.toInteger()){
+		sendEvent(name: "level", value: "${b}")
+		setLevel(b)
+	}
+	rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
+	def rgbmap = [:]
+	rgbmap.r = rgb[0]
+	rgbmap.g = rgb[1]
+	rgbmap.b = rgb[2]   
+    
+ 
+		sendEvent(name: "colorMode", value: "RGB")
+    if (lanControl) {
+        if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
+        sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
+    } else {
+        sendCommand("color", rgbmap)
+    }
+}
+
+def setHue(h)
+{
+    setHsb(h,device.currentValue( "saturation" )?:100,device.currentValue("level")?:100)
+}
+
+def setSaturation(s)
+{
+	setHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
+}
+
+def setLevel(v,duration){
+    setLevel(v)
+}
+
+def setLevel(v){
+        if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        sendEvent(name: "level", value: v)}
+    else {
+		sendEvent(name: "level", value: v)
+		if(aRngBright){v=incBrightnessRange(v)}
+        if (debugLog) { log.debug "setLevel(): Sent Brightness = ${v}"}
+		sendCommand("brightness", v)
+    }
+}
+
+
+//Turn Hubitat's 0-100 Brightness range to the 0-254 expected by some devices
+def incBrightnessRange(v)
+{
+	v=v*(254/100)
+	return Math.round(v)
+}
+
+
+//Go from 0-254 brightness range from some devices to Hubitat's 0-100 Brightness range. Maybe not needed?
+def decBrightnessRange(v)
+{
+	v=v*(100/254)
+	return Math.round(v)
+}
+*/
+
+private def sendCommand(String command, payload) {
+
+
+     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/devices/control',
+			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+            contentType: "application/json",      
+			body: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel"), cmd: ["name": command, "value": payload]],
+        ]
+    
+
+try {
+
+			httpPut(params) { resp ->
+				
+                if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
+                resp.headers.each {
+                    if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
+                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+            }
+                return resp.data
+		}
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+        if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
+    
+		return 'unknown'
+	}
+}
+
+
+def getDeviceState(){
+/*        if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("devStatus"," " ,"status"))
+            
+    } else {
+	*/ 
+		def params = [
+			uri   : "https://developer-api.govee.com",
+			path  : '/v1/devices/state',
+			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+			query: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel")],
+        ]
+    
+
+
+try {
+
+			httpGet(params) { resp ->
+
+                if (debugLog) { log.debug "getDeviceState():"+resp.data.data.properties }
+				varPower = resp.data.data.properties.find({it.powerState})?.powerState
+				varBrightness = resp.data.data.properties.find({it.brightness})?.brightness
+				mapColor = resp.data.data.properties.find({it.color})?.color                
+				varCT = resp.data.data.properties.find({it.colorTemInKelvin})?.colorTemInKelvin
+
+                resp.headers.each {
+                    if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
+                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+                }
+                //if(aRngBright){varBrightness=decBrightnessRange(varBrightness)}
+				//log.debug "Recvd Brightness = ${varBrightness}"
+				
+				sendEvent(name: "switch", value: varPower)
+				
+				
+				if(varBrightness){
+					sendEvent(name: "level", value: varBrightness)
+				}
+				
+				
+                if(varCT){
+					sendEvent(name: "colorTemperature", value: varCT)
+					sendEvent(name: "colorMode", value: "CT")
+					setCTColorName(varCT)					
+                }
+                
+				if(mapColor){
+					r=mapColor.r
+					g=mapColor.g
+					b=mapColor.b
+					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
+					hue=HSVlst[0].toInteger()
+					sat=HSVlst[1].toInteger()
+					sendEvent(name: "hue", value: hue)
+					sendEvent(name: "saturation", value: sat)
+					sendEvent(name: "colorMode", value: "RGB")
+				
+				}
+				
+				return resp.data
+			}
+			
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+		return 'unknown'
+	}
+//        }
+}
+
+def poll() {
+    if (debugLog) {log.warn "poll(): Poll Initated"}
+	refresh()
+}
+
+def refresh() {
+    if (debugLog) {log.warn "refresh(): Performing refresh"}
+    if(device.getDataValue("retrievable") =='true'){
+        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        unschedule()
+        runIn(pollRate,poll)
+        getDeviceState()
+    }
+    if (debugLog) runIn(1800, logsOff)
+}
+
+def updated() {
+    if (debugLog) {log.warn "updated(): Driver Udated"}
+    if(device.getDataValue("retrievable") =='true'){
+        if (debugLog) {log.warn "updated(): Device is retrievable. Setting up Polling"}
+        unschedule()
+        runIn(pollRate,poll)
+        getDeviceState()
+    }
+    if (debugLog) runIn(1800, logsOff) 
+}
+
+def configure() {
+    if (debugLog) {log.warn "configure(): Configuration Changed"}
+    if(device.getDataValue("retrievable") =='true'){
+        if (debugLog) {log.warn "configure(): Device is retrievable. Setting up Polling"}
+        unschedule()
+        runIn(pollRate,poll)
+        getDeviceState()
+    }
+    if (debugLog) runIn(1800, logsOff) 
+}
+
+def initialize(){
+    if (debugLog) {log.warn "initialize(): Driver Initializing"}
+    if(device.getDataValue("retrievable") =='true'){
+        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
+        unschedule()
+        runIn(pollRate,poll)
+        getDeviceState()
+    }
+    if (debugLog) runIn(1800, logsOff)
+}
+
+
+def installed(){
+    if (debugLog) {log.warn "installed(): Driver Installed"}
+    sendEvent(name: "hue", value: 0)
+    sendEvent(name: "saturation", value: 100)
+    sendEvent(name: "level", value: 100) 
+    if(device.getDataValue("retrievable") =='true'){
+        if (debugLog) {log.warn "installed(): Device is retrievable. Setting up Polling"}
+        unschedule()
+        runIn(pollRate,poll)
+        getDeviceState()
+    }
+}
+
+def logsOff() {
+    log.warn "debug logging disabled..."
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
+}
+
+def GoveeCommandBuilder(command1, value1, type) {   
+    if (type=="ct") {
+        if (debugLog) {log.debug "GoveeCommandBuilder(): Color temp action"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            color {
+            r 0
+            g 0
+            b 0
+        }
+            colorTemInKelvin value1}
+    }
+    def  command = cmd1.toString()
+        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+   else if (type=="rgb") {
+       if (debugLog) {log.debug "GoveeCommandBuilder(): rgb"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            color {
+            r value1.r
+            g value1.g
+            b value1.b
+                
+        }
+            colorTemInKelvin 0}
+    }
+    def  command = cmd1.toString()
+       if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+       else if (type=="status") {
+           if (debugLog) {log.debug "GoveeCommandBuilder():status"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            }
+    }
+    def  command = cmd1.toString()
+           if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+    else { 
+        if (debugLog) {log.debug "GoveeCommandBuilder():other action"}
+    JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            value value1}
+        }
+    def  command = cmd1.toString()
+        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command
+}
+}
+
+def sendCommandLan(String cmd) {
+  def addr = getIPString();
+    if (debugLog) {log.debug ("sendCommandLan(): ${cmd}")}
+
+  pkt = new hubitat.device.HubAction(cmd,
+                     hubitat.device.Protocol.LAN,
+                     [type: hubitat.device.HubAction.Type.LAN_TYPE_UDPCLIENT,
+                     ignoreResponse    : false,
+                     callback: parse,
+                     parseWarning: true,
+                     destinationAddress: addr])  
+  try {    
+      if (debugLog) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
+    sendHubCommand(pkt) 
+//    setLastCommandTime()    
+  }
+  catch (Exception e) {      
+      logDebug e
+  }      
+}
+
+def getIPString() {
+   return ip+":"+commandPort()
+}
+
+
+def parse(message) {  
+  log.error "Got something to parseUDP"
+  log.error "UDP Response -> ${message}"    
+}
