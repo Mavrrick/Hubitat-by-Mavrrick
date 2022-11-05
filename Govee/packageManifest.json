@@ -4,7 +4,7 @@
   "version": "1.0.9",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
-  "releaseNotes": "1.0.8 Added Driver based fade over time control for LAN API devices only.",
+  "releaseNotes": "1.0.8 Added Driver based fade over time control for LAN API devices only.\n 1.0.9 Added new drivers to better match device abilities",
   "apps": [
     {
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
