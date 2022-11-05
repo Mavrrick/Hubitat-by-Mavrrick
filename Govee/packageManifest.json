@@ -30,6 +30,27 @@
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_appliance_Driver",
       "required": true
+    },
+    {
+      "id": "82da81d1-097a-4b64-ba3f-e8773fc69959",
+      "name": "Govee Plugs and Switches Driver",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_plug_switch_driver",
+      "required": true
+    },
+    {
+      "id": "d03d22f5-5c4b-4b46-8db8-8e94abd6cafd",
+      "name": "Govee White Light Driver",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_white_light_driver",
+      "required": true
+    },
+    {
+      "id": "3ecd724a-2248-4ae4-87a7-8b349737bd26",
+      "name": "Govee Heating Appliance Driver",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_heating_app_driver",
+      "required": true
     }
   ]
 }
