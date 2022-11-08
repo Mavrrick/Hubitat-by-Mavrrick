@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.2
+// Version 1.0.8
 //
 // 9-12-22  Initial release
 // 9-30-22  Resolve issue with polling, Enhance Debug Logging
@@ -7,6 +7,7 @@
 // 10-12-22 Updated text verbiage on preferences
 // 11-3-22  Send Rate Limits to Parent app and adjust to work with limited devices.
 // 11-4-22  Added methods for Lan control to have proper fade control. 
+// 11-5-22  Updated to reflect on state when options other 'On' switch are used
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -74,6 +75,7 @@ def setColorTemperature(value,level = null,transitionTime = null)
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
 	sendEvent(name: "colorMode", value: "CT")
+    sendEvent(name: "switch", value: "on")
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
 	def intvalue = value.toInteger()
     sendEvent(name: "colorTemperature", value: intvalue)
@@ -135,6 +137,7 @@ def setHsb(h,s,b)
 
 	sendEvent(name: "hue", value: "${h}")
 	sendEvent(name: "saturation", value: "${s}")
+    sendEvent(name: "switch", value: "on")
 	if(b!= device.currentValue("level")?.toInteger()){
 		sendEvent(name: "level", value: "${b}")
 		setLevel(b)
@@ -167,6 +170,7 @@ def setSaturation(s)
 
 def setLevel(v,duration = 0){
     if (lanControl && duration>0){
+        sendEvent(name: "switch", value: "on")
         fade(v,duration)
     }
     else {
@@ -177,9 +181,12 @@ def setLevel(v,duration = 0){
 def setLevel2(v){
         if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        sendEvent(name: "level", value: v)}
+        sendEvent(name: "level", value: v)
+        sendEvent(name: "switch", value: "on")
+    }
     else {
 		sendEvent(name: "level", value: v)
+        sendEvent(name: "switch", value: "on")
 		if(aRngBright){v=incBrightnessRange(v)}
         if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
