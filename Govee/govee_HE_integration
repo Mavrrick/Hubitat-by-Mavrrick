@@ -33,6 +33,7 @@ definition(
 * 1.0.5 Correct but that prevented device Additions if both Lights and appliances where added together.
 * 1.0.6 Updated process for appliance device creation to allow for devices without gear commands.
 * 1.0.7 Enhanced Logging, Added rate limit tracking to app, Enhanced non RGB device handeling
+* 1.0.10 Correct failed update to github to include updates for new drivers
 */
 
 preferences
@@ -76,14 +77,9 @@ try {
                     controllable = it.controllable
                     retrievable = it.retrievable
                     supportCmds = it.supportCmds
-                    if (supportCmds.contains("colorTem")) {
+                    if (supportCmds.contains("colorTem") && supportCmds.contains("color")) {
                     ctMin = it.properties.colorTem.range.min
                     ctMax = it.properties.colorTem.range.max 
-                        }
-                    else { 
-                        ctMin = "N/A"
-                        ctMax = "N/A" 
-                         }
                     devices.findAll{it == deviceName} .each {
                             logger ("initialize()  configuring ${deviceName}","info")
                             addChildDevice("Mavrrick", "Govee Lights, Plugs, and Switches Driver", "${deviceID}" , location.hubs[0].id, [
@@ -102,7 +98,49 @@ try {
 				])
 			}
                     }
-            //        }  
+                    else if (supportCmds.contains("colorTem")) {
+                    ctMin = it.properties.colorTem.range.min
+                    ctMax = it.properties.colorTem.range.max 
+                    devices.findAll{it == deviceName} .each {
+                            logger ("initialize()  configuring ${deviceName}","info")
+                            addChildDevice("Mavrrick", "Govee White Light Driver", "${deviceID}" , location.hubs[0].id, [
+					            "name": "Govee Light_Plug_Switch",
+					            "label": deviceName,
+                                'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds,
+                                'ctMin': ctMin,
+                                'ctMax': ctMax    
+                            ],
+					"completedSetup": true, 					
+				])
+			}
+                    }
+                    else {
+                        ctMin = "N/A"
+                        ctMax = "N/A" 
+                    devices.findAll{it == deviceName} .each {
+                            logger ("initialize()  configuring ${deviceName}","info")
+                            addChildDevice("Mavrrick", "Govee Plugs and Switches Driver", "${deviceID}" , location.hubs[0].id, [
+					            "name": "Govee Light_Plug_Switch",
+					            "label": deviceName,
+                                'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds,
+                                'ctMin': ctMin,
+                                'ctMax': ctMax    
+                            ],
+					"completedSetup": true, 					
+				])
+			}
+                    }
+                    }  
             }                                                          
 	} catch (groovyx.net.http.HttpResponseException e) {
 		logger ("initialize() Error: e.statusCode ${e.statusCode}","error")
@@ -148,8 +186,8 @@ try {
                     supportCmds = it.supportCmds
                     modes = it.properties.mode.options
                     if (supportCmds.contains("gear")) {
-                        gear = it.properties.gear.options.value }
-                    else { gear = "N/A"} 
+                        gear = it.properties.gear.options.value 
+//                    else { gear = "N/A"} 
 					logger ("initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear","debug")
                     devices.findAll{it == deviceName} .each {
                             logger ("initialize()  configuring ${deviceName}","info")
@@ -168,8 +206,29 @@ try {
 					"completedSetup": true, 					
 				])
 			}
-                    }      
-            //        }  
+                    }
+                    else { 
+                    gear = "N/A" 
+					logger ("initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear","debug")
+                    devices.findAll{it == deviceName} .each {
+                            logger ("initialize()  configuring ${deviceName}","info")
+                            addChildDevice("Mavrrick", "Govee Heating Appliance Driver", "${deviceID}" , location.hubs[0].id, [
+					            "name": "Govee Appliance",
+					            "label": deviceName,
+                                'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+// Appliances are not retrieveable   'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds,
+                                'modes' : modes,
+                                'gears' : gear
+                            ],
+					"completedSetup": true, 					
+				])
+			}
+                    }
+                    }  
             }                                                          
 	} catch (groovyx.net.http.HttpResponseException e) {
 		logger ("initialize() Error: e.statusCode ${e.statusCode}","error")
