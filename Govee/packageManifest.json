@@ -1,7 +1,7 @@
 {
   "packageName": "Govee Integration",
   "author": "Mavrrick",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
   "releaseNotes": "1.0.9 Added new drivers to better match device abilities",
