@@ -4,7 +4,7 @@
   "version": "1.0.10",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
-  "releaseNotes": "1.0.9 Added new drivers to better match device abilities",
+  "releaseNotes": "1.0.10 Redeploy Govee Integration app with new drivers",
   "apps": [
     {
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
