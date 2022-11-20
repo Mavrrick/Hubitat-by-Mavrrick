@@ -1,7 +1,7 @@
 {
   "packageName": "Govee Integration",
   "author": "Mavrrick",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
   "releaseNotes": "1.0.10 Redeploy Govee Integration app with new drivers",
