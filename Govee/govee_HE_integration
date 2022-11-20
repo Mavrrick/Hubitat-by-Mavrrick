@@ -34,6 +34,7 @@ definition(
 * 1.0.6 Updated process for appliance device creation to allow for devices without gear commands.
 * 1.0.7 Enhanced Logging, Added rate limit tracking to app, Enhanced non RGB device handeling
 * 1.0.10 Correct failed update to github to include updates for new drivers
+* 1.0.11 Added command verification methods in the Appliance drivers.
 */
 
 preferences
