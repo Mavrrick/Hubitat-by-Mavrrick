@@ -1,7 +1,10 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.8
+// Version 1.0.11
 //
 // 2022-11-03 -	Initial Driver release for Govee Heating Appliance devices
+// 2022-1-20 - Added a pending change condition and validation that the call was successful
+// ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
+// ----------- Included code to update parent app for rate limit consumption.
 
 metadata {
 	definition(name: "Govee Heating Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -25,18 +28,18 @@ def parse(String description) {
 }
 
 def on() {
-	sendEvent(name: "switch", value: "on")
+	sendEvent(name: "switch", value: "Pending")
 	sendCommand("turn", "on")
 }
 
 def off() {
-	sendEvent(name: "switch", value: "off")
+	sendEvent(name: "switch", value: "Pending")
 	sendCommand("turn", "off")
 } 
 
 def mode(modeValue){
-    sendEvent(name: "mode", value:modeValue)
-    sendEvent(name: "switch", value: "on")
+    sendEvent(name: "mode", value: "Pending")
+    sendEvent(name: "switch", value: "Pending")
     sendCommand("mode", modeValue)
 }    
 
@@ -56,21 +59,39 @@ try {
 
 			httpPut(params) { resp ->
 				
-				log.debug "response.data="+resp.data
+                if (debugLog) {log.debug "response.data="+resp.data}
+                code = resp.data.code
+                if (debugLog) {log.debug "response.data=" + code }
+                if (code == 200 && command == "turn") {
+                    sendEvent(name: "switch", value: payload)
+                    }    
+                else if (code == 200 && command == "mode") {
+                    sendEvent(name: "switch", value: "on")
+                    sendEvent(name: "mode", value: payload)
+                    }        
                 resp.headers.each {
-//                    log.debug "${it.name}: ${it.value}"                    
+                    if (debugLog) {log.debug "${it.name}: ${it.value}"}                    
                     name = it.name
                     value=it.value
-                    if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
-                    if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
+                    if (name == "X-RateLimit-Remaining") {
+                        state.DailyLimitRemaining = value
+                        parent.apiRateLimits("DailyLimitRemainingV2", value)
+                    }
+                    if (name == "API-RateLimit-Remaining") {
+                        state.MinRateLimitRemainig = value
+                        parent.apiRateLimits("MinRateLimitRemainigV2", value)
+                    }
             }
-				return resp.data
-		        return resp.header
+				return resp
 		}
 	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
+        log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
-    
+        if (e.statusCode == 429) {
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        }    
 		return 'unknown'
 	}
 }
