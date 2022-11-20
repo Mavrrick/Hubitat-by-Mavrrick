@@ -73,7 +73,7 @@ try {
 				
                 if (debugLog) {log.debug "response.data="+resp.data}
                 code = resp.data.code
-				log.debug "response.data=" + code 
+		if (debugLog) { log.debug "response.data=" + code }
                 if (code == 200 && command == "turn") {
                     sendEvent(name: "switch", value: payload)
                     }    
