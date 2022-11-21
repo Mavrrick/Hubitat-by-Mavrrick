@@ -1,16 +1,18 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.11
+// Version 1.0.12
 //
 // 2022-11-03 -	Initial Driver release for Govee Heating Appliance devices
-// 2022-1-20 - Added a pending change condition and validation that the call was successful
+// 2022-11-20 - Added a pending change condition and validation that the call was successful
 // ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
 // ----------- Included code to update parent app for rate limit consumption.
+// 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
 
 metadata {
 	definition(name: "Govee Heating Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		
         attribute "mode", "number"
+        attribute "cloudAPI", "string"
         
 		command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the heating level of your device."]]        
     }
@@ -28,18 +30,21 @@ def parse(String description) {
 }
 
 def on() {
-	sendEvent(name: "switch", value: "Pending")
+//	sendEvent(name: "switch", value: "Pending")
+    sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "on")
 }
 
 def off() {
-	sendEvent(name: "switch", value: "Pending")
+//	sendEvent(name: "switch", value: "Pending")
+    sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "off")
 } 
 
 def mode(modeValue){
-    sendEvent(name: "mode", value: "Pending")
-    sendEvent(name: "switch", value: "Pending")
+//    sendEvent(name: "mode", value: "Pending")
+//    sendEvent(name: "switch", value: "Pending")
+    sendEvent(name: "cloudAPI", value: "Pending")
     sendCommand("mode", modeValue)
 }    
 
@@ -63,9 +68,11 @@ try {
                 code = resp.data.code
                 if (debugLog) {log.debug "response.data=" + code }
                 if (code == 200 && command == "turn") {
+                    sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: payload)
                     }    
                 else if (code == 200 && command == "mode") {
+                    sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "mode", value: payload)
                     }        
@@ -89,6 +96,13 @@ try {
 		log.error "${e}"
         if (e.statusCode == 429) {
             log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
+        else {
+          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+            sendEvent(name: "cloudAPI", value: "Retry")
             pauseExecution(60000)
             sendCommand(command, payload)
         }    
