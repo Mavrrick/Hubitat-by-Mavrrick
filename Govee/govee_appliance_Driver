@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.11
+// Version 1.0.12
 //
 // 2022-09-12 -	Initial Driver release for Govee Appliance devices
 // 2022-10-19 - Added Attributes to driver
@@ -7,6 +7,7 @@
 // 2022-11-5 - Added update to Switch value to On when Gear or Mode are used
 // 2022-1-20 - Added a pending change condition and validation that the call was successful
 // ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
+// 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
 
 metadata {
 	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -14,6 +15,7 @@ metadata {
 		
 		attribute "gear", "number"
         attribute "mode", "number"
+        attribute "cloudAPI", "string"
         
 		command "gear" , [[name: "Fan or Mist Speed", type: 'NUMBER', description: "Gear will adjust values for Fan speed or Misting depending on what device you have. Valid values are  "]]
 		command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the device operating mode. Valid values are   "]]
@@ -34,24 +36,28 @@ def parse(String description) {
 }
 
 def on() {
-	sendEvent(name: "switch", value: "Pending")
+//	sendEvent(name: "switch", value: "Pending")
+    sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "on")
 }
 
 def off() {
-	sendEvent(name: "switch", value: "Pending")
+//	sendEvent(name: "switch", value: "Pending")
+    sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "off")
-}
+} 
 
 def gear(gear){
-    sendEvent(name: "gear", value:gear)
-    sendEvent(name: "switch", value: "Pending")
+//    sendEvent(name: "gear", value:gear)
+//    sendEvent(name: "switch", value: "Pending")
+    sendEvent(name: "cloudAPI", value: "Pending")
     sendCommand("gear", gear)
 }
 
 def mode(modeValue){
-    sendEvent(name: "mode", value:modeValue)
-    sendEvent(name: "switch", value: "Pending")
+//    sendEvent(name: "mode", value:modeValue)
+//    sendEvent(name: "switch", value: "Pending")
+    sendEvent(name: "cloudAPI", value: "Pending")    
     sendCommand("mode", modeValue)
 }    
 
@@ -75,13 +81,16 @@ try {
                 code = resp.data.code
 		if (debugLog) { log.debug "response.data=" + code }
                 if (code == 200 && command == "turn") {
+                    sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: payload)
                     }    
                 else if (code == 200 && command == "mode") {
+                    sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "mode", value: payload)
                     }
                 else if (code == 200 && command == "gear") {
+                    sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "gear", value: payload)
                     }
@@ -106,10 +115,16 @@ try {
 		log.error "${e}"
         if (e.statusCode == 429) {
             log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
+        else {
+          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+            sendEvent(name: "cloudAPI", value: "Retry")
             pauseExecution(60000)
             sendCommand(command, payload)
         }
-    
 		return 'unknown'
 	}
 }
