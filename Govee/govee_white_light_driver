@@ -1,7 +1,9 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.8
+// Version 1.0.12
 //
 // 11-5-22  Initial release
+// 11-21-22- Added a pending change condition and validation that the call was successful
+// ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
 
 
 import hubitat.helper.InterfaceUtils
@@ -20,6 +22,8 @@ metadata {
 		capability "SwitchLevel"
 		capability "Refresh"
         capability "Initialize"
+        
+        attribute "cloudAPI", "string"
         
         
     }
@@ -44,7 +48,8 @@ def on() {
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         sendEvent(name: "switch", value: "on")}
     else {
-	    sendEvent(name: "switch", value: "on")
+//	    sendEvent(name: "switch", value: "on")
+        sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "on")
         }
 }
@@ -54,7 +59,8 @@ def off() {
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         sendEvent(name: "switch", value: "off")}
     else {
-	    sendEvent(name: "switch", value: "off")
+//	    sendEvent(name: "switch", value: "off")
+        sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "off")
         }
 }
@@ -173,8 +179,9 @@ def setLevel2(v){
         sendEvent(name: "level", value: v)
         sendEvent(name: "switch", value: "on")}
     else {
-		sendEvent(name: "level", value: v)
-        sendEvent(name: "switch", value: "on")
+        sendEvent(name: "cloudAPI", value: "Pending")
+//		sendEvent(name: "level", value: v)
+//      sendEvent(name: "switch", value: "on")
 		if(aRngBright){v=incBrightnessRange(v)}
         if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
@@ -274,6 +281,16 @@ try {
 			httpPut(params) { resp ->
 				
                 if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
+                code = resp.data.code
+                if (code == 200 && command == "turn") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: payload)
+                    } 
+                 else if (code == 200 && command == "brightness") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
+                     sendEvent(name: "level", value: payload)
+                    }
                 resp.headers.each {
                     if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
                     name = it.name
@@ -293,7 +310,18 @@ try {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
         if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
-    
+                if (e.statusCode == 429) {
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
+        else {
+          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        }
 		return 'unknown'
 	}
 }
