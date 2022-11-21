@@ -8,6 +8,7 @@
 // 11-3-22  Send Rate Limits to Parent app and adjust to work with limited devices.
 // 11-4-22  Added methods for Lan control to have proper fade control. 
 // 11-5-22  Updated to reflect on state when options other 'On' switch are used
+// 11-22-22 Updated to validate successful api call before changing driver status. 
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -30,6 +31,7 @@ metadata {
         capability "Initialize"
 		
 		attribute "colorName", "string"
+        attribute "cloudAPI", "string"
         
         
     }
@@ -54,7 +56,8 @@ def on() {
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         sendEvent(name: "switch", value: "on")}
     else {
-	    sendEvent(name: "switch", value: "on")
+//	    sendEvent(name: "switch", value: "on")
+        sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "on")
         }
 }
@@ -64,7 +67,8 @@ def off() {
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         sendEvent(name: "switch", value: "off")}
     else {
-	    sendEvent(name: "switch", value: "off")
+//	    sendEvent(name: "switch", value: "off")
+        sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "off")
         }
 }
@@ -74,11 +78,12 @@ def setColorTemperature(value,level = null,transitionTime = null)
     if (debugLog) { log.debug "setColorTemperature(): ${value}"}
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
-	sendEvent(name: "colorMode", value: "CT")
-    sendEvent(name: "switch", value: "on")
+//	  sendEvent(name: "colorMode", value: "CT")
+//    sendEvent(name: "switch", value: "on")
+    sendEvent(name: "cloudAPI", value: "Pending")
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
 	def intvalue = value.toInteger()
-    sendEvent(name: "colorTemperature", value: intvalue)
+//    sendEvent(name: "colorTemperature", value: intvalue)
     if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
         if (level != null) setLevel(level,transitionTime);
@@ -87,7 +92,7 @@ def setColorTemperature(value,level = null,transitionTime = null)
         if (level != null) setLevel(level,transitionTime);
 		sendCommand("colorTem", intvalue)
     }
-		setCTColorName(intvalue)
+//		setCTColorName(intvalue)
 }   
 
 
@@ -135,9 +140,9 @@ def setHsb(h,s,b)
 	hsbcmd = [h,s,b]
     if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
 
-	sendEvent(name: "hue", value: "${h}")
-	sendEvent(name: "saturation", value: "${s}")
-    sendEvent(name: "switch", value: "on")
+//	sendEvent(name: "hue", value: "${h}")
+//	sendEvent(name: "saturation", value: "${s}")
+//    sendEvent(name: "switch", value: "on")
 	if(b!= device.currentValue("level")?.toInteger()){
 		sendEvent(name: "level", value: "${b}")
 		setLevel(b)
@@ -182,11 +187,11 @@ def setLevel2(v){
         if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         sendEvent(name: "level", value: v)
-        sendEvent(name: "switch", value: "on")
-    }
+        sendEvent(name: "switch", value: "on")}
     else {
-		sendEvent(name: "level", value: v)
-        sendEvent(name: "switch", value: "on")
+        sendEvent(name: "cloudAPI", value: "Pending")
+//		sendEvent(name: "level", value: v)
+//      sendEvent(name: "switch", value: "on")
 		if(aRngBright){v=incBrightnessRange(v)}
         if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
@@ -284,6 +289,36 @@ try {
 			httpPut(params) { resp ->
 				
                 if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
+                code = resp.data.code
+                if (code == 200 && command == "turn") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: payload)
+                    } 
+                 else if (code == 200 && command == "brightness") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
+                    sendEvent(name: "level", value: payload)
+                    }
+                 else if (code == 200 && command == "colorTem") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
+                    sendEvent(name: "colorMode", value: "CT")
+                    sendEvent(name: "colorTemperature", value: payload)
+                    setCTColorName(intvalue)
+                    }
+                else if (code == 200 && command == "color") {
+                    r=payload.r
+					g=payload.g
+					b=payload.b
+					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
+					hue=HSVlst[0].toInteger()
+					sat=HSVlst[1].toInteger()
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
+                    sendEvent(name: "colorMode", value: "RGB")
+					sendEvent(name: "hue", value: hue)
+					sendEvent(name: "saturation", value: sat)
+                    }
                 resp.headers.each {
                     if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
                     name = it.name
@@ -303,7 +338,18 @@ try {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
         if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
-    
+                if (e.statusCode == 429) {
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
+        else {
+          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        }    
 		return 'unknown'
 	}
 }
