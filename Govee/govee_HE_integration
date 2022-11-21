@@ -35,6 +35,7 @@ definition(
 * 1.0.7 Enhanced Logging, Added rate limit tracking to app, Enhanced non RGB device handeling
 * 1.0.10 Correct failed update to github to include updates for new drivers
 * 1.0.11 Added command verification methods in the Appliance drivers.
+* 1.0.12 Added Attribute to track cloud api status on calls
 */
 
 preferences
