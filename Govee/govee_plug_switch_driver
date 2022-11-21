@@ -1,8 +1,9 @@
 // Hubitat driver for Govee Plug, Switch driver using Cloud API
-// Version 1.0.8
+// Version 1.0.12
 //
 // 11-3-22  Initial release
 // 11-20-22 Added code to udpate parent app for rate limit chnages.
+// 11-21-22 Added retry cloud api Attribute and retry logic to ensure devices change state as expected.
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -19,9 +20,8 @@ metadata {
 
 		capability "Refresh"
         capability "Initialize"
-		
-
         
+        attribute "cloudAPI", "string"
         
     }
 
@@ -42,7 +42,8 @@ def on() {
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         sendEvent(name: "switch", value: "on")}
     else {
-	    sendEvent(name: "switch", value: "on")
+//	    sendEvent(name: "switch", value: "on")
+        sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "on")
         }
 }
@@ -52,7 +53,8 @@ def off() {
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         sendEvent(name: "switch", value: "off")}
     else {
-	    sendEvent(name: "switch", value: "off")
+//	    sendEvent(name: "switch", value: "off")
+        sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "off")
         }
 }
@@ -204,6 +206,11 @@ try {
 			httpPut(params) { resp ->
 				
                 if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
+                code = resp.data.code
+                if (code == 200 && command == "turn") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: payload)
+                    } 
                 resp.headers.each {
                     if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
                     name = it.name
@@ -223,7 +230,18 @@ try {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
         if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
-    
+                if (e.statusCode == 429) {
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
+        else {
+          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
 		return 'unknown'
 	}
 }
