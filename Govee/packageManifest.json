@@ -1,10 +1,10 @@
 {
   "packageName": "Govee Integration",
   "author": "Mavrrick",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
-  "releaseNotes": "1.0.12 Updated drivers to better keep track of APi success and failures",
+  "releaseNotes": "1.0.13 Corrected Pending status command location on driver. Corrected White Lite Driver detection.",
   "apps": [
     {
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
