@@ -35,7 +35,8 @@ definition(
 * 1.0.7 Enhanced Logging, Added rate limit tracking to app, Enhanced non RGB device handeling
 * 1.0.10 Correct failed update to github to include updates for new drivers
 * 1.0.11 Added command verification methods in the Appliance drivers.
-* 1.0.12 Added Attribute to track cloud api status on calls
+* 1.0.12
+* 1.0.13 Corrected detection for White Light only driver
 */
 
 preferences
@@ -100,9 +101,9 @@ try {
 				])
 			}
                     }
-                    else if (supportCmds.contains("colorTem")) {
-                    ctMin = it.properties.colorTem.range.min
-                    ctMax = it.properties.colorTem.range.max 
+                    else if (supportCmds.contains("brightness")) {
+                        ctMin = "N/A"
+                        ctMax = "N/A" 
                     devices.findAll{it == deviceName} .each {
                             logger ("initialize()  configuring ${deviceName}","info")
                             addChildDevice("Mavrrick", "Govee White Light Driver", "${deviceID}" , location.hubs[0].id, [
