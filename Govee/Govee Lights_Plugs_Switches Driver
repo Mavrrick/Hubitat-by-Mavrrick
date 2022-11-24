@@ -80,7 +80,6 @@ def setColorTemperature(value,level = null,transitionTime = null)
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
 //	  sendEvent(name: "colorMode", value: "CT")
 //    sendEvent(name: "switch", value: "on")
-    sendEvent(name: "cloudAPI", value: "Pending")
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
 	def intvalue = value.toInteger()
 //    sendEvent(name: "colorTemperature", value: intvalue)
@@ -88,7 +87,8 @@ def setColorTemperature(value,level = null,transitionTime = null)
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
         if (level != null) setLevel(level,transitionTime);
         }
-    else { 
+    else {
+        sendEvent(name: "cloudAPI", value: "Pending")
         if (level != null) setLevel(level,transitionTime);
 		sendCommand("colorTem", intvalue)
     }
@@ -152,13 +152,13 @@ def setHsb(h,s,b)
 	rgbmap.r = rgb[0]
 	rgbmap.g = rgb[1]
 	rgbmap.b = rgb[2]   
-    
- 
-		sendEvent(name: "colorMode", value: "RGB")
+     
+//		sendEvent(name: "colorMode", value: "RGB")
     if (lanControl) {
         if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
         sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
     } else {
+        sendEvent(name: "cloudAPI", value: "Pending")
         sendCommand("color", rgbmap)
     }
 }
