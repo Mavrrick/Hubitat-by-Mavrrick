@@ -37,6 +37,7 @@ definition(
 * 1.0.11 Added command verification methods in the Appliance drivers.
 * 1.0.12
 * 1.0.13 Corrected detection for White Light only driver
+* 1.0.14 Added Notification for approaching rate limits for cloud API's
 */
 
 preferences
@@ -156,7 +157,6 @@ try {
                 }
 		}
       	else {
-//       state?.crtVrtButton = false
 		}
 // add appliances
        if (goveeApp) { 
@@ -190,7 +190,6 @@ try {
                     modes = it.properties.mode.options
                     if (supportCmds.contains("gear")) {
                         gear = it.properties.gear.options.value 
-//                    else { gear = "N/A"} 
 					logger ("initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear","debug")
                     devices.findAll{it == deviceName} .each {
                             logger ("initialize()  configuring ${deviceName}","info")
@@ -258,9 +257,6 @@ def mainPage()
 {
     List child = getChildDevices()
     def childCount = child.size()
-//    if (isInstalled) {def maxPoll = 86400/((10000-(50*childCount))/childCount).toDouble()
-//    maxPoll = maxPoll.round(1)}
-//    DeviceInfo()
 	dynamicPage(name: "mainPage", title: "Govee integration Main menu", uninstall: true, install: true, submitOnChange: true)
 	{
 		section("API Configuration  ")
@@ -283,6 +279,12 @@ def mainPage()
             paragraph "Your have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
             paragraph "Your have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
         }
+         section("Notification Options") {
+         input "notifyEnabled", "bool", title: "Enable Notification", required: false, defaultValue: false
+         input name: "notificationDevice", type: "capability.notification", title: "Send notification of rate limit consumption :", multiple: true
+         input "apiV1threshold", "number", title: "Daily Rate Limit threshold to send out notification for Lights, Switches, and Plugs", required: false , range: "1..500", defaultValue: 3
+         input "apiV2threshold", "number", title: "Daily Rate Limit threshold to send out notification for Appliances", required: false , range: "1..100", defaultValue: 3
+      }
         section("Logging Options") {
         input (
         		name: "configLoggingLevelIDE",
@@ -325,15 +327,9 @@ try {
 //                logger ("deviceSelect()" + ${resp.data},"debug")
 				resp.data.data.devices.each{
 					deviceID = it.device
-//					deviceModel = it.model
 					deviceName = it.deviceName
-//                    controllable = it.controllable
-//                    retrievable = it.retrievable
-//                    ctMin = it.properties.colorTem.range.min
-//                    ctMax = it.properties.colorTem.range.max
 					logger ("deviceSelect() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax","debug")
-                    options["${deviceName}"] = deviceName
-//                    options.name = deviceName                    
+                    options["${deviceName}"] = deviceName                   
 				}
                 logger (" deviceSelect() $options","debug")
 			}
@@ -377,11 +373,7 @@ try {
 //				logger ("deviceSelect2()" + ${resp.data},"debug")
 				resp.data.data.devices.each{
 					deviceID = it.device
-					deviceModel = it.model
 					deviceName = it.deviceName
-                    controllable = it.controllable
-                    retrievable = it.retrievable
-                    modes = it.properties.mode.opotions
 					logger ("deviceSelect2() $deviceName	Address: $deviceID	Model: $deviceModel controllable: $controllable modes: $modes", "debug")
                     options2["${deviceName}"] = deviceName                     
 				}
@@ -430,16 +422,13 @@ def about()
 
 def installed() {
 	log.debug "Installed with settings: ${settings}"
-//	subscribeToEvents()
     state?.isInstalled = true
-    state.crtVrtButton = false
+//    state.crtVrtButton = false
     initialize()
 }
 
 def updated() {
 	log.debug "Updated with settings: ${settings}"
-//	unsubscribe()
-//	subscribeToEvents()
     initialize()
 }
 
@@ -485,15 +474,6 @@ try {
                     options.put ("Name", deviceName)
                     log.debug "$options"
 				}
-
-				//Save the last device to preferences
-//				curDeviceID = resp.data.data.devices.last().device
-//				curDeviceModel = resp.data.data.devices.last().model
-
-//				device.updateSetting("Model",[value:curDeviceModel, type:"text"])
-//				device.updateSetting("MACAddr",[value:curDeviceID, type:"text"])
-
-//				runIn(2, 'setupDevice')
 				return resp.data
                 return options
 			}
@@ -505,39 +485,6 @@ try {
 		return 'unknown'
 	}    
 }
-
-private getKnownDevices() {
-    log.debug('getKnownDevices() getKnownDevices: Creating list of known devices')
-
-    def map = [:]
-
-    def existingDevices = getChildDevices()
-    existingDevices.each { device ->
-        def mac = device.deviceNetworkId
-        def name = device.label ?: device.name
-        map[mac] = [
-            mac: mac,
-            name: name,
-            typeName: device.typeName,
-//            needsUpdate: device.getDriverVersion() < state.minDriverVersion
-        ]
-        log.debug(" getKnownDevices() getKnownDevices: Added already-installed device ${mac}:${name}")
-    }
-       log.debug("getKnownDevices() getKnownDevices: Known devices: ${map}")
-
-    map.each { mac, data ->
-//        def address = "${hexToIp(data.ip)}:${hexToInt(data.port)}"
-        def text = "${data.name} [MAC: ${mac}, IP: ${address}"
-        if (data.typeName) {
-            text += ", Driver: ${data.typeName}] ${data.needsUpdate ? '&nbsp;&nbsp;<< Driver needs update >>' : ''}"
-        } else {
-            text += ']'
-        }
-        map[mac].label = "<li>${text}</li>"
-    }
-
-    map
-} 
 
 /**
  *  logger()
@@ -577,9 +524,26 @@ def apiRateLimits(type, value){
     logger ("apiRateLimits($type, $value)","info")
     if (type == "DailyLimitRemaining") {
         state.dailyLimit = value
+        if ( state.dailyLimit.toInteger() < apiV1threshold) {
+            sendnotification("Govee Lights, Plugs, Switches APi Rate Limit", state.dailyAppLimit)
+        }
     }
     else if (type == "DailyLimitRemainingV2") {
-        state.dailyAppLimit = value
+        state.dailyAppLimit = value        
+        log.debug "${state.dailyAppLimit}"
+        if ( state.dailyAppLimit.toInteger() < apiV2threshold) {
+            log.debug "validated api limit to low. Sending notificatoin"
+            sendnotification("Govee Appliance API rate Limit", state.dailyAppLimit)
+        } 
     }
     
+}
+
+def sendnotification (type, value){
+    if (notifyEnabled){
+    String notificationText = "${type} has reached threshold of ${value}. You will have issues if this get to zero"
+    notificationDevice?.each {
+      it.deviceNotification(notificationText)
+        }
+    }
 }
