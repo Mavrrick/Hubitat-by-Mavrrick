@@ -1,7 +1,7 @@
 {
   "packageName": "Govee Integration",
   "author": "Mavrrick",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2022-09-13",
   "releaseNotes": "1.0.14 Added Notification for approaching rate limits for cloud API's.\n 1.0.13 Corrected Pending status command location on driver. Corrected White Lite Driver detection.",
