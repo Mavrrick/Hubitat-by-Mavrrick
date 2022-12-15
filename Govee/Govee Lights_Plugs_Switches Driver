@@ -84,6 +84,7 @@ def setColorTemperature(value,level = null,transitionTime = null)
         sendEvent(name: "colorTemperature", value: intvalue)
         sendEvent(name: "switch", value: "on")
         sendEvent(name: "colorMode", value: "CT")
+	setCTColorName(intvalue)
         }
     else {
         sendEvent(name: "cloudAPI", value: "Pending")
