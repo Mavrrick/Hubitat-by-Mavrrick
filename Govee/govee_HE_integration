@@ -38,6 +38,7 @@ definition(
 * 1.0.12
 * 1.0.13 Corrected detection for White Light only driver
 * 1.0.14 Added Notification for approaching rate limits for cloud API's
+* 1.0.15 Found bug with how Light drivers were updating certain states
 */
 
 preferences
