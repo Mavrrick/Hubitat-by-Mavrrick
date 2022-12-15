@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.12
+// Version 1.0.15
 //
 // 2022-11-03 -	Initial Driver release for Govee Heating Appliance devices
 // 2022-11-20 - Added a pending change condition and validation that the call was successful
