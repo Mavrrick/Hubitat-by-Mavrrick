@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Plug, Switch driver using Cloud API
-// Version 1.0.12
+// Version 1.0.15
 //
 // 11-3-22  Initial release
 // 11-20-22 Added code to udpate parent app for rate limit chnages.
