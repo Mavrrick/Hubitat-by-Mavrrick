@@ -36,27 +36,21 @@ def parse(String description) {
 }
 
 def on() {
-//	sendEvent(name: "switch", value: "Pending")
     sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "on")
 }
 
 def off() {
-//	sendEvent(name: "switch", value: "Pending")
     sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "off")
 } 
 
 def gear(gear){
-//    sendEvent(name: "gear", value:gear)
-//    sendEvent(name: "switch", value: "Pending")
     sendEvent(name: "cloudAPI", value: "Pending")
     sendCommand("gear", gear)
 }
 
 def mode(modeValue){
-//    sendEvent(name: "mode", value:modeValue)
-//    sendEvent(name: "switch", value: "Pending")
     sendEvent(name: "cloudAPI", value: "Pending")    
     sendCommand("mode", modeValue)
 }    
@@ -129,28 +123,12 @@ try {
 	}
 }
 
-/*
-
-
-def poll() {
-	refresh()
-}
-
-def refresh() {
-    if(device.getDataValue("retrievable") =='true'){
-        getDeviceState()
-    }
-} */
 
 def updated() {
 if (logEnable) runIn(1800, logsOff)
 
 }
 
-/*
-def setupDevice(){
-
-} */
 
 def installed(){
 //    state.gearmax=max(device.getDataValue("gearsMax"))
