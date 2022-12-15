@@ -56,7 +56,6 @@ def on() {
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         sendEvent(name: "switch", value: "on")}
     else {
-//	    sendEvent(name: "switch", value: "on")
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "on")
         }
@@ -67,7 +66,6 @@ def off() {
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         sendEvent(name: "switch", value: "off")}
     else {
-//	    sendEvent(name: "switch", value: "off")
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "off")
         }
@@ -78,21 +76,20 @@ def setColorTemperature(value,level = null,transitionTime = null)
     if (debugLog) { log.debug "setColorTemperature(): ${value}"}
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
-//	  sendEvent(name: "colorMode", value: "CT")
-//    sendEvent(name: "switch", value: "on")
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
 	def intvalue = value.toInteger()
-//    sendEvent(name: "colorTemperature", value: intvalue)
     if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
         if (level != null) setLevel(level,transitionTime);
+        sendEvent(name: "colorTemperature", value: intvalue)
+        sendEvent(name: "switch", value: "on")
+        sendEvent(name: "colorMode", value: "CT")
         }
     else {
         sendEvent(name: "cloudAPI", value: "Pending")
         if (level != null) setLevel(level,transitionTime);
 		sendCommand("colorTem", intvalue)
     }
-//		setCTColorName(intvalue)
 }   
 
 
@@ -140,9 +137,7 @@ def setHsb(h,s,b)
 	hsbcmd = [h,s,b]
     if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
 
-//	sendEvent(name: "hue", value: "${h}")
-//	sendEvent(name: "saturation", value: "${s}")
-//    sendEvent(name: "switch", value: "on")
+
 	if(b!= device.currentValue("level")?.toInteger()){
 		sendEvent(name: "level", value: "${b}")
 		setLevel(b)
@@ -153,10 +148,14 @@ def setHsb(h,s,b)
 	rgbmap.g = rgb[1]
 	rgbmap.b = rgb[2]   
      
-//		sendEvent(name: "colorMode", value: "RGB")
+
     if (lanControl) {
         if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
         sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
+      	sendEvent(name: "hue", value: "${h}")
+        sendEvent(name: "saturation", value: "${s}")
+        sendEvent(name: "switch", value: "on")
+   		sendEvent(name: "colorMode", value: "RGB")
     } else {
         sendEvent(name: "cloudAPI", value: "Pending")
         sendCommand("color", rgbmap)
@@ -190,8 +189,6 @@ def setLevel2(v){
         sendEvent(name: "switch", value: "on")}
     else {
         sendEvent(name: "cloudAPI", value: "Pending")
-//		sendEvent(name: "level", value: v)
-//      sendEvent(name: "switch", value: "on")
 		if(aRngBright){v=incBrightnessRange(v)}
         if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
