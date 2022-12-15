@@ -30,20 +30,16 @@ def parse(String description) {
 }
 
 def on() {
-//	sendEvent(name: "switch", value: "Pending")
     sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "on")
 }
 
 def off() {
-//	sendEvent(name: "switch", value: "Pending")
     sendEvent(name: "cloudAPI", value: "Pending")
 	sendCommand("turn", "off")
 } 
 
 def mode(modeValue){
-//    sendEvent(name: "mode", value: "Pending")
-//    sendEvent(name: "switch", value: "Pending")
     sendEvent(name: "cloudAPI", value: "Pending")
     sendCommand("mode", modeValue)
 }    
@@ -110,18 +106,6 @@ try {
 	}
 }
 
-/*
-
-
-def poll() {
-	refresh()
-}
-
-def refresh() {
-    if(device.getDataValue("retrievable") =='true'){
-        getDeviceState()
-    }
-} */
 
 def updated() {
 if (logEnable) runIn(1800, logsOff)
