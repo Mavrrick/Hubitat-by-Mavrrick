@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.12
+// Version 1.0.15
 //
 // 11-5-22  Initial release
 // 11-21-22- Added a pending change condition and validation that the call was successful
@@ -48,7 +48,6 @@ def on() {
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         sendEvent(name: "switch", value: "on")}
     else {
-//	    sendEvent(name: "switch", value: "on")
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "on")
         }
@@ -59,110 +58,10 @@ def off() {
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         sendEvent(name: "switch", value: "off")}
     else {
-//	    sendEvent(name: "switch", value: "off")
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "off")
         }
 }
-
-/*
-def setColorTemperature(value,level = null,transitionTime = null)
-{
-    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
-    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
-    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
-	sendEvent(name: "colorMode", value: "CT")
-    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-	def intvalue = value.toInteger()
-    sendEvent(name: "colorTemperature", value: intvalue)
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) setLevel(level,transitionTime);
-        }
-    else { 
-        if (level != null) setLevel(level,transitionTime);
-		sendCommand("colorTem", intvalue)
-    }
-		setCTColorName(intvalue)
-}   
-
-
-
-def setCTColorName(value)
-{
-		if (value < 2600) {
-			sendEvent(name: "colorName", value: "Warm White")
-		}
-		else if (value < 3500) {
-			sendEvent(name: "colorName", value: "Incandescent")
-		}
-		else if (value < 4500) {
-			sendEvent(name: "colorName", value: "White")
-		}
-		else if (value < 5500) {
-			sendEvent(name: "colorName", value: "Daylight")
-		}
-		else if (value >=  5500) {
-			sendEvent(name: "colorName", value: "Cool White")
-		}
-	
-}
-
-
-
-
-
-    
-def setColor(value) {
-    if (debugLog) { log.debug "setColor(): HSBColor = "+ value }
-	if (value instanceof Map) {
-		def h = value.containsKey("hue") ? value.hue : null
-		def s = value.containsKey("saturation") ? value.saturation : null
-		def b = value.containsKey("level") ? value.level : null
-		setHsb(h, s, b)
-	} else {
-        if (debugLog) {log.debug "setColor(): Invalid argument for setColor: ${value}"}
-    }
-}
-
-def setHsb(h,s,b)
-{
-
-	hsbcmd = [h,s,b]
-    if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
-
-	sendEvent(name: "hue", value: "${h}")
-	sendEvent(name: "saturation", value: "${s}")
-	if(b!= device.currentValue("level")?.toInteger()){
-		sendEvent(name: "level", value: "${b}")
-		setLevel(b)
-	}
-	rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
-	def rgbmap = [:]
-	rgbmap.r = rgb[0]
-	rgbmap.g = rgb[1]
-	rgbmap.b = rgb[2]   
-    
- 
-		sendEvent(name: "colorMode", value: "RGB")
-    if (lanControl) {
-        if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
-        sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
-    } else {
-        sendCommand("color", rgbmap)
-    }
-}
-
-def setHue(h)
-{
-    setHsb(h,device.currentValue( "saturation" )?:100,device.currentValue("level")?:100)
-}
-
-def setSaturation(s)
-{
-	setHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
-}
-*/
 
 def setLevel(v,duration = 0){
     if (lanControl && duration>0){
@@ -180,8 +79,6 @@ def setLevel2(v){
         sendEvent(name: "switch", value: "on")}
     else {
         sendEvent(name: "cloudAPI", value: "Pending")
-//		sendEvent(name: "level", value: v)
-//      sendEvent(name: "switch", value: "on")
 		if(aRngBright){v=incBrightnessRange(v)}
         if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
@@ -476,42 +373,7 @@ def logsOff() {
 }
 
 def GoveeCommandBuilder(command1, value1, type) {   
-/*    if (type=="ct") {
-        if (debugLog) {log.debug "GoveeCommandBuilder(): Color temp action"}
-        JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            color {
-            r 0
-            g 0
-            b 0
-        }
-            colorTemInKelvin value1}
-    }
-    def  command = cmd1.toString()
-        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command    
-    }
-   else if (type=="rgb") {
-       if (debugLog) {log.debug "GoveeCommandBuilder(): rgb"}
-        JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            color {
-            r value1.r
-            g value1.g
-            b value1.b
-                
-        }
-            colorTemInKelvin 0}
-    }
-    def  command = cmd1.toString()
-       if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command    
-    }
-       else */ if (type=="status") {
+    if (type=="status") {
            if (debugLog) {log.debug "GoveeCommandBuilder():status"}
         JsonBuilder cmd1 = new JsonBuilder() 
         cmd1.msg {
