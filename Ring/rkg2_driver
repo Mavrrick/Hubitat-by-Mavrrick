@@ -628,6 +628,15 @@ void parseEntryControl(Short command, List<Short> commandBytes) {
                     if (evtInt) {
                         sendEvent(name:"armingIn", value: 0, data:[armMode: armingStates[0x02].securityKeypadState, armCmd: armingStates[0x02].hsmCmd], isStateChange:true) // Event HSM Subscribes to
                         keypadUpdateStatus(0x02, state.type, state.code) // Sends status to Keypad to move it to disarmed
+                        Date now = new Date()
+                        sendEvent(name:"alarmStatusChangeTime", value: "${now}", isStateChange:true)
+                        long ems = now.getTime()
+                        sendEvent(name:"alarmStatusChangeEpochms", value: "${ems}", isStateChange:true)
+                        changeStatus("off")
+                        state.armingIn = 0
+                        unschedule(armHomeEnd)
+                        unschedule(armAwayEnd)
+                        unschedule(changeStatus)
                     } else {
  //                       sendEvent(name:"armingIn", value: 0, data:[armMode: armingStates[0x02].securityKeypadState, armCmd: armingStates[0x02].hsmCmd], isStateChange:true)
  //                       keypadUpdateStatus(0x02, state.type, state.code) // Sends status to Keypad to move it to disarmed
