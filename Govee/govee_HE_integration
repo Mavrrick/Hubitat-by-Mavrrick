@@ -39,6 +39,8 @@ definition(
 * 1.0.13 Corrected detection for White Light only driver
 * 1.0.14 Added Notification for approaching rate limits for cloud API's
 * 1.0.15 Found bug with how Light drivers were updating certain states
+* 1.0.16 Updated Polling setup to allow value of 0
+*	 Added Actuator to Appliance devices to allow for better RM integration
 */
 
 preferences
