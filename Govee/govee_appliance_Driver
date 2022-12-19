@@ -1,18 +1,19 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.15
+// Version 1.0.16
 //
 // 2022-09-12 -	Initial Driver release for Govee Appliance devices
 // 2022-10-19 - Added Attributes to driver
 // 2022-11-3 - Send Rate Limits to parent.
 // 2022-11-5 - Added update to Switch value to On when Gear or Mode are used
-// 2022-1-20 - Added a pending change condition and validation that the call was successful
+// 2022-11-20 - Added a pending change condition and validation that the call was successful
 // ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
 // 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
+// 2022-12-19 Added Actuator capbility to more easily integrate with RM
 
 metadata {
 	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
-		
+		capability "Actuator"
 		attribute "gear", "number"
         attribute "mode", "number"
         attribute "cloudAPI", "string"
