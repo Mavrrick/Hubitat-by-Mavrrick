@@ -1,9 +1,10 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.15
+// Version 1.0.16
 //
 // 11-5-22  Initial release
 // 11-21-22- Added a pending change condition and validation that the call was successful
 // ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
+// 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
 
 
 import hubitat.helper.InterfaceUtils
@@ -313,7 +314,7 @@ def refresh() {
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
         unschedule()
-        runIn(pollRate,poll)
+        if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
     if (debugLog) runIn(1800, logsOff)
@@ -324,7 +325,7 @@ def updated() {
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "updated(): Device is retrievable. Setting up Polling"}
         unschedule()
-        runIn(pollRate,poll)
+        if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
     if (debugLog) runIn(1800, logsOff) 
@@ -335,7 +336,7 @@ def configure() {
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "configure(): Device is retrievable. Setting up Polling"}
         unschedule()
-        runIn(pollRate,poll)
+        if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
     if (debugLog) runIn(1800, logsOff) 
@@ -346,7 +347,7 @@ def initialize(){
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
         unschedule()
-        runIn(pollRate,poll)
+        if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
     if (debugLog) runIn(1800, logsOff)
@@ -362,7 +363,7 @@ def installed(){
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "installed(): Device is retrievable. Setting up Polling"}
         unschedule()
-        runIn(pollRate,poll)
+        if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
 }
