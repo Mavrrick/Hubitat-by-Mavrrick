@@ -139,18 +139,12 @@ def setHsb(h,s,b)
 	hsbcmd = [h,s,b]
     if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
 
-
-	if(b!= device.currentValue("level")?.toInteger()){
-		sendEvent(name: "level", value: "${b}")
-		setLevel(b)
-	}
 	rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
 	def rgbmap = [:]
 	rgbmap.r = rgb[0]
 	rgbmap.g = rgb[1]
 	rgbmap.b = rgb[2]   
      
-
     if (lanControl) {
         if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
         sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
@@ -161,6 +155,9 @@ def setHsb(h,s,b)
     } else {
         sendEvent(name: "cloudAPI", value: "Pending")
         sendCommand("color", rgbmap)
+    }
+    if(100 != device.currentValue("level")?.toInteger()) {
+    setLevel(100)
     }
 }
 
