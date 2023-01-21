@@ -11,6 +11,7 @@
       "name": "Govee Integration",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_HE_integration",
+      "version": "1.0.16",
       "required": true,
       "oauth": false,
       "primary": false
@@ -22,6 +23,7 @@
       "name": "Govee Lights, Plugs, and Switches Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Govee%20Lights_Plugs_Switches%20Driver",
+      "version": "1.0.17",
       "required": true
     },
     {
@@ -29,6 +31,7 @@
       "name": "Govee Appliance Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_appliance_Driver",
+      "version": "1.0.16",
       "required": true
     },
     {
@@ -36,6 +39,7 @@
       "name": "Govee Plugs and Switches Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_plug_switch_driver",
+      "version": "1.0.16",
       "required": true
     },
     {
@@ -43,6 +47,7 @@
       "name": "Govee White Light Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_white_light_driver",
+      "version": "1.0.16",
       "required": true
     },
     {
@@ -50,6 +55,7 @@
       "name": "Govee Heating Appliance Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_heating_app_driver",
+      "version": "1.0.16",
       "required": true
     }
   ]
