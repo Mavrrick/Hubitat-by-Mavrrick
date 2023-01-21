@@ -10,6 +10,7 @@
 // 11-5-22  Updated to reflect on state when options other 'On' switch are used
 // 11-22-22 Updated to validate successful api call before changing driver status.
 // 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
+// 1-21-23  Changed position of setlLevl action in setColor command.
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
