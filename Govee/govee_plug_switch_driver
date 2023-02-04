@@ -5,6 +5,7 @@
 // 11-20-22 Added code to udpate parent app for rate limit chnages.
 // 11-21-22 Added retry cloud api Attribute and retry logic to ensure devices change state as expected.
 // 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
+// 1-30-23  Added check to see if device is in Retry state and abort new commands until cleared.
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
