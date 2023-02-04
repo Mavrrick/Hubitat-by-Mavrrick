@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.17
+// Version 1.0.18
 //
 // 9-12-22  Initial release
 // 9-30-22  Resolve issue with polling, Enhance Debug Logging
@@ -11,6 +11,7 @@
 // 11-22-22 Updated to validate successful api call before changing driver status.
 // 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
 // 1-21-23  Changed position of setlLevl action in setColor command.
+// 1-30-23  Added check to see if device is in Retry state and abort new commands until cleared.
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -58,8 +59,12 @@ def on() {
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         sendEvent(name: "switch", value: "on")}
     else {
+         if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "on(): CloudAPI already in retry state. Aborting call." 
+         } else {
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "on")
+            }
         }
 }
 
@@ -68,8 +73,12 @@ def off() {
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         sendEvent(name: "switch", value: "off")}
     else {
+        if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "off(): CloudAPI already in retry state. Aborting call." 
+         } else {
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "off")
+            }
         }
 }
 
@@ -89,9 +98,13 @@ def setColorTemperature(value,level = null,transitionTime = null)
 	setCTColorName(intvalue)
         }
     else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-        if (level != null) setLevel(level,transitionTime);
-		sendCommand("colorTem", intvalue)
+       if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setColorTemperature(): CloudAPI already in retry state. Aborting call." 
+         } else {        
+            sendEvent(name: "cloudAPI", value: "Pending")
+            if (level != null) setLevel(level,transitionTime);
+		    sendCommand("colorTem", intvalue)
+       }
     }
 }   
 
@@ -154,8 +167,12 @@ def setHsb(h,s,b)
         sendEvent(name: "switch", value: "on")
    		sendEvent(name: "colorMode", value: "RGB")
     } else {
+        if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setHsb(): CloudAPI already in retry state. Aborting call." 
+        } else { 
         sendEvent(name: "cloudAPI", value: "Pending")
         sendCommand("color", rgbmap)
+        }
     }
     if(100 != device.currentValue("level")?.toInteger()) {
     setLevel(100)
@@ -178,7 +195,11 @@ def setLevel(v,duration = 0){
         fade(v,duration)
     }
     else {
-    setLevel2(v)
+        if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setLevel(): CloudAPI already in retry state. Aborting call." 
+        } else {
+        setLevel2(v)
+        }
     }
 }
 
@@ -334,12 +355,12 @@ try {
 	} catch (groovyx.net.http.HttpResponseException e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
-        if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
+//        if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
                 if (e.statusCode == 429) {
             log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
-            sendEvent(name: "cloudAPI", value: "Retry")
-            pauseExecution(60000)
-            sendCommand(command, payload)
+                       sendEvent(name: "cloudAPI", value: "Retry")
+                       pauseExecution(60000)
+                       sendCommand(command, payload)                    
         } 
         else {
           log.error "sendCommand():Unknwon Error. Attempting again in one min." 
