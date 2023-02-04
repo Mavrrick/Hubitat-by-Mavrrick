@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.16
+// Version 1.0.18
 //
 // 11-5-22  Initial release
 // 11-21-22- Added a pending change condition and validation that the call was successful
@@ -49,8 +49,12 @@ def on() {
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         sendEvent(name: "switch", value: "on")}
     else {
+         if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "on(): CloudAPI already in retry state. Aborting call." 
+         } else {
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "on")
+            }
         }
 }
 
@@ -59,17 +63,26 @@ def off() {
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         sendEvent(name: "switch", value: "off")}
     else {
+        if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "off(): CloudAPI already in retry state. Aborting call." 
+         } else {
         sendEvent(name: "cloudAPI", value: "Pending")
 	    sendCommand("turn", "off")
+            }
         }
 }
 
 def setLevel(v,duration = 0){
     if (lanControl && duration>0){
+        sendEvent(name: "switch", value: "on")
         fade(v,duration)
     }
     else {
-    setLevel2(v)
+        if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setLevel(): CloudAPI already in retry state. Aborting call." 
+        } else {
+        setLevel2(v)
+        }
     }
 }
 
