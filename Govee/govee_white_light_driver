@@ -5,6 +5,7 @@
 // 11-21-22- Added a pending change condition and validation that the call was successful
 // ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
 // 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
+// 1-30-23  Added check to see if device is in Retry state and abort new commands until cleared.
 
 
 import hubitat.helper.InterfaceUtils
