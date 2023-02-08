@@ -1,0 +1,294 @@
+/* groovylint-disable ImplementationAsType, InvertedCondition, LineLength, MethodReturnTypeRequired, MethodSize, NestedBlockDepth, NoDef, UnnecessaryGString, UnnecessaryObjectReferences, UnnecessaryToString, VariableTypeRequired */
+/*****************************************************************************************************************
+ *  Source: https://github.com/HubitatCommunity/InfluxDB-Logger
+ *
+ *  Raw Source: https://raw.githubusercontent.com/HubitatCommunity/InfluxDB-Logger/master/influxdb-logger.groovy
+ *
+ *  Forked from: https://github.com/codersaur/SmartThings/tree/master/smartapps/influxdb-logger
+ *  Original Author: David Lomas (codersaur)
+ *  Hubitat Elevation version maintained by HubitatCommunity (https://github.com/HubitatCommunity/InfluxDB-Logger)
+ *
+ *  Description: A SmartApp to log Hubitat device states to an InfluxDB database.
+ *  See Codersaur's github repo for more information.
+ *
+ *  License:
+ *   Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *   in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *   on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *   for the specific language governing permissions and limitations under the License.
+ *
+ *   Modifcation History
+ *   Date       Name            Change
+ *   2019-02-02 Dan Ogorchock   Use asynchttpPost() instead of httpPost() call
+ *   2019-09-09 Caleb Morse     Support deferring writes and doing buld writes to influxdb
+ *   2022-06-20 Denny Page      Remove nested sections for device selection.
+ *   2023-01-08 Denny Page      Address whitespace related lint issues. No functional changes.
+ *   2023-01-09 Craig King      Added InfluxDb2.x support.
+ *   2023-01-12 Denny Page      Automatic migration of Influx 1.x settings.
+ *   2023-01-15 Denny Page      Clean up various things:
+ *                              Remove Group ID/Name which are not supported on Hubitat.
+ *                              Remove Location ID and Hub ID which are not supported on Hubitat (always 1).
+ *                              Remove blocks of commented out code.
+ *                              Don't set page sections hidden to false where hideable is false.
+ *                              Remove state.queuedData.
+ *   2023-01-22 PJ              Add filterEvents option for subscribe.
+ *                              Fix event timestamps.
+ *   2023-01-23 Denny Page      Allow multiple instances of the application to be installed.
+ *                              NB: This requires Hubitat 2.2.9 or above.
+ *   2023-01-25 Craig King      Updated Button selection to valid capability for Hubitat
+ *****************************************************************************************************************/
+
+definition(
+    name: "InfluxDB Logger Advanced System",
+    namespace: "nowhereville",
+    author: "Joshua Marker (tooluser)",
+    description: "Log device states to InfluxDB",
+    category: "My Apps",
+    parent: "nowhereville:InfluxDB Logger Advanced Manager",
+    importUrl: "https://raw.githubusercontent.com/HubitatCommunity/InfluxDB-Logger/master/influxdb-logger.groovy",
+    iconUrl: "",
+    iconX2Url: "",
+    iconX3Url: "",
+)
+
+    import groovy.transform.Field
+
+    @Field static java.util.concurrent.ConcurrentLinkedQueue loggerQueueMem = new java.util.concurrent.ConcurrentLinkedQueue()
+    @Field static java.util.concurrent.Semaphore mutex = new java.util.concurrent.Semaphore(1)
+
+preferences {
+    page(name: "setupMain")
+    page(name: "connectionPage")
+}
+
+def setupMain() {
+    dynamicPage(name: "setupMain", title: "InfluxDB Logger Settings", install: true, uninstall: true) {
+        section("") {
+            input "appName", "text", title: "Aplication Name", multiple: false, required: false, submitOnChange: true, defaultValue: app.getLabel()
+
+            input(
+                name: "configLoggingLevelIDE",
+                title: "IDE Live Logging Level:\nMessages with this level and higher will be logged to the IDE.",
+                type: "enum",
+                options: [
+                    "0" : "None",
+                    "1" : "Error",
+                    "2" : "Warning",
+                    "3" : "Info",
+                    "4" : "Debug",
+                    "5" : "Trace"
+                ],
+                defaultValue: "3",
+                displayDuringSetup: true,
+                required: false
+            )
+        }
+        
+        section("System Monitoring:") {
+            input "prefLogModeEvents", "bool", title:"Log Mode Events?", defaultValue: false, required: true
+            input "prefLogHubProperties", "bool", title:"Log Hub Properties?", defaultValue: false, required: true
+            input "prefLogLocationProperties", "bool", title:"Log Location Properties?", defaultValue: false, required: true
+        } 
+    }
+}
+
+/**
+ *  installed()
+ *
+ *  Runs when the app is first installed.
+ **/
+def installed() {
+    state.installedAt = now()
+    state.loggingLevelIDE = 5
+    state.loggerQueue = []
+    updated()
+    log.info "${app.label}: Installed with settings: ${settings}"
+}
+
+/**
+ *  uninstalled()
+ *
+ *  Runs when the app is uninstalled.
+ **/
+def uninstalled() {
+    log.info "${app.label}: uninstalled"
+}
+
+/**
+ *  updated()
+ *
+ *  Runs when app settings are changed.
+ *
+ *  Updates device.state with input values and other hard-coded values.
+ *  Builds state.deviceAttributes which describes the attributes that will be monitored for each device collection
+ *  (used by manageSubscriptions() and softPoll()).
+ *  Refreshes scheduling and subscriptions.
+ **/
+def updated() {
+    logger("updated()", "trace")
+
+    // Update application name
+    app.updateLabel(appName)
+
+    // Update internal state:
+    state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
+
+    // Configure Subscriptions:
+    manageSubscriptions() 
+}
+
+
+/*****************************************************************************************************************
+ *  Event Handlers:
+ *****************************************************************************************************************/
+
+/**
+ *  handleModeEvent(evt)
+ *
+ *  Log Mode changes.
+ **/
+def handleModeEvent(evt) {
+    logger("handleModeEvent(): Mode changed to: ${evt.value}", "info")
+
+    def locationName = escapeStringForInfluxDB(location.name)
+    def mode = '"' + escapeStringForInfluxDB(evt.value) + '"'
+    long eventTimestamp = evt.unixTime * 1e6       // Time is in milliseconds, but InfluxDB expects nanoseconds
+    def data = "_stMode,locationName=${locationName} mode=${mode} ${eventTimestamp}"
+    queueToInfluxDb(data)
+}
+
+
+
+/*****************************************************************************************************************
+ *  Main Commands:
+ *****************************************************************************************************************/
+
+def queueToInfluxDb(data) {
+
+    int queueSize = 0
+    try {
+        mutex.acquire()
+        logger("queueToInfluxDb(): loggerQueueMem = ${loggerQueueMem}", "trace")
+        loggerQueueMem.offer(data)
+        queueSize = loggerQueueMem.size()
+        logger("queueToInfluxDb(): loggerQueueMem = ${loggerQueueMem.size()} size ", "trace")
+    }
+    catch (e) {
+        logger("Error 2 in queueToInfluxDb", "Warning")
+    }
+    finally {
+        mutex.release()
+    }  
+}
+
+def writeQueuedDataToInfluxDb() {
+    String writeData = ""
+
+    try {
+        mutex.acquire()
+
+        if (loggerQueueMem.size() == 0) {
+            logger("No queued data to write to InfluxDB", "info")
+            return
+        }
+        logger("Writing queued data of size ${loggerQueueMem.size()} out", "info")
+        writeData = loggerQueueMem.toArray().join('\n')
+        loggerQueueMem.clear()
+        loggerQueue = state.loggerQueue
+        loggerQueue.clear()
+    }
+    catch (e) {
+        logger("Error 2 in writeQueuedDataToInfluxDb", "Warning")
+    }
+    finally {
+        mutex.release()
+    }
+
+    logger("Calling Parent App to post ${writeData}", "trace")
+    parent.postToInfluxDB(writeData)
+    
+}
+
+
+
+/*****************************************************************************************************************
+ *  Private Helper Functions:
+ *****************************************************************************************************************/
+
+/**
+ *  manageSubscriptions()
+ *
+ *  Configures subscriptions.
+ **/
+private manageSubscriptions() {
+    logger("manageSubscriptions()", "trace")
+
+    // Unsubscribe:
+    unsubscribe()
+
+    // Subscribe to mode events:
+    if (prefLogModeEvents) subscribe(location, "mode", handleModeEvent)
+}
+
+/**
+ *  logger()
+ *
+ *  Wrapper function for all logging.
+ **/
+private logger(msg, level = "debug") {
+    switch (level) {
+        case "error":
+            if (state.loggingLevelIDE >= 1) log.error msg
+            break
+
+        case "warn":
+            if (state.loggingLevelIDE >= 2) log.warn msg
+            break
+
+        case "info":
+            if (state.loggingLevelIDE >= 3) log.info msg
+            break
+
+        case "debug":
+            if (state.loggingLevelIDE >= 4) log.debug msg
+            break
+
+        case "trace":
+            if (state.loggingLevelIDE >= 5) log.trace msg
+            break
+
+        default:
+            log.debug msg
+            break
+    }
+}
+
+/**
+ *  escapeStringForInfluxDB()
+ *
+ *  Escape values to InfluxDB.
+ *
+ *  If a tag key, tag value, or field key contains a space, comma, or an equals sign = it must
+ *  be escaped using the backslash character \. Backslash characters do not need to be escaped.
+ *  Commas and spaces will also need to be escaped for measurements, though equals signs = do not.
+ *
+ *  Further info: https://docs.influxdata.com/influxdb/v0.10/write_protocols/write_syntax/
+ **/
+private String escapeStringForInfluxDB(String str) {
+    //logger("$str", "info")
+    if (str) {
+        str = str.replaceAll(" ", "\\\\ ") // Escape spaces.
+        str = str.replaceAll(",", "\\\\,") // Escape commas.
+        str = str.replaceAll("=", "\\\\=") // Escape equal signs.
+        str = str.replaceAll("\"", "\\\\\"") // Escape double quotes.
+        //str = str.replaceAll("'", "_")  // Replace apostrophes with underscores.
+    }
+    else {
+        str = 'null'
+    }
+    return str
+}
