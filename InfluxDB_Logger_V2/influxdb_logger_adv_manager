@@ -57,8 +57,7 @@ definition(
 
     import groovy.transform.Field
 
-    @Field static java.util.concurrent.ConcurrentLinkedQueue loggerQueueBkup = new java.util.concurrent.ConcurrentLinkedQueue()
-    @Field static java.util.concurrent.Semaphore mutex = new java.util.concurrent.Semaphore(1)
+    @Field static loggerQueueMap = new java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.ConcurrentLinkedQueue>()
 
 preferences {
     page(name: "setupMain")
@@ -233,6 +232,7 @@ def postToInfluxDB(String data) {
         // Failsafe if using an old config
         setupDB()
     }
+    loggerQueueBkup = getLoggerQueue()
     loggerQueueBkup.clear()
     loggerQueueBkup.offer(data)
     
@@ -261,6 +261,7 @@ def postToInfluxDB(String data) {
  *  Handles response from post made in postToInfluxDB().
  **/
 def handleInfluxResponse(hubResponse, data) {
+    loggerQueueBkup = getLoggerQueue()
     logger("postToInfluxDB(): status of post call is: ${hubResponse.status}", "info")
     if (hubResponse.status == 204) {
 	    logger("handleInfluxResponse(): InfluxDB connectivity to database working", "info")
@@ -299,7 +300,6 @@ def handleInfluxResponse(hubResponse, data) {
         state.loggerQueue.put(bkupNum, loggerinput)
     } else if (hubResponse.status == 413 ) {
         logger("handleInfluxResponse(): Trying to load to much data at once. Please adjust post limits to ensure data is not to large : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
-        state.loggerQueue = state.loggerQueue + loggerQueueBkup.toString()
     } else if (hubResponse.status == 429 ) {
         logger("handleInfluxResponse(): (Cloud Only Error) Service quota exceeded for remote InfluxDB database adjust write pattern to database : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
         state.failed = true
@@ -479,4 +479,30 @@ private String escapeStringForInfluxDB(String str) {
         str = 'null'
     }
     return str
+}
+
+private getLoggerQueue() {
+    defaultQueue = new java.util.concurrent.ConcurrentLinkedQueue()
+    queue = loggerQueueMap.putIfAbsent(app.getId(), defaultQueue)
+    if (queue == null) {
+        // key was not in map - return defaultQueue
+        logger("allocating new queue for app","warn")
+            if (state.loggerQueue.size() > 0) {
+                logger("getLoggerQueue(): Records Pending write. Posting to InfluxDB", "info")
+//                writeQueuedDataToInfluxDbForce()
+            }
+        return defaultQueue
+    }
+    // key was already in map - return that.
+    return queue
+}
+
+// Attempt to clean up the ConcurrentLinkedQueue object.
+// Only called by uninstalled(), so should be safe.
+private releaseLoggerQueue()
+{
+    // Flush queue just before we release it,
+    writeQueuedDataToInfluxDb()
+    loggerQueueMap.remove(app.getId())
+    logger("released queue for app id ${app.getId()}", "info")
 }
