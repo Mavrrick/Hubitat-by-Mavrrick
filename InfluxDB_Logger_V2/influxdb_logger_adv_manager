@@ -57,6 +57,9 @@ definition(
 
     import groovy.transform.Field
 
+    @Field static java.util.concurrent.ConcurrentLinkedQueue loggerQueueBkup = new java.util.concurrent.ConcurrentLinkedQueue()
+    @Field static java.util.concurrent.Semaphore mutex = new java.util.concurrent.Semaphore(1)
+
 preferences {
     page(name: "setupMain")
     page(name: "connectionPage")
@@ -94,10 +97,16 @@ def setupMain() {
         }
 
         section("Logging App Management") {
-            app(name: "Device Monitor", appName: "InfluxDB Logger Advanced Device Monitor", namespace: "nowhereville", title: "Event Logging", multiple: true)
-            app(name: "Soft Poll Apps", appName: "InfluxDB Logger Advanced Push Events", namespace: "nowhereville", title: "Push Current States (useful graphing of slowly changing/reporting devices)", multiple: true)            
-            app(name: "System Montior", appName: "InfluxDB Logger Advanced System", namespace: "nowhereville", title: "Log Hub Events", multiple: false)            
-
+            paragraph "This section will help you setup what InfluxDB Logger will monitor and send to InfluxDB. There are 3 types of jobs apps that can be setup. You do not have to have all of them created or you can have multiple if you wish to."
+            paragraph "To setup a job that will send events to InfluxDB as the occur in Hubitat please click on the Create Event Logging App button below."
+            app(name: "Device Monitor", appName: "InfluxDB Logger Advanced Device Monitor", namespace: "nowhereville", title: "Create Event Logging App", multiple: true)
+            paragraph "Some devices do not regularly generate events. If you want InfluxDB Logger to generate and then push events for such devices please click on the Create Push Current State app button below."
+            app(name: "Soft Poll Apps", appName: "InfluxDB Logger Advanced Push Events", namespace: "nowhereville", title: "Create Push Current States (useful graphing of slowly changing/reporting devices)", multiple: true)            
+            paragraph "If you would like to keep track of Hub events please click on the Create Log Hub Events app button below."
+            app(name: "System Montior", appName: "InfluxDB Logger Advanced System", namespace: "nowhereville", title: "Create Log Hub Events", multiple: false)            
+        }
+        section("Data Protection Settings") {
+                input "bkupReset", "bool", title:"Reset data protection values. This will clear any pending data that has not been written yet to the DB", defaultValue:false, required: true            
         }
     }
 }
@@ -105,7 +114,10 @@ def setupMain() {
 def connectionPage() {
     dynamicPage(name: "connectionPage", title: "Connection Properties", install: false, uninstall: false) {
         section {
-            input "prefDatabaseTls", "bool", title:"Use TLS?", defaultValue: false, required: true
+            input "prefDatabaseTls", "bool", title:"Use TLS?", defaultValue: false, submitOnChange: true, required: true
+            if (prefDatabaseTls) {
+                input "prefIgnoreSSLIssues", "bool", title:"Ignore SSL cert verification issues", defaultValue:false, required: true
+            }
             input "prefDatabaseHost", "text", title: "Host", defaultValue: "192.168.1.100", required: true
             input "prefDatabasePort", "text", title : "Port", defaultValue : prefDatabaseTls ? "443" : "8086", required : false
             input(
@@ -159,6 +171,11 @@ def installed() {
     state.installedAt = now()
     state.loggingLevelIDE = 5
     updated()
+    state.loggerQueue = [:]
+    state.failed = false
+    settings.bkupReset = false
+    state.recoveryBatch=0
+    state.inRecovery = false
     log.info "${app.label}: Installed with settings: ${settings}"
 }
 
@@ -185,6 +202,14 @@ def updated() {
     logger("updated()", "trace")
     unschedule(stateLoggerSync)
 
+    if (bkupReset) {
+        state.loggerQueue = [:]
+        state.failed = false
+        settings.bkupReset = false
+        state.recoveryBatch=0
+        state.inRecovery = false
+        }
+        
     // Update application name
     app.updateLabel(appName + " : " + prefDatabaseHost)
 
@@ -203,13 +228,15 @@ def updated() {
  *
  *  Uses hubAction instead of httpPost() in case InfluxDB server is on the same LAN as the Smartthings Hub.
  **/
-def postToInfluxDB(data) {
+def postToInfluxDB(String data) {
     if (state.uri == null) {
         // Failsafe if using an old config
         setupDB()
     }
-
-    logger("postToInfluxDB(): Posting data to InfluxDB: ${state.uri}, Data: [${data}]", "info")
+    loggerQueueBkup.clear()
+    loggerQueueBkup.offer(data)
+    
+    logger("postToInfluxDB(): Posting data to InfluxDB: ${state.uri}, Data: ${data}", "info")
 
     // Hubitat Async http Post
     try {
@@ -218,11 +245,13 @@ def postToInfluxDB(data) {
             requestContentType: 'application/json',
             contentType: 'application/json',
             headers: state.headers,
+            ignoreSSLIssues: settings.prefIgnoreSSLIssues,
             body : data
         ]
         asynchttpPost('handleInfluxResponse', postParams)
     } catch (e) {
         logger("postToInfluxDB(): Something went wrong when posting: ${e}", "error")
+        state.loggerQueue += ${data}
     }
 }
 
@@ -232,11 +261,112 @@ def postToInfluxDB(data) {
  *  Handles response from post made in postToInfluxDB().
  **/
 def handleInfluxResponse(hubResponse, data) {
-    //logger("postToInfluxDB(): status of post call is: ${hubResponse.status}", "info")
-    if (hubResponse.status >= 400) {
-        logger("postToInfluxDB(): Something went wrong! Response from InfluxDB: Status: ${hubResponse.status}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
-    }
+    logger("postToInfluxDB(): status of post call is: ${hubResponse.status}", "info")
+    if (hubResponse.status == 204) {
+	    logger("handleInfluxResponse(): InfluxDB connectivity to database working", "info")
+        if (state.failed){
+            if (state.inRecovery) {
+                logger("handleInfluxResponse(): Already in recovery", "info")
+                dbRecoveryPost()
+            } else {   
+                logger("handleInfluxResponse(): Starting Recovery", "info")
+                state.inRecovery = true
+                dbRecoveryPost()
+                }
+        }          
+    } else if (hubResponse.status == 400 ) {
+        logger("handleInfluxResponse(): Data Sent to Influx DB was Malformed. Please correct selections to send proper data. : Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${hubResponse.message}", "error")
+    } else if (hubResponse.status == 401 ) {
+        logger("handleInfluxResponse(): Authorization failure. Please check your Authentication configuration : Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        state.failed = true
+        loggerQueueSize = state.loggerQueue.size()
+        bkupNum = "b"+(loggerQueueSize + 1)
+        loggerinput = loggerQueueBkup.toString()
+        state.loggerQueue.put(bkupNum, loggerinput)
+    } else if (hubResponse.status == 404 ) {
+        logger("handleInfluxResponse(): Resource not found in InfluxDB database. Please confirm your Database or Org/Bucket : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        state.failed = true
+        loggerQueueSize = state.loggerQueue.size()
+        bkupNum = "b"+(loggerQueueSize + 1)
+        loggerinput = loggerQueueBkup.toString()
+        state.loggerQueue.put(bkupNum, loggerinput)
+    } else if (hubResponse.status == 408 ) {
+        logger("handleInfluxResponse(): Your specified host is not valid. Please confirm your Database Host entry : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        state.failed = true
+        loggerQueueSize = state.loggerQueue.size()
+        bkupNum = "b"+(loggerQueueSize + 1)
+        loggerinput = loggerQueueBkup.toString()
+        state.loggerQueue.put(bkupNum, loggerinput)
+    } else if (hubResponse.status == 413 ) {
+        logger("handleInfluxResponse(): Trying to load to much data at once. Please adjust post limits to ensure data is not to large : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        state.loggerQueue = state.loggerQueue + loggerQueueBkup.toString()
+    } else if (hubResponse.status == 429 ) {
+        logger("handleInfluxResponse(): (Cloud Only Error) Service quota exceeded for remote InfluxDB database adjust write pattern to database : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        state.failed = true
+        loggerQueueSize = state.loggerQueue.size()
+        bkupNum = "b"+(loggerQueueSize + 1)
+        loggerinput = loggerQueueBkup.toString()
+        state.loggerQueue.put(bkupNum, loggerinput)
+    } else if (hubResponse.status == 503 ) {
+        logger("handleInfluxResponse(): (Cloud Only Error) Service quota exceeded for remote InfluxDB database adjust cordinality to correct : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        state.failed = true
+        loggerQueueSize = state.loggerQueue.size()
+        bkupNum = "b"+(loggerQueueSize + 1)
+        loggerinput = loggerQueueBkup.toString()
+        state.loggerQueue.put(bkupNum, loggerinput)
+    } else if (hubResponse.status >= 400 ){
+        logger("handleInfluxResponse(): Something went wrong! Response from InfluxDB: Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        state.failed = true
+        loggerQueueSize = state.loggerQueue.size()
+        bkupNum = "b"+(loggerQueueSize + 1)
+        loggerinput = loggerQueueBkup.toString()
+        state.loggerQueue.put(bkupNum, loggerinput)
+    }    
 }
+
+/**
+ *  dbRecoveryPost()
+ *
+ *  Handles recovery processes from failed Posts to database.
+ **/
+
+def dbRecoveryPost(){
+    logger("dbRecoveryPost(): InfluxDB recovery of pending transactions is being processed. ", "info")
+    loggerQueueSize = state.loggerQueue.size()
+    state.recoveryBatch = state.recoveryBatch + 1
+    logger("dbRecoveryPost(): Currently in failed state. Are we done processing backlog: Backlog size ${loggerQueueSize}, batch processed: ${state.recoveryBatch}", "info")
+    if (state.recoveryBatch <= loggerQueueSize ) {
+        loggerQueueSize = state.loggerQueue.size()            
+        recoverNum = "b"+(state.recoveryBatch)
+        logger("dbRecoveryPost(): There are ${loggerQueueSize} batches to send to InfluxDB.", "info")
+        queue = state.loggerQueue.get(recoverNum) 
+        logger("dbRecoveryPost(): Processing batch:${recoverNum} queue:${queue}.", "info")
+        queue = queue.replace("[", "")
+        queue = queue.replace("]", "")
+        logger("dbRecoveryPost(): Posting Queued data to InfluxDB: ${state.uri}, Data: [${queue}]", "info")
+        try {
+            def postParams = [
+                uri: state.uri,
+                requestContentType: 'application/json',
+                contentType: 'application/json',
+                headers: state.headers,
+                ignoreSSLIssues: settings.prefIgnoreSSLIssues,
+                body : queue
+            ]
+            asynchttpPost('handleInfluxResponse', postParams)
+            } 
+        catch (e) {
+        logger("handleInfluxResponse(): Something went wrong when posting: ${e}", "error")         
+        }
+    } else {
+        logger("dbRecoveryPost(): Backlog of ${loggerQueueSize} has been fully processed. Reseting all backup values. Recovery Complete", "info")
+        state.failed = false
+        state.recoveryBatch = 0
+        state.loggerQueue = [:]
+        state.inRecovery = false        
+    }    
+}
+
 
 /*****************************************************************************************************************
  *  Private Helper Functions:
