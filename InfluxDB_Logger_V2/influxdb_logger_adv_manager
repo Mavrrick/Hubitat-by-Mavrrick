@@ -171,7 +171,6 @@ def installed() {
     updated()
     state.loggerQueue = [:]
     state.failed = false
-    settings.bkupReset = false
     state.recoveryBatch=0
     state.inRecovery = false
     log.info "${app.label}: Installed with settings: ${settings}"
@@ -203,7 +202,6 @@ def updated() {
     if (bkupReset) {
         state.loggerQueue = [:]
         state.failed = false
-        settings.bkupReset = false
         state.recoveryBatch = 0
         state.inRecovery = false
         }
@@ -273,96 +271,31 @@ def handleInfluxResponse(hubResponse, data) {
                 }
         }          
     } else if (hubResponse.status == 400 ) {
-        logger("handleInfluxResponse(): Data Sent to Influx DB was Malformed. Please correct selections to send proper data. : Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${hubResponse.message}", "error")
+        logger("handleInfluxResponse(): Data Sent to Influx DB was Malformed. Please correct selections to send proper data. : Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
     } else if (hubResponse.status == 401 ) {
         logger("handleInfluxResponse(): Authorization failure. Please check your Authentication configuration : Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
-        state.failed = true
-        loggerQueueSize = state.loggerQueue.size()
-        bkupNum = "b"+(loggerQueueSize + 1)
-        loggerinput = data.toString()
-        state.loggerQueue.put(bkupNum, loggerinput)
+        recoveryQueue(data)
     } else if (hubResponse.status == 404 ) {
         logger("handleInfluxResponse(): Resource not found in InfluxDB database. Please confirm your Database or Org/Bucket : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
-        state.failed = true
-        loggerQueueSize = state.loggerQueue.size()
-        bkupNum = "b"+(loggerQueueSize + 1)
-        loggerinput = data.toString()
-        state.loggerQueue.put(bkupNum, loggerinput)
+        recoveryQueue(data)
     } else if (hubResponse.status == 408 ) {
         logger("handleInfluxResponse(): Problem communicating with InfluxDB Host. Check Secondary error messages for details : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
-        state.failed = true
-        loggerQueueSize = state.loggerQueue.size()
-        bkupNum = "b"+(loggerQueueSize + 1)
-        loggerinput = data.toString()
-        state.loggerQueue.put(bkupNum, loggerinput)
+        recoveryQueue(data)
     } else if (hubResponse.status == 413 ) {
         logger("handleInfluxResponse(): Trying to load to much data at once. Please adjust post limits to ensure data is not to large : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
     } else if (hubResponse.status == 429 ) {
-        logger("handleInfluxResponse(): (Cloud Only Error) Service quota exceeded for remote InfluxDB database adjust write pattern to database : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${handleInfluxResponse.body}", "error")
-        state.failed = true
-        loggerQueueSize = state.loggerQueue.size()
-        bkupNum = "b"+(loggerQueueSize + 1)
-        loggerinput = data.toString()
-        state.loggerQueue.put(bkupNum, loggerinput)
+        logger("handleInfluxResponse(): (Cloud Only Error) Service quota exceeded for remote InfluxDB database adjust write pattern to database : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
+        recoveryQueue(data)
     } else if (hubResponse.status == 503 ) {
         logger("handleInfluxResponse(): (Cloud Only Error) Service quota exceeded for remote InfluxDB database adjust cordinality to correct : ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
-        state.failed = true
-        loggerQueueSize = state.loggerQueue.size()
-        bkupNum = "b"+(loggerQueueSize + 1)
-        loggerinput = data.toString()
-        state.loggerQueue.put(bkupNum, loggerinput)
+        recoveryQueue(data)
     } else if (hubResponse.status >= 400 ){
         logger("handleInfluxResponse(): Something went wrong! Response from InfluxDB: Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
-        state.failed = true
-        loggerQueueSize = state.loggerQueue.size()
-        bkupNum = "b"+(loggerQueueSize + 1)
-        loggerinput = data.toString()
-        state.loggerQueue.put(bkupNum, loggerinput)
+        recoveryQueue(data)
     }    
 }
 
-/**
- *  dbRecoveryPost()
- *
- *  Handles recovery processes from failed Posts to database.
- **/
 
-def dbRecoveryPost(){
-    logger("dbRecoveryPost(): InfluxDB recovery of pending transactions is being processed. ", "info")
-    loggerQueueSize = state.loggerQueue.size()
-    state.recoveryBatch = state.recoveryBatch + 1
-    logger("dbRecoveryPost(): Currently in failed state. Are we done processing backlog: Backlog size ${loggerQueueSize}, batch processed: ${state.recoveryBatch}", "info")
-    if (state.recoveryBatch <= loggerQueueSize ) {
-        loggerQueueSize = state.loggerQueue.size()            
-        recoverNum = "b"+(state.recoveryBatch)
-        logger("dbRecoveryPost(): There are ${loggerQueueSize} batches to send to InfluxDB.", "info")
-        queue = state.loggerQueue.get(recoverNum) 
-        logger("dbRecoveryPost(): Processing batch:${recoverNum} queue:${queue}.", "info")
-        queue = queue.replace("[", "")
-        queue = queue.replace("]", "")
-        logger("dbRecoveryPost(): Posting Queued data to InfluxDB: ${state.uri}, Data: [${queue}]", "info")
-        try {
-            def postParams = [
-                uri: state.uri,
-                requestContentType: 'application/json',
-                contentType: 'application/json',
-                headers: state.headers,
-                ignoreSSLIssues: settings.prefIgnoreSSLIssues,
-                body : queue
-            ]
-            asynchttpPost('handleInfluxResponse', postParams)
-            } 
-        catch (e) {
-        logger("handleInfluxResponse(): Something went wrong when posting: ${e}", "error")         
-        }
-    } else {
-        logger("dbRecoveryPost(): Backlog of ${loggerQueueSize} has been fully processed. Reseting all backup values. Recovery Complete", "info")
-        state.failed = false
-        state.recoveryBatch = 0
-        state.loggerQueue = [:]
-        state.inRecovery = false        
-    }    
-}
 
 
 /*****************************************************************************************************************
@@ -478,12 +411,75 @@ private String escapeStringForInfluxDB(String str) {
     return str
 }
 
-// Attempt to clean up the ConcurrentLinkedQueue object.
-// Only called by uninstalled(), so should be safe.
+/**
+*
+* recoverHold()
+*
+* Hod execution of another batch until recovery is completed
+*
+**/
 private recoverHold()
 {    
     if (state.inRecovery){
         pauseExecution(5000)
         recoverHold()
     }
+}
+
+/**
+*
+* recoveryQueue()
+*
+* Hod execution of another batch until recovery is completed
+*
+**/
+private recoveryQueue(data)
+{    
+    if (state.failed == false) {
+        state.failed = true
+    }
+    bkupNum = "b"+(state.loggerQueue.size() + 1)
+    loggerinput = data.toString()
+    state.loggerQueue.put(bkupNum, loggerinput)
+}
+
+/**
+ *  dbRecoveryPost()
+ *
+ *  Handles recovery processes from failed Posts to database.
+ **/
+
+private dbRecoveryPost(){
+    logger("dbRecoveryPost(): InfluxDB recovery of pending transactions is being processed. ", "info")
+    state.recoveryBatch = state.recoveryBatch + 1
+    logger("dbRecoveryPost(): Currently in failed state. Are we done processing backlog: Backlog size ${state.loggerQueue.size()}, attempting to process process batch: ${state.recoveryBatch}", "info")
+    if (state.recoveryBatch <= state.loggerQueue.size() ) {            
+        recoverNum = "b"+(state.recoveryBatch)
+        logger("dbRecoveryPost(): There are ${state.loggerQueue.size()} batches to send to InfluxDB.", "info")
+        queue = state.loggerQueue.get(recoverNum) 
+        logger("dbRecoveryPost(): Processing batch:${recoverNum} queue:${queue}.", "info")
+        queue = queue.replace("[", "")
+        queue = queue.replace("]", "")
+        logger("dbRecoveryPost(): Posting Queued data to InfluxDB: ${state.uri}, Data: [${queue}]", "info")
+        try {
+            def postParams = [
+                uri: state.uri,
+                requestContentType: 'application/json',
+                contentType: 'application/json',
+                headers: state.headers,
+                ignoreSSLIssues: settings.prefIgnoreSSLIssues,
+                body : queue
+            ]
+            asynchttpPost('handleInfluxResponse', postParams)
+            } 
+        catch (e) {
+        logger("handleInfluxResponse(): Something went wrong when posting: ${e}", "error")         
+        }
+    } else {
+        logger("dbRecoveryPost(): Backlog of ${loggerQueueSize} has been fully processed. Reseting all backup values. Recovery Complete", "info")
+        state.failed = false
+        state.recoveryBatch = 0
+        state.loggerQueue = [:]
+        state.inRecovery = false        
+    }    
 }
