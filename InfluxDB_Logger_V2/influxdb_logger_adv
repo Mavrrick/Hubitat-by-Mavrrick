@@ -62,9 +62,9 @@ preferences {
 }
 
 def setupMain() {
-    dynamicPage(name: "setupMain", title: "InfluxDB Logger Settings", install: true, uninstall: true) {
-        section("Logging App Management") {
-            app(name: "Manager", appName: "InfluxDB Logger Advanced Manager", namespace: "nowhereville", title: "Create InfluxDB Logger Instance", multiple: true)
+    dynamicPage(name: "setupMain", title: " ", install: true, uninstall: true) {
+        section("Manage Influx DB Logger Instances") {
+            app(name: "Manager", appName: "InfluxDB Logger Advanced Manager", namespace: "nowhereville", title: "Click here to create InfluxDB Logger Instance", multiple: true)
 /*            input "addChildAppButton" , "button",  title: "Click here to create a new InfluxDb Logger Instance"
 //            input "addChildlist" , "button",  title: "Click her to list child apps"
             if (state.appCreate == true) {
@@ -207,7 +207,6 @@ private String escapeStringForInfluxDB(String str) {
         str = str.replaceAll(",", "\\\\,") // Escape commas.
         str = str.replaceAll("=", "\\\\=") // Escape equal signs.
         str = str.replaceAll("\"", "\\\\\"") // Escape double quotes.
-        //str = str.replaceAll("'", "_")  // Replace apostrophes with underscores.
     }
     else {
         str = 'null'
