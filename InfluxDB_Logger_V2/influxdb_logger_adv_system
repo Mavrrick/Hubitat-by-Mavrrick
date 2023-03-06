@@ -57,8 +57,7 @@ definition(
 
     import groovy.transform.Field
 
-    @Field static java.util.concurrent.ConcurrentLinkedQueue loggerQueueMem = new java.util.concurrent.ConcurrentLinkedQueue()
-    @Field static java.util.concurrent.Semaphore mutex = new java.util.concurrent.Semaphore(1)
+    @Field static loggerQueueMap = new java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.ConcurrentLinkedQueue>()
 
 preferences {
     page(name: "setupMain")
@@ -82,7 +81,7 @@ def setupMain() {
                     "4" : "Debug",
                     "5" : "Trace"
                 ],
-                defaultValue: "3",
+                defaultValue: "1",
                 displayDuringSetup: true,
                 required: false
             )
@@ -169,48 +168,40 @@ def handleModeEvent(evt) {
 
 def queueToInfluxDb(data) {
 
-    int queueSize = 0
-    try {
-        mutex.acquire()
-        logger("queueToInfluxDb(): loggerQueueMem = ${loggerQueueMem}", "trace")
-        loggerQueueMem.offer(data)
-        queueSize = loggerQueueMem.size()
-        logger("queueToInfluxDb(): loggerQueueMem = ${loggerQueueMem.size()} size ", "trace")
-    }
-    catch (e) {
-        logger("Error 2 in queueToInfluxDb", "Warning")
-    }
-    finally {
-        mutex.release()
-    }  
+    myLoggerQueue = getLoggerQueue()
+    myLoggerQueue.offer(data)
+
+    int queueSize = queueSize = myLoggerQueue.size()
+    logger("queueToInfluxDb(): loggerQueueMem = ${queueSize} size ", "trace")
 }
 
 def writeQueuedDataToInfluxDb() {
-    String writeData = ""
-
-    try {
-        mutex.acquire()
-
-        if (loggerQueueMem.size() == 0) {
-            logger("No queued data to write to InfluxDB", "info")
+        myLoggerQueue = getLoggerQueue()
+        if (myLoggerQueue == null) {
+        // Failsafe if coming from an old version
             return
         }
-        logger("Writing queued data of size ${loggerQueueMem.size()} out", "info")
-        writeData = loggerQueueMem.toArray().join('\n')
-        loggerQueueMem.clear()
-        loggerQueue = state.loggerQueue
-        loggerQueue.clear()
-    }
-    catch (e) {
-        logger("Error 2 in writeQueuedDataToInfluxDb", "Warning")
-    }
-    finally {
-        mutex.release()
-    }
 
-    logger("Calling Parent App to post ${writeData}", "trace")
-    parent.postToInfluxDB(writeData)
-    
+        Integer loggerQueueSize = myLoggerQueue.size()
+        logger("Number of events queued for InfluxDB: ${loggerQueueSize}", "debug")
+        if (loggerQueueSize == 0) {
+            return
+        }
+
+        // NB: older versions will not have state.postCount set
+        Integer postCount = state.postCount ?: 0
+        Long now = now()
+        Integer prefBatchSizeLimit = settings.prefBatchSizeLimit ?: 50
+        postCount = loggerQueueSize < prefBatchSizeLimit ? loggerQueueSize : prefBatchSizeLimit
+        state.postCount = postCount
+        state.lastPost = now
+
+        String data = myLoggerQueue.toArray().join('\n')
+
+        logger("Posting data to InfluxDB: ${state.uri}, Data: [${data}] count: ${postCount}", "debug")
+        parent.postToInfluxDB(data, postCount)
+        myLoggerQueue.clear()
+
 }
 
 
@@ -285,10 +276,35 @@ private String escapeStringForInfluxDB(String str) {
         str = str.replaceAll(",", "\\\\,") // Escape commas.
         str = str.replaceAll("=", "\\\\=") // Escape equal signs.
         str = str.replaceAll("\"", "\\\\\"") // Escape double quotes.
-        //str = str.replaceAll("'", "_")  // Replace apostrophes with underscores.
     }
     else {
         str = 'null'
     }
     return str
+}
+
+private getLoggerQueue() {
+    defaultQueue = new java.util.concurrent.ConcurrentLinkedQueue()
+    queue = loggerQueueMap.putIfAbsent(app.getId(), defaultQueue)
+    if (queue == null) {
+        // key was not in map - return defaultQueue
+        logger("allocating new queue for app","warn")
+            if (state.loggerQueue.size() > 0) {
+                logger("getLoggerQueue(): Records Pending write. Posting to InfluxDB", "info")
+                writeQueuedDataToInfluxDbForce()
+            }
+        return defaultQueue
+    }
+    // key was already in map - return that.
+    return queue
+}
+
+// Attempt to clean up the ConcurrentLinkedQueue object.
+// Only called by uninstalled(), so should be safe.
+private releaseLoggerQueue()
+{
+    // Flush queue just before we release it,
+    writeQueuedDataToInfluxDb()
+    loggerQueueMap.remove(app.getId())
+    logger("released queue for app id ${app.getId()}", "info")
 }
