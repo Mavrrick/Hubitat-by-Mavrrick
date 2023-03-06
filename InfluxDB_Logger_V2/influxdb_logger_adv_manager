@@ -88,7 +88,7 @@ def setupMain() {
                     "4" : "Debug",
                     "5" : "Trace"
                 ],
-                defaultValue: "3",
+                defaultValue: "1",
                 displayDuringSetup: true,
                 required: false
             )
@@ -172,6 +172,7 @@ def installed() {
     state.loggerQueue = [:]
     state.failed = false
     state.recoveryBatch=0
+    state.queueTotSize = 0
     state.inRecovery = false
     log.info "${app.label}: Installed with settings: ${settings}"
 }
@@ -204,6 +205,7 @@ def updated() {
         state.failed = false
         state.recoveryBatch = 0
         state.inRecovery = false
+        state.queueTotSize = 0
         }
         
     // Update application name
@@ -224,15 +226,16 @@ def updated() {
  *
  *  Uses hubAction instead of httpPost() in case InfluxDB server is on the same LAN as the Smartthings Hub.
  **/
-def postToInfluxDB(String data) {
+def postToInfluxDB(String data, postCount) {
     
     if (state.uri == null) {
         // Failsafe if using an old config
         setupDB()
     }
-    recoverHold()
+    recoverHold(data)
     
-    logger("postToInfluxDB(): Posting data to InfluxDB: ${state.uri}, Data: ${data}", "info")
+    logger("postToInfluxDB(): Posting data to InfluxDB: ${state.uri}, PostCount: ${postCount}", "info")
+    logger("postToInfluxDB(): Posting data to InfluxDB:  Data: ${data}", "debug")
 
     // Hubitat Async http Post
     try {
@@ -265,7 +268,7 @@ def handleInfluxResponse(hubResponse, data) {
                 logger("handleInfluxResponse(): Already in recovery", "info")
                 dbRecoveryPost()
             } else {   
-                logger("handleInfluxResponse(): Starting Recovery", "info")
+                logger("handleInfluxResponse(): Starting Recovery", "warn")
                 state.inRecovery = true
                 dbRecoveryPost()
                 }
@@ -418,11 +421,16 @@ private String escapeStringForInfluxDB(String str) {
 * Hod execution of another batch until recovery is completed
 *
 **/
-private recoverHold()
+private recoverHold(data)
 {    
     if (state.inRecovery){
-        pauseExecution(5000)
-        recoverHold()
+//        pauseExecution(5000)
+//        recoverHold()
+//        state.queueTotSize = state.queueTotSize + data.size()
+//        logger("recoveryHold(): Size of Backup queue is ${state.queueTotSize} ", "warn")
+        bkupNum = "b"+(state.loggerQueue.size() + 1)
+        loggerinput = data.toString()
+        state.loggerQueue.put(bkupNum, loggerinput)
     }
 }
 
@@ -434,12 +442,22 @@ private recoverHold()
 *
 **/
 private recoveryQueue(data)
-{    
-    if (state.failed == false) {
+{   
+    if (state.inRecovery) {
+        logger("recoveryQueue(): Failure during Recovery process ", "warn")
+        state.recoveryBatch = state.recoveryBatch - 1
+        state.inRecovery = false
+    } 
+    else {
+        if (state.failed == false) {
         state.failed = true
+        }
     }
+    logger("recoveryQueue(): Current Queue size: ${state.queueTotSize} Data size:  ${data.size()} ", "warn")
+    state.queueTotSize = state.queueTotSize + data.size()    
+    logger("recoveryQueue(): Size of Backup queue is ${state.queueTotSize} ", "warn")
     bkupNum = "b"+(state.loggerQueue.size() + 1)
-    loggerinput = data.toString()
+    loggerinput = data.data.toString()
     state.loggerQueue.put(bkupNum, loggerinput)
 }
 
@@ -452,7 +470,7 @@ private recoveryQueue(data)
 private dbRecoveryPost(){
     logger("dbRecoveryPost(): InfluxDB recovery of pending transactions is being processed. ", "info")
     state.recoveryBatch = state.recoveryBatch + 1
-    logger("dbRecoveryPost(): Currently in failed state. Are we done processing backlog: Backlog size ${state.loggerQueue.size()}, attempting to process process batch: ${state.recoveryBatch}", "info")
+    logger("dbRecoveryPost(): Currently in failed state. Are we done processing backlog: Backlog size ${state.loggerQueue.size()}, attempting to process process batch: ${state.recoveryBatch}", "warn")
     if (state.recoveryBatch <= state.loggerQueue.size() ) {            
         recoverNum = "b"+(state.recoveryBatch)
         logger("dbRecoveryPost(): There are ${state.loggerQueue.size()} batches to send to InfluxDB.", "info")
@@ -476,10 +494,11 @@ private dbRecoveryPost(){
         logger("handleInfluxResponse(): Something went wrong when posting: ${e}", "error")         
         }
     } else {
-        logger("dbRecoveryPost(): Backlog of ${loggerQueueSize} has been fully processed. Reseting all backup values. Recovery Complete", "info")
+        logger("dbRecoveryPost(): Backlog of ${state.loggerQueue.size()} has been fully processed. Reseting all backup values. Recovery Complete", "warn")
         state.failed = false
         state.recoveryBatch = 0
         state.loggerQueue = [:]
-        state.inRecovery = false        
+        state.inRecovery = false 
+        state.queueTotSize = 0
     }    
 }
