@@ -633,7 +633,7 @@ def writeQueuedDataToInfluxDbForce() {
     logger("Writing queued data of size ${size}", "info")
     String writeData = loggerQueue.toArray().join('\n')
     loggerQueue.clear()
-    parent.postToInfluxDB(writeData, size, loggerQueue)
+    parent.postToInfluxDB(writeData, size)
 }
 
 /*****************************************************************************************************************
