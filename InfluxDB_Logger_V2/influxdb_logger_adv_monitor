@@ -566,12 +566,11 @@ def queueToInfluxDb(data) {
     myLoggerQueue = getLoggerQueue()
     myLoggerQueue.offer(data)
     
-    if (settings.syncDelay == 0 || writeMethodFlag) {
+    if (settings.syncDelay == 0 || writeMethodFlag == true ) {
         state.loggerQueue = myLoggerQueue
         }
 
     int queueSize = queueSize = myLoggerQueue.size()
-
     
     Integer prefBatchSizeLimit = settings.prefBatchSizeLimit ?: 50
     if (queueSize >= prefBatchSizeLimit) {
