@@ -227,6 +227,10 @@ def updated() {
  *  Uses hubAction instead of httpPost() in case InfluxDB server is on the same LAN as the Smartthings Hub.
  **/
 def postToInfluxDB(String data, postCount) {
+    if (state.postCount == null) {
+        state.postCount = 0
+    }
+    state.postCount += postCount
     
     if (state.uri == null) {
         // Failsafe if using an old config
@@ -272,7 +276,9 @@ def handleInfluxResponse(hubResponse, data) {
                 state.inRecovery = true
                 dbRecoveryPost()
                 }
-        }          
+        } else {
+            state.postCount = 0    
+        }
     } else if (hubResponse.status == 400 ) {
         logger("handleInfluxResponse(): Data Sent to Influx DB was Malformed. Please correct selections to send proper data. : Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}", "error")
     } else if (hubResponse.status == 401 ) {
@@ -424,10 +430,6 @@ private String escapeStringForInfluxDB(String str) {
 private recoverHold(data)
 {    
     if (state.inRecovery){
-//        pauseExecution(5000)
-//        recoverHold()
-//        state.queueTotSize = state.queueTotSize + data.size()
-//        logger("recoveryHold(): Size of Backup queue is ${state.queueTotSize} ", "warn")
         bkupNum = "b"+(state.loggerQueue.size() + 1)
         loggerinput = data.toString()
         state.loggerQueue.put(bkupNum, loggerinput)
@@ -453,9 +455,6 @@ private recoveryQueue(data)
         state.failed = true
         }
     }
-    logger("recoveryQueue(): Current Queue size: ${state.queueTotSize} Data size:  ${data.size()} ", "warn")
-    state.queueTotSize = state.queueTotSize + data.size()    
-    logger("recoveryQueue(): Size of Backup queue is ${state.queueTotSize} ", "warn")
     bkupNum = "b"+(state.loggerQueue.size() + 1)
     loggerinput = data.data.toString()
     state.loggerQueue.put(bkupNum, loggerinput)
@@ -500,5 +499,6 @@ private dbRecoveryPost(){
         state.loggerQueue = [:]
         state.inRecovery = false 
         state.queueTotSize = 0
+        state.postCount = 0
     }    
 }
