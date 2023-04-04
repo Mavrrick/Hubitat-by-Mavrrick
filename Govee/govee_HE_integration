@@ -279,8 +279,8 @@ def mainPage()
                 if (childCount > 0) {def maxPoll = 86400/((10000-(50*childCount))/childCount).toDouble()
                 maxPoll = maxPoll.round(1)
             paragraph "With the number of devices have you can poll as frequently as every ${maxPoll} seconds"}
-            paragraph "Your have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
-            paragraph "Your have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
+            paragraph "You have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
+            paragraph "You have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
         }
          section("Notification Options") {
          input "notifyEnabled", "bool", title: "Enable Notification", required: false, defaultValue: false
