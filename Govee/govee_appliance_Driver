@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.16
+// Version 1.0.19
 //
 // 2022-09-12 -	Initial Driver release for Govee Appliance devices
 // 2022-10-19 - Added Attributes to driver
@@ -9,11 +9,13 @@
 // ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
 // 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
 // 2022-12-19 Added Actuator capbility to more easily integrate with RM
+// 2023-4-4   API Key update is now possible
 
 metadata {
 	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		capability "Actuator"
+        capability "Initialize"
 		attribute "gear", "number"
         attribute "mode", "number"
         attribute "cloudAPI", "string"
@@ -134,6 +136,13 @@ if (logEnable) runIn(1800, logsOff)
 def installed(){
 //    state.gearmax=max(device.getDataValue("gearsMax"))
   
+}
+
+def initialize() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
+    }    
 }
 
 def logsOff() {
