@@ -40,7 +40,6 @@ metadata {
         input("bucket", "text", title: "InfluxDB IP Bucket", description: "ip address of the InfluxDB server", required: true)
         input("token", "text", title: "Auth Token", description: "Auth Token for InfluxDB access", required: true)
         input("port", "number", title: "InfluxDB server Port", description: "InfluxDB server port", defaultValue: 8086, required: true)
-//        input("udptcp", "enum", title: "UDP or TCP?", description: "", defaultValue: "UDP", options: ["UDP","TCP"])
         input("hubName", "text", title: "Hub Name", description: "Host name for records in DB", required: true)
         input("prefIgnoreSSLIssues", "bool", title: "Ignore SSL Issues", description: "", defaultValue: true)
         input("logEnable", "bool", title: "Enable debug logging", description: "", defaultValue: false)
@@ -70,13 +69,12 @@ void updated() {
 }
 
 void parse(String description) {
-    def header = [:]
-    
-    def hub = location.hubs[0]
+
+/*    def hub = location.hubs[0]
     // If I can't get a hostname, an IP address will do.
     if (!hostname?.trim()) {
       hostname = hub.getDataValue("localIP")
-    }
+    } */
     
     def descData = new JsonSlurper().parseText(description)   
     
@@ -86,6 +84,7 @@ void parse(String description) {
         String message = escapeStringHTMlforMsg(descData.msg)
 //        String msg = '"'+descData.msg+'"' 
         String msg = '"'+message+'"'
+        String timestmp = '"'+descData.time+'"'
         String id = descData.id.toString()
         switch (descData.level) {
             case 'error':
@@ -122,46 +121,22 @@ void parse(String description) {
         epoch_milis = date.getTime() * 1000000
         
         
-//        String influxdb = "[{'measurement':'syslog','fields':{'facility_code':1,'message':'${descData.msg}','procid':${descData.id},'severity_code':${sevCode},'timestamp':${descData.time},'appname':'${descData.name}','facility':'${descData.type}','host':'hubitat','hostname':'hubitat','severity':'${severity}'},'tags':{'appname':'${descData.name}','facility':'${descData.type}','host':'hubitat','hostname':'hubitat','severity':'${descData.level}'},'timestamp':'${descData.time}'}]"
-//        String influxDB2 = "syslog,appname=${descData.name},facility=${descData.type},host=hubitat,hostname=hubitat,severity=${descData.level}, facility_code=1 message=${descData.msg} procid=${descData.id} severity_code=${descData.level} timestamp=${descData.time} appname=${descData.name} facility=${descData.type} host=hubitat hostname=hubitat severity=${descData.level} ${timeNow}"
-//        String influxDB2 = "syslog,appname=${name},facility=${type},host=hubitat,hostname=hubitat,severity=${severity}, facility_code=1 message=${msg} procid=${id} severity=${level} timestamp=${descData.time} appname=${name} facility=${type} host=hubitat hostname=hubitat severity_code=${sevCode} ${epoch_milis}"
-        String influxDB2 = "syslog,appname=${name},facility=${type},host=${hubName},hostname=${hubName},severity=${severity},facility_code=1,procid=${id},severity_code=${sevCode} message=${msg},severity_code=${sevCode} ${epoch_milis}"        
-        //        if (logEnable)  log.debug "sendCommand(): ${influxdb}"
+        String influxDB2 = "syslog,appname=${name},facility=${type},host=${hubName},hostname=${hubName},severity=${severity} facility_code=1,message=${msg},procid=${id},severity_code=${sevCode},timestamp=${timestmp} ${epoch_milis}"        
+
         if (logEnable)  log.debug "sendCommand(): ${influxDB2}"
-        
-//        String uri = "http://192.168.86.10:8086/api/v2/write?org=Home&bucket=Hubitat2"
-//        String token2 = "nqsRC9zL8GD-RchP_Spo-Z1MINDEBA_ZXuXSxD7GjM_LUvcGel7VPXpnlItu5P2F4yPISxUjT5n1gKEbzzwDCg=="
-//        header.put("Authorization", "Token ${token2}")
         
         def postParams = [
         uri: state.uri,
         requestContentType: 'application/json',
         contentType: 'application/json',
         headers: state.header,
-//        ignoreSSLIssues: settings.prefIgnoreSSLIssues,
+        ignoreSSLIssues: settings.prefIgnoreSSLIssues,
         timeout: 60,
         body: influxDB2
     ]
         if (logEnable)  log.debug "sendCommand(): ${postParams}"
     asynchttpPost('handleInfluxResponse', postParams, [ postTime: timeNow ])
 
-//        if (logEnable)  log.debug "sendCommand(): [{"measurement":"syslog","fields":{"facility_code":1,"message", severity: ${descData.level}, type: ${descData.type}, time: ${descData.time}"
-        if(ip != null) {
-            def priority = descData.level
-            
-            // we get date-space-time but would like ISO8601
-//            if (logEnable) log.debug "timezone from hub is ${location.timeZone.toString()}"
-
-            
-            // location timeZone comes from the geolocation of the hub. It's possible it's not set?
-            def isoDate = date.format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", location.timeZone)
-//            if (logEnable) log.debug "time we get = ${date}: epoch time ${epoch_milis}"
-            
-
-            
-        } else {
-            log.warn "No log server set"
-        }
     }
 }
 
