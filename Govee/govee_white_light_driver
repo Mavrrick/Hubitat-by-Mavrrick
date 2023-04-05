@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.18
+// Version 1.0.19
 //
 // 11-5-22  Initial release
 // 11-21-22- Added a pending change condition and validation that the call was successful
