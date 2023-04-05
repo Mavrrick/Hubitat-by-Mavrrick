@@ -1,0 +1,308 @@
+/**
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
+/* Notes
+
+2020-08-18 - staylorx
+  - A couple of dumb coding errors, and still trying to sort out TCP
+2020-08-18 - staylorx
+  - Received version from original author (great start!)
+  - Attemping RFC5424 format for syslog
+  - Date/time stamping with the hub timezone
+2023-5-5 - Mavrrick
+  - Update code to output to InfluxDB Database with all needed connectivity options
+
+*/
+
+metadata {
+    definition (name: "InfluxDB Hubitat Live Logger", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Initialize"
+    }
+    command "disconnect"
+
+    preferences {
+        input("useSSL", "bool", title: "Use SSL to connect to server", description: "", defaultValue: false)
+        input("ip", "text", title: "InfluxDB IP Address", description: "ip address of the InfluxDB server", required: true)
+        input("org", "text", title: "InfluxDB IP Org", description: "ip address of the InfluxDB server", required: true)
+        input("bucket", "text", title: "InfluxDB IP Bucket", description: "ip address of the InfluxDB server", required: true)
+        input("token", "text", title: "Auth Token", description: "Auth Token for InfluxDB access", required: true)
+        input("port", "number", title: "InfluxDB server Port", description: "InfluxDB server port", defaultValue: 8086, required: true)
+//        input("udptcp", "enum", title: "UDP or TCP?", description: "", defaultValue: "UDP", options: ["UDP","TCP"])
+        input("hubName", "text", title: "Hub Name", description: "Host name for records in DB", required: true)
+        input("prefIgnoreSSLIssues", "bool", title: "Ignore SSL Issues", description: "", defaultValue: true)
+        input("logEnable", "bool", title: "Enable debug logging", description: "", defaultValue: false)
+    }
+}
+
+import groovy.json.JsonSlurper
+import hubitat.device.HubAction
+import hubitat.device.Protocol
+import java.time.*
+
+void logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
+}
+
+void installed() {
+    if (logEnable) log.debug "installed()"
+    updated()
+}
+
+void updated() {
+    if (logEnable) log.debug "updated()"
+    initialize()
+    //turn off debug logs after 30 minutes
+    if (logEnable) runIn(1800,logsOff)
+}
+
+void parse(String description) {
+    def header = [:]
+    
+    def hub = location.hubs[0]
+    // If I can't get a hostname, an IP address will do.
+    if (!hostname?.trim()) {
+      hostname = hub.getDataValue("localIP")
+    }
+    
+    def descData = new JsonSlurper().parseText(description)   
+    
+    if("${descData.id}" != "${device.id}") {
+        
+        String name = escapeStringForInfluxDB(descData.name)
+        String message = escapeStringHTMlforMsg(descData.msg)
+//        String msg = '"'+descData.msg+'"' 
+        String msg = '"'+message+'"'
+        String id = descData.id.toString()
+        switch (descData.level) {
+            case 'error':
+                sevCode = 3
+                break
+            case 'warn':
+                sevCode = 4
+                break
+            case 'info':
+                sevCode = 6
+                break
+            default :
+                sevCode = 7
+        }
+        
+        switch (descData.level) {
+            case 'error':
+                severity = "err"
+                break
+            case 'warn':
+                severity = "warning"
+                break
+            case 'info':
+                severity = "info"
+                break
+            default :
+                severity = "debug"
+        }
+        String level = descData.level.toString()
+        String type = descData.type.toString()
+        long timeNow = new Date().time
+        def dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        def date = Date.parse(dateFormat, descData.time)
+        epoch_milis = date.getTime() * 1000000
+        
+        
+//        String influxdb = "[{'measurement':'syslog','fields':{'facility_code':1,'message':'${descData.msg}','procid':${descData.id},'severity_code':${sevCode},'timestamp':${descData.time},'appname':'${descData.name}','facility':'${descData.type}','host':'hubitat','hostname':'hubitat','severity':'${severity}'},'tags':{'appname':'${descData.name}','facility':'${descData.type}','host':'hubitat','hostname':'hubitat','severity':'${descData.level}'},'timestamp':'${descData.time}'}]"
+//        String influxDB2 = "syslog,appname=${descData.name},facility=${descData.type},host=hubitat,hostname=hubitat,severity=${descData.level}, facility_code=1 message=${descData.msg} procid=${descData.id} severity_code=${descData.level} timestamp=${descData.time} appname=${descData.name} facility=${descData.type} host=hubitat hostname=hubitat severity=${descData.level} ${timeNow}"
+//        String influxDB2 = "syslog,appname=${name},facility=${type},host=hubitat,hostname=hubitat,severity=${severity}, facility_code=1 message=${msg} procid=${id} severity=${level} timestamp=${descData.time} appname=${name} facility=${type} host=hubitat hostname=hubitat severity_code=${sevCode} ${epoch_milis}"
+        String influxDB2 = "syslog,appname=${name},facility=${type},host=${hubName},hostname=${hubName},severity=${severity},facility_code=1,procid=${id},severity_code=${sevCode} message=${msg},severity_code=${sevCode} ${epoch_milis}"        
+        //        if (logEnable)  log.debug "sendCommand(): ${influxdb}"
+        if (logEnable)  log.debug "sendCommand(): ${influxDB2}"
+        
+//        String uri = "http://192.168.86.10:8086/api/v2/write?org=Home&bucket=Hubitat2"
+//        String token2 = "nqsRC9zL8GD-RchP_Spo-Z1MINDEBA_ZXuXSxD7GjM_LUvcGel7VPXpnlItu5P2F4yPISxUjT5n1gKEbzzwDCg=="
+//        header.put("Authorization", "Token ${token2}")
+        
+        def postParams = [
+        uri: state.uri,
+        requestContentType: 'application/json',
+        contentType: 'application/json',
+        headers: state.header,
+//        ignoreSSLIssues: settings.prefIgnoreSSLIssues,
+        timeout: 60,
+        body: influxDB2
+    ]
+        if (logEnable)  log.debug "sendCommand(): ${postParams}"
+    asynchttpPost('handleInfluxResponse', postParams, [ postTime: timeNow ])
+
+//        if (logEnable)  log.debug "sendCommand(): [{"measurement":"syslog","fields":{"facility_code":1,"message", severity: ${descData.level}, type: ${descData.type}, time: ${descData.time}"
+        if(ip != null) {
+            def priority = descData.level
+            
+            // we get date-space-time but would like ISO8601
+//            if (logEnable) log.debug "timezone from hub is ${location.timeZone.toString()}"
+
+            
+            // location timeZone comes from the geolocation of the hub. It's possible it's not set?
+            def isoDate = date.format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", location.timeZone)
+//            if (logEnable) log.debug "time we get = ${date}: epoch time ${epoch_milis}"
+            
+
+            
+        } else {
+            log.warn "No log server set"
+        }
+    }
+}
+
+/**
+ *  handleInfluxResponse()
+ *
+ *  Handles response from post made in writeQueuedDataToInfluxDb().
+ *
+ *  NB: Function name handleInfluxResponse must be kept for backward compatibility
+ **/
+void handleInfluxResponse(hubResponse, closure) {
+        if (logEnable)  log.debug "handleInfluxResponse(): ${hubResponse.status}"
+    if (state.loggerQueue == null) {
+        // Failsafe if coming from an old version
+        return
+    }
+
+    // Migration: Transitioning from older versions will not have closure set
+    Double elapsed = (closure) ? (now() - closure.postTime) / 1000 : 0
+    // Migration: Transitioning from older versions will not have postCount set
+    Integer postCount = state.postCount ?: 0
+    state.postCount = 0
+
+    if (hubResponse.status < 400) {
+        log.warn "Post of ${postCount} events complete - elapsed time ${elapsed} seconds - Status: ${hubResponse.status}"
+    }
+    else {
+        log.warn "Post of ${postCount} events failed - elapsed time ${elapsed} seconds - Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}"
+        if (postCount == 1) {
+            logger("Failed record was: ${state.loggerQueue[0]}", logError)
+        }
+
+        // Migration: Old configurations will not have prefBacklogLimit set
+        if (settings.prefBacklogLimit == null) {
+            app.updateSetting("prefBacklogLimit", (Long) 5000)
+        }
+
+        if (state.loggerQueue.size() <= settings.prefBacklogLimit) {
+            if (state.loggerQueue.size() > postCount) {
+                logger("Backlog of ${state.loggerQueue.size()} events", logWarn)
+            }
+
+            // Try again later
+            runIn(60, writeQueuedDataToInfluxDb)
+            return
+        }
+
+        logger("Backlog of ${state.loggerQueue.size()} events exceeds limit of ${settings.prefBacklogLimit}: dropping ${postCount} events", logError)
+    }
+
+    // Remove the post from the queue
+    state.loggerQueue = state.loggerQueue.drop(postCount)
+
+    // Go again?
+    if (state.loggerQueue.size()) {
+        runIn(1, writeQueuedDataToInfluxDb)
+    }
+}
+
+void connect() {
+    if (logEnable) log.debug "attempting connection"
+    try {
+        interfaces.webSocket.connect("http://localhost:8080/logsocket")
+        pauseExecution(1000)
+    } catch(e) {
+        log.error "initialize error: ${e.message}"
+        logger.error("Exception", e)
+    }
+}
+
+void disconnect() {
+    interfaces.webSocket.close()
+}
+
+void uninstalled() {
+    disconnect()
+}
+
+void initialize() {
+    if (logEnable) log.debug "initialize()"
+    state.header = [:]
+    if (useSSL) {
+        newuri = "https://"+ip+":"+port+"/api/v2/write?org="+org+"&bucket="+bucket
+    } else {
+        newuri = "http://"+ip+":"+port+"/api/v2/write?org="+org+"&bucket="+bucket
+    }
+    state.uri = newuri
+    auth = token
+    String token3 = token
+    if (logEnable) log.debug "initialize() ${token3} ${newuri}"
+    state.header.put("Authorization", "Token ${token3}")
+    runIn(5, "connect")
+}
+
+void webSocketStatus(String message) {
+	// handle error messages and reconnect
+    if (logEnable) log.debug "Got status ${message}" 
+    if(message.startsWith("failure")) {
+        // reconnect in a little bit
+        runIn(5, connect)
+    }
+}
+
+/**
+ *  escapeStringForInfluxDB()
+ *
+ *  Escape values to InfluxDB.
+ *
+ *  If a tag key, tag value, or field key contains a space, comma, or an equals sign = it must
+ *  be escaped using the backslash character \. Backslash characters do not need to be escaped.
+ *  Commas and spaces will also need to be escaped for measurements, though equals signs = do not.
+ *
+ *  Further info: https://docs.influxdata.com/influxdb/v0.10/write_protocols/write_syntax/
+ **/
+private String escapeStringForInfluxDB(String str) {
+    //logger("$str", "info")
+    if (str) {
+        str = str.replaceAll(" ", "\\\\ ") // Escape spaces.
+        str = str.replaceAll(",", "\\\\,") // Escape commas.
+        str = str.replaceAll("=", "\\\\=") // Escape equal signs.
+        str = str.replaceAll("\"", "\\\\\"") // Escape double quotes.
+        //str = str.replaceAll("'", "_")  // Replace apostrophes with underscores.
+    }
+    else {
+        str = 'null'
+    }
+    return str
+}
+
+private String escapeStringHTMlforMsg(String str) {
+    //logger("$str", "info")
+    if (str) {
+        str = str.replaceAll("&apos;", "&") // Escape spaces.
+        str = str.replaceAll("&lt;", "<") // Escape commas.
+        str = str.replaceAll("&gt;", ">") // Escape equal signs.
+        str = str.replaceAll("&#027;", "'") // Escape double quotes.
+        str = str.replaceAll("&#039;", "'")  // Replace apostrophes with underscores.
+        str = str.replaceAll("&apos;", "'")
+    }
+    else {
+        str = 'null'
+    }
+    return str
+}
