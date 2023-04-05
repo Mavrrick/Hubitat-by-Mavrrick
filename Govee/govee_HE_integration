@@ -41,6 +41,7 @@ definition(
 * 1.0.15 Found bug with how Light drivers were updating certain states
 * 1.0.16 Updated Polling setup to allow value of 0
 *	 Added Actuator to Appliance devices to allow for better RM integration
+* 1.0.19 Added ability for API Key to update on devices when update from Parent App
 */
 
 preferences
@@ -56,6 +57,13 @@ def initialize() {
 
     List child = getChildDevices()
     List childDNI = child.deviceNetworkId
+    if (settings.APIKey != state.APIKey ) {
+        child.each{
+        logger ("initialize() API key has been updated. Calling child devices to udpate", "debug")
+            it.initialize()
+        }
+    state?.APIKey = settings.APIKey    
+    }
     if (goveeDev) { 
         def  goveeAdd = settings.goveeDev - child.label 
     logger ("initialize() Child device ${child} DNI's ${childDNI}", "debug")
@@ -549,4 +557,8 @@ def sendnotification (type, value){
       it.deviceNotification(notificationText)
         }
     }
+}
+
+def getParentSetting(String settingName) {
+	return parent?."${settingName}"
 }
