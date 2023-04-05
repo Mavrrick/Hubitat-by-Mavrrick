@@ -1,11 +1,12 @@
 // Hubitat driver for Govee Plug, Switch driver using Cloud API
-// Version 1.0.18
+// Version 1.0.19
 //
 // 11-3-22  Initial release
 // 11-20-22 Added code to udpate parent app for rate limit chnages.
 // 11-21-22 Added retry cloud api Attribute and retry logic to ensure devices change state as expected.
 // 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
 // 1-30-23  Added check to see if device is in Retry state and abort new commands until cleared.
+// 4-4-23   API Update now possible
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -238,6 +239,10 @@ def configure() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
+    }
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
         unschedule()
