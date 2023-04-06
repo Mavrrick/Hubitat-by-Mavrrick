@@ -150,15 +150,12 @@ void parse(String description) {
 void handleInfluxResponse(hubResponse, closure) {
     // Migration: Transitioning from older versions will not have closure set
     Double elapsed = (closure) ? (now() - closure.postTime) / 1000 : 0
-    // Migration: Transitioning from older versions will not have postCount set
-    Integer postCount = state.postCount ?: 0
-    state.postCount = 0
 
     if (hubResponse.status < 400) {
-        log.warn "Post of log data complete - elapsed time ${elapsed} seconds - Status: ${hubResponse.status}"
+        if (logEnable) log.warn "Post of log data complete - elapsed time ${elapsed} seconds - Status: ${hubResponse.status}"
     }
     else {
-        log.warn "Post of of log data failed - elapsed time ${elapsed} seconds - Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}"
+        if (logEnable) log.warn "Post of of log data failed - elapsed time ${elapsed} seconds - Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}"
     }
 
 }
