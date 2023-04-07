@@ -13,6 +13,7 @@
 // 1-21-23  Changed position of setlLevl action in setColor command.
 // 1-30-23  Added check to see if device is in Retry state and abort new commands until cleared.
 // 4-4-23   Added ability for parent app to update API Key associated with device
+// 4-7-23   Added reset of Cloud API State to getDeviceStatus and initialize routine
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -441,7 +442,10 @@ try {
 					sendEvent(name: "colorMode", value: "RGB")
 				
 				}
-				
+                if (device.currentValue("cloudAPI") == "Retry") {
+                    if (debugLog) {log.error "getDeviceState(): Cloud API in retry state. Reseting "}
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    }				
 				return resp.data
 			}
 			
@@ -496,7 +500,11 @@ def initialize(){
     if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
-    }    
+    }
+    if (device.currentValue("cloudAPI") == "Retry") {
+        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
+        sendEvent(name: "cloudAPI", value: "Initialized")
+        }
     if (device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
         unschedule()
