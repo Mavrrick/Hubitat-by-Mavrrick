@@ -10,6 +10,7 @@
 // 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
 // 2022-12-19 Added Actuator capbility to more easily integrate with RM
 // 2023-4-4   API Key update is now possible
+// 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
 
 metadata {
 	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -142,7 +143,11 @@ def initialize() {
     if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
-    }    
+    }
+    if (device.currentValue("cloudAPI") == "Retry") {
+        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
+        sendEvent(name: "cloudAPI", value: "Initialized")
+    }
 }
 
 def logsOff() {
