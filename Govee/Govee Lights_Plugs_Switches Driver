@@ -24,6 +24,16 @@ import groovy.json.JsonBuilder
 
 def commandPort() { "4003" }
 
+@Field static Map lightEffects = [
+     0:"none",
+     1:"Illusion",
+     2:"Rainbow (H6066)",
+     3:"Aurora",
+     4:"Aurora-B",
+     5:"Sunrise",
+     6:"Sunset"
+]
+
 metadata {
 	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
@@ -34,6 +44,7 @@ metadata {
 		capability "ColorMode"
 		capability "Refresh"
         capability "Initialize"
+        capability "LightEffects"
 		
 		attribute "colorName", "string"
         attribute "cloudAPI", "string"
@@ -625,4 +636,97 @@ def getIPString() {
 def parse(message) {  
   log.error "Got something to parseUDP"
   log.error "UDP Response -> ${message}"    
+}
+
+// LightEffects commands
+def setEffect(String effectName){
+   def id = lightEffects.find{ it.value == effectName }
+   if (id) setEffect(id.key)
+}
+
+def  setEffect(effectNo) {
+//  logDebug("setEffect to ${effectNo}")
+    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
+    // Illusion Light Effect
+    if (effectNo == 1) {
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQnFR4BAAEFAAJscdkKCks\\=","o/8KAAAAAAAAAAAAAAAAAAAAAFY\\=","MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="]}}}'  
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }
+    // Rainbow Light Effect
+    if (effectNo == 2) {
+        def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["owABAgQmFVIBAgFkBQAH/wAA/6E\\=","o/9/AP//AAD/AAAA/wD//4sA/1c\\=","MwUE2wkCLQAAAAAAAAAAAAAAAM8\\="]},"transaction":"u_1682169742270","type":1}}'  
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }
+    // Aurora Light Effect
+    if (effectNo == 3) {
+        if (device.getDataValue("deviceModel") == 'H6066') {
+            def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQmFTwBAgEeBQAFGf+ZXJQ\\=","o//QHwOrNgCLRQBkAAAAAAAAAKc\\=","MwUE3AkCLQAAAAAAAAAAAAAAAMg\\="]}}}'
+            if (debugLog) {log.debug ("setEffect(): device h6066 command to ${cmd2}")}
+            sendCommandLan(cmd2)
+        }
+        else if (device.getDataValue("deviceModel") == 'H6065') {
+            def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQmFTMDAQEeBQAGGf+ZXJk\\=","o//QHwOrNgCLRQBkACkAKQAAAKc\\=","MwUEUQsCRwAAAAAAAAAAAAAAAC0\\="]}}}'
+            if (debugLog) {log.debug ("setEffect(): device H6605 command to ${cmd2}")}
+            sendCommandLan(cmd2)
+        }
+        else if (device.getDataValue("deviceModel") == 'H6072') {
+            def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBAIBOwAAAAwAAf//AQAAAJI\\=","owEC+wAM/8kAjv8Ajv8A+v8AAGQ\\=","owL//wD//wD//wD//wCp/4sA/4M\\=","o/+LAP/v/wAAAAAAAAAAAAAAADg\\=","MwUENggAAAAAAAAAAAAAAAAAAAw\\="]}}}'
+            if (debugLog) {log.debug ("setEffect(): device H6072 command to ${cmd2}")}
+            sendCommandLan(cmd2)
+        }
+        else if (device.getDataValue("deviceModel") == 'H7050') {
+            def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBQICIAAAAAECAf8yAQAAAEk\\=","owEA+jIDAP8AAP//qv8AAwCAAEA\\=","owIAAAAjAAAAAwIB/xkA+gAAApw\\=","owP6AAR//wD//wCg//8A//8UAWs\\=","o//6AAD/AAAAAAAAAAAAAAAAAFk\\=","MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="]}}}'
+            if (debugLog) {log.debug ("setEffect(): device H7050 command to ${cmd2}")}
+            sendCommandLan(cmd2)
+        }
+        else {
+            def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABCQIEI0AAAAECAf8ZA8IKA+I\\=","owEC5jIED/8ICwf/B/j//wbpAGs\\=","owIC+AEAgAAjQgAAAQAB/xgDu+Q\\=","owMKA4LnMgT/03LLhf8NS/9S/wE\\=","owSZEgHNAAPkACNEAAABAAH/GIc\\=","owUDuwoDAuUyBAsH/w//CP8G6d0\\=","owYH+P8QAcwBAIAAJkYAAAEAAZk\\=","owf/GAO7CgMC5TIFB/j/Cwf//y4\\=","o/8G6Q//CNz/ERIB3QEAgAAAADY\\=","MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="]}}}'
+            if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
+            sendCommandLan(cmd2)
+        }
+    }
+    // Aurora-B Light Effect
+    if (effectNo == 4) {
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABCQIEI0AAAAECAf8ZA8IKA+I\\=","owEC5jIED/8ICwf/B/j//wbpAGs\\=","owIC+AEAgAAjQgAAAQAB/xgDu+Q\\=","owMKA4LnMgT/03LLhf8NS/9S/wE\\=","owSZEgHNAAPkACNEAAABAAH/GIc\\=","owUDuwoDAuUyBAsH/w//CP8G6d0\\=","owYH+P8QAcwBAIAAJkYAAAEAAZk\\=","owf/GAO7CgMC5TIFB/j/Cwf//y4\\=","o/8G6Q//CNz/ERIB3QEAgAAAADY\\=","MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="]}}}'
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }
+    // Sunrise Light Effect
+    if (effectNo == 5) {
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["MwUEAAAAAAAAAAAAAAAAAAAAADI\\="]}}}'
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }
+    // Sunset Light Effect
+    if (effectNo == 6) {
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]}}}'
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }
+   
+//  updateCurrentStatus(null,null,effectNo)  
+}
+
+def setNextEffect() {
+  logDebug("setNextEffect")
+  
+  i = device.currentValue("effectNumber")
+  i = (i == null) ? 1 : i + 1
+  if (i >= lightEffects.size()) i = 1
+  
+  setEffect(i) 
+}
+      
+def setPreviousEffect() {
+  logDebug("setPreviousEffect")
+  
+  maxIndex = lightEffects.size - 1
+  
+  i = device.currentValue("effectNumber")
+  i = (i == null) ? maxIndex : i - 1
+  if (i < 1) i = maxIndex
+  
+  setEffect(i)  
 }
