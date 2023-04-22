@@ -31,7 +31,8 @@ def commandPort() { "4003" }
      3:"Aurora",
      4:"Aurora-B",
      5:"Sunrise",
-     6:"Sunset"
+     6:"Sunset",
+     7:"Flower Field"
 ]
 
 metadata {
@@ -508,6 +509,7 @@ def configure() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}
+    state.scenes= lightEffects
     if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
@@ -705,7 +707,12 @@ def  setEffect(effectNo) {
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendCommandLan(cmd2)
     }
-   
+    // Flower Field Effect
+       if (effectNo == 7) {
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQmGxYACgEFAAf/AAD/f/k\\=","o/8A//8AAP8AAAD/AP//iwD/ACg\\=","MwUE3wkKLQAAAAAAAAAAAAAAAMM\\="]}}}'
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }
 //  updateCurrentStatus(null,null,effectNo)  
 }
 
