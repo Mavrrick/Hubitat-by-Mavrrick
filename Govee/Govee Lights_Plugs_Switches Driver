@@ -38,6 +38,10 @@ def commandPort() { "4003" }
      501:"Aurora-B",
 ] 
 
+// First 30 scenese are setup to replicate Hubitat Wiz Bulb integration Scense so these can be used together
+// Sense above 100 will be other standard scense that are part of the Govee devices as they are found
+// Special scense like 3d effects may have their own section as well to allow management.
+
  @Field static Map lightEffects = [
     H6052:[ //Aura Table Lamp
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
@@ -63,7 +67,7 @@ def commandPort() { "4003" }
         2:["name":"Romantic", "cmd":['"owABAgQmFTIBAgFIBQAFiwD/5H8\\="','"o/8A5/87g/9pSv+RdgAAAAAAADg\\="','"MwUE4gkCLQAAAAAAAAAAAAAAAPY\\="']],
         3:["name":"Sunset Glow", "cmd":['"owABAgQmFQoBAgFkBQAFZACX39c\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUE2gkCLQAAAAAAAAAAAAAAAM4\\="']],
         4:["name":"Rainbow", "cmd":['"owABAgQmFVIBAgFkBQAH/wAA/6E\\="','"o/9/AP//AAD/AAAA/wD//4sA/1c\\="','"MwUE2wkCLQAAAAAAAAAAAAAAAM8\\="']],
-        5:["name":"Fire", "cmd":[['"owABAgQmFUcBAgFkBQAF2AEB+5U\\="','"o/9WB/9xAP+rBf/SAAAAAAAAAP8\\="','"MwUE3gkCLQAAAAAAAAAAAAAAAMo\\="']]],
+        5:["name":"Fire", "cmd":['"owABAgQmFUcBAgFkBQAF2AEB+5U\\="','"o/9WB/9xAP+rBf/SAAAAAAAAAP8\\="','"MwUE3gkCLQAAAAAAAAAAAAAAAMo\\="']],
         7:["name":"Forest", "cmd":['"owABAgQmFTYBAgFkBQAG/545AJw\\="','"o///AAfKAJnVE8rsAf/rJAAAACY\\="','"MwUE2QkCLQAAAAAAAAAAAAAAAM0\\="']],
         101:["name":"Illusion", "cmd":['"owABAgQnFR4BAAEFAAJscdkKCks\\="','"o/8KAAAAAAAAAAAAAAAAAAAAAFY\\="','"MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="']],
         103:["name":"Aurora", "cmd":['"owABAgQmFTwBAgEeBQAFGf+ZXJQ\\="','"o//QHwOrNgCLRQBkAAAAAAAAAKc\\="','"MwUE3AkCLQAAAAAAAAAAAAAAAMg\\="']],
