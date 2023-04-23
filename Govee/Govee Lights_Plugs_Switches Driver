@@ -760,6 +760,18 @@ def  setEffect(effectNo) {
             if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
             sendCommandLan(cmd2)
      } 
+    // Romantic Effect
+    if (effectNo == 2) {
+        def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEBwAAAAAAAAAAAAAAAAAAADU\\="]},"transaction":"u_1682169742270","type":1}}'  
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }
+    // Sunset Effect   
+    if (effectNo == 2) {
+        def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]},"transaction":"u_1682169742270","type":1}}'  
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }    
     // Rainbow Light Effect
     if (effectNo == 4) {
         def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="]},"transaction":"u_1682169742270","type":1}}'  
