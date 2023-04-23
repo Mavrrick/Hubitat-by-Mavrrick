@@ -24,18 +24,19 @@ import groovy.json.JsonBuilder
 
 def commandPort() { "4003" }
 
-/* @Field static Map lightEffects = [
-     0:"none",
-     1:"Illusion",
-     2:"Rainbow (H6066)",
+ @Field static Map sceneEffects = [
+     1:"Ocean/Deep Sea",
+     2:"Romantic",
      3:"Aurora",
      4:"Aurora-B",
      5:"Sunrise",
      6:"Sunset",
-     7:"Flower Field",
-     8:"Forest",
-     9:"Deep Sea/Ocean"
-] */
+     7:"Forest",
+     101:"Illusion",
+     102:"Rainbow",
+     103:"Aurora",
+     104:"Flower Field"
+] 
 
  @Field static Map lightEffects = [
     H6052:[ //Aura Table Lamp
@@ -573,7 +574,7 @@ def configure() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}
-    state.scenes = lightEffects.(device.getDataValue("deviceModel"))
+    state.scenes = sceneEffects
     if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
@@ -759,7 +760,7 @@ def  setEffect(effectNo) {
         sendCommandLan(cmd2)
     }
     // Flower Field Effect
-       if (effectNo == 8) {
+       if (effectNo == 104) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQmGxYACgEFAAf/AAD/f/k\\=","o/8A//8AAP8AAAD/AP//iwD/ACg\\=","MwUE3wkKLQAAAAAAAAAAAAAAAMM\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendCommandLan(cmd2)
@@ -771,7 +772,7 @@ def  setEffect(effectNo) {
             sendCommandLan(cmd2)
     }
     // Ocean/Deep Sea Light Effect
-    if (effectNo == 9) {
+    if (effectNo == 1) {
             def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBAICHQAAAAEAAf//AAAAALs\\=","owEA3DICAGT/AAD/AAAAAAAAACo\\=","owIaAAIKAQIB/ygB1wAAAAAyAYM\\=","o/8A/5YAAAAAAAAAAAAAAAAAADU\\=","MwUEywAAAAAAAAAAAAAAAAAAAPk\\="]}}}'
             if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
             sendCommandLan(cmd2)
