@@ -751,7 +751,7 @@ def setEffect(String effectName){
 def  setEffect(effectNo) {
 //    if (debugLog) {log.debug ("setEffect(): setEffect2 to ${lightEffects.(device.getDataValue("deviceModel")).find{effectNo}}")}
     int effectNum = effectNo
-    if (lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNum)) {
+    if (lightEffects.containsKey((device.getDataValue("deviceModel"))) && (lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNum))) {
         sceneInfo = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).name
         sceneCmd = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).cmd 
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
