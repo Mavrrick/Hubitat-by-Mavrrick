@@ -163,7 +163,7 @@ metadata {
 		
 		attribute "colorName", "string"
         attribute "cloudAPI", "string"
-        attribute "effect", "string"
+        attribute "effectNum", "integer"
    
     }
 
@@ -223,7 +223,7 @@ def setColorTemperature(value,level = null,transitionTime = null)
         sendEvent(name: "colorTemperature", value: intvalue)
         sendEvent(name: "switch", value: "on")
         sendEvent(name: "colorMode", value: "CT")
-	setCTColorName(intvalue)
+	    setCTColorName(intvalue)
         }
     else {
        if (device.currentValue("cloudAPI") == "Retry") {
@@ -755,88 +755,107 @@ def parse(message) {
 }
 
 // LightEffects commands
-def setEffect(String effectName){
-   def id = lightEffects.find{ it.value == effectName }
-   if (id) setEffect(id.key)
-}
+// def setEffect(String effectName){
+//   def id = lightEffects.find{ it.value == effectName }
+//   if (id) setEffect(id.key)
+// }
 
 def  setEffect(effectNo) {
 //    if (debugLog) {log.debug ("setEffect(): setEffect2 to ${lightEffects.(device.getDataValue("deviceModel")).find{effectNo}}")}
-    int effectNum = effectNo
-    if (lightEffects.containsKey((device.getDataValue("deviceModel"))) && (lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNum))) {
-        sceneInfo = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).name
-        sceneCmd = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).cmd 
+    int effectNumber = effectNo
+    if (lightEffects.containsKey((device.getDataValue("deviceModel"))) && (lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNumber))) {
+        sceneInfo = lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).name
+        sceneCmd = lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).cmd 
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
-        sendEvent(name: "effect", value: sceneInfo+"("+effectNo+")")
+        sendEvent(name: "effectName", value: sceneInfo)
+        sendEvent(name: "effectNum", value: effectNumber)
+        sendEvent(name: "colorMode", value: "Scene")
 //    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
     } else {
+        sendEvent(name: "colorMode", value: "Scene")
+        sendEvent(name: "effectNum", value: effectNumber)
     // Ocean/Deep Sea Light Effect
     if (effectNo == 1) {
             def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBAICHQAAAAEAAf//AAAAALs\\=","owEA3DICAGT/AAD/AAAAAAAAACo\\=","owIaAAIKAQIB/ygB1wAAAAAyAYM\\=","o/8A/5YAAAAAAAAAAAAAAAAAADU\\=","MwUEywAAAAAAAAAAAAAAAAAAAPk\\="]}}}'
             if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
+            sendEvent(name: "effectName", value: "Ocean/Deep Sea")
             sendCommandLan(cmd2)
      } 
     // Romantic Effect
     if (effectNo == 2) {
         def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEBwAAAAAAAAAAAAAAAAAAADU\\="]},"transaction":"u_1682169742270","type":1}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Romantic")
         sendCommandLan(cmd2)
     }
     // Sunset Effect   
     if (effectNo == 2) {
         def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]},"transaction":"u_1682169742270","type":1}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Sunset")
         sendCommandLan(cmd2)
     }    
     // Rainbow Light Effect
     if (effectNo == 4) {
         def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="]},"transaction":"u_1682169742270","type":1}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Rainbow")
         sendCommandLan(cmd2)
     }
     // Fire Light Effect
     if (effectNo == 5) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABDAIFHQAAABYAAXAyA7sUFFk\\=","owEC1RQC/1kH////AwD/EwD/ASw\\=","owIpJwAABQIB/5kC/18eAgD/Bog\\=","owMAAAD/////bQf/TQf/Dgf/CH4\\=","owQJEgD8EACAAikhAAAGAgH/mbk\\=","owUC/18eAgD/BgAAAP////9tB4s\\=","owb/TQf/Dgf/CAkQAP4QAP0CKTA\\=","owdDAhQUAAH//wCAFBQB6hQG/2I\\=","owgVB/8ICf8ICf8pB/8HEwAAAIM\\=","owkTAPwAAIADKSQAAAEAAf8AADQ\\=","owqAFBQB6RQG/xUH/zkH/44H/3Y\\=","o/9eB/8HE/8PBxcA+QAA/wQAAAw\\=","MwUEMggAAAAAAAAAAAAAAAAAAAg\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Fire")
         sendCommandLan(cmd2)
     }
     // Cozy Light Effect (static Scene to very warm light)
     if (effectNo == 6) {
         if (debugLog) {log.debug ("setEffect(): Static Scene Cozy Called. Calling CT Command directly")}
-        setColorTemperature(2000)
+        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
+        if (level != null) setLevel(level,transitionTime);
+        sendEvent(name: "colorTemperature", value: 2000)
+        sendEvent(name: "switch", value: "on")
+	    setCTColorName(2000)
+        sendEvent(name: "effectName", value: "Cozy")
     }
     // Forest Effect
     if (effectNo == 7) {
-            def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDJgABAAoCAf8ZAbQKCtk\\=","owECyBQF//8AAP//////AP//lBI\\=","owL/ABQBlgAAAAAjAAIPBQIB/wo\\=","owMUA9gAAAH6CgQE/wC0/wBH/5I\\=","owT/4/8AAAAAAAAAABoAAAABAl0\\=","owUB/wUByBQUAu4UAQD/AAAAAJI\\=","o/8AAAAAAAAAAAAAAAAAAAAAAFw\\=","MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="]}}}'
-            if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-            sendCommandLan(cmd2)
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDJgABAAoCAf8ZAbQKCtk\\=","owECyBQF//8AAP//////AP//lBI\\=","owL/ABQBlgAAAAAjAAIPBQIB/wo\\=","owMUA9gAAAH6CgQE/wC0/wBH/5I\\=","owT/4/8AAAAAAAAAABoAAAABAl0\\=","owUB/wUByBQUAu4UAQD/AAAAAJI\\=","o/8AAAAAAAAAAAAAAAAAAAAAAFw\\=","MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="]}}}'
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Forest")
+        sendCommandLan(cmd2)
     }
     // Flower Field Effect
     if (effectNo == 8) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBQICLKACFAoCAf+WAMwAAJE\\=","owEC4AAH0QBe/wMA/2wA//8A/1g\\=","owJ/AP8AAPUA/wAAABAA2AAaoFk\\=","owMAAAEAATIUAAAAAAD6FAHPAKY\\=","o/9iAAAAAAAAAAAAAAAAAAAAAD4\\=","MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Flower Field")
         sendCommandLan(cmd2)
     }     
     // Illusion Light Effect
     if (effectNo == 101) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQnFR4BAAEFAAJscdkKCks\\=","o/8KAAAAAAAAAAAAAAAAAAAAAFY\\=","MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="]}}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Illusion")
         sendCommandLan(cmd2)
     }
     // Aurora Light Effect
     if (effectNo == 103) {    
-            def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABCQIEI0AAAAECAf8ZA8IKA+I\\=","owEC5jIED/8ICwf/B/j//wbpAGs\\=","owIC+AEAgAAjQgAAAQAB/xgDu+Q\\=","owMKA4LnMgT/03LLhf8NS/9S/wE\\=","owSZEgHNAAPkACNEAAABAAH/GIc\\=","owUDuwoDAuUyBAsH/w//CP8G6d0\\=","owYH+P8QAcwBAIAAJkYAAAEAAZk\\=","owf/GAO7CgMC5TIFB/j/Cwf//y4\\=","o/8G6Q//CNz/ERIB3QEAgAAAADY\\=","MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="]}}}'
-            if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
-            sendCommandLan(cmd2)
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABCQIEI0AAAAECAf8ZA8IKA+I\\=","owEC5jIED/8ICwf/B/j//wbpAGs\\=","owIC+AEAgAAjQgAAAQAB/xgDu+Q\\=","owMKA4LnMgT/03LLhf8NS/9S/wE\\=","owSZEgHNAAPkACNEAAABAAH/GIc\\=","owUDuwoDAuUyBAsH/w//CP8G6d0\\=","owYH+P8QAcwBAIAAJkYAAAEAAZk\\=","owf/GAO7CgMC5TIFB/j/Cwf//y4\\=","o/8G6Q//CNz/ERIB3QEAgAAAADY\\=","MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="]}}}'
+        if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Aurora")
+        sendCommandLan(cmd2)
     }
        
     // Aurora-B Light Effect
     if (effectNo == 501) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABCQIEI0AAAAECAf8ZA8IKA+I\\=","owEC5jIED/8ICwf/B/j//wbpAGs\\=","owIC+AEAgAAjQgAAAQAB/xgDu+Q\\=","owMKA4LnMgT/03LLhf8NS/9S/wE\\=","owSZEgHNAAPkACNEAAABAAH/GIc\\=","owUDuwoDAuUyBAsH/w//CP8G6d0\\=","owYH+P8QAcwBAIAAJkYAAAEAAZk\\=","owf/GAO7CgMC5TIFB/j/Cwf//y4\\=","o/8G6Q//CNz/ERIB3QEAgAAAADY\\=","MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendEvent(name: "effectName", value: "Aurora-B")
         sendCommandLan(cmd2)
     }
     }    
@@ -844,23 +863,23 @@ def  setEffect(effectNo) {
 }
 
 def setNextEffect() {
-  logDebug("setNextEffect")
-  
-  i = device.currentValue("effectNumber")
-  i = (i == null) ? 1 : i + 1
-  if (i >= lightEffects.size()) i = 1
-  
-  setEffect(i) 
+if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
+      if (device.currentValue("colorMode") != "Scene") {
+        setEffect(1)
+        } else {
+            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
+            int nextEffect = device.currentValue("effectNum").toInteger()+1
+            setEffect(nextEffect)
+        }  
 }
       
 def setPreviousEffect() {
-  logDebug("setPreviousEffect")
-  
-  maxIndex = lightEffects.size - 1
-  
-  i = device.currentValue("effectNumber")
-  i = (i == null) ? maxIndex : i - 1
-  if (i < 1) i = maxIndex
-  
-  setEffect(i)  
+if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
+      if (device.currentValue("colorMode") != "Scene") {
+        setEffect(8)
+        } else {
+            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
+            int prevEffect = device.currentValue("effectNum").toInteger()-1
+            setEffect(prevEffect)
+        }  
 }
