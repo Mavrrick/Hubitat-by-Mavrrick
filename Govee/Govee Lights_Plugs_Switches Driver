@@ -74,6 +74,7 @@ def commandPort() { "4003" }
         8:["name":"Flower Field", "cmd":['"owABAgQmGxYACgEFAAf/AAD/f/k\\="','"o/8A//8AAP8AAAD/AP//iwD/ACg\\="','"MwUE3wkKLQAAAAAAAAAAAAAAAMM\\="']],
         101:["name":"Illusion", "cmd":['"owABAgQnFR4BAAEFAAJscdkKCks\\="','"o/8KAAAAAAAAAAAAAAAAAAAAAFY\\="','"MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="']],
         103:["name":"Aurora", "cmd":['"owABAgQmFTwBAgEeBQAFGf+ZXJQ\\="','"o//QHwOrNgCLRQBkAAAAAAAAAKc\\="','"MwUE3AkCLQAAAAAAAAAAAAAAAMg\\="']],
+        104:["name":"Test DIY", "cmd":['"owABAgQmBzIACAEFAAT/LgBl//Q\\="','"o/86G4D/Dev/AAAAAAAAAAAAABs\\="','"MwUKwQAAAAAAAAAAAAAAAAAAAP0\\="']]
     ], 
     H6072:[ // Lyra Lamp
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
@@ -134,6 +135,17 @@ def commandPort() { "4003" }
         7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
         8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
         103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']]
+    ],
+    H705A:[ //Permanent Outdoor Lights
+        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
+        2:["name":"Romantic", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
+        3:["name":"Sunset Glow", "cmd":['"owABCwIFIyAAAAECAf9/ANcUFPg\\="','"owEA8BQE/0EA/4IAxxb+giL+AfE\\="','"owIA8wAAAAEjIgAAAQIB/38A7T0\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAAQDyAAAABSMkAAABAgH/f9Q\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4BAPIAAAADIyYAAAECATw\\="','"owf/fgDwFBQA8hQE/0EA/5YAwCA\\="','"owgH/mQQ/gEA8gAAAAQjKAAAASU\\="','"owkCAf+AAOkUFADuFAT/QQD/lhY\\="','"o/8A7QAk/7IAAQDyAAAAAAAAACs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']],
+        4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
+        5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
+        7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
+        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
+        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']],
+        104:["name":"Halloween D", "cmd":[['"owABCgIFHQACFAoAAacAA8kKCsI="','"owEB\\/AUCiwD\\/\\/2cAAACAAACAALQ="','"owImAAAAAQAB\\/wAA\\/AUFA\\/wKBXQ="','"owMA\\/wAAAAAAAAAAAAAAAAARAE4="','"owT0AACAABoAAQACAAH\\/\\/wD3FCg="','"owUUAP8UAf9pABIA9wAAgAAaZNU="','"owYBAAIAAf\\/mAJkUFAD\\/FAGLAEY="','"owf\\/AAD3EAD3AB0AAAABAAEkCXs="','"owgAxhQUAPkUAosA\\/\\/9ZAAAA96c="','"o\\/8AAIAAAAAAAAAAAAAAAAAAANw="','"MwUEowsAAAAAAAAAAAAAAAAAAJo="']]]
     ]
 ]    
 
