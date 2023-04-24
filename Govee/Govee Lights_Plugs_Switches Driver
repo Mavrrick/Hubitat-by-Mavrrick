@@ -30,11 +30,11 @@ def commandPort() { "4003" }
      3:"Sunset/Sunset Glow",
      4:"Rainbow",
      5:"Fire",
-     6:"Sunset",
+     6:"Cozy",
      7:"Forest",
+     8:"Flower Field",
      101:"Illusion",
      103:"Aurora",
-     104:"Flower Field",
      501:"Aurora-B",
 ] 
 
@@ -50,6 +50,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
         5:["name":"Fire", "cmd":['"MwUEIQAAAAAAAAAAAAAAAAAAABM\\="']],
         7:["name":"Forest", "cmd":['"MwUEEgAAAAAAAAAAAAAAAAAAACA\\="']],
+        8:["name":"Flower Field", "cmd":['"owABCAcJZFP//wAGGAD/AD9MTk8\\="','"owFQVFVZW19iY2Rmam9wc3V2eNA\\="','"owJ6foCDBv8AblNdbXJ3ewSLAKM\\="','"owP/Q2drgiX/fwAAAQIDBAUGBzc\\="','"owQICQoLDA0ODxAREhMUFRYXGL8\\="','"owUZGhscHR4fICEiI0kS/wAAMig\\="','"owZBRkhNUVZYWmFlaGx0eX1/gSw\\="','"o/8DAP//Sl5gAAAAAAAAAAAAACs\\="','"MwUEuwsAAAAAAAAAAAAAAAAAAII\\="']],
         103:["name":"Aurora", "cmd":['"MwUEHAAAAAAAAAAAAAAAAAAAAC4\\="']]
     ], 
     H6065:[ // Govee Glide Y Lights
@@ -59,6 +60,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"owABAgQmFVADBAEmBQAH/wAA/+U\\="','"o/9/AP//AAD/AAAA/wD//4sA/1c\\="','"MwUEUAsCRwAAAAAAAAAAAAAAACw\\="']],
         5:["name":"Fire", "cmd":['"owABAgQmFVUDFAwCAv8BJQUABQI\\="','"o//YAQH7Vgf/cQD/qwUBAQEAAPA\\="','"MwUEVAsCRwAAAAAAAAAAAAAAACg\\="']],
         7:["name":"Forest", "cmd":['"owABAgQmFS0DAgEiBQAG/545AMM\\="','"o///AAfKAJnVE8rsAf/rJAAAACY\\="','"MwUETgsCRwAAAAAAAAAAAAAAADI\\="']],
+        8:["name":"Stream", "cmd":['"owABAgRYADIBZAMGAQENAAYBAKQ\\="','"o/8AAAYBAQcAA07NxAEBAT7P5A0\\="','"MwUEyBwARwAAAAAAAAAAAAAAAKE\\="']],
         101:["name":"Illusion", "cmd":['"owABAgQnFR4BAAEFAAJscdkKCks\\="','"o/8KAAAAAAAAAAAAAAAAAAAAAFY\\="','"MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="']],
         103:["name":"Aurora", "cmd":['"owABAgQmFTMDAQEeBQAGGf+ZXJk\\="','"o//QHwOrNgCLRQBkACkAKQAAAKc\\="','"MwUEUQsCRwAAAAAAAAAAAAAAAC0\\="']]
     ],
@@ -69,9 +71,9 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"owABAgQmFVIBAgFkBQAH/wAA/6E\\="','"o/9/AP//AAD/AAAA/wD//4sA/1c\\="','"MwUE2wkCLQAAAAAAAAAAAAAAAM8\\="']],
         5:["name":"Fire", "cmd":['"owABAgQmFUcBAgFkBQAF2AEB+5U\\="','"o/9WB/9xAP+rBf/SAAAAAAAAAP8\\="','"MwUE3gkCLQAAAAAAAAAAAAAAAMo\\="']],
         7:["name":"Forest", "cmd":['"owABAgQmFTYBAgFkBQAG/545AJw\\="','"o///AAfKAJnVE8rsAf/rJAAAACY\\="','"MwUE2QkCLQAAAAAAAAAAAAAAAM0\\="']],
+        8:["name":"Flower Field", "cmd":['"owABAgQmGxYACgEFAAf/AAD/f/k\\="','"o/8A//8AAP8AAAD/AP//iwD/ACg\\="','"MwUE3wkKLQAAAAAAAAAAAAAAAMM\\="']],
         101:["name":"Illusion", "cmd":['"owABAgQnFR4BAAEFAAJscdkKCks\\="','"o/8KAAAAAAAAAAAAAAAAAAAAAFY\\="','"MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="']],
         103:["name":"Aurora", "cmd":['"owABAgQmFTwBAgEeBQAFGf+ZXJQ\\="','"o//QHwOrNgCLRQBkAAAAAAAAAKc\\="','"MwUE3AkCLQAAAAAAAAAAAAAAAMg\\="']],
-        104:["name":"Flower Field", "cmd":['"owABAgQmGxYACgEFAAf/AAD/f/k\\="','"o/8A//8AAP8AAAD/AP//iwD/ACg\\="','"MwUE3wkKLQAAAAAAAAAAAAAAAMM\\="']]
     ], 
     H6072:[ // Lyra Lamp
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
@@ -80,6 +82,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
         5:["name":"Fire", "cmd":['"owABBwIEGiQAAAECAf8AA4AUFOM\\="','"owED4woB/zkHFwD/EwD/ABoiALQ\\="','"owIAAQIB/wADgBQUA4AUAf9HB/Y\\="','"owMXAP8AAIAAHQAAAAECAf8NAic\\="','"owT/CgoA9BQC/wAA/0AHAACAAH0\\="','"owUAgAAaJgAAAQIB/wADgBQUA2c\\="','"o/+AFAH/FwcXAf0AAIAAAAAAAE0\\="','"MwUEOggAAAAAAAAAAAAAAAAAAAA\\="']],
         7:["name":"Forest", "cmd":['"MwUEEgAAAAAAAAAAAAAAAAAAACA\\="']],
+        8:["name":"Journee of Flowers", "cmd":['"owABCQIFGgAAAAECAf9MA+oUFO4\\="','"owEBzRQB/38AEgD/AACAACAgAJY\\="','"owIAAQIC/0wD7xQU/wAAgBQUAYE\\="','"owP0FAH/AAASAP8AAIAAGiIAAOs\\="','"owQBAgH/TAP/FBQA8xQBAP8AEuE\\="','"owUA/wAAgAAaJAAAAQIB/0wD/6o\\="','"owYUFADzFAEA//8SAP8AAIAAGjQ\\="','"owcmAAABAgH/SwP/FBQA5hQB/8Q\\="','"o/8X/xIA/wAAgAAAAAAAAAAAANk\\="','"MwUEOwgAAAAAAAAAAAAAAAAAAAE\\="']],
         103:["name":"Aurora", "cmd":['"owABBAIBOwAAAAwAAf//AQAAAJI\\="','"owEC+wAM/8kAjv8Ajv8A+v8AAGQ\\="','"owL//wD//wD//wD//wCp/4sA/4M\\="','"o/+LAP/v/wAAAAAAAAAAAAAAADg\\="','"MwUENggAAAAAAAAAAAAAAAAAAAw\\="']]
     ],
     H6076:[ // Basics Floor Lamp
@@ -89,6 +92,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
         5:["name":"Fire", "cmd":['"owABBwIEGkMAAAECAUwAA4AUFDc\\="','"owED4woB/zkHFwD9EwD9AB0AAJE\\="','"owIAAQIB/w0C/woKAPQUAv8AALE\\="','"owP/QAcAAIAAAIAAGkYAAAECAUY\\="','"owR+AAOAFBQDgBQB/xcHFwH9AMg\\="','"owUAgAAaQwAAAQIBfgADgBQUA4M\\="','"o/+AFAH/FwcXAf0AAIAAAAAAAE0\\="','"MwUEZwgAAAAAAAAAAAAAAAAAAF0\\="']],
         7:["name":"Forest", "cmd":['"owABBgIDGgAAAAEAAf8AAIAUFMA\\="','"owEAgBQBAP8AAACAAACAAB0AANU\\="','"owIAAQIB/wAAgBQUANtkAv//AGE\\="','"owMA/wAAAIAAAIAAHQAAAAECAUA\\="','"owT/AAKAFBQA22QCAP8A//8AAJg\\="','"o/8AgAAAgAAAAAAAAAAAAAAAAFw\\="','"MwUEbAgAAAAAAAAAAAAAAAAAAFY\\="']],
+        8:["name":"Blossom", "cmd":['"owABCwIEKTAAAAEAAf//AIAUFDY\\="','"owEB8hQG/wAA/38AcP6aB3H/9VQ\\="','"owIX////ABYA9wAAgAApIwAAASM\\="','"owMAAf//AIAUFAHyFAb/AAD/f78\\="','"owQAcP6aByz//hH+//8AFAD3AJU\\="','"owUAgAApJQAAAQAB//8AgBQUAas\\="','"owbyFAb/AAD/fwBw/poHXP//B3I\\="','"owf3//8AFgD3AACAACk3AAABAC0\\="','"owgB//8AgBQUAfIUBv8AAP9/ALQ\\="','"owlw/poHWf/zB////wAUAPcAAPc\\="','"o/+AAAAAAAAAAAAAAAAAAAAAANw\\="','"MwUEqAkAAAAAAAAAAAAAAAAAAJM\\="']],
     ],
     H61A1:[ // Neon Rope Light
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
@@ -97,6 +101,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
         5:["name":"Fire", "cmd":['"owABDAIFHQAAAA4AAXAyA7sUFEE\\="','"owEC1RQC/1kH////AwD/EwD3ASQ\\="','"owIpJwAABAIB/5kC/18eAgD/Bok\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD3EACAAikhAAAEAgH/mbA\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAPQQAPcCKTA\\="','"owdDAggGAAH//wCAFBQB6hQG/2w\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPcAAIADKSQAAAEAAf8AAD8\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA9AAA/wQAAAE\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
         7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUA9gAAAH6CgQE/wC0/wBH/5I\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
+        8:["name":"Flower Field-A", "cmd":['"owABBQICLKACFAoCAf+WAMwAAJE\\="','"owEC4AAH0QBe/wMA/2wA//8A/1g\\="','"owJ/AP8AAPUA/wAAABAA2AAaoFk\\="','"owMAAAEAATIUAAAAAAD6FAHPAKY\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="']],
         103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']],
         501:["name":"Aurora-B", "cmd":['"owABCQIEI0AAAAECAf8ZA8IKA+I\\="','"owEC5jIED/8ICwf/B/j//wbpAGs\\="','"owIC+AEAgAAjQgAAAQAB/xgDu+Q\\="','"owMKA4LnMgT/03LLhf8NS/9S/wE\\="','"owSZEgHNAAPkACNEAAABAAH/GIc\\="','"owUDuwoDAuUyBAsH/w//CP8G6d0\\="','"owYH+P8QAcwBAIAAJkYAAAEAAZk\\="','"owf/GAO7CgMC5TIFB/j/Cwf//y4\\="','"o/8G6Q//CNz/ERIB3QEAgAAAADY\\="','"MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="']]
     ],
@@ -107,6 +112,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
         5:["name":"Fire", "cmd":['"owABDAIFHQAAAA4AAXAyA7sUFEE\\="','"owEC1RQC/1kH////AwD/EwD3ASQ\\="','"owIpJwAABAIB/5kC/18eAgD/Bok\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD3EACAAikhAAAEAgH/mbA\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAPQQAPcCKTA\\="','"owdDAggGAAH//wCAFBQB6hQG/2w\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPcAAIADKSQAAAEAAf8AAD8\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA9AAA/wQAAAE\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
         7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUA9gAAAH6CgQE/wC0/wBH/5I\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
+        8:["name":"Flower Field-A", "cmd":['"owABBQICLKACFAoCAf+WAMwAAJE\\="','"owEC4AAH0QBe/wMA/2wA//8A/1g\\="','"owJ/AP8AAPUA/wAAABAA2AAaoFk\\="','"owMAAAEAATIUAAAAAAD6FAHPAKY\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="']],
         103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']]
     ],
     H6172:[ //Outdoor LED Strip Lights
@@ -116,6 +122,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
         5:["name":"Fire", "cmd":['"owABDAIFHQAAABYAAXAyA7sUFFk\\="','"owEC1RQC/1kH////AwD/EwD/ASw\\="','"owIpJwAABQIB/5kC/18eAgD/Bog\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD8EACAAikhAAAGAgH/mbk\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAP4QAP0CKTA\\="','"owdDAhQUAAH//wCAFBQB6hQG/2I\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPwAAIADKSQAAAEAAf8AADQ\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA+QAA/wQAAAw\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
         7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUAfsAAAH6CgQE/wC0/wBH/7M\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
+        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
         103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']]
     ],
     H7050:[ //Smart Ground Lights
@@ -125,6 +132,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
         5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
         7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
+        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
         103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']]
     ]
 ]    
@@ -143,8 +151,7 @@ metadata {
 		
 		attribute "colorName", "string"
         attribute "cloudAPI", "string"
-        attribute "colorName", "string"
-        attribute "cloudAPI", "string"
+        attribute "effect", "string"
    
     }
 
@@ -744,12 +751,12 @@ def setEffect(String effectName){
 def  setEffect(effectNo) {
 //    if (debugLog) {log.debug ("setEffect(): setEffect2 to ${lightEffects.(device.getDataValue("deviceModel")).find{effectNo}}")}
     int effectNum = effectNo
-    sceneInfo = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).name
-    sceneCmd = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).cmd 
-    if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
-    sendEvent(name: "effect", value: sceneInfo+"("+effectNo+")")
+    if (lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNum)) {
+        sceneInfo = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).name
+        sceneCmd = lightEffects.(device.getDataValue("deviceModel")).get(effectNum).cmd 
+        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
+        sendEvent(name: "effect", value: sceneInfo+"("+effectNo+")")
 //    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
-    if (sceneInfo) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
@@ -784,18 +791,23 @@ def  setEffect(effectNo) {
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendCommandLan(cmd2)
     }
-    // Sunset Light Effect
+    // Cozy Light Effect (static Scene to very warm light)
     if (effectNo == 6) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendCommandLan(cmd2)
+        if (debugLog) {log.debug ("setEffect(): Static Scene Cozy Called. Calling CT Command directly")}
+        setColorTemperature(2000)
     }
     // Forest Effect
     if (effectNo == 7) {
             def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDJgABAAoCAf8ZAbQKCtk\\=","owECyBQF//8AAP//////AP//lBI\\=","owL/ABQBlgAAAAAjAAIPBQIB/wo\\=","owMUA9gAAAH6CgQE/wC0/wBH/5I\\=","owT/4/8AAAAAAAAAABoAAAABAl0\\=","owUB/wUByBQUAu4UAQD/AAAAAJI\\=","o/8AAAAAAAAAAAAAAAAAAAAAAFw\\=","MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="]}}}'
-            if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
+            if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
             sendCommandLan(cmd2)
     }
+    // Flower Field Effect
+    if (effectNo == 8) {
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBQICLKACFAoCAf+WAMwAAJE\\=","owEC4AAH0QBe/wMA/2wA//8A/1g\\=","owJ/AP8AAPUA/wAAABAA2AAaoFk\\=","owMAAAEAATIUAAAAAAD6FAHPAKY\\=","o/9iAAAAAAAAAAAAAAAAAAAAAD4\\=","MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="]}}}'
+        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
+        sendCommandLan(cmd2)
+    }     
     // Illusion Light Effect
     if (effectNo == 101) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQnFR4BAAEFAAJscdkKCks\\=","o/8KAAAAAAAAAAAAAAAAAAAAAFY\\=","MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="]}}}'  
@@ -808,12 +820,7 @@ def  setEffect(effectNo) {
             if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
             sendCommandLan(cmd2)
     }
-    // Flower Field Effect
-       if (effectNo == 104) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABAgQmGxYACgEFAAf/AAD/f/k\\=","o/8A//8AAP8AAAD/AP//iwD/ACg\\=","MwUE3wkKLQAAAAAAAAAAAAAAAMM\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendCommandLan(cmd2)
-    }        
+       
     // Aurora-B Light Effect
     if (effectNo == 501) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABCQIEI0AAAAECAf8ZA8IKA+I\\=","owEC5jIED/8ICwf/B/j//wbpAGs\\=","owIC+AEAgAAjQgAAAQAB/xgDu+Q\\=","owMKA4LnMgT/03LLhf8NS/9S/wE\\=","owSZEgHNAAPkACNEAAABAAH/GIc\\=","owUDuwoDAuUyBAsH/w//CP8G6d0\\=","owYH+P8QAcwBAIAAJkYAAAEAAZk\\=","owf/GAO7CgMC5TIFB/j/Cwf//y4\\=","o/8G6Q//CNz/ERIB3QEAgAAAADY\\=","MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="]}}}'
