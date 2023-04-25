@@ -95,7 +95,18 @@ def commandPort() { "4003" }
         7:["name":"Forest", "cmd":['"owABBgIDGgAAAAEAAf8AAIAUFMA\\="','"owEAgBQBAP8AAACAAACAAB0AANU\\="','"owIAAQIB/wAAgBQUANtkAv//AGE\\="','"owMA/wAAAIAAAIAAHQAAAAECAUA\\="','"owT/AAKAFBQA22QCAP8A//8AAJg\\="','"o/8AgAAAgAAAAAAAAAAAAAAAAFw\\="','"MwUEbAgAAAAAAAAAAAAAAAAAAFY\\="']],
         8:["name":"Blossom", "cmd":['"owABCwIEKTAAAAEAAf//AIAUFDY\\="','"owEB8hQG/wAA/38AcP6aB3H/9VQ\\="','"owIX////ABYA9wAAgAApIwAAASM\\="','"owMAAf//AIAUFAHyFAb/AAD/f78\\="','"owQAcP6aByz//hH+//8AFAD3AJU\\="','"owUAgAApJQAAAQAB//8AgBQUAas\\="','"owbyFAb/AAD/fwBw/poHXP//B3I\\="','"owf3//8AFgD3AACAACk3AAABAC0\\="','"owgB//8AgBQUAfIUBv8AAP9/ALQ\\="','"owlw/poHWf/zB////wAUAPcAAPc\\="','"o/+AAAAAAAAAAAAAAAAAAAAAANw\\="','"MwUEqAkAAAAAAAAAAAAAAAAAAJM\\="']],
     ],
-    H61A1:[ // Neon Rope Light
+    H61A1:[ // Neon Rope Light 2m
+        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
+        2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
+        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
+        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
+        5:["name":"Fire", "cmd":['"owABDAIFHQAAAA4AAXAyA7sUFEE\\="','"owEC1RQC/1kH////AwD/EwD3ASQ\\="','"owIpJwAABAIB/5kC/18eAgD/Bok\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD3EACAAikhAAAEAgH/mbA\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAPQQAPcCKTA\\="','"owdDAggGAAH//wCAFBQB6hQG/2w\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPcAAIADKSQAAAEAAf8AAD8\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA9AAA/wQAAAE\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
+        7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUA9gAAAH6CgQE/wC0/wBH/5I\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
+        8:["name":"Flower Field-A", "cmd":['"owABBQICLKACFAoCAf+WAMwAAJE\\="','"owEC4AAH0QBe/wMA/2wA//8A/1g\\="','"owJ/AP8AAPUA/wAAABAA2AAaoFk\\="','"owMAAAEAATIUAAAAAAD6FAHPAKY\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="']],
+        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']],
+        501:["name":"Aurora-B", "cmd":['"owABCQIEI0AAAAECAf8ZA8IKA+I\\="','"owEC5jIED/8ICwf/B/j//wbpAGs\\="','"owIC+AEAgAAjQgAAAQAB/xgDu+Q\\="','"owMKA4LnMgT/03LLhf8NS/9S/wE\\="','"owSZEgHNAAPkACNEAAABAAH/GIc\\="','"owUDuwoDAuUyBAsH/w//CP8G6d0\\="','"owYH+P8QAcwBAIAAJkYAAAEAAZk\\="','"owf/GAO7CgMC5TIFB/j/Cwf//y4\\="','"o/8G6Q//CNz/ERIB3QEAgAAAADY\\="','"MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="']]
+    ],
+    H61A2:[ // Neon Rope Light 5m
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -125,6 +136,26 @@ def commandPort() { "4003" }
         7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUAfsAAAH6CgQE/wC0/wBH/7M\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
         8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
         103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']]
+    ],
+    H7020:[ //Smart Ground Lights
+        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
+        2:["name":"Romantic", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
+        3:["name":"Sunset Glow", "cmd":['"owABCwIFIyAAAAECAf9/ANcUFPg\\="','"owEA8BQE/0EA/4IAxxb+giL+AfE\\="','"owIA8wAAAAEjIgAAAQIB/38A7T0\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAAQDyAAAABSMkAAABAgH/f9Q\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4BAPIAAAADIyYAAAECATw\\="','"owf/fgDwFBQA8hQE/0EA/5YAwCA\\="','"owgH/mQQ/gEA8gAAAAQjKAAAASU\\="','"owkCAf+AAOkUFADuFAT/QQD/lhY\\="','"o/8A7QAk/7IAAQDyAAAAAAAAACs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']],
+        4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
+        5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
+        7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
+        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
+        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']]
+    ],
+    H7021:[ //Smart Ground Lights
+        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
+        2:["name":"Romantic", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
+        3:["name":"Sunset Glow", "cmd":['"owABCwIFIyAAAAECAf9/ANcUFPg\\="','"owEA8BQE/0EA/4IAxxb+giL+AfE\\="','"owIA8wAAAAEjIgAAAQIB/38A7T0\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAAQDyAAAABSMkAAABAgH/f9Q\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4BAPIAAAADIyYAAAECATw\\="','"owf/fgDwFBQA8hQE/0EA/5YAwCA\\="','"owgH/mQQ/gEA8gAAAAQjKAAAASU\\="','"owkCAf+AAOkUFADuFAT/QQD/lhY\\="','"o/8A7QAk/7IAAQDyAAAAAAAAACs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']],
+        4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
+        5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
+        7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
+        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
+        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']]
     ],
     H7050:[ //Smart Ground Lights
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
