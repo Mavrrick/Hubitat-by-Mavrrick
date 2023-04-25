@@ -152,6 +152,7 @@ def commandPort() { "4003" }
 metadata {
 	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
+                capability "Actuator"
 		capability "ColorControl"
 		capability "ColorTemperature"
 		capability "Light"
