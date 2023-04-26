@@ -60,7 +60,7 @@ def commandPort() { "4003" }
         4:["name":"Rainbow", "cmd":['"owABAgQmFVADBAEmBQAH/wAA/+U\\="','"o/9/AP//AAD/AAAA/wD//4sA/1c\\="','"MwUEUAsCRwAAAAAAAAAAAAAAACw\\="']],
         5:["name":"Fire", "cmd":['"owABAgQmFVUDFAwCAv8BJQUABQI\\="','"o//YAQH7Vgf/cQD/qwUBAQEAAPA\\="','"MwUEVAsCRwAAAAAAAAAAAAAAACg\\="']],
         7:["name":"Forest", "cmd":['"owABAgQmFS0DAgEiBQAG/545AMM\\="','"o///AAfKAJnVE8rsAf/rJAAAACY\\="','"MwUETgsCRwAAAAAAAAAAAAAAADI\\="']],
-        8:["name":"Stream", "cmd":['"owABAgRYADIBZAMGAQENAAYBAKQ\\="','"o/8AAAYBAQcAA07NxAEBAT7P5A0\\="','"MwUEyBwARwAAAAAAAAAAAAAAAKE\\="']],
+        8:["name":"Colorful", "cmd":['"owABAwQmFWEDBwFkBQAIAAD/AGQ\\\\u003d"','"owEA/wD//wD/////AP//AP8Absw\\\\u003d"','"o///AG4AAAAAAAAAAAAAAAAAAM0\\\\u003d"','"MwUEWQsCRwAAAAAAAAAAAAAAACU\\\\u003d"']],
         101:["name":"Illusion", "cmd":['"owABAgQnFR4BAAEFAAJscdkKCks\\="','"o/8KAAAAAAAAAAAAAAAAAAAAAFY\\="','"MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="']],
         103:["name":"Aurora", "cmd":['"owABAgQmFTMDAQEeBQAGGf+ZXJk\\="','"o//QHwOrNgCLRQBkACkAKQAAAKc\\="','"MwUEUQsCRwAAAAAAAAAAAAAAAC0\\="']]
     ],
