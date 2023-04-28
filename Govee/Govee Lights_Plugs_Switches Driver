@@ -292,6 +292,10 @@ def setColorTemperature(value,level = null,transitionTime = null)
         sendEvent(name: "colorTemperature", value: intvalue)
         sendEvent(name: "switch", value: "on")
         sendEvent(name: "colorMode", value: "CT")
+        if (effectNum != 0){
+            sendEvent(name: "effectNum", value: 0)
+            sendEvent(name: "effectName", value: "None") 
+        }
 	    setCTColorName(intvalue)
         }
     else {
@@ -363,6 +367,10 @@ def setHsb(h,s,b)
         sendEvent(name: "saturation", value: "${s}")
         sendEvent(name: "switch", value: "on")
    		sendEvent(name: "colorMode", value: "RGB")
+        if (effectNum != 0){
+            sendEvent(name: "effectNum", value: 0)
+            sendEvent(name: "effectName", value: "None") 
+        }
     } else {
         if (device.currentValue("cloudAPI") == "Retry") {
             log.error "setHsb(): CloudAPI already in retry state. Aborting call." 
@@ -838,13 +846,13 @@ def  setEffect(effectNo) {
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
-        sendEvent(name: "colorMode", value: "Scene")
+//        sendEvent(name: "colorMode", value: "Scene")
 //    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
     } else {
-        sendEvent(name: "colorMode", value: "Scene")
+//        sendEvent(name: "colorMode", value: "Scene")
         sendEvent(name: "effectNum", value: effectNumber)
     // Ocean/Deep Sea Light Effect
     if (effectNo == 1) {
@@ -977,7 +985,7 @@ def  setEffect(effectNo) {
 
 def setNextEffect() {
 if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
-      if (device.currentValue("colorMode") != "Scene") {
+      if (effectNum == 0) {
         setEffect(1)
         } else {
             if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
@@ -988,8 +996,8 @@ if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentV
       
 def setPreviousEffect() {
 if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
-      if (device.currentValue("colorMode") != "Scene") {
-        setEffect(8)
+      if (effectNum == 0) {
+        setEffect(13)
         } else {
             if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
             int prevEffect = device.currentValue("effectNum").toInteger()-1
