@@ -217,6 +217,7 @@ def commandPort() { "4003" }
     ]
 ]    
 
+
 metadata {
 	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
@@ -233,7 +234,17 @@ metadata {
 		attribute "colorName", "string"
         attribute "cloudAPI", "string"
         attribute "effectNum", "integer"
-   
+        command "diyAdd", [
+//            [name: "diyNumber", type: "NUMBER", description: "Number use to call DIY"],
+            [name: "diyName", type: "STRING", description: "Name of DIY"],
+            [name: "command", type: "STRING", description: "DIY Command extracted using Govee Integration"]
+        ]
+       command "diyDelete", [
+//            [name: "diyName", type: "NUMBER", description: "DIY Number to delete"]
+           ]  
+       command "activateDIY", [
+            [name: "diyName", type: "STRING", description: "DIY Number to activate"]
+           ]
     }
 
 	preferences {		
@@ -701,6 +712,7 @@ def configure() {
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}
     state.scenes = sceneEffects
+    state.diyEffects = [:]
     if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
@@ -1004,3 +1016,35 @@ if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentV
             setEffect(prevEffect)
         }  
 }
+
+def diyAdd(diyName, command) {
+    if (debugLog) {log.debug ("diyAdd(): Adding DIY Scene ${diyName} with Command ${command}")}
+    diySize = state.diyEffects.size()
+       if (debugLog) {log.debug ("diyAdd(): DIY size ${diySize} ")}
+    diyAddNum = (diySize + 1000).toInteger()
+    diyEntry = [:]
+    diyEntry.put("name", diyName)
+    diyEntry.put("cmd", command)    
+    state.diyEffects.put(diyAddNum,diyEntry) 
+}
+
+
+def diyDelete(diyDelete) {
+    if (debugLog) {log.debug ("diyAdd(): Deleteuing DIY Scene ${diyDelete}")}
+//    state.diyEffects = state.diyEffects().findAll {it.key != diyDelete}
+    state.diyEffects = state.diyEffects.remove(diyDelete) 
+}
+
+ def activateDIY(diyActivate) {
+     number = state.diyEffects.containsKey(diyActivate)
+     scenedata = state.diyEffects.get(diyActivate)
+     if (debugLog) {log.debug ("activateDIY(): Activate DIYeffect number ${number}  diyActivate ${diyActivate} scenedata ${scenedata}")}
+     sceneName = scenedata.name
+     sceneCmd = scenedata.cmd
+     if (debugLog) {log.debug ("activateDIY(): Activate DIYeffect sceneName ${sceneName}  command ${sceneCmd}")}
+        sendEvent(name: "effectName", value: sceneName)
+        sendEvent(name: "effectNum", value: diyActivate)
+        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
+        if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
+       sendCommandLan(cmd2)
+    } 
