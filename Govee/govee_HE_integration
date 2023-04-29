@@ -1,3 +1,5 @@
+/* groovylint-disable DuplicateNumberLiteral, DuplicateStringLiteral, ImplementationAsType, ImplicitClosureParameter, InvertedCondition, LineLength, MethodReturnTypeRequired, MethodSize, NestedBlockDepth, NglParseError, NoDef, NoJavaUtilDate, NoWildcardImports, ParameterReassignment, UnnecessaryGString, UnnecessaryObjectReferences, UnnecessaryToString, UnusedImport, VariableTypeRequired */
+/* groovylint-disable LineLength */
 /**
  *  Govee Integration
  *
@@ -10,26 +12,25 @@
  *
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *  for the specific language governing permissions and limitations under the License.
- *
+ *  for the specific language governing permissions and limitations under the License
  */
 definition(
-    name: "Govee Integration ",
-    namespace: "Mavrrick",
-    author: "CRAIG KING",
-    description: "Govee Integration for HE",
-    category: "Lighting",
-    iconUrl: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg",
-    iconX2Url: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg",
-    iconX3Url: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg",
+    name: 'Govee Integration ',
+    namespace: 'Mavrrick',
+    author: 'CRAIG KING',
+    description: 'Govee Integration for HE',
+    category: 'Lighting',
+    iconUrl: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
+    iconX2Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
+    iconX3Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
     singleInstance: true)
 
-/* 
+/*
 * Initial release v1.0.0
 * 1.0.1 Update to improve device support + Cleanup
 * 1.0.2
 * 1.0.3
-* 1.0.4 Improved handeling of Govee Device Additions  
+* 1.0.4 Improved handeling of Govee Device Additions
 * 1.0.5 Correct but that prevented device Additions if both Lights and appliances where added together.
 * 1.0.6 Updated process for appliance device creation to allow for devices without gear commands.
 * 1.0.7 Enhanced Logging, Added rate limit tracking to app, Enhanced non RGB device handeling
@@ -40,17 +41,18 @@ definition(
 * 1.0.14 Added Notification for approaching rate limits for cloud API's
 * 1.0.15 Found bug with how Light drivers were updating certain states
 * 1.0.16 Updated Polling setup to allow value of 0
-*	 Added Actuator to Appliance devices to allow for better RM integration
+*     Added Actuator to Appliance devices to allow for better RM integration
 * 1.0.19 Added ability for app to udpate API Key on child devices
 */
 
 preferences
 {
-	page (name: "mainPage", title: "Govee Integration")
-	page (name: "deviceSelect", title: "Select Light, Switch, Plug devices")
-    page (name: "deviceSelect2", title: "Select Appliances")
+    page(name: 'mainPage', title: 'Govee Integration')
+    page(name: 'deviceSelect', title: 'Select Light, Switch, Plug devices')
+    page(name: 'deviceSelect2', title: 'Select Appliances')
+    page(name: 'sceneExtract', title: 'Extract scenes')
+    page(name: 'about', title: 'About')
 }
-
 
 def initialize() {
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
@@ -58,48 +60,44 @@ def initialize() {
     List child = getChildDevices()
     List childDNI = child.deviceNetworkId
     if (settings.APIKey != state.APIKey ) {
-        child.each{
-        logger ("initialize() API key has been updated. Calling child devices to udpate", "debug")
+        child.each {
+            logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
             it.initialize()
         }
-    state?.APIKey = settings.APIKey    
+        state?.APIKey = settings.APIKey
     }
-    if (goveeDev) { 
-        def  goveeAdd = settings.goveeDev - child.label 
-    logger ("initialize() Child device ${child} DNI's ${childDNI}", "debug")
-    logger ("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.","info")
-    if (goveeAdd) {
-         def devices = goveeAdd
-         logger ("initialize() $devices are selcted to be integrated","info")
-         logger ("initialize() DEVICE INFORMATION","info")
-	     def params = [
-            uri   : "https://developer-api.govee.com",
+    if (goveeDev) {
+        def  goveeAdd = settings.goveeDev - child.label
+        logger("initialize() Child device ${child} DNI's ${childDNI}", 'debug')
+        logger("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.", 'info')
+        if (goveeAdd) {
+            def devices = goveeAdd
+            logger("initialize() $devices are selcted to be integrated", 'info')
+            logger('initialize() DEVICE INFORMATION', 'info')
+            def params = [
+            uri   : 'https://developer-api.govee.com',
             path  : '/v1/devices',
-			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
         ]
-    
 
-
-try {
-
-			httpGet(params) { resp ->
-                
-//                logger (${resp.data},"debug")
-				resp.data.data.devices.each{
-					deviceID = it.device
-					deviceModel = it.model
-					deviceName = it.deviceName
-                    controllable = it.controllable
-                    retrievable = it.retrievable
-                    supportCmds = it.supportCmds
-                    if (supportCmds.contains("colorTem") && supportCmds.contains("color")) {
-                    ctMin = it.properties.colorTem.range.min
-                    ctMax = it.properties.colorTem.range.max 
-                    devices.findAll{it == deviceName} .each {
-                            logger ("initialize()  configuring ${deviceName}","info")
-                            addChildDevice("Mavrrick", "Govee Lights, Plugs, and Switches Driver", "${deviceID}" , location.hubs[0].id, [
-					            "name": "Govee Light_Plug_Switch",
-					            "label": deviceName,
+            try {
+                httpGet(params) { resp ->
+                    //                logger (${resp.data},"debug")
+                    resp.data.data.devices.each {
+                        deviceID = it.device
+                        deviceModel = it.model
+                        deviceName = it.deviceName
+                        controllable = it.controllable
+                        retrievable = it.retrievable
+                        supportCmds = it.supportCmds
+                        if (supportCmds.contains('colorTem') && supportCmds.contains('color')) {
+                            ctMin = it.properties.colorTem.range.min
+                            ctMax = it.properties.colorTem.range.max
+                            devices.findAll { it == deviceName } .each {
+                                logger("initialize()  configuring ${deviceName}", 'info')
+                                addChildDevice('Mavrrick', 'Govee Lights, Plugs, and Switches Driver', "${deviceID}" , location.hubs[0].id, [
+                                'name': 'Govee Light_Plug_Switch',
+                                'label': deviceName,
                                 'data': [
                                 'deviceID': deviceID,
                                 'deviceModel': deviceModel,
@@ -107,20 +105,20 @@ try {
                                 'apiKey': settings.APIKey,
                                 'commands': supportCmds,
                                 'ctMin': ctMin,
-                                'ctMax': ctMax    
+                                'ctMax': ctMax
                             ],
-					"completedSetup": true, 					
-				])
-			}
+                    'completedSetup': true,
+                ])
+                        }
                     }
-                    else if (supportCmds.contains("brightness")) {
-                        ctMin = "N/A"
-                        ctMax = "N/A" 
-                    devices.findAll{it == deviceName} .each {
-                            logger ("initialize()  configuring ${deviceName}","info")
-                            addChildDevice("Mavrrick", "Govee White Light Driver", "${deviceID}" , location.hubs[0].id, [
-					            "name": "Govee Light_Plug_Switch",
-					            "label": deviceName,
+                    else if (supportCmds.contains('brightness')) {
+                            ctMin = 'N/A'
+                            ctMax = 'N/A'
+                            devices.findAll { it == deviceName } .each {
+                                logger("initialize()  configuring ${deviceName}", 'info')
+                                addChildDevice('Mavrrick', 'Govee White Light Driver', "${deviceID}" , location.hubs[0].id, [
+                                'name': 'Govee Light_Plug_Switch',
+                                'label': deviceName,
                                 'data': [
                                 'deviceID': deviceID,
                                 'deviceModel': deviceModel,
@@ -128,373 +126,452 @@ try {
                                 'apiKey': settings.APIKey,
                                 'commands': supportCmds,
                                 'ctMin': ctMin,
-                                'ctMax': ctMax    
+                                'ctMax': ctMax
                             ],
-					"completedSetup": true, 					
-				])
-			}
+                    'completedSetup': true,
+                ])
                     }
-                    else {
-                        ctMin = "N/A"
-                        ctMax = "N/A" 
-                    devices.findAll{it == deviceName} .each {
-                            logger ("initialize()  configuring ${deviceName}","info")
-                            addChildDevice("Mavrrick", "Govee Plugs and Switches Driver", "${deviceID}" , location.hubs[0].id, [
-					            "name": "Govee Light_Plug_Switch",
-					            "label": deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax    
-                            ],
-					"completedSetup": true, 					
-				])
-			}
-                    }
-                    }  
-            }                                                          
-	} catch (groovyx.net.http.HttpResponseException e) {
-		logger ("initialize() Error: e.statusCode ${e.statusCode}","error")
-		logger ("initialize() ${e}","error")
-		
-		return 'unknown'
-	}
-                state?.installDev = goveeDev
-                logger ("initialize() Govee devices integrated","info")
                 }
-		}
-      	else {
-		}
-// add appliances
-       if (goveeApp) { 
+                    else {
+                            ctMin = 'N/A'
+                            ctMax = 'N/A'
+                            devices.findAll { it == deviceName } .each {
+                                logger("initialize()  configuring ${deviceName}", 'info')
+                                addChildDevice('Mavrrick', 'Govee Plugs and Switches Driver', "${deviceID}" , location.hubs[0].id, [
+                                'name': 'Govee Light_Plug_Switch',
+                                'label': deviceName,
+                                'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds,
+                                'ctMin': ctMin,
+                                'ctMax': ctMax
+                            ],
+                    'completedSetup': true,
+                ])
+                    }
+            }
+        }
+    }
+    } catch (groovyx.net.http.HttpResponseException e) {
+                logger("initialize() Error: e.statusCode ${e.statusCode}", 'error')
+                logger("initialize() ${e}", 'error')
+
+                return 'unknown'
+}
+            state?.installDev = goveeDev
+            logger('initialize() Govee devices integrated', 'info')
+                }
+        }
+          else {
+        logger('initialize() No devices to add', 'info')
+          }
+    // add appliances
+    if (goveeApp) {
         def  goveeAdd2 = settings.goveeApp - child.label
-         logger("initialize() Govee Appliances to add ${goveeAdd2}.","info")
+        logger("initialize() Govee Appliances to add ${goveeAdd2}.", 'info')
         if (goveeAdd2) {
             def devices = goveeAdd2
-    		logger ("initialize() $devices are selcted to be integrated","info")
-            logger ("initialize() Appliance INFORMATION","info")
-	     def params2 = [
-            uri   : "https://developer-api.govee.com",
+            logger("initialize() $devices are selcted to be integrated", 'info')
+            logger('initialize() Appliance INFORMATION', 'info')
+            def params2 = [
+            uri   : 'https://developer-api.govee.com',
             path  : '/v1/appliance/devices',
-			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
         ]
-    
 
-
-try {
-
-			httpGet(params2) { resp ->
-
-				//List each device assigned to current API key
- //               logger ("initialize()" + ${resp.data},"debug")
-				resp.data.data.devices.each{
-					deviceID = it.device
-					deviceModel = it.model
-					deviceName = it.deviceName
-                    controllable = it.controllable
-                    retrievable = it.retrievable
-                    supportCmds = it.supportCmds
-                    modes = it.properties.mode.options
-                    if (supportCmds.contains("gear")) {
-                        gear = it.properties.gear.options.value 
-					logger ("initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear","debug")
-                    devices.findAll{it == deviceName} .each {
-                            logger ("initialize()  configuring ${deviceName}","info")
-                            addChildDevice("Mavrrick", "Govee Appliance Driver", "${deviceID}" , location.hubs[0].id, [
-					            "name": "Govee Appliance",
-					            "label": deviceName,
+            try {
+                httpGet(params2) { resp ->
+                    //List each device assigned to current API key
+                    //               logger ("initialize()" + ${resp.data},"debug")
+                    resp.data.data.devices.each {
+                        deviceID = it.device
+                        deviceModel = it.model
+                        deviceName = it.deviceName
+                        controllable = it.controllable
+                        retrievable = it.retrievable
+                        supportCmds = it.supportCmds
+                        modes = it.properties.mode.options
+                        if (supportCmds.contains('gear')) {
+                            gear = it.properties.gear.options.value
+                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
+                            devices.findAll { it == deviceName } .each {
+                                logger("initialize()  configuring ${deviceName}", 'info')
+                                addChildDevice('Mavrrick', 'Govee Appliance Driver', "${deviceID}" , location.hubs[0].id, [
+                                'name': 'Govee Appliance',
+                                'label': deviceName,
                                 'data': [
                                 'deviceID': deviceID,
                                 'deviceModel': deviceModel,
-// Appliances are not retrieveable   'retrievable': retrievable,
+                                // Appliances are not retrieveable   'retrievable': retrievable,
                                 'apiKey': settings.APIKey,
                                 'commands': supportCmds,
                                 'modes' : modes,
                                 'gears' : gear
                             ],
-					"completedSetup": true, 					
-				])
-			}
+                    'completedSetup': true,
+                ])
+                        }
                     }
-                    else { 
-                    gear = "N/A" 
-					logger ("initialize() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear","debug")
-                    devices.findAll{it == deviceName} .each {
-                            logger ("initialize()  configuring ${deviceName}","info")
-                            addChildDevice("Mavrrick", "Govee Heating Appliance Driver", "${deviceID}" , location.hubs[0].id, [
-					            "name": "Govee Appliance",
-					            "label": deviceName,
+                    else {
+                            gear = 'N/A'
+                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
+                            devices.findAll { it == deviceName } .each {
+                                logger("initialize()  configuring ${deviceName}", 'info')
+                                addChildDevice('Mavrrick', 'Govee Heating Appliance Driver', "${deviceID}" , location.hubs[0].id, [
+                                'name': 'Govee Appliance',
+                                'label': deviceName,
                                 'data': [
                                 'deviceID': deviceID,
                                 'deviceModel': deviceModel,
-// Appliances are not retrieveable   'retrievable': retrievable,
+                                // Appliances are not retrieveable   'retrievable': retrievable,
                                 'apiKey': settings.APIKey,
                                 'commands': supportCmds,
                                 'modes' : modes,
                                 'gears' : gear
                             ],
-					"completedSetup": true, 					
-				])
-			}
+                    'completedSetup': true,
+                ])
                     }
-                    }  
-            }                                                          
-	} catch (groovyx.net.http.HttpResponseException e) {
-		logger ("initialize() Error: e.statusCode ${e.statusCode}","error")
-		logger ("initialize() ${e}","error")
-		
-		return 'unknown'
-	}
-                state?.installedApp = goveeApp
-                logger ("initialize() Govee devices integrated","info")
+                }
+            }
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+                logger("initialize() Error: e.statusCode ${e.statusCode}", 'error')
+                logger("initialize() ${e}", 'error')
+
+                return 'unknown'
+    }
+            state?.installedApp = goveeApp
+            logger('initialize() Govee devices integrated', 'info')
                 }
     }
-      	else {
-		}
-    
-}   
-
+          else {
+        logger('initialize() No appliances to add', 'info')
+          }
+}
 
 /*
-	mainPage
+    mainPage
 
-	UI Page: Main menu for the app.
+    UI Page: Main menu for the app.
 */
-def mainPage()
-{
+def mainPage() {
     List child = getChildDevices()
     def childCount = child.size()
-	dynamicPage(name: "mainPage", title: "Govee integration Main menu", uninstall: true, install: true, submitOnChange: true)
-	{
-		section("API Configuration  ")
-		{
-			paragraph "The Govee APi is required for this integration. Please obtain this value befor moving forward. You can obtain the Govee APi from the Govee Home app 'About Us' section."
-            input "APIKey", "string", title: "Enter Your API Key", required: true
-		}
-	    section("Govee Device Add Page") {
-			href "deviceSelect", title: "Device selection", description: "Select Govee devices to add to your environment"
-	    }
-        section("Govee Apliance Add Page") {
-			href "deviceSelect2", title: "Device selection", description: "Select Govee devices to add to your environment"
-	    }
-        section("Current Integrated Device Information") {
+    dynamicPage(name: 'mainPage', title: 'Govee integration Main menu', uninstall: true, install: true, submitOnChange: true)
+    {
+        section('API Configuration  ')
+        {
+            paragraph "The Govee APi is required for this integration. Please obtain this value befor moving forward. You can obtain the Govee APi from the Govee Home app 'About Us' section."
+            input 'APIKey', 'string', title: 'Enter Your API Key', required: true
+        }
+        section('Govee Device Add Page') {
+            href 'deviceSelect', title: 'Device selection', description: 'Select Govee devices to add to your environment'
+        }
+        section('Govee Apliance Add Page') {
+            href 'deviceSelect2', title: 'Device selection', description: 'Select Govee devices to add to your environment'
+        }
+        section('Current Integrated Device Information') {
             paragraph "There are ${childCount} devices integrated"
             paragraph "Your current integrated devices are ${child.label}"
-                if (childCount > 0) {def maxPoll = 86400/((10000-(50*childCount))/childCount).toDouble()
+                if (childCount > 0) { def maxPoll = 86400 / ((10000 - (50 * childCount)) / childCount).toDouble()
                 maxPoll = maxPoll.round(1)
-            paragraph "With the number of devices have you can poll as frequently as every ${maxPoll} seconds"}
+                paragraph "With the number of devices have you can poll as frequently as every ${maxPoll} seconds" }
             paragraph "You have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
             paragraph "You have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
         }
-         section("Notification Options") {
-         input "notifyEnabled", "bool", title: "Enable Notification", required: false, defaultValue: false
-         input name: "notificationDevice", type: "capability.notification", title: "Send notification of rate limit consumption :", multiple: true
-         input "apiV1threshold", "number", title: "Daily Rate Limit threshold to send out notification for Lights, Switches, and Plugs", required: false , range: "1..500", defaultValue: 3
-         input "apiV2threshold", "number", title: "Daily Rate Limit threshold to send out notification for Appliances", required: false , range: "1..100", defaultValue: 3
-      }
-        section("Logging Options") {
-        input (
-        		name: "configLoggingLevelIDE",
-        		title: "IDE Live Logging Level:\nMessages with this level and higher will be logged to the IDE.",
-        		type: "enum",
-        		options: [
-	        	    "0" : "None",
-    	    	    "1" : "Error",
-        		    "2" : "Warning",
-        		    "3" : "Info",
-        	    	"4" : "Debug",
-	        	    "5" : "Trace"
-    	    	],
-        		defaultValue: "1",
-            	displayDuringSetup: true,
-	        	required: false
-    	    )
+        section('Notification Options') {
+            input 'notifyEnabled', 'bool', title: 'Enable Notification', required: false, defaultValue: false
+            input name: 'notificationDevice', type: 'capability.notification', title: 'Send notification of rate limit consumption :', multiple: true
+            input 'apiV1threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Lights, Switches, and Plugs', required: false , range: '1..500', defaultValue: 3
+            input 'apiV2threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Appliances', required: false , range: '1..100', defaultValue: 3
         }
-	}
+        section('Govee Scene Extract') {
+            href 'sceneExtract', title: 'Scene Extract menu', description: 'Extract Scenes through this menu'
+        }        
+        section('Logging Options') {
+            input(
+                name: 'configLoggingLevelIDE',
+                title: 'IDE Live Logging Level:\nMessages with this level and higher will be logged to the IDE.',
+                type: 'enum',
+                options: [
+                    '0' : 'None',
+                    '1' : 'Error',
+                    '2' : 'Warning',
+                    '3' : 'Info',
+                    '4' : 'Debug',
+                    '5' : 'Trace'
+                ],
+                defaultValue: '1',
+                displayDuringSetup: true,
+                required: false
+            )
+        }
+        section('About') {
+            href 'about', title: 'About Information menu', description: 'About Menu for Govee Integration'
+        }
+    }
 }
 
-def deviceSelect()
-{
+def deviceSelect() {
     def options = [:]
-    
-    logger ("deviceSelect() DEVICE INFORMATION","debug")
-	     def params = [
-            uri   : "https://developer-api.govee.com",
+
+    logger('deviceSelect() DEVICE INFORMATION', 'debug')
+    def params = [
+            uri   : 'https://developer-api.govee.com',
             path  : '/v1/devices',
-			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
         ]
-    
 
+    try {
+        httpGet(params) { resp ->
+                //List each device assigned to current API key
+                //                logger ("deviceSelect()" + ${resp.data},"debug")
+                resp.data.data.devices.each {
+                    deviceID = it.device
+                    deviceName = it.deviceName
+                    logger("deviceSelect() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax", 'debug')
+                    options["${deviceName}"] = deviceName
+                }
+                logger(" deviceSelect() $options", 'debug')
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+        logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
+        logger("deviceSelect() ${e}", 'error')
 
-try {
+        return 'unknown'
+    }
 
-			httpGet(params) { resp ->
-
-				//List each device assigned to current API key
-//                logger ("deviceSelect()" + ${resp.data},"debug")
-				resp.data.data.devices.each{
-					deviceID = it.device
-					deviceName = it.deviceName
-					logger ("deviceSelect() $deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax","debug")
-                    options["${deviceName}"] = deviceName                   
-				}
-                logger (" deviceSelect() $options","debug")
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		logger ("deviceSelect() Error: e.statusCode ${e.statusCode}","error")
-		logger ("deviceSelect() ${e}","error")
-		
-		return 'unknown'
-	} 
-
-	dynamicPage(name: "deviceSelect", title: "Add Devices page", uninstall: false, install: false)
-	{
-		section("Please select the Lights, Plugs, Switch you want to integrate")
-		{
-            paragraph "Please select the devices you wish to integrate."    
-            input(name: "goveeDev", type: "enum", required:false, description: "Please select the devices you wish to integrate.", multiple:true, 
-			    options: options, width: 8, height: 1)
-		}
-
-	}
+    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false)
+    {
+        section('Please select the Lights, Plugs, Switch you want to integrate')
+        {
+            paragraph 'Please select the devices you wish to integrate.'
+            input(name: 'goveeDev', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:true,
+                options: options, width: 8, height: 1)
+        }
+    }
 }
 
-def deviceSelect2()
-{
+def deviceSelect2() {
     def options2 = [:]
-    log.debug "Appliance INFORMATION"
-	     def paramsApp = [
-            uri   : "https://developer-api.govee.com",
+    log.debug 'Appliance INFORMATION'
+    def paramsApp = [
+            uri   : 'https://developer-api.govee.com',
             path  : '/v1/appliance/devices',
-			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
         ]
-    
 
+    try {
+        httpGet(paramsApp) { resp ->
+                //List each device assigned to current API key
+                //                logger ("deviceSelect2()" + ${resp.data},"debug")
+                resp.data.data.devices.each {
+                    deviceID = it.device
+                    deviceName = it.deviceName
+                    logger("deviceSelect2() $deviceName    Address: $deviceID    Model: $deviceModel controllable: $controllable modes: $modes", 'debug')
+                    options2["${deviceName}"] = deviceName
+                }
+                logger("deviceSelect2() $options2", 'debug')
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+        logger("deviceSelect2() Error: e.statusCode ${e.statusCode}", 'error')
+        logger("deviceSelect2() ${e}", 'error')
 
-try {
-
-			httpGet(paramsApp) { resp ->
-
-				//List each device assigned to current API key
-//				logger ("deviceSelect2()" + ${resp.data},"debug")
-				resp.data.data.devices.each{
-					deviceID = it.device
-					deviceName = it.deviceName
-					logger ("deviceSelect2() $deviceName	Address: $deviceID	Model: $deviceModel controllable: $controllable modes: $modes", "debug")
-                    options2["${deviceName}"] = deviceName                     
-				}
-                logger ("deviceSelect2() $options2","debug")
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		logger ("deviceSelect2() Error: e.statusCode ${e.statusCode}","error")
-		logger ("deviceSelect2() ${e}","error")
-		
-		return 'unknown'
-	}    
-	dynamicPage(name: "deviceSelect", title: "Add Devices page", uninstall: false, install: false)
-	{
-
-        section("Please select the Govee Appliances you want to integrate")
-		{
-            paragraph "Please select the appliances you wish to add to the integration. "    
-            input(name: "goveeApp", type: "enum", required:false, description: "Please select the appliances you wish to add to the integration.", multiple:true, 
-			    options: options2, width: 8, height: 1)
-		}
-
-	}
+        return 'unknown'
+    }
+    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false)
+    {
+        section('Please select the Govee Appliances you want to integrate')
+        {
+            paragraph 'Please select the appliances you wish to add to the integration. '
+            input(name: 'goveeApp', type: 'enum', required:false, description: 'Please select the appliances you wish to add to the integration.', multiple:true,
+                options: options2, width: 8, height: 1)
+        }
+    }
 }
 
+def sceneExtract() {
+    def sceneData = [:]
 
+    logger('sceneExtract() DEVICE INFORMATION', 'debug')
+    if (settings.goveeToken) {
+    goveeHomeToken = "Bearer " + settings.goveeToken
+    
 
-def about()
-{
-	dynamicPage(name: "about", title: "About Govee Integration with HE", uninstall: false, install: false)
-	{
-		section()
-		{
-			paragraph image: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg", "Govee Integration"
-		}
-        section("Support the Project")
-		{
-			paragraph "Govee is provided free for personal and non-commercial use.  I have worked on this app in my free time to fill the needs I have found for myself and others like you.  I will continue to make improvements where I can. If you would like you can donate to continue to help with development please use the link below."
-			href (name: "donate", style:"embedded", title: "Consider making a \$5 or \$10 donation today.", image: "https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg", url: "https://www.paypal.me/mavrrick58")
-		}
-        section ("Return to Govee  Main page"){
-            href "mainPage", title: "Govee Main Menu", description: "Return to main Govee Main Menu"            
-		}
-	}
+    def params = [
+            uri   : 'https://app2.govee.com',
+            path  : '/bff-app/v1/exec-plat/home',
+            headers: ['Authorization': goveeHomeToken, 'Content-Type': 'application/json', 'appVersion': '5.6.01'],
+        ]
+//    if (goveeHomeToken) {
+        logger("sceneExtract(): Calling HTTP server", 'error')
+    try {
+        httpGet(params) { resp ->
+                resp.data.data.components.forEach {
+                    name = it.name.toString()
+                    logger("sceneExtract(): ${name}", 'error')
+                    if (name == 'Default') {
+                        logger("sceneExtract(): found default group moving forward", 'error')
+                        it.oneClicks.iotRules.forEach {
+                            devName= it.deviceObj.name
+                            devSku= it.deviceObj.sku
+                            logger("sceneExtract(): Looking at ${devName} ${devSku}", 'error')
+                            rules = it.rule.toString()
+                            logger("sceneExtract(): rule is ${rules}", 'error')
+                            ruleSceneSub1=rules.indexOf('scenesStr')
+                            ruleSceneSub2 = rules.substring(ruleSceneSub1)
+                            ruleSceneSub3=ruleSceneSub2.indexOf('},')
+                            ruleSceneSub4 = ruleSceneSub3-1
+                            ruleScene = ruleSceneSub2.substring(12,ruleSceneSub4)
+//                            rules3 = rulesSub.indexOf('transaction') - 3
+                            logger("sceneExtract(): Substring Name is ${ruleSceneSub3}: ${ruleScene}", 'error')                            
+                            rules2 = rules.indexOf('command')                            
+                            rulesSub = rules.substring(rules2)
+                            rules3 = rulesSub.indexOf('transaction') - 3
+                            logger("sceneExtract(): substring rule is ${rules2} ${rules3}", 'error')
+                            rules5 = rulesSub.substring(9,rules3)
+                            logger("sceneExtract(): substring rule is ${rules5}", 'error')
+                           }
+                    } else {
+                    logger("sceneExtract(): Default group not found", 'error')
+                    }
+//                    logger("sceneExtract(): ${it.value}", 'error') 
+                }
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+        logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
+        logger("deviceSelect() ${e}", 'error')
+
+        return 'unknown'
+    }
+    }
+    dynamicPage(name: 'sceneExtract', title: 'Scene Extract', uninstall: false, install: false, submitOnChange: true)
+    {
+        section('Govee Home Creds')
+        {
+            paragraph "Please provide your gove home token."
+//            input 'goveeEmail', 'string', title: 'Please enter your Email used to log into Govee Home', required: true
+            input 'goveeToken', 'string', title: 'Please enter your token obtained from using the curl command', required: true
+        }
+        section('Extracted command') {
+            paragraph "Below is the command information"
+            paragraph "Device name ${devName}"
+            paragraph "Scene name is ${ruleScene}"
+            paragraph "Command is ${rules5}" 
+            paragraph "This command will work with any device with model ${devSku}" 
+//            paragraph "You have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
+//            paragraph "You have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
+        }
+    
+    }
+}
+
+def about() {
+    dynamicPage(name: 'about', title: 'About Govee Integration with HE', uninstall: false, install: false)
+    {
+        section()
+        {
+            paragraph image: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg', 'Govee Integration'
+        }
+        section('Support the Project')
+        {
+            paragraph 'Govee is provided free for personal and non-commercial use.  I have worked on this app in my free time to fill the needs I have found for myself and others like you.  I will continue to make improvements where I can. If you would like you can donate to continue to help with development please use the link below.'
+            href(name: 'donate', style:'embedded', title: "Consider making a \$5 or \$10 donation today to support my ongoing effort to continue improving this integration.", url: 'https://www.paypal.me/mavrrick58')
+        }
+    }
 }
 
 def installed() {
-	log.debug "Installed with settings: ${settings}"
+    log.debug "Installed with settings: ${settings}"
     state?.isInstalled = true
-//    state.crtVrtButton = false
+    //    state.crtVrtButton = false
     initialize()
 }
 
 def updated() {
-	log.debug "Updated with settings: ${settings}"
+    log.debug "Updated with settings: ${settings}"
     initialize()
 }
 
 def uninstalled() {
     // external cleanup. No need to unsubscribe or remove scheduled jobs
-    	// 1.4 Remove dead virtual devices
-	getChildDevices()?.each
-	{childDevice ->
-			deleteChildDevice(childDevice.deviceNetworkId)
-		}
-	}
-
-def subscribeToEvents() {
+    // 1.4 Remove dead virtual devices
+    getChildDevices()?.each
+    { childDevice ->
+            deleteChildDevice(childDevice.deviceNetworkId)
+    }
 }
 
-def DeviceInfo(){
-        def options = [:]
-log.debug "DEVICE INFORMATION"
-	     def params = [
-            uri   : "https://developer-api.govee.com",
+def DeviceInfo() {
+    def options = [:]
+    log.debug 'DEVICE INFORMATION'
+    def params = [
+            uri   : 'https://developer-api.govee.com',
             path  : '/v1/devices',
-			headers: ["Govee-API-Key": settings.APIKey, "Content-Type": "application/json"],
+            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
         ]
-    
 
-
-try {
-
-			httpGet(params) { resp ->
-
-				//List each device assigned to current API key
-				//log.debug resp.data
-				resp.data.data.devices.each{
-					deviceID = it.device
-					deviceModel = it.model
-					deviceName = it.deviceName
+    try {
+        httpGet(params) { resp ->
+                //List each device assigned to current API key
+                //log.debug resp.data
+                resp.data.data.devices.each {
+                    deviceID = it.device
+                    deviceModel = it.model
+                    deviceName = it.deviceName
                     controllable = it.controllable
                     retrievable = it.retrievable
                     ctMin = it.properties.colorTem.range.min
                     ctMax = it.properties.colorTem.range.max
-					log.debug "$deviceName	Address: $deviceID	Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
-                    options.put("deviceID", deviceID)
-                    options.put ("Name", deviceName)
+                    log.debug "$deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
+                    options.put('deviceID', deviceID)
+                    options.put('Name', deviceName)
                     log.debug "$options"
-				}
-				return resp.data
+                }
+                return resp.data
                 return options
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		
-		return 'unknown'
-	}    
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+        log.error "Error: e.statusCode ${e.statusCode}"
+        log.error "${e}"
+
+        return 'unknown'
+    }
+}
+
+def apiRateLimits(type, value) {
+    logger("apiRateLimits($type, $value)", 'info')
+    if (type == 'DailyLimitRemaining') {
+        state.dailyLimit = value
+        if ( state.dailyLimit.toInteger() < apiV1threshold) {
+            sendnotification('Govee Lights, Plugs, Switches APi Rate Limit', state.dailyAppLimit)
+        }
+    }
+    else if (type == 'DailyLimitRemainingV2') {
+        state.dailyAppLimit = value
+        log.debug "${state.dailyAppLimit}"
+        if ( state.dailyAppLimit.toInteger() < apiV2threshold) {
+            log.debug 'validated api limit to low. Sending notificatoin'
+            sendnotification('Govee Appliance API rate Limit', state.dailyAppLimit)
+        }
+    }
+}
+
+def sendnotification (type, value) {
+    if (notifyEnabled) {
+        String notificationText = "${type} has reached threshold of ${value}. You will have issues if this get to zero"
+        notificationDevice?.each {
+            it.deviceNotification(notificationText)
+        }
+    }
+}
+
+def getParentSetting(String settingName) {
+    return parent?."${settingName}"
 }
 
 /**
@@ -502,63 +579,30 @@ try {
  *
  *  Wrapper function for all logging.
  **/
-private logger(msg, level = "debug") {
-
-    switch(level) {
-        case "error":
-            if (state.loggingLevelIDE >= 1) log.error msg
+private logger(msg, level = 'debug') {
+    switch (level) {
+        case 'error':
+            if (state.loggingLevelIDE >= 1) { log.error msg }
             break
 
-        case "warn":
-            if (state.loggingLevelIDE >= 2) log.warn msg
+        case 'warn':
+            if (state.loggingLevelIDE >= 2)  { log.warn msg }
             break
 
-        case "info":
-            if (state.loggingLevelIDE >= 3) log.info msg
+        case 'info':
+            if (state.loggingLevelIDE >= 3) { log.info msg }
             break
 
-        case "debug":
-            if (state.loggingLevelIDE >= 4) log.debug msg
+        case 'debug':
+            if (state.loggingLevelIDE >= 4) { log.debug msg }
             break
 
-        case "trace":
-            if (state.loggingLevelIDE >= 5) log.trace msg
+        case 'trace':
+            if (state.loggingLevelIDE >= 5) { log.trace msg }
             break
 
         default:
             log.debug msg
             break
     }
-}
-
-def apiRateLimits(type, value){
-    logger ("apiRateLimits($type, $value)","info")
-    if (type == "DailyLimitRemaining") {
-        state.dailyLimit = value
-        if ( state.dailyLimit.toInteger() < apiV1threshold) {
-            sendnotification("Govee Lights, Plugs, Switches APi Rate Limit", state.dailyAppLimit)
-        }
-    }
-    else if (type == "DailyLimitRemainingV2") {
-        state.dailyAppLimit = value        
-        log.debug "${state.dailyAppLimit}"
-        if ( state.dailyAppLimit.toInteger() < apiV2threshold) {
-            log.debug "validated api limit to low. Sending notificatoin"
-            sendnotification("Govee Appliance API rate Limit", state.dailyAppLimit)
-        } 
-    }
-    
-}
-
-def sendnotification (type, value){
-    if (notifyEnabled){
-    String notificationText = "${type} has reached threshold of ${value}. You will have issues if this get to zero"
-    notificationDevice?.each {
-      it.deviceNotification(notificationText)
-        }
-    }
-}
-
-def getParentSetting(String settingName) {
-	return parent?."${settingName}"
 }
