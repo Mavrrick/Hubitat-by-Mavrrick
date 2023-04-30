@@ -43,6 +43,7 @@ definition(
 * 1.0.16 Updated Polling setup to allow value of 0
 *     Added Actuator to Appliance devices to allow for better RM integration
 * 1.0.19 Added ability for app to udpate API Key on child devices
+* 1.0.20 Added Scenes and respective tools
 */
 
 preferences
