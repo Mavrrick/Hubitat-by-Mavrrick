@@ -51,6 +51,7 @@ preferences
     page(name: 'deviceSelect', title: 'Select Light, Switch, Plug devices')
     page(name: 'deviceSelect2', title: 'Select Appliances')
     page(name: 'sceneExtract', title: 'Extract scenes')
+    page(name: 'sceneExtract2', title: 'Govee Home Creds')
     page(name: 'about', title: 'About')
 }
 
@@ -399,7 +400,7 @@ def sceneExtract() {
 
     logger('sceneExtract() DEVICE INFORMATION', 'debug')
     if (settings.goveeToken) {
-    goveeHomeToken = "Bearer " + settings.goveeToken
+    goveeHomeToken = "Bearer " + state.goveeHomeToken
     
 
     def params = [
@@ -407,7 +408,6 @@ def sceneExtract() {
             path  : '/bff-app/v1/exec-plat/home',
             headers: ['Authorization': goveeHomeToken, 'Content-Type': 'application/json', 'appVersion': '5.6.01'],
         ]
-//    if (goveeHomeToken) {
         logger("sceneExtract(): Calling HTTP server", 'error')
     try {
         httpGet(params) { resp ->
@@ -427,7 +427,6 @@ def sceneExtract() {
                             ruleSceneSub3=ruleSceneSub2.indexOf('},')
                             ruleSceneSub4 = ruleSceneSub3-1
                             ruleScene = ruleSceneSub2.substring(12,ruleSceneSub4)
-//                            rules3 = rulesSub.indexOf('transaction') - 3
                             logger("sceneExtract(): Substring Name is ${ruleSceneSub3}: ${ruleScene}", 'error')                            
                             rules2 = rules.indexOf('command')                            
                             rulesSub = rules.substring(rules2)
@@ -438,8 +437,7 @@ def sceneExtract() {
                            }
                     } else {
                     logger("sceneExtract(): Default group not found", 'error')
-                    }
-//                    logger("sceneExtract(): ${it.value}", 'error') 
+                    } 
                 }
         }
     } catch (groovyx.net.http.HttpResponseException e) {
@@ -454,21 +452,66 @@ def sceneExtract() {
         section('Govee Home Creds')
         {
             paragraph "Please provide your gove home token."
-//            input 'goveeEmail', 'string', title: 'Please enter your Email used to log into Govee Home', required: true
-            input 'goveeToken', 'string', title: 'Please enter your token obtained from using the curl command', required: true
+            href 'sceneExtract2', title: 'Govee Home Creds', description: 'Setup Gove Home Creds to obtain token'
+            if (timeNow > state.goveeHomeExpiry) {
+            paragraph "Token has expired. Please click the Govee HOme Creds button above to refresh"
+            } else {
+                paragraph "Token has valid"
+            }
         }
-        section('Extracted command') {
-            paragraph "Below is the command information"
+        section('Extracted command below:') {
             paragraph "Device name ${devName}"
             paragraph "Scene name is ${ruleScene}"
             paragraph "Command is ${rules5}" 
             paragraph "This command will work with any device with model ${devSku}" 
-//            paragraph "You have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
-//            paragraph "You have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
         }
     
     }
 }
+
+def sceneExtract2() {
+    
+    logger('sceneExtract2() DEVICE INFORMATION', 'debug')
+    if (settings.goveeEmail && settings.goveePassword) {
+        if (timeNow > state.goveeHomeExpiry) {
+            bodyParm = '{"email": '+settings.goveeEmail+', "password": '+settings.goveePassword+'}'
+            logger("sceneExtract(): bodyparm to be passed:  ${bodyParm}", 'error')
+            def params = [
+                uri   : 'https://community-api.govee.com',
+                path  : '/os/v1/login',
+                headers: ['Content-Type': 'application/json'],
+                body: bodyParm
+            ]
+            logger("sceneExtract(): parms to be passed:  ${params}", 'error')
+            try {
+                httpPost(params) { resp ->
+                    status = resp.data.status.value
+                    msg = resp.data.message.value
+                    state.goveeHomeToken = resp.data.data.token.value.toString()
+                    state.goveeHomeExpiry = resp.data.data.expiredAt.value
+                    logger("sceneExtract(): Substring status is ${status}: Message ${msg}", 'error')
+                    logger("sceneExtract(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'error')
+                    }
+                } catch (groovyx.net.http.HttpResponseException e) {
+                    logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
+                    logger("deviceSelect() ${e}", 'error')
+
+                return 'unknown'
+            }        
+        }
+    }           
+            
+    dynamicPage(name: 'sceneExtract2', title: 'Govee Home Credentials', uninstall: false, install: false, submitOnChange: true)
+    {
+        section('Govee Home Creds')
+        {
+            paragraph "Please provide your gove home token."
+            input 'goveeEmail', 'string', title: 'Please enter your Email used to log into Govee Home', required: true
+            input 'goveePassword', 'password', title: 'Please enter your Govee Home password', required: true
+        }
+    }
+}
+
 
 def about() {
     dynamicPage(name: 'about', title: 'About Govee Integration with HE', uninstall: false, install: false)
