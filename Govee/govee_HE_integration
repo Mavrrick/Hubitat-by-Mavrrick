@@ -400,7 +400,7 @@ def sceneExtract() {
     def sceneData = [:]
 
     logger('sceneExtract() DEVICE INFORMATION', 'debug')
-    if (settings.goveeToken) {
+    if (state.goveeHomeToken) {
     goveeHomeToken = "Bearer " + state.goveeHomeToken
     
 
@@ -474,8 +474,8 @@ def sceneExtract2() {
     
     logger('sceneExtract2() DEVICE INFORMATION', 'debug')
     if (settings.goveeEmail && settings.goveePassword) {
-        if (timeNow > state.goveeHomeExpiry) {
-            bodyParm = '{"email": '+settings.goveeEmail+', "password": '+settings.goveePassword+'}'
+//        if (timeNow > state.goveeHomeExpiry) {
+            bodyParm = '{"email": "'+settings.goveeEmail+'", "password": "'+settings.goveePassword+'"}'
             logger("sceneExtract(): bodyparm to be passed:  ${bodyParm}", 'error')
             def params = [
                 uri   : 'https://community-api.govee.com',
@@ -499,7 +499,7 @@ def sceneExtract2() {
 
                 return 'unknown'
             }        
-        }
+ //       }
     }           
             
     dynamicPage(name: 'sceneExtract2', title: 'Govee Home Credentials', uninstall: false, install: false, submitOnChange: true)
