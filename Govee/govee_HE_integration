@@ -46,6 +46,8 @@ definition(
 * 1.0.20 Added Scenes and respective tools
 */
 
+import groovy.json.JsonSlurper
+
 preferences
 {
     page(name: 'mainPage', title: 'Govee Integration')
@@ -412,6 +414,9 @@ def sceneExtract() {
         logger("sceneExtract(): Calling HTTP server", 'error')
     try {
         httpGet(params) { resp ->
+            def slurper = new JsonSlurper()
+//            parsed  = slurper.parse(resp.data)
+            logger("sceneExtract(): ${parsed}", 'error')
                 resp.data.data.components.forEach {
                     name = it.name.toString()
                     logger("sceneExtract(): ${name}", 'error')
@@ -421,20 +426,24 @@ def sceneExtract() {
                             devName= it.deviceObj.name
                             devSku= it.deviceObj.sku
                             logger("sceneExtract(): Looking at ${devName} ${devSku}", 'error')
-                            rules = it.rule.toString()
+                            rules = it.rule
+                            if (rules.get(0).get(0).cmdType == 0) {
+                                logger("sceneExtract(): First rule is on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'error')
+                                cmdVal=rules.get(0).get(1).cmdVal
+                                iotMsg=rules.get(0).get(1).iotMsg
+                            } else {
+                                logger("sceneExtract(): First rule is not on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'error')
+                                cmdVal=rules.get(0).get(0).cmdVal
+                                iotMsg=rules.get(0).get(0).iotMsg    
+                            }
+                            iotMsgJson  = slurper.parseText(iotMsg)
+                            cmdValJson  = slurper.parseText(cmdVal)
                             logger("sceneExtract(): rule is ${rules}", 'error')
-                            ruleSceneSub1=rules.indexOf('scenesStr')
-                            ruleSceneSub2 = rules.substring(ruleSceneSub1)
-                            ruleSceneSub3=ruleSceneSub2.indexOf('},')
-                            ruleSceneSub4 = ruleSceneSub3-1
-                            ruleScene = ruleSceneSub2.substring(12,ruleSceneSub4)
-                            logger("sceneExtract(): Substring Name is ${ruleSceneSub3}: ${ruleScene}", 'error')                            
-                            rules2 = rules.indexOf('command')                            
-                            rulesSub = rules.substring(rules2)
-                            rules3 = rulesSub.indexOf('transaction') - 3
-                            logger("sceneExtract(): substring rule is ${rules2} ${rules3}", 'error')
-                            rules5 = rulesSub.substring(9,rules3)
-                            logger("sceneExtract(): substring rule is ${rules5}", 'error')
+                            logger("sceneExtract(): cmdVal is ${cmdVal}", 'error')
+                            logger("sceneExtract(): iotMSG is ${iotMsg}", 'error')
+                            logger("sceneExtract(): cmdValJson is ${cmdValJson}", 'error')
+                            logger("sceneExtract(): iotMsgJson is ${iotMsgJson}", 'error')
+                            logger("sceneExtract(): Substring Name is ${cmdValJson.scenesStr}: ${iotMsgJson.msg.data.command}", 'error')                            
                            }
                     } else {
                     logger("sceneExtract(): Default group not found", 'error')
@@ -462,8 +471,8 @@ def sceneExtract() {
         }
         section('Extracted command below:') {
             paragraph "Device name ${devName}"
-            paragraph "Scene name is ${ruleScene}"
-            paragraph "Command is ${rules5}" 
+            paragraph "Scene name is ${cmdValJson.scenesStr}"
+            paragraph "Command is ${iotMsgJson.msg.data.command}" 
             paragraph "This command will work with any device with model ${devSku}" 
         }
     
