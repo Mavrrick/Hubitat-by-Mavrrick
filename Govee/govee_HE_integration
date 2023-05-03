@@ -438,6 +438,8 @@ def sceneExtract() {
                             }
                             iotMsgJson  = slurper.parseText(iotMsg)
                             cmdValJson  = slurper.parseText(cmdVal)
+                            sceneName = cmdValJson.scenesStr
+                            command = iotMsgJson.msg.data.command
                             logger("sceneExtract(): rule is ${rules}", 'error')
                             logger("sceneExtract(): cmdVal is ${cmdVal}", 'error')
                             logger("sceneExtract(): iotMSG is ${iotMsg}", 'error')
@@ -471,8 +473,8 @@ def sceneExtract() {
         }
         section('Extracted command below:') {
             paragraph "Device name ${devName}"
-            paragraph "Scene name is ${cmdValJson.scenesStr}"
-            paragraph "Command is ${iotMsgJson.msg.data.command}" 
+            paragraph "Scene name is ${sceneName}"
+            paragraph "Command is ${command}" 
             paragraph "This command will work with any device with model ${devSku}" 
         }
     
@@ -495,11 +497,12 @@ def sceneExtract2() {
             logger("sceneExtract(): parms to be passed:  ${params}", 'error')
             try {
                 httpPost(params) { resp ->
-                    status = resp.data.status.value
-                    msg = resp.data.message.value
-                    state.goveeHomeToken = resp.data.data.token.value.toString()
+                    status = resp.data.status
+                    msg = resp.data.message
+                    state.goveeHomeToken = resp.data.data.token
                     state.goveeHomeExpiry = resp.data.data.expiredAt.value
-                    logger("sceneExtract(): Substring status is ${status}: Message ${msg}", 'error')
+                    logger("sceneExtract(): response is ${resp.data}", 'error')
+                    logger("sceneExtract(): status is ${status}: Message ${msg}", 'error')
                     logger("sceneExtract(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'error')
                     }
                 } catch (groovyx.net.http.HttpResponseException e) {
