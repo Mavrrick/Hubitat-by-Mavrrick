@@ -497,13 +497,18 @@ def sceneExtract2() {
             logger("sceneExtract(): parms to be passed:  ${params}", 'error')
             try {
                 httpPost(params) { resp ->
+                    logger("sceneExtract(): response is ${resp.data}", 'error')
                     status = resp.data.status
                     msg = resp.data.message
-                    state.goveeHomeToken = resp.data.data.token
-                    state.goveeHomeExpiry = resp.data.data.expiredAt.value
-                    logger("sceneExtract(): response is ${resp.data}", 'error')
                     logger("sceneExtract(): status is ${status}: Message ${msg}", 'error')
-                    logger("sceneExtract(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'error')
+                    if (status == 200) {
+                        state.goveeHomeToken = resp.data.data.token
+                        state.goveeHomeExpiry = resp.data.data.expiredAt.value
+                        logger("sceneExtract(): response is ${resp.data}", 'error')
+                        logger("sceneExtract(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'error')
+                    } else {
+                        logger("sceneExtract(): Login failed check error above and correct", 'info')
+                        }
                     }
                 } catch (groovyx.net.http.HttpResponseException e) {
                     logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
@@ -521,6 +526,13 @@ def sceneExtract2() {
             paragraph "Please provide your gove home token."
             input 'goveeEmail', 'string', title: 'Please enter your Email used to log into Govee Home', required: true
             input 'goveePassword', 'password', title: 'Please enter your Govee Home password', required: true
+            if (settings.goveeEmail && settings.goveePassword) {
+                if (status == 200) {
+                paragraph "Login Successful"
+                } else {
+                    paragraph "Login failed with error code ${status}: ${msg}"
+                }
+            }
         }
     }
 }
