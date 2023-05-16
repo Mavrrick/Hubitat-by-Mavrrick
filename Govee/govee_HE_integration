@@ -411,44 +411,48 @@ def sceneExtract() {
             path  : '/bff-app/v1/exec-plat/home',
             headers: ['Authorization': goveeHomeToken, 'Content-Type': 'application/json', 'appVersion': '5.6.01'],
         ]
-        logger("sceneExtract(): Calling HTTP server", 'error')
+        logger("sceneExtract(): Calling HTTP server", 'info')
     try {
         httpGet(params) { resp ->
             def slurper = new JsonSlurper()
 //            parsed  = slurper.parse(resp.data)
-            logger("sceneExtract(): ${parsed}", 'error')
+//            logger("sceneExtract(): ${parsed}", 'error')
                 resp.data.data.components.forEach {
                     name = it.name.toString()
-                    logger("sceneExtract(): ${name}", 'error')
+//                    logger("sceneExtract(): ${name}", 'error')
                     if (name == 'Default') {
-                        logger("sceneExtract(): found default group moving forward", 'error')
+                        logger("sceneExtract(): found default group moving forward", 'debug')
                         it.oneClicks.iotRules.forEach {
                             devName= it.deviceObj.name
                             devSku= it.deviceObj.sku
-                            logger("sceneExtract(): Looking at ${devName} ${devSku}", 'error')
+                            logger("sceneExtract(): Looking at ${devName} ${devSku}", 'info')
                             rules = it.rule
                             if (rules.get(0).get(0).cmdType == 0) {
-                                logger("sceneExtract(): First rule is on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'error')
+                                logger("sceneExtract(): First rule is on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'debug')
                                 cmdVal=rules.get(0).get(1).cmdVal
                                 iotMsg=rules.get(0).get(1).iotMsg
                             } else {
-                                logger("sceneExtract(): First rule is not on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'error')
+                                logger("sceneExtract(): First rule is not on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'debug')
                                 cmdVal=rules.get(0).get(0).cmdVal
                                 iotMsg=rules.get(0).get(0).iotMsg    
                             }
                             iotMsgJson  = slurper.parseText(iotMsg)
                             cmdValJson  = slurper.parseText(cmdVal)
-                            sceneName = cmdValJson.scenesStr
+                            if ( cmdValJson.scenesStr == null) {
+                                sceneName = cmdValJson.diyName }
+                            else { scenesStr
+                                sceneName = cmdValJson.scenesStr
+                            }
                             command = iotMsgJson.msg.data.command
-                            logger("sceneExtract(): rule is ${rules}", 'error')
-                            logger("sceneExtract(): cmdVal is ${cmdVal}", 'error')
-                            logger("sceneExtract(): iotMSG is ${iotMsg}", 'error')
-                            logger("sceneExtract(): cmdValJson is ${cmdValJson}", 'error')
-                            logger("sceneExtract(): iotMsgJson is ${iotMsgJson}", 'error')
-                            logger("sceneExtract(): Substring Name is ${cmdValJson.scenesStr}: ${iotMsgJson.msg.data.command}", 'error')                            
+                            logger("sceneExtract(): rule is ${rules}", 'trace')
+                            logger("sceneExtract(): cmdVal is ${cmdVal}", 'trace')
+                            logger("sceneExtract(): iotMSG is ${iotMsg}", 'trace')
+                            logger("sceneExtract(): cmdValJson is ${cmdValJson}", 'trace')
+                            logger("sceneExtract(): iotMsgJson is ${iotMsgJson}", 'trace')
+                            logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')                            
                            }
                     } else {
-                    logger("sceneExtract(): Default group not found", 'error')
+//                    logger("sceneExtract(): Default group not found", 'error')
                     } 
                 }
         }
@@ -487,27 +491,27 @@ def sceneExtract2() {
     if (settings.goveeEmail && settings.goveePassword) {
 //        if (timeNow > state.goveeHomeExpiry) {
             bodyParm = '{"email": "'+settings.goveeEmail+'", "password": "'+settings.goveePassword+'"}'
-            logger("sceneExtract(): bodyparm to be passed:  ${bodyParm}", 'error')
+            logger("sceneExtract(): bodyparm to be passed:  ${bodyParm}", 'debug')
             def params = [
                 uri   : 'https://community-api.govee.com',
                 path  : '/os/v1/login',
                 headers: ['Content-Type': 'application/json'],
                 body: bodyParm
             ]
-            logger("sceneExtract(): parms to be passed:  ${params}", 'error')
+            logger("sceneExtract(): parms to be passed:  ${params}", 'debug')
             try {
                 httpPost(params) { resp ->
-                    logger("sceneExtract(): response is ${resp.data}", 'error')
+                    logger("sceneExtract(): response is ${resp.data}", 'trace')
                     status = resp.data.status
                     msg = resp.data.message
-                    logger("sceneExtract(): status is ${status}: Message ${msg}", 'error')
+                    logger("sceneExtract(): status is ${status}: Message ${msg}", 'trace')
                     if (status == 200) {
                         state.goveeHomeToken = resp.data.data.token
                         state.goveeHomeExpiry = resp.data.data.expiredAt.value
-                        logger("sceneExtract(): response is ${resp.data}", 'error')
-                        logger("sceneExtract(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'error')
+                        logger("sceneExtract(): response is ${resp.data}", 'debug')
+                        logger("sceneExtract(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'info')
                     } else {
-                        logger("sceneExtract(): Login failed check error above and correct", 'info')
+                        logger("sceneExtract(): Login failed check error above and correct", 'error')
                         }
                     }
                 } catch (groovyx.net.http.HttpResponseException e) {
@@ -612,7 +616,7 @@ def DeviceInfo() {
 }
 
 def apiRateLimits(type, value) {
-    logger("apiRateLimits($type, $value)", 'info')
+    logger("apiRateLimits($type, $value)", 'debug')
     if (type == 'DailyLimitRemaining') {
         state.dailyLimit = value
         if ( state.dailyLimit.toInteger() < apiV1threshold) {
@@ -621,7 +625,7 @@ def apiRateLimits(type, value) {
     }
     else if (type == 'DailyLimitRemainingV2') {
         state.dailyAppLimit = value
-        log.debug "${state.dailyAppLimit}"
+//        log.debug "${state.dailyAppLimit}"
         if ( state.dailyAppLimit.toInteger() < apiV2threshold) {
             log.debug 'validated api limit to low. Sending notificatoin'
             sendnotification('Govee Appliance API rate Limit', state.dailyAppLimit)
