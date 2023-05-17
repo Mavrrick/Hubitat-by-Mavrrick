@@ -91,13 +91,13 @@ def update( carbonDioxide , pm, tvoc, temperature, humidity  ){
     sendEvent(name: "humidity", value: humidity)
 //Calculate AQI from PM and TVOC
     if (pm <= 12.0) { aqicalc1 = ((50-0)/(12.0)*(pm)+ 0).toDouble() }
-    else if (pm <= 35.4) { aqicalc1 = ((100 - 50) / (35.4 - 12.0) * (pm - 12.0) + 50).toDouble()}
-    else if (pm <= 55.4) { aqicalc1 = ((150 - 100) / (55.4 - 35.4) * (pm - 35.4) + 100).toDouble()}
-    else if (pm <= 150.4) { aqicalc1 = ((200 - 150) / (150.4 - 55.4) * (pm - 55.4) + 150).toDouble()}
-    else if (pm <= 250.4) { aqicalc1 = ((300 - 200) / (250.4 - 150.4) * (pm - 150.4) + 200).toDouble()}
-    else if (pm <= 350.4) { aqicalc1 = ((400 - 300) / (350.4 - 250.4) * (pm - 250.4) + 300).toDouble()}
-    else if (pm <= 500.4) { aqicalc1 = ((500 - 400) / (500.4 - 350.4) * (pm - 350.4) + 400).toDouble()}
-    def aqi = aqicalc1+tvoc
+    else if (pm <= 35.4) { aqicalc1 = ((100 - 51) / (35.4 - 12.0) * (pm - 12.0) + 50).toDouble()}
+    else if (pm <= 55.4) { aqicalc1 = ((150 - 101) / (55.4 - 35.4) * (pm - 35.4) + 100).toDouble()}
+    else if (pm <= 150.4) { aqicalc1 = ((200 - 151) / (150.4 - 55.4) * (pm - 55.4) + 150).toDouble()}
+    else if (pm <= 250.4) { aqicalc1 = ((300 - 201) / (250.4 - 150.4) * (pm - 150.4) + 200).toDouble()}
+    else if (pm <= 350.4) { aqicalc1 = ((400 - 301) / (350.4 - 250.4) * (pm - 250.4) + 300).toDouble()}
+    else if (pm <= 500.4) { aqicalc1 = ((500 - 401) / (500.4 - 350.4) * (pm - 350.4) + 400).toDouble()}
+    def aqi = aqicalc1
     aqi = aqi.round(1)
 //    log.debug "aqi value is : ${aqi}"
     if (aqi>=1) { sendEvent(name: "airQualityIndex", value: aqi )}
