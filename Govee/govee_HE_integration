@@ -449,7 +449,7 @@ def sceneExtract() {
                             logger("sceneExtract(): iotMSG is ${iotMsg}", 'trace')
                             logger("sceneExtract(): cmdValJson is ${cmdValJson}", 'trace')
                             logger("sceneExtract(): iotMsgJson is ${iotMsgJson}", 'trace')
-                            logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')                            
+                            logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command.inspect().replaceAll("\'", "\"")}", 'debug')                            
                            }
                     } else {
 //                    logger("sceneExtract(): Default group not found", 'error')
@@ -478,7 +478,7 @@ def sceneExtract() {
         section('Extracted command below:') {
             paragraph "Device name ${devName}"
             paragraph "Scene name is ${sceneName}"
-            paragraph "Command is ${command}" 
+            paragraph "Command is ${command.inspect().replaceAll("\'", "\"")}" 
             paragraph "This command will work with any device with model ${devSku}" 
         }
     
