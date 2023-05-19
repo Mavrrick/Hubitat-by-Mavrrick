@@ -24,200 +24,6 @@ import groovy.json.JsonBuilder
 
 def commandPort() { "4003" }
 
- @Field static Map sceneEffects = [
-     1:"Ocean/Deep Sea",
-     2:"Romantic",
-     3:"Sunset/Sunset Glow",
-     4:"Rainbow",
-     5:"Fire",
-     6:"Cozy",
-     7:"Forest",
-     8:"Flower Field",
-     9:"Sunrise",
-     10:"Sunset",
-     11:"Warm White",
-     12:"Daylight",     
-     13:"Cool White",     
-     101:"Illusion",
-     102:"Mirage",
-     103:"Aurora",
-     104:"Holloween D",
-     105:"Nebula",
-     501:"Aurora-B"
-] 
-
-// First 30 scenese are setup to replicate Hubitat Wiz Bulb integration Scense so these can be used together
-// Sense above 100 will be other standard scense that are part of the Govee devices as they are found
-// Special scense like 3d effects may have their own section as well to allow management.
-
- @Field static Map lightEffects = [
-    H6052:[ //Aura Table Lamp
-        1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
-        2:["name":"Romantic", "cmd":['"owABCgcJVWT///8FDO5x/xgZGho\\="','"owEbHB0eHyAhIiMYiwD/AAECA9U\\="','"owIEBQYHCAkKCwwNDg8QERITFLU\\="','"owMVFhck/P8AYGFiY2RlZmdoaZI\\="','"owRqa2xtbm9wcXJzdHV2d3h5et0\\="','"owV7fH1+f4CBgoMk/38AJCUmJ3k\\="','"owYoKSorLC0uLzAxMjM0NTY3OJ0\\="','"owc5Ojs8PT4/QEFCQ0RFRkcY/3s\\="','"owivAEhJSktMTU5PUFFSU1RVVlM\\="','"o/9XWFlaW1xdXl8AAAAAAAAAAAs\\="','"MwUEMgEAAAAAAAAAAAAAAAAAAAE\\="']],
-        3:["name":"Sunset", "cmd":['"owABCwcOAGQAAAAJDP8AAAABAj0\\="','"owEDBAUGBwgJCgsM/wgADA0OD1o\\="','"owIQERITFBUWFwv/UQAYGRobHBg\\="','"owMdHh8gISIB/1AAIxj/ZgAkJZI\\="','"owQmJygpKissLS4vMDEyMzQ1NpE\\="','"owU3ODk6Oxj/fwA8PT4/QEFCQwk\\="','"owZERUZHSElKS0xNTk9QUVJTGL0\\="','"owf/ngBUVVZXWFlaW1xdXl9gYcQ\\="','"owhiY2RlZmdoaWprDP/uAGxtbtg\\="','"owlvcHFyc3R1dncM//8AeHl6e8k\\="','"o/98fX5/gIGCgwAAAAAAAAAAAFw\\="','"MwUELQEAAAAAAAAAAAAAAAAAAB4\\="']],
-        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
-        5:["name":"Fire", "cmd":['"MwUEIQAAAAAAAAAAAAAAAAAAABM\\="']],
-        7:["name":"Forest", "cmd":['"MwUEEgAAAAAAAAAAAAAAAAAAACA\\="']],
-        8:["name":"Flower Field", "cmd":['"owABCAcJZFP//wAGGAD/AD9MTk8\\="','"owFQVFVZW19iY2Rmam9wc3V2eNA\\="','"owJ6foCDBv8AblNdbXJ3ewSLAKM\\="','"owP/Q2drgiX/fwAAAQIDBAUGBzc\\="','"owQICQoLDA0ODxAREhMUFRYXGL8\\="','"owUZGhscHR4fICEiI0kS/wAAMig\\="','"owZBRkhNUVZYWmFlaGx0eX1/gSw\\="','"o/8DAP//Sl5gAAAAAAAAAAAAACs\\="','"MwUEuwsAAAAAAAAAAAAAAAAAAII\\="']],
-        9:["name":"Sunrise", "cmd":['"owABCwcJAGQAAAAIDIsA/0hJSvg\\\\u003d"','"owFLTE1OT1BRUlMMABKJbG1ub34\\\\u003d"','"owJwcXJzdHV2dwz/GfRgYWJjZNs\\\\u003d"','"owNlZmdoaWprDN400lRVVldYWfE\\\\u003d"','"owRaW1xdXl8Y/wAAAAECAwQFBkY\\\\u003d"','"owUHCAkKCwwNDg8QERITFBUWF6E\\\\u003d"','"owYY/38AGBkaGxwdHh8gISIjJBk\\\\u003d"','"owclJicoKSorLC0uLxj//wAwMZk\\\\u003d"','"owgyMzQ1Njc4OTo7PD0+P0BBQuk\\\\u003d"','"owlDREVGRwwAAP94eXp7fH1+fxo\\\\u003d"','"o/+AgYKDAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUELAEAAAAAAAAAAAAAAAAAAB8\\\\u003d"']],
-        10:["name":"Sunset", "cmd":['"owABCwcOAGQAAAAJDP8AAAABAj0\\\\u003d"','"owEDBAUGBwgJCgsM/wgADA0OD1o\\\\u003d"','"owIQERITFBUWFwv/UQAYGRobHBg\\\\u003d"','"owMdHh8gISIB/1AAIxj/ZgAkJZI\\\\u003d"','"owQmJygpKissLS4vMDEyMzQ1NpE\\\\u003d"','"owU3ODk6Oxj/fwA8PT4/QEFCQwk\\\\u003d"','"owZERUZHSElKS0xNTk9QUVJTGL0\\\\u003d"','"owf/ngBUVVZXWFlaW1xdXl9gYcQ\\\\u003d"','"owhiY2RlZmdoaWprDP/uAGxtbtg\\\\u003d"','"owlvcHFyc3R1dncM//8AeHl6e8k\\\\u003d"','"o/98fX5/gIGCgwAAAAAAAAAAAFw\\\\u003d"','"MwUELQEAAAAAAAAAAAAAAAAAAB4\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"MwUEHAAAAAAAAAAAAAAAAAAAAC4\\="']]
-    ], 
-    H6065:[ // Govee Glide Y Lights
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFU8DBAEgBQAEABKJAGQ\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUETQsCRwAAAAAAAAAAAAAAADE\\="']],
-        2:["name":"Romantic", "cmd":['"owABAgQnFUIBAAEFAAWLAP/kAEQ\\="','"o//n/zuD/2lK/5F2AAAAAAAAADg\\="','"MwUEWgsCRwAAAAAAAAAAAAAAACY\\="']],
-        3:["name":"Sunset Glow", "cmd":['"owABAgQmFSQDAgEeBQAFZACX34E\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUETwsCRwAAAAAAAAAAAAAAADM\\="']],
-        4:["name":"Rainbow", "cmd":['"owABAgQmFVADBAEmBQAH/wAA/+U\\="','"o/9/AP//AAD/AAAA/wD//4sA/1c\\="','"MwUEUAsCRwAAAAAAAAAAAAAAACw\\="']],
-        5:["name":"Fire", "cmd":['"owABAgQmFVUDFAwCAv8BJQUABQI\\="','"o//YAQH7Vgf/cQD/qwUBAQEAAPA\\="','"MwUEVAsCRwAAAAAAAAAAAAAAACg\\="']],
-        7:["name":"Forest", "cmd":['"owABAgQmFS0DAgEiBQAG/545AMM\\="','"o///AAfKAJnVE8rsAf/rJAAAACY\\="','"MwUETgsCRwAAAAAAAAAAAAAAADI\\="']],
-        8:["name":"Colorful", "cmd":['"owABAwQmFWEDBwFkBQAIAAD/AGQ\\\\u003d"','"owEA/wD//wD/////AP//AP8Absw\\\\u003d"','"o///AG4AAAAAAAAAAAAAAAAAAM0\\\\u003d"','"MwUEWQsCRwAAAAAAAAAAAAAAACU\\\\u003d"']],
-        101:["name":"Illusion", "cmd":['"owABAgQnFR4BAAEFAAJscdkKCks\\="','"o/8KAAAAAAAAAAAAAAAAAAAAAFY\\="','"MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="']],
-        102:["name":"Thunderclap", "cmd":['"owABAgQnPFMAAoM47Nvk7gAAAGg\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE2RwARwAAAAAAAAAAAAAAALA\\\\u003d"']],
-        107:["name":"Meteor", "cmd":['"owABAgQmFUsDBAEmBQAGAQEBAf8\\\\u003d"','"o/8BAQEBAYsA/wEBAQEBAQAAACk\\\\u003d"','"MwUEVQsCRwAAAAAAAAAAAAAAACk\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABAgQmFTMDAQEeBQAGGf+ZXJk\\="','"o//QHwOrNgCLRQBkACkAKQAAAKc\\="','"MwUEUQsCRwAAAAAAAAAAAAAAAC0\\="']]
-    ],
-    H6066:[ // Gove Glide Hexa Pro
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFS0CAgFkBQAEABKJAEU\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUE2AkCLQAAAAAAAAAAAAAAAMw\\="']],
-        2:["name":"Romantic", "cmd":['"owABAgQmFTIBAgFIBQAFiwD/5H8\\="','"o/8A5/87g/9pSv+RdgAAAAAAADg\\="','"MwUE4gkCLQAAAAAAAAAAAAAAAPY\\="']],
-        3:["name":"Sunset Glow", "cmd":['"owABAgQmFQoBAgFkBQAFZACX39c\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUE2gkCLQAAAAAAAAAAAAAAAM4\\="']],
-        4:["name":"Rainbow", "cmd":['"owABAgQmFVIBAgFkBQAH/wAA/6E\\="','"o/9/AP//AAD/AAAA/wD//4sA/1c\\="','"MwUE2wkCLQAAAAAAAAAAAAAAAM8\\="']],
-        5:["name":"Fire", "cmd":['"owABAgQmFUcBAgFkBQAF2AEB+5U\\="','"o/9WB/9xAP+rBf/SAAAAAAAAAP8\\="','"MwUE3gkCLQAAAAAAAAAAAAAAAMo\\="']],
-        7:["name":"Forest", "cmd":['"owABAgQmFTYBAgFkBQAG/545AJw\\="','"o///AAfKAJnVE8rsAf/rJAAAACY\\="','"MwUE2QkCLQAAAAAAAAAAAAAAAM0\\="']],
-        8:["name":"Flower Field", "cmd":['"owABAgQmGxYACgEFAAf/AAD/f/k\\="','"o/8A//8AAP8AAAD/AP//iwD/ACg\\="','"MwUE3wkKLQAAAAAAAAAAAAAAAMM\\="']],
-        101:["name":"Illusion", "cmd":['"owABAgQnFR4BAAEFAAJscdkKCks\\="','"o/8KAAAAAAAAAAAAAAAAAAAAAFY\\="','"MwUEVh0ALQAAAAAAAAAAAAAAAFQ\\="']],
-        102:["name":"Mirage", "cmd":['"owABAgQnFR0BAAEFAAIAD57//x0\\\\u003d"','"o/9lAAAAAAAAAAAAAAAAAAAAADk\\\\u003d"','"MwUEDQoALQAAAAAAAAAAAAAAABg\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABAgQmFTwBAgEeBQAFGf+ZXJQ\\="','"o//QHwOrNgCLRQBkAAAAAAAAAKc\\="','"MwUE3AkCLQAAAAAAAAAAAAAAAMg\\="']],
-        106:["name":"Cubic", "cmd":['"owABAwQmBwoBCgEFAAj//wD/8IY\\\\u003d"','"owFsAQEBit1pAKkAAQEBaNjWBzg\\\\u003d"','"o/++uAAAAAAAAAAAAAAAAAAAAFo\\\\u003d"','"MwUEBAoKLQAAAAAAAAAAAAAAABs\\\\u003d"']],
-        104:["name":"Test DIY", "cmd":['"owABAgQmBzIACAEFAAT/LgBl//Q\\="','"o/86G4D/Dev/AAAAAAAAAAAAABs\\="','"MwUKwQAAAAAAAAAAAAAAAAAAAP0\\="']]
-    ], 
-    H6072:[ // Lyra Lamp
-        1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
-        2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
-        3:["name":"Sunset", "cmd":['"owABBwIDIGQAAAUAAf//AAAAAOQ\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaQAAAAQAB//8AAAAAAvg\\="','"owPIMgH/AAAAAAAAAAAAJkAAAMI\\="','"owQBAgP//wDIAAD/AAJkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUENAgAAAAAAAAAAAAAAAAAAA4\\="']],
-        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
-        5:["name":"Fire", "cmd":['"owABBwIEGiQAAAECAf8AA4AUFOM\\="','"owED4woB/zkHFwD/EwD/ABoiALQ\\="','"owIAAQIB/wADgBQUA4AUAf9HB/Y\\="','"owMXAP8AAIAAHQAAAAECAf8NAic\\="','"owT/CgoA9BQC/wAA/0AHAACAAH0\\="','"owUAgAAaJgAAAQIB/wADgBQUA2c\\="','"o/+AFAH/FwcXAf0AAIAAAAAAAE0\\="','"MwUEOggAAAAAAAAAAAAAAAAAAAA\\="']],
-        7:["name":"Forest", "cmd":['"MwUEEgAAAAAAAAAAAAAAAAAAACA\\="']],
-        8:["name":"Journee of Flowers", "cmd":['"owABCQIFGgAAAAECAf9MA+oUFO4\\="','"owEBzRQB/38AEgD/AACAACAgAJY\\="','"owIAAQIC/0wD7xQU/wAAgBQUAYE\\="','"owP0FAH/AAASAP8AAIAAGiIAAOs\\="','"owQBAgH/TAP/FBQA8xQBAP8AEuE\\="','"owUA/wAAgAAaJAAAAQIB/0wD/6o\\="','"owYUFADzFAEA//8SAP8AAIAAGjQ\\="','"owcmAAABAgH/SwP/FBQA5hQB/8Q\\="','"o/8X/xIA/wAAgAAAAAAAAAAAANk\\="','"MwUEOwgAAAAAAAAAAAAAAAAAAAE\\="']],
-        9:["name":"Sunrise", "cmd":['"owABCAIDGhQAAAEAAf//AAAAAKU\\\\u003d"','"owEA/zIB//8AAAAAAAAAA0dQAHo\\\\u003d"','"owIAEAAB//8AAAAAAvsUEP9/AM0\\\\u003d"','"owP/fwD/AAD/AAD/FgD/FgD/AN8\\\\u003d"','"owQA/38A/38A//8A//8A//8A/1g\\\\u003d"','"owX/AP//AP//AP//AAAAAAAAAFk\\\\u003d"','"owYCIGQAAAEAAf//AAD//wIAMtM\\\\u003d"','"o/8DBoH+B7T/AAD/AAAAAAAAAZQ\\\\u003d"','"MwUEMwgAAAAAAAAAAAAAAAAAAAk\\\\u003d"']],
-        10:["name":"Sunset", "cmd":['"owABBwIDIGQAAAUAAf//AAAAAOQ\\\\u003d"','"owEDADID/38A/38A/38AAAAAABA\\\\u003d"','"owIAAAEaQAAAAQAB//8AAAAAAvg\\\\u003d"','"owPIMgH/AAAAAAAAAAAAJkAAAMI\\\\u003d"','"owQBAgP//wDIAAD/AAJkCgoAAPY\\\\u003d"','"owUByAoKAP8yAf9/AAAAAAAAACM\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUENAgAAAAAAAAAAAAAAAAAAA4\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABBAIBOwAAAAwAAf//AQAAAJI\\="','"owEC+wAM/8kAjv8Ajv8A+v8AAGQ\\="','"owL//wD//wD//wD//wCp/4sA/4M\\="','"o/+LAP/v/wAAAAAAAAAAAAAAADg\\="','"MwUENggAAAAAAAAAAAAAAAAAAAw\\="']]
-    ],
-    H6076:[ // Basics Floor Lamp
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBgIDGgAAAAEAAf8AAIAUFMA\\="','"owEAgBQBAP8AAACAAACAAB0AANU\\="','"owIAAQIB/wAAgBQUANtkAv//AGE\\="','"owMA/wAAAIAAAIAAHQAAAAECAUA\\="','"owT/AAKAFBQA22QCAP8A//8AAJg\\="','"o/8AgAAAgAAAAAAAAAAAAAAAAFw\\="','"MwUEbAgAAAAAAAAAAAAAAAAAAFY\\="']],
-        2:["name":"Romantic", "cmd":['"owABBAICIAAAAAMCAXAPA/cUFA0\\="','"owEDABQD/38A//8A/3MHEQD4AFQ\\="','"owIAgAAaAAAAAQAB/2UAwRQUAGA\\="','"o/+AFAGwB/8AAIAAAIAAAAAAAIE\\="','"MwUEcQgAAAAAAAAAAAAAAAAAAEs\\="']],
-        3:["name":"Sunset", "cmd":['"owABBwIDIGAAAAUAAf//AAAAAOA\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaAAAAAQAB//8AAAAAArg\\="','"owPIMgH/AAAAAAAAAAAAJgAAAII\\="','"owQBAgP//wLIAAD/AABkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEaQgAAAAAAAAAAAAAAAAAAFM\\="']],
-        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
-        5:["name":"Fire", "cmd":['"owABBwIEGkMAAAECAUwAA4AUFDc\\="','"owED4woB/zkHFwD9EwD9AB0AAJE\\="','"owIAAQIB/w0C/woKAPQUAv8AALE\\="','"owP/QAcAAIAAAIAAGkYAAAECAUY\\="','"owR+AAOAFBQDgBQB/xcHFwH9AMg\\="','"owUAgAAaQwAAAQIBfgADgBQUA4M\\="','"o/+AFAH/FwcXAf0AAIAAAAAAAE0\\="','"MwUEZwgAAAAAAAAAAAAAAAAAAF0\\="']],
-        7:["name":"Forest", "cmd":['"owABBgIDGgAAAAEAAf8AAIAUFMA\\="','"owEAgBQBAP8AAACAAACAAB0AANU\\="','"owIAAQIB/wAAgBQUANtkAv//AGE\\="','"owMA/wAAAIAAAIAAHQAAAAECAUA\\="','"owT/AAKAFBQA22QCAP8A//8AAJg\\="','"o/8AgAAAgAAAAAAAAAAAAAAAAFw\\="','"MwUEbAgAAAAAAAAAAAAAAAAAAFY\\="']],
-        8:["name":"Blossom", "cmd":['"owABCwIEKTAAAAEAAf//AIAUFDY\\="','"owEB8hQG/wAA/38AcP6aB3H/9VQ\\="','"owIX////ABYA9wAAgAApIwAAASM\\="','"owMAAf//AIAUFAHyFAb/AAD/f78\\="','"owQAcP6aByz//hH+//8AFAD3AJU\\="','"owUAgAApJQAAAQAB//8AgBQUAas\\="','"owbyFAb/AAD/fwBw/poHXP//B3I\\="','"owf3//8AFgD3AACAACk3AAABAC0\\="','"owgB//8AgBQUAfIUBv8AAP9/ALQ\\="','"owlw/poHWf/zB////wAUAPcAAPc\\="','"o/+AAAAAAAAAAAAAAAAAAAAAANw\\="','"MwUEqAkAAAAAAAAAAAAAAAAAAJM\\="']],
-        9:["name":"Sunrise", "cmd":['"owABBwIDGhUAAAEAAf//AAAAAKs\\\\u003d"','"owEA/zIB//8AAAAAAAAAAylVABE\\\\u003d"','"owIABQAB//8AAAAAgvsUBv9/AE4\\\\u003d"','"owP/AAD/AAD/fwD//wD//wAAACA\\\\u003d"','"owQAAAAAAh0AAAACAAH//wAA/0Q\\\\u003d"','"owX/AwAyAgAA/we0/wAAAAAAANk\\\\u003d"','"o/8BAAAAAAAAAAAAAAAAAAAAAF0\\\\u003d"','"MwUEaAgAAAAAAAAAAAAAAAAAAFI\\\\u003d"']],
-        10:["name":"Sunset", "cmd":['"owABBwIDIGAAAAUAAf//AAAAAOA\\\\u003d"','"owEDADID/38A/38A/38AAAAAABA\\\\u003d"','"owIAAAEaAAAAAQAB//8AAAAAArg\\\\u003d"','"owPIMgH/AAAAAAAAAAAAJgAAAII\\\\u003d"','"owQBAgP//wLIAAD/AABkCgoAAPY\\\\u003d"','"owUByAoKAP8yAf9/AAAAAAAAACM\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUEaQgAAAAAAAAAAAAAAAAAAFM\\\\u003d"']],
-        107:["name":"Meteor", "cmd":['"owABBwIDIGQAAAUAAf//AAAAAOQ\\\\u003d"','"owEDADID/38A/38A/38AAAAAABA\\\\u003d"','"owIAAAEaQAAAAQAB//8AAAAAAvg\\\\u003d"','"owPIMgH/AAAAAAAAAAAAJkAAAMI\\\\u003d"','"owQBAgP//wDIAAD/AAJkCgoAAPY\\\\u003d"','"owUByAoKAP8yAf9/AAAAAAAAACM\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUENAgAAAAAAAAAAAAAAAAAAA4\\\\u003d"']]
-
-    ],
-    H61A1:[ // Neon Rope Light 2m
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
-        2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
-        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
-        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
-        5:["name":"Fire", "cmd":['"owABDAIFHQAAAA4AAXAyA7sUFEE\\="','"owEC1RQC/1kH////AwD/EwD3ASQ\\="','"owIpJwAABAIB/5kC/18eAgD/Bok\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD3EACAAikhAAAEAgH/mbA\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAPQQAPcCKTA\\="','"owdDAggGAAH//wCAFBQB6hQG/2w\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPcAAIADKSQAAAEAAf8AAD8\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA9AAA/wQAAAE\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
-        7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUA9gAAAH6CgQE/wC0/wBH/5I\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
-        8:["name":"Flower Field-A", "cmd":['"owABBQICLKACFAoCAf+WAMwAAJE\\="','"owEC4AAH0QBe/wMA/2wA//8A/1g\\="','"owJ/AP8AAPUA/wAAABAA2AAaoFk\\="','"owMAAAEAATIUAAAAAAD6FAHPAKY\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="']],
-        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\\\u003d"']],
-        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']],
-        501:["name":"Aurora-B", "cmd":['"owABCQIEI0AAAAECAf8ZA8IKA+I\\="','"owEC5jIED/8ICwf/B/j//wbpAGs\\="','"owIC+AEAgAAjQgAAAQAB/xgDu+Q\\="','"owMKA4LnMgT/03LLhf8NS/9S/wE\\="','"owSZEgHNAAPkACNEAAABAAH/GIc\\="','"owUDuwoDAuUyBAsH/w//CP8G6d0\\="','"owYH+P8QAcwBAIAAJkYAAAEAAZk\\="','"owf/GAO7CgMC5TIFB/j/Cwf//y4\\="','"o/8G6Q//CNz/ERIB3QEAgAAAADY\\="','"MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="']]
-    ],
-    H61A2:[ // Neon Rope Light 5m
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
-        2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
-        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
-        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
-        5:["name":"Fire", "cmd":['"owABDAIFHQAAAA4AAXAyA7sUFEE\\="','"owEC1RQC/1kH////AwD/EwD3ASQ\\="','"owIpJwAABAIB/5kC/18eAgD/Bok\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD3EACAAikhAAAEAgH/mbA\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAPQQAPcCKTA\\="','"owdDAggGAAH//wCAFBQB6hQG/2w\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPcAAIADKSQAAAEAAf8AAD8\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA9AAA/wQAAAE\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
-        7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUA9gAAAH6CgQE/wC0/wBH/5I\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
-        8:["name":"Flower Field-A", "cmd":['"owABBQICLKACFAoCAf+WAMwAAJE\\="','"owEC4AAH0QBe/wMA/2wA//8A/1g\\="','"owJ/AP8AAPUA/wAAABAA2AAaoFk\\="','"owMAAAEAATIUAAAAAAD6FAHPAKY\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="']],
-        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\\\u003d"']],
-        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']],
-        501:["name":"Aurora-B", "cmd":['"owABCQIEI0AAAAECAf8ZA8IKA+I\\="','"owEC5jIED/8ICwf/B/j//wbpAGs\\="','"owIC+AEAgAAjQgAAAQAB/xgDu+Q\\="','"owMKA4LnMgT/03LLhf8NS/9S/wE\\="','"owSZEgHNAAPkACNEAAABAAH/GIc\\="','"owUDuwoDAuUyBAsH/w//CP8G6d0\\="','"owYH+P8QAcwBAIAAJkYAAAEAAZk\\="','"owf/GAO7CgMC5TIFB/j/Cwf//y4\\="','"o/8G6Q//CNz/ERIB3QEAgAAAADY\\="','"MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="']]
-    ],
-    H61C3:[ //Govee Desk Neon Rope
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
-        2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
-        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
-        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
-        5:["name":"Fire", "cmd":['"owABDAIFHQAAAA4AAXAyA7sUFEE\\="','"owEC1RQC/1kH////AwD/EwD3ASQ\\="','"owIpJwAABAIB/5kC/18eAgD/Bok\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD3EACAAikhAAAEAgH/mbA\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAPQQAPcCKTA\\="','"owdDAggGAAH//wCAFBQB6hQG/2w\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPcAAIADKSQAAAEAAf8AAD8\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA9AAA/wQAAAE\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
-        7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUA9gAAAH6CgQE/wC0/wBH/5I\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
-        8:["name":"Flower Field-A", "cmd":['"owABBQICLKACFAoCAf+WAMwAAJE\\="','"owEC4AAH0QBe/wMA/2wA//8A/1g\\="','"owJ/AP8AAPUA/wAAABAA2AAaoFk\\="','"owMAAAEAATIUAAAAAAD6FAHPAKY\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="']],
-        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\\\u003d"']],
-        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']]
-    ],
-    H6172:[ //Outdoor LED Strip Lights
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
-        2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
-        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
-        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
-        5:["name":"Fire", "cmd":['"owABDAIFHQAAABYAAXAyA7sUFFk\\="','"owEC1RQC/1kH////AwD/EwD/ASw\\="','"owIpJwAABQIB/5kC/18eAgD/Bog\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD8EACAAikhAAAGAgH/mbk\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAP4QAP0CKTA\\="','"owdDAhQUAAH//wCAFBQB6hQG/2I\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPwAAIADKSQAAAEAAf8AADQ\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA+QAA/wQAAAw\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
-        7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUAfsAAAH6CgQE/wC0/wBH/7M\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
-        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
-        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\\\u003d"']],
-        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']]
-    ],
-    H7020:[ //String Lights
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
-        2:["name":"Romantic", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
-        3:["name":"Sunset Glow", "cmd":['"owABCwIFIyAAAAECAf9/ANcUFPg\\="','"owEA8BQE/0EA/4IAxxb+giL+AfE\\="','"owIA8wAAAAEjIgAAAQIB/38A7T0\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAAQDyAAAABSMkAAABAgH/f9Q\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4BAPIAAAADIyYAAAECATw\\="','"owf/fgDwFBQA8hQE/0EA/5YAwCA\\="','"owgH/mQQ/gEA8gAAAAQjKAAAASU\\="','"owkCAf+AAOkUFADuFAT/QQD/lhY\\="','"o/8A7QAk/7IAAQDyAAAAAAAAACs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']],
-        4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
-        5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
-        7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
-        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
-        105:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\\\u003d"','"owEDgBQDAAD/bwf+yQb/BADyEIk\\\\u003d"','"owIA9wAaAAILBgABUxUA6hQUAO4\\\\u003d"','"o//tFAH+/v4AAIAAAPYAAAAAACw\\\\u003d"','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\\\u003d"']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']]
-    ],
-    H7050:[ //Smart Ground Lights
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
-        2:["name":"Romantic", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
-        3:["name":"Sunset Glow", "cmd":['"owABCwIFIyAAAAECAf9/ANcUFPg\\="','"owEA8BQE/0EA/4IAxxb+giL+AfE\\="','"owIA8wAAAAEjIgAAAQIB/38A7T0\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAAQDyAAAABSMkAAABAgH/f9Q\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4BAPIAAAADIyYAAAECATw\\="','"owf/fgDwFBQA8hQE/0EA/5YAwCA\\="','"owgH/mQQ/gEA8gAAAAQjKAAAASU\\="','"owkCAf+AAOkUFADuFAT/QQD/lhY\\="','"o/8A7QAk/7IAAQDyAAAAAAAAACs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']],
-        4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
-        5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
-        7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
-        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']],
-        104:["name":"Halloween D", "cmd":['"owABCgIFHQACFAoAAacAA8kKCsI="','"owEB\\/AUCiwD\\/\\/2cAAACAAACAALQ="','"owImAAAAAQAB\\/wAA\\/AUFA\\/wKBXQ="','"owMA\\/wAAAAAAAAAAAAAAAAARAE4="','"owT0AACAABoAAQACAAH\\/\\/wD3FCg="','"owUUAP8UAf9pABIA9wAAgAAaZNU="','"owYBAAIAAf\\/mAJkUFAD\\/FAGLAEY="','"owf\\/AAD3EAD3AB0AAAABAAEkCXs="','"owgAxhQUAPkUAosA\\/\\/9ZAAAA96c="','"o\\/8AAIAAAAAAAAAAAAAAAAAAANw="','"MwUEowsAAAAAAAAAAAAAAAAAAJo="']],
-        105:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\\\u003d"','"owEDgBQDAAD/bwf+yQb/BADyEIk\\\\u003d"','"owIA9wAaAAILBgABUxUA6hQUAO4\\\\u003d"','"o//tFAH+/v4AAIAAAPYAAAAAACw\\\\u003d"','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\\\u003d"']],
-        108:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]
-     ],
-    H705A:[ //Permanent Outdoor Lights
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
-        2:["name":"Romantic", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
-        3:["name":"Sunset Glow", "cmd":['"owABCwIFIyAAAAECAf9/ANcUFPg\\="','"owEA8BQE/0EA/4IAxxb+giL+AfE\\="','"owIA8wAAAAEjIgAAAQIB/38A7T0\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAAQDyAAAABSMkAAABAgH/f9Q\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4BAPIAAAADIyYAAAECATw\\="','"owf/fgDwFBQA8hQE/0EA/5YAwCA\\="','"owgH/mQQ/gEA8gAAAAQjKAAAASU\\="','"owkCAf+AAOkUFADuFAT/QQD/lhY\\="','"o/8A7QAk/7IAAQDyAAAAAAAAACs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']],
-        4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
-        5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
-        7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
-        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']],
-        104:["name":"Halloween D", "cmd":['"owABCgIFHQACFAoAAacAA8kKCsI="','"owEB\\/AUCiwD\\/\\/2cAAACAAACAALQ="','"owImAAAAAQAB\\/wAA\\/AUFA\\/wKBXQ="','"owMA\\/wAAAAAAAAAAAAAAAAARAE4="','"owT0AACAABoAAQACAAH\\/\\/wD3FCg="','"owUUAP8UAf9pABIA9wAAgAAaZNU="','"owYBAAIAAf\\/mAJkUFAD\\/FAGLAEY="','"owf\\/AAD3EAD3AB0AAAABAAEkCXs="','"owgAxhQUAPkUAosA\\/\\/9ZAAAA96c="','"o\\/8AAIAAAAAAAAAAAAAAAAAAANw="','"MwUEowsAAAAAAAAAAAAAAAAAAJo="']],
-        105:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\\\u003d"','"owEDgBQDAAD/bwf+yQb/BADyEIk\\\\u003d"','"owIA9wAaAAILBgABUxUA6hQUAO4\\\\u003d"','"o//tFAH+/v4AAIAAAPYAAAAAACw\\\\u003d"','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\\\u003d"']],
-        108:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]
-    ],
-        H705B:[ //Permanent Outdoor Lights
-        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
-        2:["name":"Romantic", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
-        3:["name":"Sunset Glow", "cmd":['"owABCwIFIyAAAAECAf9/ANcUFPg\\="','"owEA8BQE/0EA/4IAxxb+giL+AfE\\="','"owIA8wAAAAEjIgAAAQIB/38A7T0\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAAQDyAAAABSMkAAABAgH/f9Q\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4BAPIAAAADIyYAAAECATw\\="','"owf/fgDwFBQA8hQE/0EA/5YAwCA\\="','"owgH/mQQ/gEA8gAAAAQjKAAAASU\\="','"owkCAf+AAOkUFADuFAT/QQD/lhY\\="','"o/8A7QAk/7IAAQDyAAAAAAAAACs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']],
-        4:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']],
-        5:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']],
-        7:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']],
-        8:["name":"Flower Field-B", "cmd":['"owABCgIFHSAAAAEAAf//AIAUFBI\\="','"owED9gECAAD//wAAEAD7AAD8AEM\\="','"owIdIgAAAQAB//8AgBQUA/YBAug\\="','"owMA//8A/wAQAPsAAPwAHSQAAHE\\="','"owQBAAH//wCAFBQD9gECiwD//1o\\="','"owV/ABAA+wAA/AAdJgAAAQAB/wo\\="','"owb/AIAUFAP2AQIA/wD//wAQAMM\\="','"owf7AAD8AB0oAAABAAH//wCAFAI\\="','"owgUA/YBAosA/wD//xAA+wAA/Co\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7QgAAAAAAAAAAAAAAAAAANc\\="']],
-        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']],
-        104:["name":"Halloween D", "cmd":['"owABCgIFHQACFAoAAacAA8kKCsI="','"owEB\\/AUCiwD\\/\\/2cAAACAAACAALQ="','"owImAAAAAQAB\\/wAA\\/AUFA\\/wKBXQ="','"owMA\\/wAAAAAAAAAAAAAAAAARAE4="','"owT0AACAABoAAQACAAH\\/\\/wD3FCg="','"owUUAP8UAf9pABIA9wAAgAAaZNU="','"owYBAAIAAf\\/mAJkUFAD\\/FAGLAEY="','"owf\\/AAD3EAD3AB0AAAABAAEkCXs="','"owgAxhQUAPkUAosA\\/\\/9ZAAAA96c="','"o\\/8AAIAAAAAAAAAAAAAAAAAAANw="','"MwUEowsAAAAAAAAAAAAAAAAAAJo="']],
-        105:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\\\u003d"','"owEDgBQDAAD/bwf+yQb/BADyEIk\\\\u003d"','"owIA9wAaAAILBgABUxUA6hQUAO4\\\\u003d"','"o//tFAH+/v4AAIAAAPYAAAAAACw\\\\u003d"','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\\\u003d"']],
-        108:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]
-    ]
-]    
-
-
 metadata {
 	definition(name: "Govee Lights, Plugs, and Switches Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
@@ -233,16 +39,8 @@ metadata {
 		
 		attribute "colorName", "string"
         attribute "cloudAPI", "string"
-        attribute "effectNum", "integer"
-        command "diyAdd", [
-//            [name: "diyNumber", type: "NUMBER", description: "Number use to call DIY"],
-            [name: "diyName", type: "STRING", description: "Name of DIY"],
-            [name: "command", type: "STRING", description: "DIY Command extracted using Govee Integration"]
-        ]
-       command "diyDelete", [
-//            [name: "diyName", type: "NUMBER", description: "DIY Number to delete"]
-           ]  
-       command "activateDIY", [
+        attribute "effectNum", "integer" 
+        command "activateDIY", [
             [name: "diyName", type: "STRING", description: "DIY Number to activate"]
            ]
     }
@@ -341,11 +139,6 @@ def setCTColorName(value)
 		}
 	
 }
-
-
-
-
-
     
 def setColor(value) {
     if (debugLog) { log.debug "setColor(): HSBColor = "+ value }
@@ -711,8 +504,8 @@ def configure() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}
-    state.scenes = sceneEffects
-    state.diyEffects = [:]
+    state.scenes = [:]
+    state.diyEffects = [:]    
     if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
@@ -727,6 +520,7 @@ def initialize(){
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
+    retrieveScenes()
     if (debugLog) runIn(1800, logsOff)
 }
 
@@ -843,29 +637,24 @@ def parse(message) {
   log.error "UDP Response -> ${message}"    
 }
 
-// LightEffects commands
-// def setEffect(String effectName){
-//   def id = lightEffects.find{ it.value == effectName }
-//   if (id) setEffect(id.key)
-// }
+
 
 def  setEffect(effectNo) {
-//    if (debugLog) {log.debug ("setEffect(): setEffect2 to ${lightEffects.(device.getDataValue("deviceModel")).find{effectNo}}")}
-    int effectNumber = effectNo
-    if (lightEffects.containsKey((device.getDataValue("deviceModel"))) && (lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNumber))) {
-        sceneInfo = lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).name
-        sceneCmd = lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).cmd 
-        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
+    effectNumber = effectNo.toString()
+    if (parent.state.lightEffects.containsKey((device.getDataValue("deviceModel"))) && (parent.state.lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNumber))) {
+        sceneInfo = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).name
+        sceneCmd = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).cmd
+        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}: ParentData ${parentData}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
-//        sendEvent(name: "colorMode", value: "Scene")
+        sendEvent(name: "switch", value: "on")
 //    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
-    } else {
-//        sendEvent(name: "colorMode", value: "Scene")
+   } else {
         sendEvent(name: "effectNum", value: effectNumber)
+        sendEvent(name: "switch", value: "on")
     // Ocean/Deep Sea Light Effect
     if (effectNo == 1) {
             def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBAICHQAAAAEAAf//AAAAALs\\=","owEA3DICAGT/AAD/AAAAAAAAACo\\=","owIaAAIKAQIB/ygB1wAAAAAyAYM\\=","o/8A/5YAAAAAAAAAAAAAAAAAADU\\=","MwUEywAAAAAAAAAAAAAAAAAAAPk\\="]}}}'
@@ -881,7 +670,7 @@ def  setEffect(effectNo) {
         sendCommandLan(cmd2)
     }
     // Sunset Effect   
-    if (effectNo == 2) {
+    if (effectNo == 3) {
         def cmd2 = '{"msg":{"accountTopic":"GA/804fa9a617c337aaa6adf6feeeb3fb95","cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]},"transaction":"u_1682169742270","type":1}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Sunset")
@@ -907,7 +696,6 @@ def  setEffect(effectNo) {
         sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
         if (level != null) setLevel(level,transitionTime);
         sendEvent(name: "colorTemperature", value: 2000)
-        sendEvent(name: "switch", value: "on")
 	    setCTColorName(2000)
         sendEvent(name: "effectName", value: "Cozy")
     }
@@ -945,7 +733,6 @@ def  setEffect(effectNo) {
         sendCommandLan(GoveeCommandBuilder("colorwc",3500, "ct"))
         if (level != null) setLevel(level,transitionTime);
         sendEvent(name: "colorTemperature", value: 3500)
-        sendEvent(name: "switch", value: "on")
 	    setCTColorName(3500)
         sendEvent(name: "effectName", value: "Warm White")
     } 
@@ -955,7 +742,6 @@ def  setEffect(effectNo) {
         sendCommandLan(GoveeCommandBuilder("colorwc",5600, "ct"))
         if (level != null) setLevel(level,transitionTime);
         sendEvent(name: "colorTemperature", value: 5600)
-        sendEvent(name: "switch", value: "on")
 	    setCTColorName(5600)
         sendEvent(name: "effectName", value: "Daylight")
     }
@@ -965,7 +751,6 @@ def  setEffect(effectNo) {
         sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
         if (level != null) setLevel(level,transitionTime);
         sendEvent(name: "colorTemperature", value: 6500)
-        sendEvent(name: "switch", value: "on")
 	    setCTColorName(6500)
         sendEvent(name: "effectName", value: "Cool White")
     }        
@@ -991,7 +776,7 @@ def  setEffect(effectNo) {
         sendEvent(name: "effectName", value: "Aurora-B")
         sendCommandLan(cmd2)
     }
-    }    
+    }   
 //  updateCurrentStatus(null,null,effectNo)  
 }
 
@@ -1017,34 +802,40 @@ if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentV
         }  
 }
 
-def diyAdd(diyName, command) {
-    if (debugLog) {log.debug ("diyAdd(): Adding DIY Scene ${diyName} with Command ${command}")}
-    diySize = state.diyEffects.size()
-       if (debugLog) {log.debug ("diyAdd(): DIY size ${diySize} ")}
-    diyAddNum = (diySize + 1000).toInteger()
-    diyEntry = [:]
-    diyEntry.put("name", diyName)
-    diyEntry.put("cmd", command)    
-    state.diyEffects.put(diyAddNum,diyEntry) 
-}
 
-
-def diyDelete(diyDelete) {
-    if (debugLog) {log.debug ("diyAdd(): Deleteuing DIY Scene ${diyDelete}")}
-//    state.diyEffects = state.diyEffects().findAll {it.key != diyDelete}
-    state.diyEffects = state.diyEffects.remove(diyDelete) 
-}
-
- def activateDIY(diyActivate) {
-     number = state.diyEffects.containsKey(diyActivate)
-     scenedata = state.diyEffects.get(diyActivate)
-     if (debugLog) {log.debug ("activateDIY(): Activate DIYeffect number ${number}  diyActivate ${diyActivate} scenedata ${scenedata}")}
-     sceneName = scenedata.name
-     sceneCmd = scenedata.cmd
-     if (debugLog) {log.debug ("activateDIY(): Activate DIYeffect sceneName ${sceneName}  command ${sceneCmd}")}
-        sendEvent(name: "effectName", value: sceneName)
-        sendEvent(name: "effectNum", value: diyActivate)
+def activateDIY(diyActivate) {
+        diyEffectNumber = diyActivate.toString()
+        sceneInfo = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).name
+        sceneCmd = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd 
+        if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} called ${sceneInfo} with command ${sceneCmd}")}
+        sendEvent(name: "effectName", value: sceneInfo)
+        sendEvent(name: "effectNum", value: diyEffectNumber)
+        sendEvent(name: "switch", value: "on")
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
-        if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
-       sendCommandLan(cmd2)
-    } 
+        if (debugLog) {log.debug ("activateDIY(): command to be sent to ${cmd2}")}
+        sendCommandLan(cmd2)
+}
+
+def retrieveScenes() {
+    if (debugLog) {log.debug ("activateDIY(): Retrieving Scenes from parent app")}
+    parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
+        value = it.value
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${value.name}")}
+        num = it.getKey()
+        name = value.name
+        state.diyEffects.put(num,name)
+    }
+        parent.state.lightEffects.(device.getDataValue("deviceModel")).each {
+        value = it.value
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${value.name}")}
+        num = it.getKey()
+        name = value.name
+        state.scenes.put(num,name)    
+        }
+    state.diyEffects = state.diyEffects.sort {it.key}
+    state.scenes = state.scenes.sort {it.key}
+}
+
+    
