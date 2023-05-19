@@ -299,9 +299,11 @@ def mainPage() {
         section('Govee Scene Extract') {
             href 'sceneExtract', title: 'Scene Extract menu', description: 'Extract Scenes through this menu'
             paragraph "Click button below to scenes to all children device"  
-            input "pushScenesUpdate" , "button",  title: "Click her to update all devices awareness of scenes"
-            paragraph "Click button below to clear DIY Scenes and reload preload scenes"            
-            input "sceneInitialize" , "button",  title: "Click her to Initialize the Scene information"
+            input "pushScenesUpdate" , "button",  title: "Click here to update all devices awareness of scenes"
+            paragraph "Click button below to reload preload scenes"            
+            input "sceneInitialize" , "button",  title: "Click here to reload preloaded scene information"
+            paragraph "Click button below to clear DIY scenes"            
+            input "sceneDIYInitialize" , "button",  title: "Click here to clear DIY scene information"
         }        
         section('Logging Options') {
             input(
@@ -729,17 +731,18 @@ private logger(msg, level = 'debug') {
 
 private def appButtonHandler(button) {
     if (button == "sceneInitialize") {
-    log.debug "Initializing Scene data"
-    state?.diyEffects = [:]
-    state?.lightEffects = [:]
-    lightEffectSetup()
+        log.debug "Initializing Scene data"
+        state?.lightEffects = [:]
+        lightEffectSetup()
     } else if (button == "pushScenesUpdate") {
         List child = getChildDevices()
         child.each {
         logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
         it.initialize()
         } 
-    }
+    } else if (button == "sceneDIYInitialize") {
+        state?.diyEffects = [:] 
+    }    
 }
 
 
