@@ -298,7 +298,9 @@ def mainPage() {
         }
         section('Govee Scene Extract') {
             href 'sceneExtract', title: 'Scene Extract menu', description: 'Extract Scenes through this menu'
-            paragraph "Click button below to clear DIY Scenes and reload preload scenes"
+            paragraph "Click button below to scenes to all children device"  
+            input "pushScenesUpdate" , "button",  title: "Click her to update all devices awareness of scenes"
+            paragraph "Click button below to clear DIY Scenes and reload preload scenes"            
             input "sceneInitialize" , "button",  title: "Click her to Initialize the Scene information"
         }        
         section('Logging Options') {
@@ -726,11 +728,18 @@ private logger(msg, level = 'debug') {
 }
 
 private def appButtonHandler(button) {
-//    if (button == "addChildAppButton") {
+    if (button == "sceneInitialize") {
     log.debug "Initializing Scene data"
     state?.diyEffects = [:]
- //   state?.lightEffects = [:]
+    state?.lightEffects = [:]
     lightEffectSetup()
+    } else if (button == "pushScenesUpdate") {
+        List child = getChildDevices()
+        child.each {
+        logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
+        it.initialize()
+        } 
+    }
 }
 
 
@@ -831,6 +840,19 @@ private def lightEffectSetup() {
         103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']],
         501:["name":"Aurora-B", "cmd":['"owABCQIEI0AAAAECAf8ZA8IKA+I\\="','"owEC5jIED/8ICwf/B/j//wbpAGs\\="','"owIC+AEAgAAjQgAAAQAB/xgDu+Q\\="','"owMKA4LnMgT/03LLhf8NS/9S/wE\\="','"owSZEgHNAAPkACNEAAABAAH/GIc\\="','"owUDuwoDAuUyBAsH/w//CP8G6d0\\="','"owYH+P8QAcwBAIAAJkYAAAEAAZk\\="','"owf/GAO7CgMC5TIFB/j/Cwf//y4\\="','"o/8G6Q//CNz/ERIB3QEAgAAAADY\\="','"MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="']]
     ],
+    H61A8:[ // Outdoor Neon Rope Light 5m
+        1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
+        2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
+        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
+        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']],
+        5:["name":"Fire", "cmd":['"owABDAIFHQAAAA4AAXAyA7sUFEE\\="','"owEC1RQC/1kH////AwD/EwD3ASQ\\="','"owIpJwAABAIB/5kC/18eAgD/Bok\\="','"owMAAAD/////bQf/TQf/Dgf/CH4\\="','"owQJEgD3EACAAikhAAAEAgH/mbA\\="','"owUC/18eAgD/BgAAAP////9tB4s\\="','"owb/TQf/Dgf/CAkQAPQQAPcCKTA\\="','"owdDAggGAAH//wCAFBQB6hQG/2w\\="','"owgVB/8ICf8ICf8pB/8HEwAAAIM\\="','"owkTAPcAAIADKSQAAAEAAf8AAD8\\="','"owqAFBQB6RQG/xUH/zkH/44H/3Y\\="','"o/9eB/8HE/8PBxcA9AAA/wQAAAE\\="','"MwUEMggAAAAAAAAAAAAAAAAAAAg\\="']],
+        7:["name":"Forest", "cmd":['"owABBwIDJgABAAoCAf8ZAbQKCtk\\="','"owECyBQF//8AAP//////AP//lBI\\="','"owL/ABQBlgAAAAAjAAIPBQIB/wo\\="','"owMUA9gAAAH6CgQE/wC0/wBH/5I\\="','"owT/4/8AAAAAAAAAABoAAAABAl0\\="','"owUB/wUByBQUAu4UAQD/AAAAAJI\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="']],
+        8:["name":"Flower Field-A", "cmd":['"owABBQICLKACFAoCAf+WAMwAAJE\\="','"owEC4AAH0QBe/wMA/2wA//8A/1g\\="','"owJ/AP8AAPUA/wAAABAA2AAaoFk\\="','"owMAAAEAATIUAAAAAAD6FAHPAKY\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="']],
+        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\\\u003d"']],
+        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
+        103:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA9zIDAP8AAP//qv8AAwCAAE0\\="','"owIAAAAjAAAAAwIB/xkA7wAAAok\\="','"owP3AAR//wD//wCg//8A//8UAWY\\="','"o//3AAD/AAAAAAAAAAAAAAAAAFQ\\="','"MwUE1wAAAAAAAAAAAAAAAAAAAOU\\="']],
+        501:["name":"Aurora-B", "cmd":['"owABCQIEI0AAAAECAf8ZA8IKA+I\\="','"owEC5jIED/8ICwf/B/j//wbpAGs\\="','"owIC+AEAgAAjQgAAAQAB/xgDu+Q\\="','"owMKA4LnMgT/03LLhf8NS/9S/wE\\="','"owSZEgHNAAPkACNEAAABAAH/GIc\\="','"owUDuwoDAuUyBAsH/w//CP8G6d0\\="','"owYH+P8QAcwBAIAAJkYAAAEAAZk\\="','"owf/GAO7CgMC5TIFB/j/Cwf//y4\\="','"o/8G6Q//CNz/ERIB3QEAgAAAADY\\="','"MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="']]
+    ],    
     H61C3:[ //Govee Desk Neon Rope
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
