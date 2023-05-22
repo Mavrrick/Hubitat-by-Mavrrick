@@ -55,6 +55,7 @@ preferences
     page(name: 'mainPage', title: 'Govee Integration')
     page(name: 'deviceSelect', title: 'Select Light, Switch, Plug devices')
     page(name: 'deviceSelect2', title: 'Select Appliances')
+    page(name: 'sceneManagement', title: 'Scene Management')
     page(name: 'sceneExtract', title: 'Extract scenes')
     page(name: 'sceneExtract2', title: 'Govee Home Creds')
     page(name: 'about', title: 'About')
@@ -270,42 +271,36 @@ def mainPage() {
     def childCount = child.size()
     dynamicPage(name: 'mainPage', title: 'Govee integration Main menu', uninstall: true, install: true, submitOnChange: true)
     {
-        section('API Configuration  ')
+        section('<b>API Configuration</b>')
         {
             paragraph "The Govee APi is required for this integration. Please obtain this value befor moving forward. You can obtain the Govee APi from the Govee Home app 'About Us' section."
             input 'APIKey', 'string', title: 'Enter Your API Key', required: true
         }
-        section('Govee Device Add Page') {
+        section('<b>Govee Device Add Page</b>') {
             href 'deviceSelect', title: 'Device selection', description: 'Select Govee devices to add to your environment'
         }
-        section('Govee Apliance Add Page') {
+        section('<b>Govee Apliance Add Page</b>') {
             href 'deviceSelect2', title: 'Device selection', description: 'Select Govee devices to add to your environment'
         }
-        section('Current Integrated Device Information') {
-            paragraph "There are ${childCount} devices integrated"
+        section('<b>Current Integrated Device Information</b>') {
+            paragraph "There are <mark>${childCount}</mark> devices integrated"
             paragraph "Your current integrated devices are ${child.label}"
                 if (childCount > 0) { def maxPoll = 86400 / ((10000 - (50 * childCount)) / childCount).toDouble()
                 maxPoll = maxPoll.round(1)
-                paragraph "With the number of devices have you can poll as frequently as every ${maxPoll} seconds" }
-            paragraph "You have ${state.dailyLimit} of your 10k Daily APIv1 Calls left."
-            paragraph "You have ${state.dailyAppLimit} of your 100 Daily APIv2 Calls left."
+                paragraph "With the number of devices have you can poll as frequently as every <mark>${maxPoll}</mark> seconds" }
+            paragraph "You have <mark>${state.dailyLimit}</mark> of your 10k Daily APIv1 Calls left."
+            paragraph "You have <mark>${state.dailyAppLimit}</mark> of your 100 Daily APIv2 Calls left."
         }
-        section('Notification Options') {
+        section('<b>Notification Options</b>') {
             input 'notifyEnabled', 'bool', title: 'Enable Notification', required: false, defaultValue: false
             input name: 'notificationDevice', type: 'capability.notification', title: 'Send notification of rate limit consumption :', multiple: true
             input 'apiV1threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Lights, Switches, and Plugs', required: false , range: '1..500', defaultValue: 3
             input 'apiV2threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Appliances', required: false , range: '1..100', defaultValue: 3
         }
-        section('Govee Scene Extract') {
-            href 'sceneExtract', title: 'Scene Extract menu', description: 'Extract Scenes through this menu'
-            paragraph "Click button below to scenes to all children device"  
-            input "pushScenesUpdate" , "button",  title: "Click here to update all devices awareness of scenes"
-            paragraph "Click button below to reload preload scenes"            
-            input "sceneInitialize" , "button",  title: "Click here to reload preloaded scene information"
-            paragraph "Click button below to clear DIY scenes"            
-            input "sceneDIYInitialize" , "button",  title: "Click here to clear DIY scene information"
-        }        
-        section('Logging Options') {
+        section('<b>Govee Scene Management</b>') {
+            href 'sceneManagement', title: 'Scene Management', description: 'Click to setup extraction credential, extract scenes, and manage device association.'
+        }       
+        section('<b>Logging Options</b>') {
             input(
                 name: 'configLoggingLevelIDE',
                 title: 'IDE Live Logging Level:\nMessages with this level and higher will be logged to the IDE.',
@@ -407,6 +402,31 @@ def deviceSelect2() {
     }
 }
 
+def sceneManagement() {
+    dynamicPage(name: 'sceneManagement', title: 'Govee Scene Management menu', uninstall: false, install: false, submitOnChange: false)
+    {
+        section('Govee Home Creds')
+        {
+            paragraph "Please provide your gove home token."
+            href 'sceneExtract2', title: 'Govee Home Creds', description: 'Setup Gove Home Creds to obtain token'
+            if (timeNow > state.goveeHomeExpiry) {
+            paragraph "Token has expired. Please click the Govee HOme Creds button above to refresh"
+            } else {
+                paragraph "Token has <mark>valid</mark>"
+            }
+        }
+        section('Govee Scene Extract') {
+            href 'sceneExtract', title: 'Scene Extract menu', description: 'Extract Scenes through this menu'
+            paragraph "Click button below to scenes to all children device"  
+            input "pushScenesUpdate" , "button",  title: "Click here to update all devices awareness of scenes"
+            paragraph "Click button below to reload preload scenes"            
+            input "sceneInitialize" , "button",  title: "Click here to reload preloaded scene information"
+            paragraph "Click button below to clear DIY scenes"            
+            input "sceneDIYInitialize" , "button",  title: "Click here to clear DIY scene information"
+        }        
+    }
+}
+
 def sceneExtract() {
     def sceneData = [:]
 
@@ -424,11 +444,8 @@ def sceneExtract() {
     try {
         httpGet(params) { resp ->
             def slurper = new JsonSlurper()
-//            parsed  = slurper.parse(resp.data)
-//            logger("sceneExtract(): ${parsed}", 'error')
                 resp.data.data.components.forEach {
                     name = it.name.toString()
-//                    logger("sceneExtract(): ${name}", 'error')
                     if (name == 'Default') {
                         logger("sceneExtract(): found default group moving forward", 'debug')
                         it.oneClicks.iotRules.forEach {
@@ -461,10 +478,6 @@ def sceneExtract() {
                             logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
                             logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command.inspect().replaceAll("\'", "\"")}", 'debug')
                             diyAdd(devSku, sceneName, command)
-/*                            state.lightEffects.H6066.each {
-                            logger("sceneExtract(): Show all scenes in application ${it.getKey()}", 'debug')
-                            logger("sceneExtract(): Show all scenes in application ${it.value}", 'debug')
-                            } */
                            }
                     } else {
 //                    logger("sceneExtract(): Default group not found", 'error')
@@ -480,20 +493,10 @@ def sceneExtract() {
     }
     dynamicPage(name: 'sceneExtract', title: 'Scene Extract', uninstall: false, install: false, submitOnChange: true)
     {
-        section('Govee Home Creds')
-        {
-            paragraph "Please provide your gove home token."
-            href 'sceneExtract2', title: 'Govee Home Creds', description: 'Setup Gove Home Creds to obtain token'
-            if (timeNow > state.goveeHomeExpiry) {
-            paragraph "Token has expired. Please click the Govee HOme Creds button above to refresh"
-            } else {
-                paragraph "Token has valid"
-            }
-        }
-        section('Extracted command below:') {
+        section('<b>Extracted command below:</b>') {
             paragraph "Device name ${devName}"
             paragraph "Scene name is ${sceneName}"
-            paragraph "Command is ${command.inspect().replaceAll("\'", "\"")}" 
+            paragraph "Command is <mark>${command.inspect().replaceAll("\'", "\"")}</mark>" 
             paragraph "This command will work with any device with model ${devSku}" 
         }
     }
@@ -503,7 +506,6 @@ def sceneExtract2() {
     
     logger('sceneExtract2() DEVICE INFORMATION', 'debug')
     if (settings.goveeEmail && settings.goveePassword) {
-//        if (timeNow > state.goveeHomeExpiry) {
             bodyParm = '{"email": "'+settings.goveeEmail+'", "password": "'+settings.goveePassword+'"}'
             logger("sceneExtract(): bodyparm to be passed:  ${bodyParm}", 'error')
             def params = [
@@ -534,7 +536,6 @@ def sceneExtract2() {
 
                 return 'unknown'
             }        
- //       }
     }           
             
     dynamicPage(name: 'sceneExtract2', title: 'Govee Home Credentials', uninstall: false, install: false, submitOnChange: true)
@@ -752,26 +753,69 @@ private def appButtonHandler(button) {
 
 /// All Light efects mapping to commands for all devices.
 private def lightEffectSetup() {
-    lightEffectH6052()
+    List child = getChildDevices()
+    List childModels = child.data.deviceModel
+    logger("lightEffectSetup() Child device ${child} Model ${childModels}", 'debug')
+    if (childModels.contains("H6052")) {
+        lightEffectH6052()
+    }
+    if (childModels.contains("H6065")) {
     lightEffectH6065()
+    }
+    if (childModels.contains("H6066")) {    
     lightEffectH6066()
+    }
+    if (childModels.contains("H6072")) {
     lightEffectH6072()
+    }
+    if (childModels.contains("H6076")) {
     lightEffectH6076()
+    }
+    if (childModels.contains("H61A0")) {
     lightEffectH61A0()
+    }
+    if (childModels.contains("H61A1")) {
     lightEffectH61A1()
+    }
+    if (childModels.contains("H61A2")) {    
     lightEffectH61A2()
-    lightEffectH61A3()    
-    lightEffectH61A5()    
+    }
+    if (childModels.contains("H61A3")) {
+    lightEffectH61A3() 
+    }
+    if (childModels.contains("H61A5")) {
+    lightEffectH61A5()
+    }
+    if (childModels.contains("H61A8")) {
     lightEffectH61A8()
+    }
+    if (childModels.contains("H61C3")) {
     lightEffectH61C3()
+    }
+    if (childModels.contains("H6172")) {
     lightEffectH6172()
+    }
+    if (childModels.contains("H6173")) {
     lightEffectH6173()
+    }
+    if (childModels.contains("H7020")) {
     lightEffectH7020()
+    }
+    if (childModels.contains("H7050")) {
     lightEffectH7050()
+    }
+    if (childModels.contains("H7051")) {
     lightEffectH7051()
+    }
+    if (childModels.contains("H705A")) {
     lightEffectH705A()
+    }    
+    if (childModels.contains("H705B")) {
     lightEffectH705B()
+    }
+    if (childModels.contains("H705C")) {
     lightEffectH705C()
+    }
 }
 
 private def lightEffectH6052() {
