@@ -477,6 +477,7 @@ def refresh() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
+    if (lanControl) retrieveScenes()
     if (debugLog) runIn(1800, logsOff)
 }
 
@@ -488,6 +489,7 @@ def updated() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
+    if (lanControl) retrieveScenes()
     if (debugLog) runIn(1800, logsOff) 
 }
 
@@ -499,13 +501,12 @@ def configure() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
+    if (lanControl) retrieveScenes()
     if (debugLog) runIn(1800, logsOff) 
 }
 
 def initialize(){
-    if (debugLog) {log.warn "initialize(): Driver Initializing"}
-    state.scenes = [:]
-    state.diyEffects = [:]    
+    if (debugLog) {log.warn "initialize(): Driver Initializing"}    
     if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
@@ -817,6 +818,8 @@ def activateDIY(diyActivate) {
 }
 
 def retrieveScenes() {
+    state.scenes = [:]
+    state.diyEffects = [:]
     if (debugLog) {log.debug ("activateDIY(): Retrieving Scenes from parent app")}
     parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
         value = it.value
