@@ -411,10 +411,10 @@ def sceneManagement() {
         {
             paragraph "Please provide your gove home token."
             href 'sceneExtract2', title: 'Govee Home Creds', description: 'Setup Gove Home Creds to obtain token'
-            if (timeNow > state.goveeHomeExpiry) {
-            paragraph "Token has expired. Please click the Govee HOme Creds button above to refresh"
+            if (now() > state.goveeHomeExpiry) {
+            paragraph "Token has <mark>expired</mark>. Please click the Govee Home Creds button above to refresh"
             } else {
-                paragraph "Token has <mark>valid</mark>"
+                paragraph "Token is <mark>valid</mark>"
             }
         }
         section('Govee Scene Extract') {
