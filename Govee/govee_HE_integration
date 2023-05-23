@@ -174,10 +174,6 @@ def initialize() {
             logger('initialize() Govee devices integrated', 'info')
                 }
         lightEffectSetup()
-        child.each {
-        logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
-        it.initialize()
-            }
         }
           else {
         logger('initialize() No devices to add', 'info')
