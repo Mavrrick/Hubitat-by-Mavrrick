@@ -65,7 +65,7 @@ preferences
 def initialize() {
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
     //    state.diyEffects = [:]
-    lightEffectSetup()
+//    lightEffectSetup()
     List child = getChildDevices()
     List childDNI = child.deviceNetworkId
     if (settings.APIKey != state.APIKey ) {
@@ -173,6 +173,7 @@ def initialize() {
             state?.installDev = goveeDev
             logger('initialize() Govee devices integrated', 'info')
                 }
+        lightEffectSetup()
         }
           else {
         logger('initialize() No devices to add', 'info')
@@ -609,6 +610,7 @@ def installed() {
     log.debug "Installed with settings: ${settings}"
     state?.isInstalled = true
     state?.diyEffects = [:]
+    state?.lightEffects = [:]
     initialize()
 }
 
