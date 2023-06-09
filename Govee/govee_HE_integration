@@ -407,7 +407,7 @@ def deviceSelect2() {
 def sceneManagement() {
     dynamicPage(name: 'sceneManagement', title: 'Govee Scene Management menu', uninstall: false, install: false, submitOnChange: false)
     {
-        section('Govee Home Creds')
+        section('<b>Govee Home Creds</b>')
         {
             paragraph "Please provide your gove home token."
             href 'sceneExtract2', title: 'Govee Home Creds', description: 'Setup Gove Home Creds to obtain token'
@@ -417,7 +417,12 @@ def sceneManagement() {
                 paragraph "Token is <mark>valid</mark>"
             }
         }
-        section('Govee Scene Extract') {
+        section('<b>Govee Home Group</b>')
+        {
+            paragraph "Please provide the group used to extract scenes"
+            input 'goveeGroup', 'string', title: 'Please enter your Govee home Group name used to extract scenes. This is case sensative', required: false, defaultValue: 'Default'
+        }
+        section('<b>Govee Scene Extract</b>') {
             href 'sceneExtract', title: 'Extract Scene', description: 'Click here to perform scene extract'
             paragraph "Click button below to scenes to all children device"
             input "pushScenesUpdate" , "button",  title: "Click here to update all devices awareness of scenes"
@@ -426,7 +431,7 @@ def sceneManagement() {
             paragraph "Click button below to clear DIY scenes"
             input "sceneDIYInitialize" , "button",  title: "Click here to clear DIY scene information"
         }
-        section('Scene Manual Add')
+        section('<b>Scene Manual Add</b>')
         {
             href 'sceneManualAdd', title: 'Manual DIY Scene Add', description: 'Click to perform a manual add'
         }
@@ -481,11 +486,14 @@ def sceneExtract() {
             def slurper = new JsonSlurper()
                 resp.data.data.components.forEach {
                     name = it.name.toString()
-                    if (name == 'Default') {
-                        logger("sceneExtract(): found default group moving forward", 'debug')
+                    if (name == settings.goveeGroup) {
+                        logger("sceneExtract(): found ${settings.goveeGroup} group moving forward", 'debug')
                         it.oneClicks.iotRules.forEach {
-                            devName= it.deviceObj.name
-                            devSku= it.deviceObj.sku.get(0)
+                            logger("sceneExtract(): found ${it.deviceObj.feastType} feastType", 'debug')
+                            feastType = it.deviceObj.feastType.get(0)
+                            if (feastType == 0) {
+                            devName = it.deviceObj.name
+                            devSku = it.deviceObj.sku.get(0)
                             logger("sceneExtract(): Looking at ${devName} ${devSku}", 'info')
                             rules = it.rule
                             if (rules.get(0).get(0).cmdType == 0) {
@@ -513,6 +521,9 @@ def sceneExtract() {
                             logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
                             logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command.inspect().replaceAll("\'", "\"")}", 'debug')
                             diyAdd(devSku, sceneName, command)
+                            } else {
+                                logger("sceneExtract(): Found scene that is not extractable. Moving on", 'debug')
+                            }
                         }
                     } else {
                     //                    logger("sceneExtract(): Default group not found", 'error')
@@ -540,53 +551,25 @@ def sceneExtract() {
 def sceneExtract2() {
 
     logger('sceneExtract2() DEVICE INFORMATION', 'debug')
-    if (settings.goveeEmail && settings.goveePassword) {
-            bodyParm = '{"email": "'+settings.goveeEmail+'", "password": "'+settings.goveePassword+'"}'
-            logger("sceneExtract(): bodyparm to be passed:  ${bodyParm}", 'error')
-            def params = [
-                uri   : 'https://community-api.govee.com',
-                path  : '/os/v1/login',
-                headers: ['Content-Type': 'application/json'],
-                body: bodyParm
-            ]
-            logger("sceneExtract(): parms to be passed:  ${params}", 'error')
-            try {
-                httpPost(params) { resp ->
-                    logger("sceneExtract(): response is ${resp.data}", 'error')
-                    status = resp.data.status
-                    msg = resp.data.message
-                    logger("sceneExtract(): status is ${status}: Message ${msg}", 'error')
-                    if (status == 200) {
-                        state.goveeHomeToken = resp.data.data.token
-                        state.goveeHomeExpiry = resp.data.data.expiredAt.value
-                        logger("sceneExtract(): response is ${resp.data}", 'error')
-                        logger("sceneExtract(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'error')
-                    } else {
-                        logger("sceneExtract(): Login failed check error above and correct", 'info')
-                    }
-                }
-                } catch (groovyx.net.http.HttpResponseException e) {
-                    logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
-                    logger("deviceSelect() ${e}", 'error')
-
-                return 'unknown'
-            }
-    }
-
     dynamicPage(name: 'sceneExtract2', title: 'Govee Home Credentials', uninstall: false, install: false, submitOnChange: true)
     {
         section('Govee Home Creds')
         {
             paragraph "Please provide your gove home token."
-            input 'goveeEmail', 'string', title: 'Please enter your Email used to log into Govee Home', required: true
-            input 'goveePassword', 'password', title: 'Please enter your Govee Home password', required: true
+            input 'goveeEmail', 'string', title: 'Please enter your Email used to log into Govee Home', required: false, submitOnChange: true
+            input 'goveePassword', 'password', title: 'Please enter your Govee Home password', required: false, submitOnChange: true
+            input "goveeHomeLogin" , "button",  title: "Click here to attempt login"
             if (settings.goveeEmail && settings.goveePassword) {
-                if (status == 200) {
-                paragraph "Login Successful"
+                if (now() > state.goveeHomeExpiry) {
+                    paragraph "Token has <mark>not valid</mark>. Please Login"
                 } else {
-                    paragraph "Login failed with error code ${status}: ${msg}"
+                paragraph "Token is <mark>valid</mark>"
                 }
+            } else {
+                paragraph "Please add a Email and Password to Obtain your Govee Home Token"
             }
+            paragraph "To clear token clear Email address and password and then click button below to clear token"
+            input "goveeHomeTokenClear" , "button",  title: "Click here to reset Govee Home token"
         }
     }
 }
@@ -792,21 +775,57 @@ private logger(msg, level = 'debug') {
     }
 }
 
+
+
 private def appButtonHandler(button) {
     if (button == "sceneInitialize") {
-        log.debug "Initializing Scene data"
+        log.debug "appButtonHandler(): Initializing Scene data"
         state?.lightEffects = [:]
         lightEffectSetup()
     } else if (button == "pushScenesUpdate") {
         List child = getChildDevices()
         child.each {
-        logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
+        logger('appButtonHandler(): API key has been updated. Calling child devices to udpate', 'debug')
         it.initialize()
         }
     } else if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
-    } else if (button == "manualAdd") {
-        state?.diyEffects = [:]
+    } else if (button == "goveeHomeLogin") {
+        if (settings.goveeEmail && settings.goveePassword) {
+            bodyParm = '{"email": "'+settings.goveeEmail+'", "password": "'+settings.goveePassword+'"}'
+            logger("appButtonHandler(): bodyparm to be passed:  ${bodyParm}", 'error')
+            def params = [
+                uri   : 'https://community-api.govee.com',
+                path  : '/os/v1/login',
+                headers: ['Content-Type': 'application/json'],
+                body: bodyParm
+            ]
+            logger("appButtonHandler(): parms to be passed:  ${params}", 'error')
+            try {
+                httpPost(params) { resp ->
+                    logger("appButtonHandler(): response is ${resp.data}", 'error')
+                    status = resp.data.status
+                    msg = resp.data.message
+                    logger("appButtonHandler(): status is ${status}: Message ${msg}", 'error')
+                    if (status == 200) {
+                        state.goveeHomeToken = resp.data.data.token
+                        state.goveeHomeExpiry = resp.data.data.expiredAt.value
+                        logger("appButtonHandler(): response is ${resp.data}", 'error')
+                        logger("appButtonHandler(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'error')
+                    } else {
+                        logger("appButtonHandler(): Login failed check error above and correct", 'info')
+                    }
+                }
+                } catch (groovyx.net.http.HttpResponseException e) {
+                    logger("appButtonHandler(): Error: e.statusCode ${e.statusCode}", 'error')
+                    logger("appButtonHandler(): ${e}", 'error')
+
+                return 'unknown'
+            }
+        }        
+    } else if (button == "goveeHomeTokenClear") {
+        state?.goveeHomeToken = 'XXXX'
+        state?.goveeHomeExpiry = 0
     }
 }
 
@@ -862,13 +881,13 @@ private def lightEffectSetup() {
     lightEffectH6173()
     }
     if (childModels.contains("H619A")) {
-    lightEffectH6173()
+    lightEffectH619A()
     }
     if (childModels.contains("H619C")) {
-    lightEffectH6173()
+    lightEffectH619C()
     }
     if (childModels.contains("H619E")) {
-    lightEffectH6173()
+    lightEffectH619E()
     }
     if (childModels.contains("H7020")) {
     lightEffectH7020()
