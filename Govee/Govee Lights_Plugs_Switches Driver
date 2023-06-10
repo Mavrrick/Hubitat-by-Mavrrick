@@ -90,6 +90,8 @@ def off() {
 
 def setColorTemperature(value,level = null,transitionTime = null)
 {
+    unschedule(fadeUp)
+    unschedule(fadeDown)
     if (debugLog) { log.debug "setColorTemperature(): ${value}"}
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
@@ -141,6 +143,8 @@ def setCTColorName(value)
 }
     
 def setColor(value) {
+    unschedule(fadeUp)
+    unschedule(fadeDown)
     if (debugLog) { log.debug "setColor(): HSBColor = "+ value }
 	if (value instanceof Map) {
 		def h = value.containsKey("hue") ? value.hue : null
@@ -700,7 +704,6 @@ def  setEffect(effectNo) {
     if (effectNo == 6) {
         if (debugLog) {log.debug ("setEffect(): Static Scene Cozy Called. Calling CT Command directly")}
         sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        if (level != null) setLevel(level,transitionTime);
         sendEvent(name: "colorTemperature", value: 2000)
 	    setCTColorName(2000)
         sendEvent(name: "effectName", value: "Cozy")
@@ -721,17 +724,19 @@ def  setEffect(effectNo) {
     }
     // Sunrise Effect
     if (effectNo == 9) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
+        pauseExecution(750)
         sendCommandLan(GoveeCommandBuilder("brightness",1, "level"))
         sendEvent(name: "level", value: 1)
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
         fade(100,1800)        
         sendEvent(name: "effectName", value: "Sunrise")
     }
     // Sunset Effect
     if (effectNo == 10) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
+        pauseExecution(750)
         sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
         sendEvent(name: "level", value: 100)
-        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
         fade(0,1800)
         sendEvent(name: "effectName", value: "Sunset")
     }
@@ -762,54 +767,68 @@ def  setEffect(effectNo) {
     // Night Light Effect   
     if (effectNo == 14) {
         if (debugLog) {log.debug ("setEffect(): Static Night Light Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("brightness",5, "level"))
         sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
         sendEvent(name: "colorTemperature", value: 2000)
 	    setCTColorName(2000)
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",5, "level"))
+        sendEvent(name: "level", value: 5)
         sendEvent(name: "effectName", value: "Night Light")
     }
     // Focus Effect   
     if (effectNo == 15) {
         if (debugLog) {log.debug ("setEffect(): Focus Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
         sendCommandLan(GoveeCommandBuilder("colorwc",4500, "ct"))
         sendEvent(name: "colorTemperature", value: 4500)
 	    setCTColorName(4500)
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
+        sendEvent(name: "level", value: 100)
         sendEvent(name: "effectName", value: "Focus")
     } 
     // Relax Effect   
     if (effectNo == 16) {
         if (debugLog) {log.debug ("setEffect(): Static Relax Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
         sendCommandLan(GoveeCommandBuilder("colorwc", [r:255, g:194, b:194], "rgb"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
+        sendEvent(name: "level", value: 100)
         sendEvent(name: "effectName", value: "Relax")
     }
     // True Color Effect   
     if (effectNo == 17) {
         if (debugLog) {log.debug ("setEffect(): True Color Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
         sendCommandLan(GoveeCommandBuilder("colorwc",3350, "ct"))
+        sendEvent(name: "colorTemperature", value: 3350)
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
         sendEvent(name: "effectName", value: "True Color")
     }
     // TV Time Effect   
     if (effectNo == 18) {
-        if (debugLog) {log.debug ("setEffect(): Static TV Time Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
+        if (debugLog) {log.debug ("setEffect(): Static TV Time Effect Called. Calling CT Command directly")}        
         sendCommandLan(GoveeCommandBuilder("colorwc", [r:179, g:134, b:254], "rgb"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
+        sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "TV Time")
     }
     // Plant Growth Effect   
     if (effectNo == 19) {
         if (debugLog) {log.debug ("setEffect(): Static Plant Growth Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
         sendCommandLan(GoveeCommandBuilder("colorwc", [r:247, g:154, b:254], "rgb"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
+        sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "Plant Growth")
     }
     // Spring Effect   
     if (effectNo == 19) {
         if (debugLog) {log.debug ("setEffect(): Static Plant Growth Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
         sendCommandLan(GoveeCommandBuilder("colorwc", [r:247, g:154, b:254], "rgb"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
+        sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "Plant Growth")
     }
     // Spring Effect
@@ -840,6 +859,8 @@ def  setEffect(effectNo) {
 
 def setNextEffect() {
 if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
+    unschedule(fadeUp)
+    unschedule(fadeDown)
       if (effectNum == 0) {
         setEffect(1)
         } else {
@@ -851,6 +872,8 @@ if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentV
       
 def setPreviousEffect() {
 if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
+    unschedule(fadeUp)
+    unschedule(fadeDown)
       if (effectNum == 0) {
         setEffect(13)
         } else {
@@ -897,5 +920,3 @@ def retrieveScenes() {
     state.diyEffects = state.diyEffects.sort {it.key}
     state.scenes = state.scenes.sort {it.key}
 }
-
-    
