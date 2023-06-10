@@ -103,6 +103,8 @@ def setLevel2(v){
 }
 
 def fade(v,duration){
+    unschedule(fadeUp)
+    unschedule(fadeDown)
     curLevel = device.currentValue("level")
     if (v<curLevel){
     fadeRep = (curLevel-v)/fadeInc
@@ -121,22 +123,25 @@ def fade(v,duration){
 
 def fadeDown(curLevel,level,fadeInt,fadeRep) {
     if (debugLog) {log.debug "fadeDown(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-        v= curLevel-fadeInc
-        curLevel = curLevel-fadeInc
+    v= curLevel-fadeInc
+    curLevel = curLevel-fadeInc
     log.debug "fadeDown(): v ${v}"
+    if (v==0) {
+        log.debug "fadeDown(): Next fade is to 0 turning off device. Fade is complete"
+        off()
+    } else {
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         sendEvent(name: "level", value: v)
-        sendEvent(name: "switch", value: "on")
-    if (level==curLevel)    {
-        if (debugLog) {log.debug "fade completed"}
-    }
-    else {
-        if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
-        def int delay= fadeRep
-        if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
-        pauseExecution(delay)
-        if (debugLog) {log.debug "fadeDown(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-        fadeDown(curLevel,level, fadeInt,fadeRep)
+        if (level==curLevel)    {
+            if (debugLog) {log.debug "fade completed"}
+            }
+        else {
+            if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
+            def int delay= fadeRep
+            if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
+            if (debugLog) {log.debug "fadeDown(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+            runInMillis(delay, fadeDown, [data:[curLevel,level, fadeInt,fadeRep]])
+        }
     }
 } 
 
@@ -147,7 +152,6 @@ def fadeUp(curLevel,level,fadeInt,fadeRep) {
     log.debug "fadeUp(): v ${v}"
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         sendEvent(name: "level", value: v)
-        sendEvent(name: "switch", value: "on")
     if (level==curLevel)    {
         if (debugLog) {log.debug "fade completed"}
     }
@@ -155,9 +159,8 @@ def fadeUp(curLevel,level,fadeInt,fadeRep) {
         if (debugLog) {log.debug "fadeUp(): continueing  fading to ${v}"}
         def int delay= fadeRep
         if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
-        pauseExecution(delay)
         if (debugLog) {log.debug "fadeUp(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-        fadeUp(curLevel,level, fadeInt,fadeRep)
+          runInMillis(delay, fadeUp, [data:[curLevel,level, fadeInt,fadeRep]])
     }
 } 
 
