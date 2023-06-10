@@ -822,15 +822,6 @@ def  setEffect(effectNo) {
         sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "Plant Growth")
     }
-    // Spring Effect   
-    if (effectNo == 19) {
-        if (debugLog) {log.debug ("setEffect(): Static Plant Growth Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:247, g:154, b:254], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
-        sendEvent(name: "level", value: 45)
-        sendEvent(name: "effectName", value: "Plant Growth")
-    }
     // Spring Effect
     if (effectNo == 20) {
         def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDKQACCgUCAf8ZAAAAAGU\\=","owEC+jIG/zgA/38AAP8AAAAAANY\\=","owL//4sA/wAAgAAAAAAjAAIeCmA\\=","owMAAf//AAAAAAH6AATxAB3/dTg\\=","owQA/8AA/0sAAAD/AAH6AB0AADU\\=","owUAAQABMgAByDIyAsgyAgD/AFg\\=","o////wAAAAAAAAAAAAAAAAAAAFw\\=","MwUE0gAAAAAAAAAAAAAAAAAAAOA\\="]}}}'  
