@@ -724,7 +724,7 @@ def  setEffect(effectNo) {
         sendCommandLan(GoveeCommandBuilder("brightness",1, "level"))
         sendEvent(name: "level", value: 1)
         sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        fade(100,300)        
+        fade(100,1800)        
         sendEvent(name: "effectName", value: "Sunrise")
         sendCommandLan(cmd2)
     }
@@ -733,7 +733,7 @@ def  setEffect(effectNo) {
         sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
         sendEvent(name: "level", value: 100)
         sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
-        fade(0,300)
+        fade(0,1800)
         sendEvent(name: "effectName", value: "Sunset")
         sendCommandLan(cmd2)
     }
