@@ -498,19 +498,29 @@ def sceneExtract() {
                             devSku = it.deviceObj.sku.get(0)
                             logger("sceneExtract(): Looking at ${devName} ${devSku}", 'info')
                             rules = it.rule
-                            if (rules.get(0).get(0).cmdType == 0) {
-                                logger("sceneExtract(): First rule is on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'debug')
-                                cmdVal=rules.get(0).get(1).cmdVal
-                                iotMsg=rules.get(0).get(1).iotMsg
-                            } else {
-                                logger("sceneExtract(): First rule is not on/off as expected cmdtype is ${rules.get(0).get(0).cmdType}", 'debug')
+                            rulesSize = rules.get(0).size()
+                            logger("sceneExtract(): Looking at ${rulesSize}", 'debug')
+                            if (rules.get(0).get(0).cmdType == 3 || rules.get(0).get(0).cmdType == 4 || rules.get(0).get(0).cmdType == 32) {
+                                logger("sceneExtract(): First rule is scene or DIY ${rules.get(0).get(0).cmdType}", 'debug')
                                 cmdVal=rules.get(0).get(0).cmdVal
                                 iotMsg=rules.get(0).get(0).iotMsg
+                            } else if (rules.get(0).get(1).cmdType == 3 || rules.get(0).get(1).cmdType == 4 || rules.get(0).get(1).cmdType == 32) {
+                                logger("sceneExtract(): Second rule is scene or DIY ${rules.get(0).get(1).cmdType}", 'debug')
+                                cmdVal=rules.get(0).get(1).cmdVal
+                                iotMsg=rules.get(0).get(1).iotMsg
+                            } else  { 
+                                logger("sceneExtract(): First two rules failed falling back to third rule ${rules.get(0).get(2).cmdType}", 'debug')
+                                cmdVal=rules.get(0).get(2).cmdVal
+                                iotMsg=rules.get(0).get(2).iotMsg
+                                logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
                             iotMsgJson  = slurper.parseText(iotMsg)
                             cmdValJson  = slurper.parseText(cmdVal)
-                            if ( cmdValJson.scenesStr == null) {
+                            if ( cmdValJson.scenesStr == null && cmdValJson.startBri == null) {
                                 sceneName = cmdValJson.diyName }
+                            else if (cmdValJson.scenesStr == null && cmdValJson.diyName == null) {
+                                sceneName = "Sleep starting at "+ cmdValJson.startBri + "% for " + cmdValJson.closeTime + " min"
+                            }    
                             else {
                                 sceneName = cmdValJson.scenesStr
                             }
