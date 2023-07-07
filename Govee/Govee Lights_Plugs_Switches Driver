@@ -145,11 +145,12 @@ def setCTColorName(value)
 def setColor(value) {
     unschedule(fadeUp)
     unschedule(fadeDown)
-    if (debugLog) { log.debug "setColor(): HSBColor = "+ value }
+    if (debugLog) { log.debug "setColor(): HSBColor = "+ value + "${device.currentValue("level")}"}
 	if (value instanceof Map) {
 		def h = value.containsKey("hue") ? value.hue : null
 		def s = value.containsKey("saturation") ? value.saturation : null
 		def b = value.containsKey("level") ? value.level : null
+        if (b == null) { b = device.currentValue("level") }
 		setHsb(h, s, b)
 	} else {
         if (debugLog) {log.debug "setColor(): Invalid argument for setColor: ${value}"}
@@ -470,7 +471,6 @@ try {
 		log.error "${e}"
 		return 'unknown'
 	}
-//        }
 }
 
 def poll() {
@@ -486,7 +486,6 @@ def refresh() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
-    if (lanControl) retrieveScenes()
     if (debugLog) runIn(1800, logsOff)
 }
 
@@ -891,7 +890,7 @@ def activateDIY(diyActivate) {
 def retrieveScenes() {
     state.scenes = [:]
     state.diyEffects = [:]
-    if (debugLog) {log.debug ("activateDIY(): Retrieving Scenes from parent app")}
+    if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent app")}
     parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
         value = it.value
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
@@ -911,5 +910,3 @@ def retrieveScenes() {
     state.diyEffects = state.diyEffects.sort {it.key}
     state.scenes = state.scenes.sort {it.key}
 }
-
-    
