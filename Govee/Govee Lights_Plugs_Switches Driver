@@ -497,7 +497,6 @@ def updated() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
-    if (lanControl) retrieveScenes()
     if (debugLog) runIn(1800, logsOff) 
 }
 
@@ -509,7 +508,6 @@ def configure() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
-    if (lanControl) retrieveScenes()
     if (debugLog) runIn(1800, logsOff) 
 }
 
