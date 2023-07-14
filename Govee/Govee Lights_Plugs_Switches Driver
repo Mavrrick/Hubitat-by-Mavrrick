@@ -889,13 +889,17 @@ def retrieveScenes() {
     state.scenes = [:]
     state.diyEffects = [:]
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent app")}
-    parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
-        value = it.value
-        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
-        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${value.name}")}
-        num = it.getKey()
-        name = value.name
-        state.diyEffects.put(num,name)
+    if (state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
+        if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
+    } else {
+        parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
+            value = it.value
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${value.name}")}
+            num = it.getKey()
+            name = value.name
+            state.diyEffects.put(num,name)
+        }
     }
         parent.state.lightEffects.(device.getDataValue("deviceModel")).each {
         value = it.value
