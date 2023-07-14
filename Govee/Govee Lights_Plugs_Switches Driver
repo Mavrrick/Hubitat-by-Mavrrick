@@ -833,16 +833,8 @@ def  setEffect(effectNo) {
         sendEvent(name: "effectName", value: "Summer")
         sendCommandLan(cmd2)
     }
-       
-    // Aurora-B Light Effect
-/*    if (effectNo == 501) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABCQIEI0AAAAECAf8ZA8IKA+I\\=","owEC5jIED/8ICwf/B/j//wbpAGs\\=","owIC+AEAgAAjQgAAAQAB/xgDu+Q\\=","owMKA4LnMgT/03LLhf8NS/9S/wE\\=","owSZEgHNAAPkACNEAAABAAH/GIc\\=","owUDuwoDAuUyBAsH/w//CP8G6d0\\=","owYH+P8QAcwBAIAAJkYAAAEAAZk\\=","owf/GAO7CgMC5TIFB/j/Cwf//y4\\=","o/8G6Q//CNz/ERIB3QEAgAAAADY\\=","MwUE8QgAAAAAAAAAAAAAAAAAAMs\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Aurora-B")
-        sendCommandLan(cmd2)
-    } */
     }   
-//  updateCurrentStatus(null,null,effectNo)  
+  
 }
 
 def setNextEffect() {
@@ -889,8 +881,8 @@ def retrieveScenes() {
     state.scenes = [:]
     state.diyEffects = [:]
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent app")}
-    if (state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
-        if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
+    if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
+        if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
     } else {
         parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
             value = it.value
@@ -901,7 +893,7 @@ def retrieveScenes() {
             state.diyEffects.put(num,name)
         }
     }
-    if (state.lightEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
+    if (parent.state.lightEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else {
         parent.state.lightEffects.(device.getDataValue("deviceModel")).each {
