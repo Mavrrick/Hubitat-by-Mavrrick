@@ -4081,6 +4081,17 @@ private def lightEffectH610A() {
     lightEffectsAdd = [:]
     lightEffectsAdd = [
     H610A:[ //Glide Lively Bars
+        1:["name":"Deep Sea", "cmd":['"owABBwoDIgADDAAAAczMAQAUFIE\\="','"owED8hQCB1b/AAD/AACAAACAABQ\\="','"owIBAgAB/ycAAgQBAgH//wMAFGg\\="','"owMUAfkUBP9Mhv//AAD/AAZG/ig\\="','"owQSAPIAAIAFAQEA/ycAAgQBAh8\\="','"owUB//8DABQUAfkUBP9Mhv//AHk\\="','"o/8A/wAGRv4QAPIAAIAFAQEB/4Q\\="','"MwUEVgkAAAAAAAAAAAAAAAAAAG0\\="']], 
+        2:["name":"Romantic", "cmd":['"owABAwoBIgAAAAECAf9/APIUFPg\\="','"owEA5RQC/wAAjwf+AACAAACAANg\\="','"o/8AAgAB/wAAAAAAAAAAAAAAAKA\\="','"MwUEbAkAAAAAAAAAAAAAAAAAAFc\\="']], 
+        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
+        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']], 
+        5:["name":"Fire", "cmd":['"owABBQoCJVAAAAMAAf//AAAUFNg\\="','"owEDABQD/wAA/0sH/3MHEAD5AJg\\="','"owIAgAABAgAB/yVVAAADAAH//64\\="','"owMAABQUAwAUA/8AAP9LB/9zB3M\\="','"o/8SAPkAAIAAAQIAAf8AAAAAAMo\\="','"MwUEVAkAAAAAAAAAAAAAAAAAAG8\\="']],
+        7:["name":"Forest", "cmd":['"owABBQoCJAAAAAQAAf//AAAUFI4\\="','"owED9BQD//8AAP8AAGQAAAD0AC0\\="','"owIAgAABAQD/JAAAAAQCAf//AP0\\="','"owMAFBQD9BQDAP8A//8AAGQAANs\\="','"o/8A9AAAgAABAQH/AAAAAAAAANY\\="','"MwUETQkAAAAAAAAAAAAAAAAAAHY\\="']],
+        8:["name":"Flower Field", "cmd":['"owABCAoDKgAAAAECAkwcA8wUFBc\\="','"owFMHAHMFBQDABQD/yCf/wc7/1c\\="','"owIhqAAA+QAAgAABAQD/KwACCo0\\="','"owMIAgH/AAPYHhQBgB4F/60H/7U\\="','"owRFB/8AAHgH/v8HLgAAgAAAgE0\\="','"owUAAAIAAf8qAAAAAQICTxwDzO0\\="','"owYUFE0cAcwUFAMAFAP/IJ//FoQ\\="','"o/9J/yGoAAD5AACAAAEBAf8AAOQ\\="','"MwUEWgkAAAAAAAAAAAAAAAAAAGE\\="']], 
+        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\="']],
+        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
+        20:["name":"Spring", "cmd":['"owABBgoCMAAAAAwCAv/MA8wUFGw\\="','"owH/zAHMFBQC+R4F/z9N/38AALE\\="','"owL/ANMv/v//AAAAgAAAgAUBAVk\\="','"owMA/zAAAAAMAgL/zQPMFBT/zK0\\="','"owQBzBQUAvkeBf9/AP9RWf//AP0\\="','"o/8A/wDOK/4AAOoAAIAFAQEB/yk\\="','"MwUEUAkAAAAAAAAAAAAAAAAAAGs\\="']],  
+        21:["name":"Summer", "cmd":['"owABBgoCKgAAAAUAAf//A/8UFH4\\="','"owEDABQF0P878v8dtv8sg/4cyHg\\="','"owL+NRAA9wAA9wABAQD/KgAAAK8\\="','"owMFAAH//wP/FBQDABQFd/4amUA\\="','"owT+Lv/6M7j+JWn/KxAA9wAA948\\="','"o/8AAQEB/wAAAAAAAAAAAAAAAKI\\="','"MwUEUQkAAAAAAAAAAAAAAAAAAGo\\="']],        
         101:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\="']], 
         102:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
         103:["name":"Forest", "cmd":['"owABBQoCJAAAAAQAAf//AAAUFI4\\="','"owED9BQD//8AAP8AAGQAAAD0AC0\\="','"owIAgAABAQD/JAAAAAQCAf//AP0\\="','"owMAFBQD9BQDAP8A//8AAGQAANs\\="','"o/8A9AAAgAABAQH/AAAAAAAAANY\\="','"MwUETQkAAAAAAAAAAAAAAAAAAHY\\="']],
@@ -4156,6 +4167,17 @@ private def lightEffectH610B() {
     lightEffectsAdd = [:]
     lightEffectsAdd = [
     H610B:[ //Glide Lively Bars
+        1:["name":"Deep Sea", "cmd":['"owABBwoDIgADDAAAAczMAQAUFIE\\="','"owED8hQCB1b/AAD/AACAAACAABQ\\="','"owIBAgAB/ycAAgQBAgH//wMAFGg\\="','"owMUAfkUBP9Mhv//AAD/AAZG/ig\\="','"owQSAPIAAIAFAQEA/ycAAgQBAh8\\="','"owUB//8DABQUAfkUBP9Mhv//AHk\\="','"o/8A/wAGRv4QAPIAAIAFAQEB/4Q\\="','"MwUEVgkAAAAAAAAAAAAAAAAAAG0\\="']], 
+        2:["name":"Romantic", "cmd":['"owABAwoBIgAAAAECAf9/APIUFPg\\="','"owEA5RQC/wAAjwf+AACAAACAANg\\="','"o/8AAgAB/wAAAAAAAAAAAAAAAKA\\="','"MwUEbAkAAAAAAAAAAAAAAAAAAFc\\="']], 
+        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
+        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']], 
+        5:["name":"Fire", "cmd":['"owABBQoCJVAAAAMAAf//AAAUFNg\\="','"owEDABQD/wAA/0sH/3MHEAD5AJg\\="','"owIAgAABAgAB/yVVAAADAAH//64\\="','"owMAABQUAwAUA/8AAP9LB/9zB3M\\="','"o/8SAPkAAIAAAQIAAf8AAAAAAMo\\="','"MwUEVAkAAAAAAAAAAAAAAAAAAG8\\="']],
+        7:["name":"Forest", "cmd":['"owABBQoCJAAAAAQAAf//AAAUFI4\\="','"owED9BQD//8AAP8AAGQAAAD0AC0\\="','"owIAgAABAQD/JAAAAAQCAf//AP0\\="','"owMAFBQD9BQDAP8A//8AAGQAANs\\="','"o/8A9AAAgAABAQH/AAAAAAAAANY\\="','"MwUETQkAAAAAAAAAAAAAAAAAAHY\\="']],
+        8:["name":"Flower Field", "cmd":['"owABCAoDKgAAAAECAkwcA8wUFBc\\="','"owFMHAHMFBQDABQD/yCf/wc7/1c\\="','"owIhqAAA+QAAgAABAQD/KwACCo0\\="','"owMIAgH/AAPYHhQBgB4F/60H/7U\\="','"owRFB/8AAHgH/v8HLgAAgAAAgE0\\="','"owUAAAIAAf8qAAAAAQICTxwDzO0\\="','"owYUFE0cAcwUFAMAFAP/IJ//FoQ\\="','"o/9J/yGoAAD5AACAAAEBAf8AAOQ\\="','"MwUEWgkAAAAAAAAAAAAAAAAAAGE\\="']], 
+        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\="']],
+        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
+        20:["name":"Spring", "cmd":['"owABBgoCMAAAAAwCAv/MA8wUFGw\\="','"owH/zAHMFBQC+R4F/z9N/38AALE\\="','"owL/ANMv/v//AAAAgAAAgAUBAVk\\="','"owMA/zAAAAAMAgL/zQPMFBT/zK0\\="','"owQBzBQUAvkeBf9/AP9RWf//AP0\\="','"o/8A/wDOK/4AAOoAAIAFAQEB/yk\\="','"MwUEUAkAAAAAAAAAAAAAAAAAAGs\\="']],  
+        21:["name":"Summer", "cmd":['"owABBgoCKgAAAAUAAf//A/8UFH4\\="','"owEDABQF0P878v8dtv8sg/4cyHg\\="','"owL+NRAA9wAA9wABAQD/KgAAAK8\\="','"owMFAAH//wP/FBQDABQFd/4amUA\\="','"owT+Lv/6M7j+JWn/KxAA9wAA948\\="','"o/8AAQEB/wAAAAAAAAAAAAAAAKI\\="','"MwUEUQkAAAAAAAAAAAAAAAAAAGo\\="']],        
         101:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\="']], 
         102:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
         103:["name":"Forest", "cmd":['"owABBQoCJAAAAAQAAf//AAAUFI4\\="','"owED9BQD//8AAP8AAGQAAAD0AC0\\="','"owIAgAABAQD/JAAAAAQCAf//AP0\\="','"owMAFBQD9BQDAP8A//8AAGQAANs\\="','"o/8A9AAAgAABAQH/AAAAAAAAANY\\="','"MwUETQkAAAAAAAAAAAAAAAAAAHY\\="']],
@@ -4231,6 +4253,17 @@ private def lightEffectH6062() {
     lightEffectsAdd = [:]
     lightEffectsAdd = [
     H6062:[ //Glide Wall Bar Lights
+        1:["name":"Deep Sea", "cmd":['"owABBwoDIgADDAAAAczMAQAUFIE\\="','"owED8hQCB1b/AAD/AACAAACAABQ\\="','"owIBAgAB/ycAAgQBAgH//wMAFGg\\="','"owMUAfkUBP9Mhv//AAD/AAZG/ig\\="','"owQSAPIAAIAFAQEA/ycAAgQBAh8\\="','"owUB//8DABQUAfkUBP9Mhv//AHk\\="','"o/8A/wAGRv4QAPIAAIAFAQEB/4Q\\="','"MwUEVgkAAAAAAAAAAAAAAAAAAG0\\="']], 
+        2:["name":"Romantic", "cmd":['"owABAwoBIgAAAAECAf9/APIUFPg\\="','"owEA5RQC/wAAjwf+AACAAACAANg\\="','"o/8AAgAB/wAAAAAAAAAAAAAAAKA\\="','"MwUEbAkAAAAAAAAAAAAAAAAAAFc\\="']], 
+        3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
+        4:["name":"Rainbow", "cmd":['"MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="']], 
+        5:["name":"Fire", "cmd":['"owABBQoCJVAAAAMAAf//AAAUFNg\\="','"owEDABQD/wAA/0sH/3MHEAD5AJg\\="','"owIAgAABAgAB/yVVAAADAAH//64\\="','"owMAABQUAwAUA/8AAP9LB/9zB3M\\="','"o/8SAPkAAIAAAQIAAf8AAAAAAMo\\="','"MwUEVAkAAAAAAAAAAAAAAAAAAG8\\="']],
+        7:["name":"Forest", "cmd":['"owABBQoCJAAAAAQAAf//AAAUFI4\\="','"owED9BQD//8AAP8AAGQAAAD0AC0\\="','"owIAgAABAQD/JAAAAAQCAf//AP0\\="','"owMAFBQD9BQDAP8A//8AAGQAANs\\="','"o/8A9AAAgAABAQH/AAAAAAAAANY\\="','"MwUETQkAAAAAAAAAAAAAAAAAAHY\\="']],
+        8:["name":"Flower Field", "cmd":['"owABCAoDKgAAAAECAkwcA8wUFBc\\="','"owFMHAHMFBQDABQD/yCf/wc7/1c\\="','"owIhqAAA+QAAgAABAQD/KwACCo0\\="','"owMIAgH/AAPYHhQBgB4F/60H/7U\\="','"owRFB/8AAHgH/v8HLgAAgAAAgE0\\="','"owUAAAIAAf8qAAAAAQICTxwDzO0\\="','"owYUFE0cAcwUFAMAFAP/IJ//FoQ\\="','"o/9J/yGoAAD5AACAAAEBAf8AAOQ\\="','"MwUEWgkAAAAAAAAAAAAAAAAAAGE\\="']], 
+        9:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\="']],
+        10:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\\\u003d"']],
+        20:["name":"Spring", "cmd":['"owABBgoCMAAAAAwCAv/MA8wUFGw\\="','"owH/zAHMFBQC+R4F/z9N/38AALE\\="','"owL/ANMv/v//AAAAgAAAgAUBAVk\\="','"owMA/zAAAAAMAgL/zQPMFBT/zK0\\="','"owQBzBQUAvkeBf9/AP9RWf//AP0\\="','"o/8A/wDOK/4AAOoAAIAFAQEB/yk\\="','"MwUEUAkAAAAAAAAAAAAAAAAAAGs\\="']],  
+        21:["name":"Summer", "cmd":['"owABBgoCKgAAAAUAAf//A/8UFH4\\="','"owEDABQF0P878v8dtv8sg/4cyHg\\="','"owL+NRAA9wAA9wABAQD/KgAAAK8\\="','"owMFAAH//wP/FBQDABQFd/4amUA\\="','"owT+Lv/6M7j+JWn/KxAA9wAA948\\="','"o/8AAQEB/wAAAAAAAAAAAAAAAKI\\="','"MwUEUQkAAAAAAAAAAAAAAAAAAGo\\="']],        
         101:["name":"Sunrise", "cmd":['"MwUEAAAAAAAAAAAAAAAAAAAAADI\\="']], 
         102:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
         103:["name":"Forest", "cmd":['"owABBQoCJAAAAAQAAf//AAAUFI4\\="','"owED9BQD//8AAP8AAGQAAAD0AC0\\="','"owIAgAABAQD/JAAAAAQCAf//AP0\\="','"owMAFBQD9BQDAP8A//8AAGQAANs\\="','"o/8A9AAAgAABAQH/AAAAAAAAANY\\="','"MwUETQkAAAAAAAAAAAAAAAAAAHY\\="']],
