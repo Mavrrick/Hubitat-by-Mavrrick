@@ -64,8 +64,6 @@ preferences
 
 def initialize() {
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
-    //    state.diyEffects = [:]
-//    lightEffectSetup()
     List child = getChildDevices()
     List childDNI = child.deviceNetworkId
     if (settings.APIKey != state.APIKey ) {
@@ -93,12 +91,14 @@ def initialize() {
                 httpGet(params) { resp ->
                     //                logger (${resp.data},"debug")
                     resp.data.data.devices.each {
-                        deviceID = it.device
+                        deviceID = it.device                            
                         deviceModel = it.model
                         deviceName = it.deviceName
                         controllable = it.controllable
                         retrievable = it.retrievable
                         supportCmds = it.supportCmds
+                        if (childDNI.contains(deviceID) == false) {
+                        logger("initialize(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
                         if (supportCmds.contains('colorTem') && supportCmds.contains('color')) {
                             ctMin = it.properties.colorTem.range.min
                             ctMax = it.properties.colorTem.range.max
@@ -162,6 +162,9 @@ def initialize() {
                 ])
                     }
             }
+            } else {
+                logger("initialize(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
+            }                
         }
     }
     } catch (groovyx.net.http.HttpResponseException e) {
@@ -178,7 +181,7 @@ def initialize() {
           else {
         logger('initialize() No devices to add', 'info')
           }
-    // add appliances
+// Add appliances
     if (goveeApp) {
         def  goveeAdd2 = settings.goveeApp - child.label
         logger("initialize() Govee Appliances to add ${goveeAdd2}.", 'info')
@@ -204,6 +207,8 @@ def initialize() {
                         retrievable = it.retrievable
                         supportCmds = it.supportCmds
                         modes = it.properties.mode.options
+                        if (childDNI.contains(deviceID) == false) {
+                        logger("initialize(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
                         if (supportCmds.contains('gear')) {
                             gear = it.properties.gear.options.value
                             logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
@@ -245,8 +250,11 @@ def initialize() {
                     'completedSetup': true,
                 ])
                     }
-                }
-            }
+                }          
+                            } else {
+                logger("initialize(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
+            }            
+            }        
         }
     } catch (groovyx.net.http.HttpResponseException e) {
                 logger("initialize() Error: e.statusCode ${e.statusCode}", 'error')
@@ -343,7 +351,7 @@ def deviceSelect() {
                 resp.data.data.devices.each {
                     deviceID = it.device
                     deviceName = it.deviceName
-                    logger("deviceSelect() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax", 'debug')
+                    logger("deviceSelect() $deviceName    Address: $deviceID", 'debug')
                     options["${deviceName}"] = deviceName
                 }
                 logger(" deviceSelect() $options", 'debug')
@@ -382,7 +390,7 @@ def deviceSelect2() {
                 resp.data.data.devices.each {
                     deviceID = it.device
                     deviceName = it.deviceName
-                    logger("deviceSelect2() $deviceName    Address: $deviceID    Model: $deviceModel controllable: $controllable modes: $modes", 'debug')
+                    logger("deviceSelect2() $deviceName    Address: $deviceID ", 'debug')
                     options2["${deviceName}"] = deviceName
                 }
                 logger("deviceSelect2() $options2", 'debug')
