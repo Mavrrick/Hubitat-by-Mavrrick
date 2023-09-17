@@ -229,6 +229,52 @@ def initialize() {
                     'completedSetup': true,
                 ])
                         }
+                    } else if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch') && supportCmds.contains('whiteNoise:switch') ) {
+                            mistGear = it.properties.'mist:gear'.options
+                            lightScenes = it.properties.'light:scene'.options
+                            whiteNoise = it.properties.'whiteNoise:music'.options
+                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
+                            devices.findAll { it == deviceName } .each {
+                                logger("initialize()  configuring ${deviceName}", 'info')
+                                addChildDevice('Mavrrick', 'Govee Appliance Driver with Lights and WhitenNoise', "${deviceID}" , location.hubs[0].id, [
+                                'name': 'Govee Appliance',
+                                'label': deviceName,
+                                'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                // Appliances are not retrieveable   'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds,
+                                'modes' : modes,
+                                'mist:gears' : mistGear,
+                                'light:scenes' : lightScenes,
+                                'whiteNoise:Music' : whiteNoise    
+                            ],
+                    'completedSetup': true,
+                ])
+                        }
+                    } else if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch')) {
+                            mistGear = it.properties.'mist:gear'.options
+                            lightScenes = it.properties.'light:scene'.options
+                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
+                            devices.findAll { it == deviceName } .each {
+                                logger("initialize()  configuring ${deviceName}", 'info')
+                                addChildDevice('Mavrrick', 'Govee Appliance Driver with Lights', "${deviceID}" , location.hubs[0].id, [
+                                'name': 'Govee Appliance',
+                                'label': deviceName,
+                                'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                // Appliances are not retrieveable   'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds,
+                                'modes' : modes,
+                                'mist:gears' : mistGear,
+                                'light:scenes' : lightScenes    
+                            ],
+                    'completedSetup': true,
+                ])
+                        }
                     }
                     else {
                             gear = 'N/A'
@@ -386,7 +432,8 @@ def deviceSelect2() {
     try {
         httpGet(paramsApp) { resp ->
                 //List each device assigned to current API key
-                logger ("deviceSelect2():  ${resp.data}","trace")
+                state.goveeAppAPI = resp.data.data
+                logger ("deviceSelect2():  ${resp.data.data}","trace")
                 resp.data.data.devices.each {
                     deviceID = it.device
                     deviceName = it.deviceName
@@ -614,9 +661,9 @@ def about() {
 
 def installed() {
     log.debug "Installed with settings: ${settings}"
-    state?.isInstalled = true
-    state?.diyEffects = [:]
-    state?.lightEffects = [:]
+    state.isInstalled = true
+    state.diyEffects = [:]
+    state.lightEffects = [:]
     initialize()
 }
 
