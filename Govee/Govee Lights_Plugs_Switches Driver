@@ -96,7 +96,7 @@ def setColorTemperature(value,level = null,transitionTime = null)
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-	def intvalue = value.toInteger()
+	int intvalue = value.toInteger()
     if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
         if (level != null) setLevel(level,transitionTime);
@@ -122,7 +122,7 @@ def setColorTemperature(value,level = null,transitionTime = null)
 
 
 
-def setCTColorName(value)
+def setCTColorName(int value)
 {
 		if (value < 2600) {
 			sendEvent(name: "colorName", value: "Warm White")
@@ -203,45 +203,46 @@ def setSaturation(s)
 	setHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
 }
 
-def setLevel(v,duration = 0){
+def setLevel(float v,duration = 0){
+    int intv = v.toInteger()
     if (lanControl && duration>0){
         sendEvent(name: "switch", value: "on")
-        fade(v,duration)
+        fade(intv,duration)
     }
     else {
         if (device.currentValue("cloudAPI") == "Retry") {
             log.error "setLevel(): CloudAPI already in retry state. Aborting call." 
         } else {
-        setLevel2(v)
+        setLevel2(intv)
         }
     }
 }
 
-def setLevel2(v){
+def setLevel2(int v){
         if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         sendEvent(name: "level", value: v)
         sendEvent(name: "switch", value: "on")}
     else {
         sendEvent(name: "cloudAPI", value: "Pending")
-		if(aRngBright){v=incBrightnessRange(v)}
+		if  (aRngBright) {v=incBrightnessRange(v)}
         if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
     }
 }
 
-def fade(v,duration){
+def fade(int v,float duration){
     unschedule(fadeUp)
     unschedule(fadeDown)
-    curLevel = device.currentValue("level")
-    if (v<curLevel){
-    fadeRep = (curLevel-v)/fadeInc
-    fadeInt = (duration*1000)/fadeRep
+    int curLevel = device.currentValue("level")
+    if (v < curLevel){
+    float fadeRep = (curLevel-v)/fadeInc
+    float fadeInt = (duration*1000)/fadeRep
     fadeDown(curLevel, v, fadeRep, fadeInt)
         }
-    else if (v>curLevel){
-    fadeRep = (v-curLevel)/fadeInc
-    fadeInt = (duration*1000)/fadeRep
+    else if (v > curLevel){
+    float fadeRep = (v-curLevel)/fadeInc
+    float fadeInt = (duration*1000)/fadeRep
     fadeUp(curLevel, v, fadeRep, fadeInt)
         }
     else {
@@ -249,12 +250,12 @@ def fade(v,duration){
     }
 }
 
-def fadeDown(curLevel,level,fadeInt,fadeRep) {
+def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeDown(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-    v= curLevel-fadeInc
-    curLevel = curLevel-fadeInc
+    int v = (curLevel-fadeInc).toInteger()
+    int curLevelInt = (curLevel-fadeInc).toInteger()
     log.debug "fadeDown(): v ${v}"
-    if (v==0) {
+    if ( v == 0 ) {
         log.debug "fadeDown(): Next fade is to 0 turning off device. Fade is complete"
         off()
     } else {
@@ -265,18 +266,18 @@ def fadeDown(curLevel,level,fadeInt,fadeRep) {
             }
         else {
             if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
-            def int delay= fadeRep
+            def int delay = fadeRep
             if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
-            if (debugLog) {log.debug "fadeDown(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-            runInMillis(delay, fadeDown, [data:[curLevel,level, fadeInt,fadeRep]])
+            if (debugLog) {log.debug "fadeDown(): executing loop to fadedown() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+            runInMillis(delay, fadeDown, [data:[curLevelInt,level, fadeInt,fadeRep]])
         }
     }
 } 
 
-def fadeUp(curLevel,level,fadeInt,fadeRep) {
+def fadeUp( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeUp(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-        v= curLevel+fadeInc
-        curLevel = curLevel+fadeInc
+        int v= (curLevel+fadeInc).toInteger()
+        int curLevelInt = (curLevel+fadeInc).toInteger()
     log.debug "fadeUp(): v ${v}"
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         sendEvent(name: "level", value: v)
@@ -287,8 +288,8 @@ def fadeUp(curLevel,level,fadeInt,fadeRep) {
         if (debugLog) {log.debug "fadeUp(): continueing  fading to ${v}"}
         def int delay= fadeRep
         if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
-        if (debugLog) {log.debug "fadeUp(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-          runInMillis(delay, fadeUp, [data:[curLevel,level, fadeInt,fadeRep]])
+        if (debugLog) {log.debug "fadeUp(): executing loop to fadeup() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+          runInMillis(delay, fadeUp, [data:[curLevelInt,level, fadeInt,fadeRep]])
     }
 } 
 
@@ -551,7 +552,7 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-def GoveeCommandBuilder(command1, value1, type) {   
+def GoveeCommandBuilder(String command1, value1, String type) {   
     if (type=="ct") {
         if (debugLog) {log.debug "GoveeCommandBuilder(): Color temp action"}
         JsonBuilder cmd1 = new JsonBuilder() 
@@ -615,7 +616,7 @@ def GoveeCommandBuilder(command1, value1, type) {
 
 def sendCommandLan(String cmd) {
   def addr = getIPString();
-//    if (debugLog) {log.debug ("sendCommandLan(): ${cmd}")}
+    if (debugLog) {log.debug ("sendCommandLan(): ${cmd}")}
 
   pkt = new hubitat.device.HubAction(cmd,
                      hubitat.device.Protocol.LAN,
@@ -627,7 +628,7 @@ def sendCommandLan(String cmd) {
   try {    
       if (debugLog) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
     sendHubCommand(pkt) 
-//    setLastCommandTime()    
+      
   }
   catch (Exception e) {      
       logDebug e
@@ -649,14 +650,14 @@ def parse(message) {
 def  setEffect(effectNo) {
     effectNumber = effectNo.toString()
     if (parent.state.lightEffects.containsKey((device.getDataValue("deviceModel"))) && (parent.state.lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNumber))) {
-        sceneInfo = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).name
-        sceneCmd = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).cmd
+        String sceneInfo = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).name
+        String sceneCmd = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}: ParentData ${parentData}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
 //    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
    } else {
@@ -664,35 +665,35 @@ def  setEffect(effectNo) {
         sendEvent(name: "switch", value: "on")
     // Ocean/Deep Sea Light Effect
     if (effectNo == 1) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBAICHQAAAAEAAf//AAAAALs\\=","owEA3DICAGT/AAD/AAAAAAAAACo\\=","owIaAAIKAQIB/ygB1wAAAAAyAYM\\=","o/8A/5YAAAAAAAAAAAAAAAAAADU\\=","MwUEywAAAAAAAAAAAAAAAAAAAPk\\="]}}}'
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBAICHQAAAAEAAf//AAAAALs\\=","owEA3DICAGT/AAD/AAAAAAAAACo\\=","owIaAAIKAQIB/ygB1wAAAAAyAYM\\=","o/8A/5YAAAAAAAAAAAAAAAAAADU\\=","MwUEywAAAAAAAAAAAAAAAAAAAPk\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Ocean/Deep Sea")
         sendCommandLan(cmd2)
      } 
     // Romantic Effect
     if (effectNo == 2) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEBwAAAAAAAAAAAAAAAAAAADU\\="]},"transaction":"u_1682169742270","type":1}}'  
+        String cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEBwAAAAAAAAAAAAAAAAAAADU\\="]},"transaction":"u_1682169742270","type":1}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Romantic")
         sendCommandLan(cmd2)
     }
     // Sunset Effect   
     if (effectNo == 3) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]},"transaction":"u_1682169742270","type":1}}'  
+        String cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]},"transaction":"u_1682169742270","type":1}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Sunset")
         sendCommandLan(cmd2)
     }    
     // Rainbow Light Effect
     if (effectNo == 4) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="]},"transaction":"u_1682169742270","type":1}}'  
+        String cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="]},"transaction":"u_1682169742270","type":1}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Rainbow")
         sendCommandLan(cmd2)
     }
     // Fire Light Effect
     if (effectNo == 5) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABDAIFHQAAABYAAXAyA7sUFFk\\=","owEC1RQC/1kH////AwD/EwD/ASw\\=","owIpJwAABQIB/5kC/18eAgD/Bog\\=","owMAAAD/////bQf/TQf/Dgf/CH4\\=","owQJEgD8EACAAikhAAAGAgH/mbk\\=","owUC/18eAgD/BgAAAP////9tB4s\\=","owb/TQf/Dgf/CAkQAP4QAP0CKTA\\=","owdDAhQUAAH//wCAFBQB6hQG/2I\\=","owgVB/8ICf8ICf8pB/8HEwAAAIM\\=","owkTAPwAAIADKSQAAAEAAf8AADQ\\=","owqAFBQB6RQG/xUH/zkH/44H/3Y\\=","o/9eB/8HE/8PBxcA+QAA/wQAAAw\\=","MwUEMggAAAAAAAAAAAAAAAAAAAg\\="]}}}'
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABDAIFHQAAABYAAXAyA7sUFFk\\=","owEC1RQC/1kH////AwD/EwD/ASw\\=","owIpJwAABQIB/5kC/18eAgD/Bog\\=","owMAAAD/////bQf/TQf/Dgf/CH4\\=","owQJEgD8EACAAikhAAAGAgH/mbk\\=","owUC/18eAgD/BgAAAP////9tB4s\\=","owb/TQf/Dgf/CAkQAP4QAP0CKTA\\=","owdDAhQUAAH//wCAFBQB6hQG/2I\\=","owgVB/8ICf8ICf8pB/8HEwAAAIM\\=","owkTAPwAAIADKSQAAAEAAf8AADQ\\=","owqAFBQB6RQG/xUH/zkH/44H/3Y\\=","o/9eB/8HE/8PBxcA+QAA/wQAAAw\\=","MwUEMggAAAAAAAAAAAAAAAAAAAg\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Fire")
         sendCommandLan(cmd2)
@@ -707,14 +708,14 @@ def  setEffect(effectNo) {
     }
     // Forest Effect
     if (effectNo == 7) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDJgABAAoCAf8ZAbQKCtk\\=","owECyBQF//8AAP//////AP//lBI\\=","owL/ABQBlgAAAAAjAAIPBQIB/wo\\=","owMUA9gAAAH6CgQE/wC0/wBH/5I\\=","owT/4/8AAAAAAAAAABoAAAABAl0\\=","owUB/wUByBQUAu4UAQD/AAAAAJI\\=","o/8AAAAAAAAAAAAAAAAAAAAAAFw\\=","MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="]}}}'
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDJgABAAoCAf8ZAbQKCtk\\=","owECyBQF//8AAP//////AP//lBI\\=","owL/ABQBlgAAAAAjAAIPBQIB/wo\\=","owMUA9gAAAH6CgQE/wC0/wBH/5I\\=","owT/4/8AAAAAAAAAABoAAAABAl0\\=","owUB/wUByBQUAu4UAQD/AAAAAJI\\=","o/8AAAAAAAAAAAAAAAAAAAAAAFw\\=","MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Forest")
         sendCommandLan(cmd2)
     }
     // Flower Field Effect
     if (effectNo == 8) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBQICLKACFAoCAf+WAMwAAJE\\=","owEC4AAH0QBe/wMA/2wA//8A/1g\\=","owJ/AP8AAPUA/wAAABAA2AAaoFk\\=","owMAAAEAATIUAAAAAAD6FAHPAKY\\=","o/9iAAAAAAAAAAAAAAAAAAAAAD4\\=","MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="]}}}'
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBQICLKACFAoCAf+WAMwAAJE\\=","owEC4AAH0QBe/wMA/2wA//8A/1g\\=","owJ/AP8AAPUA/wAAABAA2AAaoFk\\=","owMAAAEAATIUAAAAAAD6FAHPAKY\\=","o/9iAAAAAAAAAAAAAAAAAAAAAD4\\=","MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Flower Field")
         sendCommandLan(cmd2)
@@ -821,14 +822,14 @@ def  setEffect(effectNo) {
     }
     // Spring Effect
     if (effectNo == 20) {
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDKQACCgUCAf8ZAAAAAGU\\=","owEC+jIG/zgA/38AAP8AAAAAANY\\=","owL//4sA/wAAgAAAAAAjAAIeCmA\\=","owMAAf//AAAAAAH6AATxAB3/dTg\\=","owQA/8AA/0sAAAD/AAH6AB0AADU\\=","owUAAQABMgAByDIyAsgyAgD/AFg\\=","o////wAAAAAAAAAAAAAAAAAAAFw\\=","MwUE0gAAAAAAAAAAAAAAAAAAAOA\\="]}}}'  
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDKQACCgUCAf8ZAAAAAGU\\=","owEC+jIG/zgA/38AAP8AAAAAANY\\=","owL//4sA/wAAgAAAAAAjAAIeCmA\\=","owMAAf//AAAAAAH6AATxAB3/dTg\\=","owQA/8AA/0sAAAD/AAH6AB0AADU\\=","owUAAQABMgAByDIyAsgyAgD/AFg\\=","o////wAAAAAAAAAAAAAAAAAAAFw\\=","MwUE0gAAAAAAAAAAAAAAAAAAAOA\\="]}}}'  
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Spring")
         sendCommandLan(cmd2)
     }
     // Summer Light Effect
     if (effectNo == 21) {    
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIEGhAAAAEAAf//AIAUFCk\\=","owECABQBAP8AAACAAACAABqBAtM\\=","owIZFAAB//8AgBQUAgAUAf9RSd0\\=","owMAAIAAAIABGoECGRQAAf//ADQ\\=","owSAFBQCABQB/wAAAACAAACAAs0\\=","owUaGQAAAQAB//8AgBQUAgAUATI\\=","o/8A/wAAAIAAAIAAAAAAAAAAAKM\\=","MwUE6AgAAAAAAAAAAAAAAAAAANI\\="]}}}'
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIEGhAAAAEAAf//AIAUFCk\\=","owECABQBAP8AAACAAACAABqBAtM\\=","owIZFAAB//8AgBQUAgAUAf9RSd0\\=","owMAAIAAAIABGoECGRQAAf//ADQ\\=","owSAFBQCABQB/wAAAACAAACAAs0\\=","owUaGQAAAQAB//8AgBQUAgAUATI\\=","o/8A/wAAAIAAAIAAAAAAAAAAAKM\\=","MwUE6AgAAAAAAAAAAAAAAAAAANI\\="]}}}'
         if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
         sendEvent(name: "effectName", value: "Summer")
         sendCommandLan(cmd2)
@@ -865,46 +866,41 @@ if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentV
 
 
 def activateDIY(diyActivate) {
-        diyEffectNumber = diyActivate.toString()
-        sceneInfo = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).name
-        sceneCmd = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd 
+        String diyEffectNumber = diyActivate.toString()
+        String sceneInfo = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).name
+        String sceneCmd = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd 
         if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} called ${sceneInfo} with command ${sceneCmd}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: diyEffectNumber)
         sendEvent(name: "switch", value: "on")
-        def cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("activateDIY(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
 }
 
 def retrieveScenes() {
-    state.scenes = [:]
-    state.diyEffects = [:]
+    state.scenes = [] as List
+    state.diyEffects = [] as List
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent app")}
     if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
     } else {
         parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
-            value = it.value
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
-            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${value.name}")}
-            num = it.getKey()
-            name = value.name
-            state.diyEffects.put(num,name)
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+            String sceneValue = it.getKey() + "=" + it.value.name
+            state.diyEffects.add(sceneValue)
         }
     }
     if (parent.state.lightEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else {
         parent.state.lightEffects.(device.getDataValue("deviceModel")).each {
-        value = it.value
-        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
-        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${value.name}")}
-        num = it.getKey()
-        name = value.name
-        state.scenes.put(num,name)    
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+            String sceneValue = it.getKey() + "=" + it.value.name
+            state.scenes.add(sceneValue)
+            state.scenes = state.scenes.sort()
         }
     }
-    state.diyEffects = state.diyEffects.sort {it.key}
-    state.scenes = state.scenes.sort {it.key}
 }
