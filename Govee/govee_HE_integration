@@ -74,107 +74,11 @@ def initialize() {
         state?.APIKey = settings.APIKey
     }
     if (goveeDev) {
-        def  goveeAdd = settings.goveeDev - child.label
-        logger("initialize() Child device ${child} DNI's ${childDNI}", 'debug')
+        def goveeAdd = settings.goveeDev - child.label
+        logger("initialize() Found child devices ${child} with DNI's ${childDNI}", 'debug')
         logger("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.", 'info')
         if (goveeAdd) {
-            def devices = goveeAdd
-            logger("initialize() $devices are selcted to be integrated", 'info')
-            logger('initialize() DEVICE INFORMATION', 'info')
-            def params = [
-            uri   : 'https://developer-api.govee.com',
-            path  : '/v1/devices',
-            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
-        ]
-
-            try {
-                httpGet(params) { resp ->
-                logger ("initialize(): ${resp.data}",'trace')
-                    resp.data.data.devices.each {
-                        deviceID = it.device                            
-                        deviceModel = it.model
-                        deviceName = it.deviceName
-                        controllable = it.controllable
-                        retrievable = it.retrievable
-                        supportCmds = it.supportCmds
-                        if (childDNI.contains(deviceID) == false) {
-                        logger("initialize(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
-                        if (supportCmds.contains('colorTem') && supportCmds.contains('color')) {
-                            ctMin = it.properties.colorTem.range.min
-                            ctMax = it.properties.colorTem.range.max
-                            devices.findAll { it == deviceName } .each {
-                                logger("initialize()  configuring ${deviceName}", 'info')
-                                addChildDevice('Mavrrick', 'Govee Lights, Plugs, and Switches Driver', "${deviceID}" , location.hubs[0].id, [
-                                'name': 'Govee Light_Plug_Switch',
-                                'label': deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax
-                            ],
-                    'completedSetup': true,
-                ])
-                        }
-                    }
-                    else if (supportCmds.contains('brightness')) {
-                            ctMin = 'N/A'
-                            ctMax = 'N/A'
-                            devices.findAll { it == deviceName } .each {
-                                logger("initialize()  configuring ${deviceName}", 'info')
-                                addChildDevice('Mavrrick', 'Govee White Light Driver', "${deviceID}" , location.hubs[0].id, [
-                                'name': 'Govee Light_Plug_Switch',
-                                'label': deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax
-                            ],
-                    'completedSetup': true,
-                ])
-                    }
-                }
-                    else {
-                            ctMin = 'N/A'
-                            ctMax = 'N/A'
-                            devices.findAll { it == deviceName } .each {
-                                logger("initialize()  configuring ${deviceName}", 'info')
-                                addChildDevice('Mavrrick', 'Govee Plugs and Switches Driver', "${deviceID}" , location.hubs[0].id, [
-                                'name': 'Govee Light_Plug_Switch',
-                                'label': deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax
-                            ],
-                    'completedSetup': true,
-                ])
-                    }
-            }
-            } else {
-                logger("initialize(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
-            }                
-        }
-    }
-    } catch (groovyx.net.http.HttpResponseException e) {
-                logger("initialize() Error: e.statusCode ${e.statusCode}", 'error')
-                logger("initialize() ${e}", 'error')
-
-                return 'unknown'
-}
-            state?.installDev = goveeDev
-            logger('initialize() Govee devices integrated', 'info')
+            goveeLightAdd(goveeAdd)
                 }
         lightEffectSetup()
         }
@@ -186,130 +90,7 @@ def initialize() {
         def  goveeAdd2 = settings.goveeApp - child.label
         logger("initialize() Govee Appliances to add ${goveeAdd2}.", 'info')
         if (goveeAdd2) {
-            def devices = goveeAdd2
-            logger("initialize() $devices are selcted to be integrated", 'info')
-            logger('initialize() Appliance INFORMATION', 'info')
-            def params2 = [
-            uri   : 'https://developer-api.govee.com',
-            path  : '/v1/appliance/devices',
-            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
-        ]
-
-            try {
-                httpGet(params2) { resp ->
-                    //List each device assigned to current API key
-                logger ("initialize(): ${resp.data}",'trace')
-                    resp.data.data.devices.each {
-                        deviceID = it.device
-                        deviceModel = it.model
-                        deviceName = it.deviceName
-                        controllable = it.controllable
-                        retrievable = it.retrievable
-                        supportCmds = it.supportCmds
-                        modes = it.properties.mode.options
-                        if (childDNI.contains(deviceID) == false) {
-                        logger("initialize(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
-                        if (supportCmds.contains('gear')) {
-                            gear = it.properties.gear.options.value
-                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
-                            devices.findAll { it == deviceName } .each {
-                                logger("initialize()  configuring ${deviceName}", 'info')
-                                addChildDevice('Mavrrick', 'Govee Appliance Driver', "${deviceID}" , location.hubs[0].id, [
-                                'name': 'Govee Appliance',
-                                'label': deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                // Appliances are not retrieveable   'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'modes' : modes,
-                                'gears' : gear
-                            ],
-                    'completedSetup': true,
-                ])
-                        }
-                    } else if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch') && supportCmds.contains('whiteNoise:switch') ) {
-                            mistGear = it.properties.'mist:gear'.options
-                            lightScenes = it.properties.'light:scene'.options
-                            whiteNoise = it.properties.'whiteNoise:music'.options
-                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
-                            devices.findAll { it == deviceName } .each {
-                                logger("initialize()  configuring ${deviceName}", 'info')
-                                addChildDevice('Mavrrick', 'Govee Appliance Driver with Lights and WhitenNoise', "${deviceID}" , location.hubs[0].id, [
-                                'name': 'Govee Appliance',
-                                'label': deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                // Appliances are not retrieveable   'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'modes' : modes,
-                                'mist:gears' : mistGear,
-                                'light:scenes' : lightScenes,
-                                'whiteNoise:Music' : whiteNoise    
-                            ],
-                    'completedSetup': true,
-                ])
-                        }
-                    } else if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch')) {
-                            mistGear = it.properties.'mist:gear'.options
-                            lightScenes = it.properties.'light:scene'.options
-                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
-                            devices.findAll { it == deviceName } .each {
-                                logger("initialize()  configuring ${deviceName}", 'info')
-                                addChildDevice('Mavrrick', 'Govee Appliance Driver with Lights', "${deviceID}" , location.hubs[0].id, [
-                                'name': 'Govee Appliance',
-                                'label': deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                // Appliances are not retrieveable   'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'modes' : modes,
-                                'mist:gears' : mistGear,
-                                'light:scenes' : lightScenes    
-                            ],
-                    'completedSetup': true,
-                ])
-                        }
-                    }
-                    else {
-                            gear = 'N/A'
-                            logger("initialize() $deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable modes: $modes gears: $gear", 'debug')
-                            devices.findAll { it == deviceName } .each {
-                                logger("initialize()  configuring ${deviceName}", 'info')
-                                addChildDevice('Mavrrick', 'Govee Heating Appliance Driver', "${deviceID}" , location.hubs[0].id, [
-                                'name': 'Govee Appliance',
-                                'label': deviceName,
-                                'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                // Appliances are not retrieveable   'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': supportCmds,
-                                'modes' : modes,
-                                'gears' : gear
-                            ],
-                    'completedSetup': true,
-                ])
-                    }
-                }          
-                            } else {
-                logger("initialize(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
-            }            
-            }        
-        }
-    } catch (groovyx.net.http.HttpResponseException e) {
-                logger("initialize() Error: e.statusCode ${e.statusCode}", 'error')
-                logger("initialize() ${e}", 'error')
-
-                return 'unknown'
-    }
-            state?.installedApp = goveeApp
-            logger('initialize() Govee devices integrated', 'info')
+            goveeAppAdd(goveeAdd2)
                 }
     }
           else {
@@ -393,11 +174,12 @@ def deviceSelect() {
     try {
         httpGet(params) { resp ->
                 //List each device assigned to current API key
+                state.goveeLightAPI = resp.data.data
                 logger ("deviceSelect():  ${resp.data}","trace")
                 resp.data.data.devices.each {
-                    deviceID = it.device
-                    deviceName = it.deviceName
-                    logger("deviceSelect() $deviceName    Address: $deviceID", 'debug')
+//                    deviceID = it.device
+                    String deviceName = it.deviceName
+                    logger("deviceSelect() $deviceName found", 'debug')
                     options["${deviceName}"] = deviceName
                 }
                 logger(" deviceSelect() $options", 'debug')
@@ -435,9 +217,9 @@ def deviceSelect2() {
                 state.goveeAppAPI = resp.data.data
                 logger ("deviceSelect2():  ${resp.data.data}","trace")
                 resp.data.data.devices.each {
-                    deviceID = it.device
-                    deviceName = it.deviceName
-                    logger("deviceSelect2() $deviceName    Address: $deviceID ", 'debug')
+//                    deviceID = it.device
+                    String deviceName = it.deviceName
+                    logger("deviceSelect2() $deviceName  found", 'debug')
                     options2["${deviceName}"] = deviceName
                 }
                 logger("deviceSelect2() $options2", 'debug')
@@ -524,11 +306,11 @@ def sceneManualAdd2() {
 }
 
 def sceneExtract() {
-    def sceneData = [:]
+//    def sceneData = [:]
 
     logger('sceneExtract() DEVICE INFORMATION', 'debug')
     if (state.goveeHomeToken) {
-    goveeHomeToken = "Bearer " + state.goveeHomeToken
+    String goveeHomeToken = "Bearer " + state.goveeHomeToken
 
     def params = [
             uri   : 'https://app2.govee.com',
@@ -540,53 +322,57 @@ def sceneExtract() {
         httpGet(params) { resp ->
             def slurper = new JsonSlurper()
                 resp.data.data.components.forEach {
-                    name = it.name.toString()
+                    String name = it.name.toString()
                     if (name == settings.goveeGroup) {
                         logger("sceneExtract(): found ${settings.goveeGroup} group moving forward", 'debug')
-                        it.oneClicks.iotRules.forEach {
+                        it.oneClicks.iotRules.forEach {  
                             logger("sceneExtract(): Tap to Run has deviceObj ${it.get(0).containsKey("deviceObj")} ", 'debug')
                             if (it.get(0).containsKey("deviceObj")) {
                             logger("sceneExtract(): found ${it.deviceObj.feastType} feastType", 'debug')
-                            feastType = it.deviceObj.feastType.get(0)
+                            int feastType = it.deviceObj.feastType.get(0)
                             if (feastType == 0) {
-                            devName = it.deviceObj.name
+                            devName = it.deviceObj.name.get(0) 
                             devSku = it.deviceObj.sku.get(0)
                             logger("sceneExtract(): Looking at ${devName} ${devSku}", 'info')
-                            rules = it.rule
-                            rulesSize = rules.get(0).size()
-                            logger("sceneExtract(): Looking at ${rulesSize}", 'debug')
-                            if (rules.get(0).get(0).cmdType == 3 || rules.get(0).get(0).cmdType == 4 || rules.get(0).get(0).cmdType == 32) {
-                                logger("sceneExtract(): First rule is scene or DIY ${rules.get(0).get(0).cmdType}", 'debug')
-                                cmdVal=rules.get(0).get(0).cmdVal
-                                iotMsg=rules.get(0).get(0).iotMsg
-                            } else if (rules.get(0).get(1).cmdType == 3 || rules.get(0).get(1).cmdType == 4 || rules.get(0).get(1).cmdType == 32) {
-                                logger("sceneExtract(): Second rule is scene or DIY ${rules.get(0).get(1).cmdType}", 'debug')
-                                cmdVal=rules.get(0).get(1).cmdVal
-                                iotMsg=rules.get(0).get(1).iotMsg
+//                            int rulesSize = it.rule.get(0).size()    
+                            logger("sceneExtract(): Looking at ${it.rule.get(0).size()}", 'debug')
+                            if (it.rule.get(0).get(0).cmdType == 3 || it.rule.get(0).get(0).cmdType == 4 || it.rule.get(0).get(0).cmdType == 32) {    
+                                logger("sceneExtract(): First rule is scene or DIY ${it.rule.get(0).get(0).cmdType}", 'debug')
+                                if ((slurper.parseText(it.rule.get(0).get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(0).cmdVal)).startBri == null) {
+                                    sceneName = (slurper.parseText(it.rule.get(0).get(0).cmdVal)).diyName }
+                                else if ((slurper.parseText(it.rule.get(0).get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(0).cmdVal)).diyName == null) {
+                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(0).get(0).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(0).get(0).cmdVal)).closeTime + " min"
+                                    }    
+                                else {
+                                sceneName = (slurper.parseText(it.rule.get(0).get(0).cmdVal)).scenesStr
+                                }
+                                command = (slurper.parseText(it.rule.get(0).get(0).iotMsg)).msg.data.command
+                            } else if (it.rule.get(0).get(1).cmdType == 3 || it.rule.get(0).get(1).cmdType == 4 || it.rule.get(0).get(1).cmdType == 32) {
+                                logger("sceneExtract(): Second rule is scene or DIY ${it.rule.get(0).get(1).cmdType}", 'debug')
+                                if ((slurper.parseText(it.rule.get(0).get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).startBri == null) {
+                                    sceneName = (slurper.parseText(it.rule.get(0).get(1).cmdVal)).diyName }
+                                else if ((slurper.parseText(it.rule.get(0).get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).diyName == null) {
+                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(0).get(1).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(0).get(1).cmdVal)).closeTime + " min"
+                                    }    
+                                else {
+                                sceneName = (slurper.parseText(it.rule.get(0).get(1).cmdVal)).scenesStr
+                                }
+                            command = (slurper.parseText(it.rule.get(0).get(1).iotMsg)).msg.data.command                                
                             } else  { 
-                                logger("sceneExtract(): First two rules failed falling back to third rule ${rules.get(0).get(2).cmdType}", 'debug')
-                                cmdVal=rules.get(0).get(2).cmdVal
-                                iotMsg=rules.get(0).get(2).iotMsg
+                                logger("sceneExtract(): First two rules failed falling back to third rule ${it.rule.get(0).get(2).cmdType}", 'debug')
+                                if ((slurper.parseText(it.rule.get(0).get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).startBri == null) {
+                                    sceneName = (slurper.parseText(it.rule.get(0).get(2).cmdVal)).diyName }
+                                else if ((slurper.parseText(it.rule.get(0).get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).diyName == null) {
+                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(0).get(2).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(0).get(2).cmdVal)).closeTime + " min"
+                                    }    
+                                else {
+                                sceneName = (slurper.parseText(it.rule.get(0).get(2).cmdVal)).scenesStr
+                                }
+                                command = (slurper.parseText(it.rule.get(0).get(2).iotMsg)).msg.data.command
                                 logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
-                            iotMsgJson  = slurper.parseText(iotMsg)
-                            cmdValJson  = slurper.parseText(cmdVal)
-                            if ( cmdValJson.scenesStr == null && cmdValJson.startBri == null) {
-                                sceneName = cmdValJson.diyName }
-                            else if (cmdValJson.scenesStr == null && cmdValJson.diyName == null) {
-                                sceneName = "Sleep starting at "+ cmdValJson.startBri + "% for " + cmdValJson.closeTime + " min"
-                            }    
-                            else {
-                                sceneName = cmdValJson.scenesStr
-                            }
-                            command = iotMsgJson.msg.data.command
-                            logger("sceneExtract(): rule is ${rules}", 'trace')
-                            logger("sceneExtract(): cmdVal is ${cmdVal}", 'trace')
-                            logger("sceneExtract(): iotMSG is ${iotMsg}", 'trace')
-                            logger("sceneExtract(): cmdValJson is ${cmdValJson}", 'trace')
-                            logger("sceneExtract(): iotMsgJson is ${iotMsgJson}", 'trace')
                             logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
-                            logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command.inspect().replaceAll("\'", "\"")}", 'debug')
+//                            logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command.inspect().replaceAll("\'", "\"")}", 'debug')
                             diyAdd(devSku, sceneName, command)
                             } else {
                                 logger("sceneExtract(): Found scene that is not extractable. Moving on", 'debug')
@@ -595,9 +381,7 @@ def sceneExtract() {
                                logger("sceneExtract(): Tap to run does not contain device only action. Ignoring", 'debug') 
                             }
                         }
-                    } else {
-                    //                    logger("sceneExtract(): Default group not found", 'error')
-                    }
+                    } 
                 }
         }
     } catch (groovyx.net.http.HttpResponseException e) {
@@ -684,42 +468,6 @@ def uninstalled() {
     }
 }
 
-def DeviceInfo() {
-    def options = [:]
-    log.debug 'DEVICE INFORMATION'
-    def params = [
-            uri   : 'https://developer-api.govee.com',
-            path  : '/v1/devices',
-            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
-        ]
-
-    try {
-        httpGet(params) { resp ->
-                //List each device assigned to current API key
-                //log.debug resp.data
-                resp.data.data.devices.each {
-                    deviceID = it.device
-                    deviceModel = it.model
-                    deviceName = it.deviceName
-                    controllable = it.controllable
-                    retrievable = it.retrievable
-                    ctMin = it.properties.colorTem.range.min
-                    ctMax = it.properties.colorTem.range.max
-                    log.debug "$deviceName    Address: $deviceID    Model: $deviceModel retrievable: $retrievable controllable: $controllable Color Temp: $ctMin Color Temp: $ctMax"
-                    options.put('deviceID', deviceID)
-                    options.put('Name', deviceName)
-                    log.debug "$options"
-                }
-                return resp.data
-                return options
-        }
-    } catch (groovyx.net.http.HttpResponseException e) {
-        log.error "Error: e.statusCode ${e.statusCode}"
-        log.error "${e}"
-
-        return 'unknown'
-    }
-}
 
 def apiRateLimits(type, value) {
     logger("apiRateLimits($type, $value)", 'info')
@@ -748,14 +496,10 @@ def sendnotification (type, value) {
     }
 }
 
-/* def getParentSetting(String settingName) {
-    return parent?."${settingName}"
-} */
-
 def diyAdd(devSKU, diyName, command) {
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
     command = command.inspect().replaceAll("\'", "\"")
-    diyEntry = [:]
+    Map diyEntry = [:]
     diyEntry.put("name", diyName)
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
@@ -764,7 +508,7 @@ def diyAdd(devSKU, diyName, command) {
         logger("diyAdd(): Device ${devSKU} not found", 'debug')
         logger("diyAdd(): New Device. Starting at 1001", 'debug')
         diyAddNum = 1001
-        diyEntry2 = [:]
+        Map diyEntry2 = [:]
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
@@ -781,6 +525,12 @@ def diyAdd(devSKU, diyName, command) {
         }
     }
 }
+
+/**
+ *  diyAddManual()
+ *
+ *  Method to manually add shared Scenes to Hubitat.
+ **/
 
 def diyAddManual(devSKU, diyName, command) {
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
@@ -845,7 +595,203 @@ private logger(msg, level = 'debug') {
     }
 }
 
+/**
+ *  goveeLightAdd()
+ *
+ *  Wrapper function for all logging.
+ **/
+private goveeLightAdd(goveeAdd) {
+    def devices = goveeAdd
+    List child = getChildDevices()
+    List childDNI = child.deviceNetworkId
+    logger("goveeLightAdd() $devices are selcted to be integrated", 'info')
+    logger('goveeLightAdd() DEVICE INFORMATION', 'info')
+    logger ("goveeLightAdd(): ${state.goveeLightAPI}",'trace')
+    state.goveeLightAPI.devices.each {
+        String deviceID = it.device                            
+        String deviceModel = it.model
+        String deviceName = it.deviceName
+        String controllable = it.controllable
+        String retrievable = it.retrievable
+        String supportCmds = it.supportCmds
+        if (childDNI.contains(deviceID) == false) {
+            logger("goveeLightAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
+            if (supportCmds.contains('colorTem') && supportCmds.contains('color')) {
+                String ctMin = it.properties.colorTem.range.min
+                String ctMax = it.properties.colorTem.range.max
+                devices.findAll { it == deviceName } .each {
+                    logger("goveeLightAdd()  configuring ${deviceName}", 'info')
+                    addChildDevice('Mavrrick', 'Govee Lights, Plugs, and Switches Driver', "${deviceID}" , location.hubs[0].id, [
+                        'name': 'Govee Light_Plug_Switch',
+                        'label': deviceName,
+                        'data': [
+                            'deviceID': deviceID,
+                            'deviceModel': deviceModel,
+                            'retrievable': retrievable,
+                            'apiKey': settings.APIKey,
+                            'commands': supportCmds,
+                            'ctMin': ctMin,
+                            'ctMax': ctMax
+                            ],
+                        'completedSetup': true,
+                    ])
+                }
+            } else if (supportCmds.contains('brightness')) {
+                String ctMin = 'N/A'
+                String ctMax = 'N/A'
+                devices.findAll { it == deviceName } .each {
+                    logger("goveeLightAdd()  configuring ${deviceName}", 'info')
+                    addChildDevice('Mavrrick', 'Govee White Light Driver', "${deviceID}" , location.hubs[0].id, [
+                        'name': 'Govee Light_Plug_Switch',
+                        'label': deviceName,
+                        'data': [
+                            'deviceID': deviceID,
+                            'deviceModel': deviceModel,
+                            'retrievable': retrievable,
+                            'apiKey': settings.APIKey,
+                            'commands': supportCmds,
+                            'ctMin': ctMin,
+                            'ctMax': ctMax
+                            ],
+                        'completedSetup': true,
+                    ])
+                }
+            } else {
+                String ctMin = 'N/A'
+                String ctMax = 'N/A'
+                devices.findAll { it == deviceName } .each {
+                    logger("goveeLightAdd()  configuring ${deviceName}", 'info')
+                    addChildDevice('Mavrrick', 'Govee Plugs and Switches Driver', "${deviceID}" , location.hubs[0].id, [
+                        'name': 'Govee Light_Plug_Switch',
+                        'label': deviceName,
+                        'data': [
+                            'deviceID': deviceID,
+                            'deviceModel': deviceModel,
+                            'retrievable': retrievable,
+                            'apiKey': settings.APIKey,
+                            'commands': supportCmds,
+                            'ctMin': ctMin,
+                            'ctMax': ctMax
+                            ],
+                        'completedSetup': true,
+                    ])
+                }
+            }
+        } else {
+            logger("goveeLightAdd(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
+        }                
+    }
+    state?.installDev = goveeDev
+    logger('goveeLightAdd() Govee devices integrated', 'info')
+}
+     
 
+
+
+
+/**
+ *  goveeAppAdd()
+ *
+ *  Part of initialization to added appliance devices to Hubitat from data retrieved from Govee.
+ **/
+private goveeAppAdd(goveeAdd2) {
+    def devices = goveeAdd2
+    List child = getChildDevices()
+    List childDNI = child.deviceNetworkId
+    logger("goveeAppAdd() $devices are selcted to be integrated", 'info')
+    logger('goveeAppAdd() Appliance INFORMATION', 'info')
+        logger ("goveeAppAdd(): ${state.goveeAppAPI}",'trace')
+        state.goveeAppAPI.devices.each {
+            String deviceID = it.device
+            String deviceModel = it.model
+            String deviceName = it.deviceName
+            String supportCmds = it.supportCmds
+            if (childDNI.contains(deviceID) == false) {
+                logger("goveeAppAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
+                if (supportCmds.contains('gear')) {
+                    logger("goveeAppAdd() $deviceName    Address: $deviceID    Model: $deviceModel", 'debug')
+                    devices.findAll { it == deviceName } .each {
+                        logger("goveeAppAdd()  configuring ${deviceName}", 'info')
+                        addChildDevice('Mavrrick', 'Govee Appliance Driver', "${deviceID}" , location.hubs[0].id, [
+                        'name': 'Govee Appliance',
+                        'label': deviceName,
+                        'data': [
+                            'deviceID': deviceID,
+                            'deviceModel': deviceModel,
+                            // Appliances are not retrieveable   'retrievable': retrievable,
+                            'apiKey': settings.APIKey,
+                            'commands': supportCmds
+                            ],
+                        'completedSetup': true,
+                        ])
+                    }
+                } else if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch') && supportCmds.contains('whiteNoise:switch') ) {
+                    logger("goveeAppAdd() $deviceName    Address: $deviceID    Model: $deviceModel", 'debug')
+                    devices.findAll { it == deviceName } .each {
+                        logger("goveeAppAdd()  configuring ${deviceName}", 'info')
+                        addChildDevice('Mavrrick', 'Govee Appliance Driver with Lights and WhitenNoise', "${deviceID}" , location.hubs[0].id, [
+                            'name': 'Govee Appliance',
+                            'label': deviceName,
+                            'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                // Appliances are not retrieveable   'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds   
+                             ],
+                            'completedSetup': true,
+                        ])
+                    }
+                } else if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch')) {
+                    logger("goveeAppAdd() $deviceName    Address: $deviceID    Model: $deviceModel", 'debug')
+                    devices.findAll { it == deviceName } .each {
+                        logger("goveeAppAdd()  configuring ${deviceName}", 'info')
+                        addChildDevice('Mavrrick', 'Govee Appliance Driver with Lights', "${deviceID}" , location.hubs[0].id, [
+                            'name': 'Govee Appliance',
+                            'label': deviceName,
+                            'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                // Appliances are not retrieveable   'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds
+                            ],
+                            'completedSetup': true,
+                        ])
+                    }
+                } else {
+                    logger("goveeAppAdd() $deviceName    Address: $deviceID    Model: $deviceModel", 'debug')
+                    devices.findAll { it == deviceName } .each {
+                        logger("goveeAppAdd()  configuring ${deviceName}", 'info')
+                        addChildDevice('Mavrrick', 'Govee Heating Appliance Driver', "${deviceID}" , location.hubs[0].id, [
+                            'name': 'Govee Appliance',
+                            'label': deviceName,
+                            'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                // Appliances are not retrieveable   'retrievable': retrievable,
+                                'apiKey': settings.APIKey,
+                                'commands': supportCmds
+                            ],
+                            'completedSetup': true,
+                        ])
+                    }
+                }          
+            
+            } else {
+                logger("initialize(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
+            }            
+        }        
+    state?.installedApp = goveeApp
+    logger('initialize() Govee devices integrated', 'info')
+}
+
+
+/**
+ *  appButtonHandler()
+ *
+ *  Handler for when Buttons are pressed in App. These are used for the Scene extract page.
+ **/
 
 private def appButtonHandler(button) {
     if (button == "sceneInitialize") {
@@ -900,7 +846,7 @@ private def appButtonHandler(button) {
 }
 
 // First 30 scenese are setup to replicate Hubitat Wiz Bulb integration Scense so these can be used together
-// Sense above 100 will be other standard scense that are part of the Govee devices as they are found
+// Scense above 100 will be other standard scense that are part of the Govee devices as they are found
 // Special scense like 3d effects may have their own section as well to allow management.
 
 /// All Light efects mapping to commands for all devices.
@@ -1003,6 +949,9 @@ private def lightEffectSetup() {
     }
     if (childModels.contains("H6062")) {
     lightEffectH6062()
+    }
+    if (childModels.contains("H6088")) {
+    lightEffectH6088()
     }
 }
 
@@ -4386,6 +4335,58 @@ private def lightEffectH6062() {
         165:["name":"Split", "cmd":['"owABCgoEKDcAAAMCAf/MAvQUFHw\\="','"owEB9BQEAP///zVX//8AAP8AFDE\\="','"owIA7wAAgAEBAgAB/ygwAAADAis\\="','"owMB/8wC9BQUAfQUBAD///9AWmQ\\="','"owT//wAA/wAWAO8AAIABAQIAASI\\="','"owX/KCMAAAICAf//AvQUFALyFEE\\="','"owYE//8AAP8AAP///2KWFwDyALA\\="','"owcAgAEBAgAB/yglAAACAgH//9Q\\="','"owgC9BQUAvIUBP//AAD/AAD//0I\\="','"o///WHsVAPIAAIABAQIAAf8AABs\\="','"MwUEhgkAAAAAAAAAAAAAAAAAAL0\\="']], 
         166:["name":"Left side on", "cmd":['"MzMBAAAAAAAAAAAAAAAAAAAAAAE\\="']],
         167:["name":"Right side on", "cmd":['"MzMQAAAAAAAAAAAAAAAAAAAAABA\\="']]        ]
+    ]
+    state.lightEffects = state.lightEffects + lightEffectsAdd
+}
+
+private def lightEffectH6088() {
+    lightEffectsAdd = [:]
+    lightEffectsAdd = [
+    H6088:[ //Sconeses
+        101:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
+        102:["name":"Aurora", "cmd":['"owABBQICIAAAAAECAf8yAQAAAEk\\="','"owEA+jIDAP8AAP//qv8AAwCAAEA\\="','"owIAAAAjAAAAAwIB/xkA+gAAApw\\="','"owP6AAR//wD//wCg//8A//8UAWs\\="','"o//6AAD/AAAAAAAAAAAAAAAAAFk\\="','"MwUE8QcAAAAAAAAAAAAAAAAAAMQ\\="']], 
+        103:["name":"Cherry blossoms", "cmd":['"owABBgIDHQAAAAEAAf8AAIAUFMc\\="','"owEAgBQC/0LI+RT/AACAAACAAFM\\="','"owIdAAIHAgAB/wAAAAUFAPwUAq8\\="','"owPXBv//Gf8QAPYAAIAAHQACBug\\="','"owQCAAF7AAAABQUA/BQCz/8P//U\\="','"o/9yBwQA9hAA7wAAAAAAAAAAACQ\\="','"MwUE8gcAAAAAAAAAAAAAAAAAAMc\\="']], 
+        104:["name":"Star", "cmd":['"owABAwIBKQABADICAf8yAP8yGaI\\="','"owEB/QAGAP//AKP/AHT/AAAAAI8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE8wcAAAAAAAAAAAAAAAAAAMY\\="']], 
+        105:["name":"Rainbow", "cmd":['"owABAwIBKQAAAAcCAf/aAv8KClc\\="','"owEDgAoG/wAA/38A//8AAP8AAK0\\="','"o/8A/4sA/xAA8QAAgAAAAAAAALY\\="','"MwUE9AcAAAAAAAAAAAAAAAAAAME\\="']], 
+        106:["name":"Fire", "cmd":['"owABBAICGgACBAECAf9SAdgAAMw\\="','"owEA2h4B/wAAAwCAAAAABCMAADw\\="','"owIAAQAB//8AAAAAAP0ABPEAHbQ\\="','"o///dQD/wAD/HQcAAP8AAP8AAAw\\="','"MwUE9QcAAAAAAAAAAAAAAAAAAMA\\="']], 
+        107:["name":"Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']], 
+        108:["name":"Desert", "cmd":['"owABBQICGgABADICAf8ZAQAUFGo\\="','"owEA+jIByHgAAwCAAAAAACkAAnM\\="','"owIeDwAB/zIAyBQUAPwABv//AE4\\="','"owP/bwD/oAD/cwD/wgD6/wAUAc4\\="','"o//MAAD/AAAAAAAAAAAAAAAAAG8\\="','"MwUE9wcAAAAAAAAAAAAAAAAAAMI\\="']], 
+        109:["name":"Karst Cave", "cmd":['"owABBQICKQAAAAEAAf+YA5oKCnA\\="','"owECyBQGvQD/AAD//wAA/38AALg\\="','"owL/AAD//wAB+gAAAAAdAAIEAb8\\="','"owMAAf8AAM8UFACAFAI9af+fNwQ\\="','"o///AACAAACAAAAAAAAAAAAAAKM\\="','"MwUE+AcAAAAAAAAAAAAAAAAAAM0="']], 
+        110:["name":"Glacier", "cmd":['"owABBgIDHTAAAAECAf9NA7sUFIA\\="','"owEAxgoCB4P/AP//BAD2EADqAh0\\="','"owIaAAAAAQAB/4MDzBQUAIAUAZ0\\="','"owMAAP8AAIAAAIABHTQAAAECAXU\\="','"owT/TQO7FBQAxgoCB4P/AP//BBw\\="','"o/8A9hAA6gIAAAAAAAAAAAAAAFI\\="','"MwUE+QcAAAAAAAAAAAAAAAAAAMw\\="']], 
+        111:["name":"Forest", "cmd":['"owABAwIBIAAAAAgCAf8yAcgyFKs\\="','"owEC+jIDbv8A1f8A1f8AEQKAAGk\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+gcAAAAAAAAAAAAAAAAAAM8\\="']], 
+        112:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\="','"owEBnRQDqP/i/+kH////AAAAEGI\\="','"owIFtAAgoAEAMgABZB4AAAAAANg\\="','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\="']], 
+        113:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\="','"owEDgBQDAAD/bwf+yQb/BADyEIk\\="','"owIA9wAaAAILBgABUxUA6hQUAO4\\="','"o//tFAH+/v4AAIAAAPYAAAAAACw\\="','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\="']], 
+        114:["name":"Raindrop", "cmd":['"owABBQICKQABADICAf8yAP8yGac\\="','"owEB/AAGAP//AKP/AHT/AAAAAI4\\="','"owIAAAAAAAAAAAAAAAMaAAAAAbk\\="','"owMAAf8AAIAUFACAFAE7vf8AADI\\="','"o/+AEAD8AQAAAAAAAAAAAAAAADE\\="','"MwUE/QcAAAAAAAAAAAAAAAAAAMg\\="']], 
+        115:["name":"Night", "cmd":['"owABBAICHQAAAAUAAZYFAZYyMrs\\="','"owEC3DICAAD/nADIAAAAAAAAAOc\\="','"owIgAAAAAwIBlgUB1zIyAgAyA/c\\="','"o/+LAP8AAAAAAP8AAAAAAAAAANc\\="','"MwUE/gcAAAAAAAAAAAAAAAAAAMs\\="']], 
+        116:["name":"Flower Field", "cmd":['"owABBQICLKACHhkCAf+WA84AAIk\\="','"owECnQoH0QBe/wMA/2wA//8A/y8\\="','"owJ/AP8AAPUA/wAAABAAvAAaoD0\\="','"owMBADIAATIUAAAAAAD6FAHPAJQ\\="','"o/9iAAAAAAAAAAAAAAAAAAAAAD4\\="','"MwUE/wcAAAAAAAAAAAAAAAAAAMo\\="']], 
+        117:["name":"Christmas", "cmd":['"owABBAICHQACCgEAAf+AA/cFBTg\\="','"owEA/woC/wAA//8AAACAEADbAuM\\="','"owIaAAAAAQAB/xoA1hQUAfUyAU8\\="','"o/8A/wAQAOsADvkBAAAAAAAAAK4\\="','"MwUEAAgAAAAAAAAAAAAAAAAAADo\\="']], 
+        118:["name":"Candlelight", "cmd":['"owABBAICIAAAAAECAf9kAPwAAOM\\="','"owEA+hQDtAAA/wAA/xIHAwCAAG0\\="','"owIAAAAaAAAAAQIBujwB+QUFAMc\\="','"o///FAH/ggcAAIARAPQAAAAAAKk\\="','"MwUEAQgAAAAAAAAAAAAAAAAAADs\\="']], 
+        119:["name":"Fireworks", "cmd":['"owABCgIEKVABABkAAf8AAP8yMs4\\="','"owECZAAG/wAAAAD/AP///////8I\\="','"owLQB/9/ABQA/wAAAAAjVQEAGXM\\="','"owMAAf8AAP8yMgJkAAT/AAAAADw\\="','"owT/AP//////FgD/AAAAACkAAmU\\="','"owUPBQAB/wAC/zIyAv8CBv8AAKk\\="','"owYAAAD//wAAAAAAAP8A//8AAFo\\="','"owcAEgH6ACkAAg8FAAH/AAL/Ml0\\="','"owgyAv8CBosA/wAAAP//AAAAABQ\\="','"o///cv8A//8AAAASAfoAAAAAAMc\\="','"MwUEAggAAAAAAAAAAAAAAAAAADg\\="']], 
+        120:["name":"Party", "cmd":['"owABCwIEKQABADICAf8AA/8KCrU\\="','"owEBpQUG/wAA/38A//8AAP8AAIU\\="','"owL//4sA/xQA8gAIgAApAAEAMqE\\="','"owMCAf+yA/8KCgGjBQb/AAD/f8w\\="','"owQA//8AAP8AAP//iwD/FgD4ENI\\="','"owUBgAEpAAEAMgABlJQAgBQUAL0\\="','"owbnFAb/AAD/fwD//wAA/wAA/y8\\="','"owf/iwD/AACAAACAACkAAhkBABw\\="','"owgB//8AgBQUAP8UBv8AAP9/ALg\\="','"own//wAA/wAA//+LAP8AAIAAAKE\\="','"o/+AAAAAAAAAAAAAAAAAAAAAANw\\="','"MwUEAwgAAAAAAAAAAAAAAAAAADk\\="']], 
+        121:["name":"Carnival", "cmd":['"owABCQIFGiABAAUCAf8oAfAAALc\\="','"owECADIB/wAAEQD8EQH8ABoiAVQ\\="','"owIABQIB/ygB8AAAAgAyAf9/ADA\\="','"owMRAPwRAfwAGiQBAAUCAf8oAU4\\="','"owTwAAACADIB//8AEQD8EQH8AGc\\="','"owUaJgEABQIB/ygB8AAAAgAyAYo\\="','"owZ//wAQAPwRAfwAGigBAAUCARA\\="','"owf/KAHwAAACADIBAP8AEQD8EbA\\="','"o/8B/AAAAAAAAAAAAAAAAAAAAKE\\="','"MwUEBAgAAAAAAAAAAAAAAAAAAD4\\="']], 
+        122:["name":"Mother's Day", "cmd":['"owABBQICIAAAAAEAAf//AQAAAIY\\="','"owEA3DID/wsA6QD/zAD/AAAAAJ4\\="','"owIAAAAgAAIoAQIB/ygB1yAUAJw\\="','"owMAMgP/f///PwD///8AAAAAANE\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEBQgAAAAAAAAAAAAAAAAAAD8\\="']], 
+        123:["name":"Illumination", "cmd":['"MwUEPwAAAAAAAAAAAAAAAAAAAA0\\="']], 
+        124:["name":"Bright", "cmd":['"owABBAICGgAAAAEAAf9MA+cUFOs\\="','"owEA+jIB//UIAwCAAAAAACAAAsg\\="','"owIPBQABf00ByBQUAvoUA//YB54\\="','"o///fwD4/qIAAAAQAPsAAAAAAJM\\="','"MwUE5gcAAAAAAAAAAAAAAAAAANM\\="']], 
+        125:["name":"Sports", "cmd":['"owABAwIBJgAAAAIAAf//AAAAAIc\\="','"owEC/zIF/wAAAAD/AAAAAP///5c\\="','"o///ABMB/wAAAAAAAAAAAAAAAE4\\="','"MwUE5wcAAAAAAAAAAAAAAAAAANI\\="']], 
+        126:["name":"Siren", "cmd":['"owABCgIFKQAAADICAb1+AP0UFIk\\="','"owEBABQGiwD/iwD/AP//AP//ALE\\="','"owIA/wAA/wAAgAAAgAAdAAEAAbw\\="','"owMAAf//AIAUFAEAFAL//////8k\\="','"owT/FQD/AACAAB0AAQABAAH//y4\\="','"owUAgBQUAQAUAv///////xcA/9k\\="','"owYAAIAAHQABAAEAAf//AIAUFLk\\="','"owcBABQC////////FwD9AACAANk\\="','"owgdAAEAAQAB//8AgBQUAQAUAiA\\="','"o/////////8VAP0AAIAAAAAAADQ\\="','"MwUE6AcAAAAAAAAAAAAAAAAAAN0\\="']], 
+        127:["name":"Morning", "cmd":['"owABBAICIAAAAAEAAcgyAWQyMhk\\="','"owGAyDIDXXz/AP//oPv+AAAAAKA\\="','"owIAAAAaAAIKAQIB/ygBtDIyANM\\="','"o/8AMgEA/5YAAAAAAAAAAAAAAAY\\="','"MwUE6QcAAAAAAAAAAAAAAAAAANw\\="']], 
+        128:["name":"Dreamland", "cmd":['"owABCAIDGgAAAAECAf8UAdwUFIU\\="','"owEA+jIBAP//AwCAAAAAACwAAsY\\="','"owIeCgAB/xkByBQUAvoUB/+7/8s\\="','"owPNAP////+5AP8A4P8AEf+LAFE\\="','"owT/AAAAAAD/ACwAAAAKAAH/GWY\\="','"owUByBQUAtwyB/+7/80A//////I\\="','"owa5AP8A4P8AEf+LAP8RAPIAAIU\\="','"o///AAAAAAAAAAAAAAAAAAAAAKM\\="','"MwUE6gcAAAAAAAAAAAAAAAAAAN8\\="']], 
+        129:["name":"Electro Dance", "cmd":['"owABCQIFJgAAAAgAAf8AA/9kZIA\\="','"owECADIF/wAA//8AAP//AAD/AJc\\="','"owL/ABIA/wAAAAIaEQAAAQIB/0c\\="','"owMAAAAAAAD/MgGLAP8AAAASAQs\\="','"owT/ARoTAAABAgH/AAAAAAAA/1I\\="','"owUyAQAA/wAAABIB/wEaFQAAAYk\\="','"owYCAf8AAAAAAAD/MgEA/wAAAGo\\="','"owcAEgH/ARoVAAABAgH/AAAAALs\\="','"o/8AAP8yAQD//wAAABIB/wEAAH0\\="','"MwUE6wcAAAAAAAAAAAAAAAAAAN4\\="']], 
+        130:["name":"Stacking", "cmd":['"owABBQICIAAAAAEAAf//AAAAAIc\\="','"owEAyDID/wAAAP8AAAD/FADOAH4\\="','"owIAAAAgAAEAAQAB//8AAAAAAIA\\="','"owPIMgP/AAAA/wAAAP8SAP8AAEs\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUE7AcAAAAAAAAAAAAAAAAAANk\\="']], 
+        131:["name":"Sway", "cmd":['"owABCQIEI0ABAAQCAf8vA/gUFOM\\="','"owEA+RQE/0EA/4IA1ABX/5YAFXc\\="','"owIA/QAAAAUjQwEABAIB/y8D+BQ\\="','"owMUFAD5FAT/F/L/ggCGHP//liI\\="','"owQAFQD9AAAABSNVAQAEAgH/L+o\\="','"owUD+BQUAPkUBBv+CWJd/oYc//w\\="','"owbr/wgVAP0AAAAFIAAAAAEAAXQ\\="','"owdZJgPhFBQAgBQDB1z/AP//i4E\\="','"o/8A/wAAgAAAgAAAAAAAAAAAAKM\\="','"MwUE7QcAAAAAAAAAAAAAAAAAANg\\="']], 
+        132:["name":"Poppin", "cmd":['"owABBQICIwACGQECAf/hAIAUFAM\\="','"owECABQEAAD/AP//AAAAAAAAFFs\\="','"owIA/xEA/wAdAAEACAABAwIB/1o\\="','"owMUFACAFAIAAP8A//8VAP8AACM\\="','"o/+AAAAAAAAAAAAAAAAAAAAAANw\\="','"MwUE7gcAAAAAAAAAAAAAAAAAANs\\="']], 
+        133:["name":"Dancing", "cmd":['"owABBgIDHQAAAAEAAf8AAH9SFH4\\="','"owEAzQMCAwD/ZwD/EAN/EAN/AQs\\="','"owIaKAAAAQAB/wAAqWQUAKABARU\\="','"owP/AN0QAcsQAP8BGiAAAAEAAYw\\="','"owT/AAB/FBQAfwEBAP/aEgF/EgM\\="','"o/8A/wIAAAAAAAAAAAAAAAAAAKE\\="','"MwUE7wcAAAAAAAAAAAAAAAAAANo\\="']], 
+        134:["name":"Cheerful", "cmd":['"owABBQICHQAAAAEAAf99AYAUFLk\\="','"owEAgBQC/wAAAAD/AACAAACAADQ\\="','"owIvAAEAMgAC//8AgBQU/wABgEE\\="','"owMUFAEAFAYA//8AAAAA//8AALM\\="','"o/8AAP//AAAAFQD7AACAAAAAADI\\="','"MwUEBggAAAAAAAAAAAAAAAAAADw\\="']], 
+        135:["name":"Rush", "cmd":['"owABBwIEGkAAAAIAAUsAAIAUFDE\\="','"owEAgBQBiwD/EgD/EgD/ABphADg\\="','"owIAAgAB/wAAgBQUAIAUAQAA/7c\\="','"owMRAP8RAP8BGmIAAAMAAf8AACQ\\="','"owQAFBQAgBQBAP//EwD/EwD/ATM\\="','"owUaZAAAAQABTQAAgBQUAIAUAYA\\="','"o//4B/4QAP8QAP8BAAAAAAAAAFw\\="','"MwUEBwgAAAAAAAAAAAAAAAAAAD0\\="']], 
+        136:["name":"Flash", "cmd":['"owABAwIBJqABAAoAAf//AAAAAC4\\="','"owEA/hQF//8A/38A/0UA/wAA21M\\="','"o/8ASBQB/wAAAAAAAAAAAAAAAP4\\="','"MwUECAgAAAAAAAAAAAAAAAAAADI\\="']], 
+        137:["name":"Speeding", "cmd":['"owABBQIDGiAAAAEAAf//AIAUFBw\\="','"owEAgBQB/wAAAACAEAD/BRooAJA\\="','"owIAAQAB//8AgBQUAIAUAf8Gldg\\="','"owMAAIAQAP0DGgAAAAEAAUoAAJ4\\="','"o/+AFBQAgBQBAAD/AACAAACAAbc\\="','"MwUECQgAAAAAAAAAAAAAAAAAADM\\="']], 
+        138:["name":"Meditation", "cmd":['"owABBQICIwAAAAECAec1AAAAAFQ\\="','"owEAblMEKwf/Bhz+Bkb+B3v/A5I\\="','"owIAHAAAAAAdAAEAMgIB/zIAAF0\\="','"owMyAAD6MgIAAHgAAFADAIAAAPM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUECggAAAAAAAAAAAAAAAAAADA\\="']], 
+        139:["name":"Crossing", "cmd":['"owABCQIFGgAAAAEAAf//AAAUFLY\\="','"owEAABQB/wAAAACAAACAAB0iAXY\\="','"owIABQAB/xgDxWRQAIYUAgAA/98\\="','"owP/AAAAAYARAP0AHSABAAUAAQo\\="','"owT/GAPFZFAAfhQCAAD//wAAANo\\="','"owUBgBEA/QAdJgEABQAB/xgDxdQ\\="','"owZkUACCFAIAAP//AAAAAYARAJU\\="','"owf9AB0oAQAFAAH/GAPFZFAAgPw\\="','"o/8UAgAA//8AAAABgBEA/QAAACc\\="','"MwUECwgAAAAAAAAAAAAAAAAAADE\\="']], 
+        140:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']], 
+        141:["name":"Warm", "cmd":['"owABBgIDIFABABQAAf//AAAUFME\\="','"owEAABQD/1QHAAAA/2oHFQD6AGQ\\="','"owIAgAAgVQEAFAAB//8AABQUAEA\\="','"owMAFAP/VAcAAAD/agcXAPoAAGQ\\="','"owSAABoAAAABAAGPPgEAFBQAAI0\\="','"o/8UAf9UBwcA/QAAgAAAAAAAAJ8\\="','"MwUEDQgAAAAAAAAAAAAAAAAAADc\\="']], 
+        142:["name":"Tension", "cmd":['"owABBQICIAABAAoCAf8UAAAAAGQ\\="','"owECAAADUAAAyAAA/wAAEQH+ACo\\="','"owIAAAAgAAEACgIB/xQAAAAAAmA\\="','"owMAAAP/AADIAABQAAATAf4AACg\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDggAAAAAAAAAAAAAAAAAADQ\\="']], 
+        143:["name":"Heartbeat", "cmd":['"MwUEQQAAAAAAAAAAAAAAAAAAAHM\\="']] 
+        ]
     ]
     state.lightEffects = state.lightEffects + lightEffectsAdd
 }
