@@ -75,45 +75,46 @@ def off() {
         }
 }
 
-def setLevel(v,duration = 0){
+def setLevel(float v,duration = 0){
+    int intv = v.toInteger()
     if (lanControl && duration>0){
         sendEvent(name: "switch", value: "on")
-        fade(v,duration)
+        fade(intv,duration)
     }
     else {
         if (device.currentValue("cloudAPI") == "Retry") {
             log.error "setLevel(): CloudAPI already in retry state. Aborting call." 
         } else {
-        setLevel2(v)
+        setLevel2(intv)
         }
     }
 }
 
-def setLevel2(v){
+def setLevel2(int v){
         if (lanControl) {
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         sendEvent(name: "level", value: v)
         sendEvent(name: "switch", value: "on")}
     else {
         sendEvent(name: "cloudAPI", value: "Pending")
-		if(aRngBright){v=incBrightnessRange(v)}
+		if  (aRngBright) {v=incBrightnessRange(v)}
         if (debugLog) { log.debug "setLevel2(): Sent Brightness = ${v}"}
 		sendCommand("brightness", v)
     }
 }
 
-def fade(v,duration){
+def fade(int v,float duration){
     unschedule(fadeUp)
     unschedule(fadeDown)
-    curLevel = device.currentValue("level")
-    if (v<curLevel){
-    fadeRep = (curLevel-v)/fadeInc
-    fadeInt = (duration*1000)/fadeRep
+    int curLevel = device.currentValue("level")
+    if (v < curLevel){
+    float fadeRep = (curLevel-v)/fadeInc
+    float fadeInt = (duration*1000)/fadeRep
     fadeDown(curLevel, v, fadeRep, fadeInt)
         }
-    else if (v>curLevel){
-    fadeRep = (v-curLevel)/fadeInc
-    fadeInt = (duration*1000)/fadeRep
+    else if (v > curLevel){
+    float fadeRep = (v-curLevel)/fadeInc
+    float fadeInt = (duration*1000)/fadeRep
     fadeUp(curLevel, v, fadeRep, fadeInt)
         }
     else {
@@ -121,12 +122,12 @@ def fade(v,duration){
     }
 }
 
-def fadeDown(curLevel,level,fadeInt,fadeRep) {
+def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeDown(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-    v= curLevel-fadeInc
-    curLevel = curLevel-fadeInc
+    int v = (curLevel-fadeInc).toInteger()
+    int curLevelInt = (curLevel-fadeInc).toInteger()
     log.debug "fadeDown(): v ${v}"
-    if (v==0) {
+    if ( v == 0 ) {
         log.debug "fadeDown(): Next fade is to 0 turning off device. Fade is complete"
         off()
     } else {
@@ -137,21 +138,21 @@ def fadeDown(curLevel,level,fadeInt,fadeRep) {
             }
         else {
             if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
-            def int delay= fadeRep
+            def int delay = fadeRep
             if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
-            if (debugLog) {log.debug "fadeDown(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-            runInMillis(delay, fadeDown, [data:[curLevel,level, fadeInt,fadeRep]])
+            if (debugLog) {log.debug "fadeDown(): executing loop to fadedown() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+            runInMillis(delay, fadeDown, [data:[curLevelInt,level, fadeInt,fadeRep]])
         }
     }
 } 
 
-def fadeUp(curLevel,level,fadeInt,fadeRep) {
+def fadeUp( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeUp(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-        v= curLevel+fadeInc
-        curLevel = curLevel+fadeInc
+    int v= (curLevel+fadeInc).toInteger()
+    int curLevelInt = (curLevel+fadeInc).toInteger()
     log.debug "fadeUp(): v ${v}"
-        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        sendEvent(name: "level", value: v)
+    sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+    sendEvent(name: "level", value: v)
     if (level==curLevel)    {
         if (debugLog) {log.debug "fade completed"}
     }
@@ -159,8 +160,8 @@ def fadeUp(curLevel,level,fadeInt,fadeRep) {
         if (debugLog) {log.debug "fadeUp(): continueing  fading to ${v}"}
         def int delay= fadeRep
         if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
-        if (debugLog) {log.debug "fadeUp(): executing loop to fade2() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
-          runInMillis(delay, fadeUp, [data:[curLevel,level, fadeInt,fadeRep]])
+        if (debugLog) {log.debug "fadeUp(): executing loop to fadeup() with values curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+          runInMillis(delay, fadeUp, [data:[curLevelInt,level, fadeInt,fadeRep]])
     }
 } 
 
@@ -403,7 +404,7 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-def GoveeCommandBuilder(command1, value1, type) {   
+def GoveeCommandBuilder(String command1, value1, String type) {   
     if (type=="status") {
            if (debugLog) {log.debug "GoveeCommandBuilder():status"}
         JsonBuilder cmd1 = new JsonBuilder() 
@@ -444,7 +445,7 @@ def sendCommandLan(String cmd) {
   try {    
       if (debugLog) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
     sendHubCommand(pkt) 
-//    setLastCommandTime()    
+    
   }
   catch (Exception e) {      
       logDebug e
