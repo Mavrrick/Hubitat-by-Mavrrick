@@ -195,15 +195,15 @@ def setHsb(h,s,b)
 	rgbmap.g = rgb[1]
 	rgbmap.b = rgb[2]   
      
-/*        if (device.currentValue("cloudAPI") == "Retry") {
+        if (device.currentValue("cloudAPI") == "Retry") {
             log.error "setHsb(): CloudAPI already in retry state. Aborting call." 
-        } else { */
+        } else { 
         sendEvent(name: "cloudAPI", value: "Pending")
         sendCommand("light:color", rgbmap)
-//        }
+        }
 //    }
     if(100 != device.currentValue("level")?.toInteger()) {
-//    light_brightness(100)
+    light_brightness(100)
     }
 }
 
@@ -356,14 +356,14 @@ try {
                 resp.headers.each {
                     if (debugLog) {log.debug "${it.name}: ${it.value}"}                    
                     name = it.name
-                    value=it.value
-                    if (name == "X-RateLimit-Remaining") {
+                    value = it.value
+                    if (it.name == "X-RateLimit-Remaining") {
                         state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemainingV2", value)
+                        parent.apiRateLimits("DailyLimitRemainingV2", it.value)
                     }
-                    if (name == "API-RateLimit-Remaining") {
+                    if (it.name == "API-RateLimit-Remaining") {
                         state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainigV2", value)
+                        parent.apiRateLimits("MinRateLimitRemainigV2", it.value)
                     }
             }
 				return resp.data
@@ -379,7 +379,7 @@ try {
             sendCommand(command, payload)
         } 
         else {
-          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+          log.error "sendCommand():Unknwon Error." 
 //            sendEvent(name: "cloudAPI", value: "Retry")
 //            pauseExecution(60000)
 //            sendCommand(command, payload)
@@ -420,21 +420,19 @@ def logsOff() {
 
 def retrieveOptions() {
     
-    if (debugLog) {log.error "retrieveOptions(): ${parent.state.goveeAppAPI}"}
-    dni = device.getDeviceNetworkId()
-    if (debugLog) {log.error "retrieveOptions(): ${dni}"}
+    if (debugLog) {log.error "retrieveOptions(): API: ${parent.state.goveeAppAPI} DNI: ${device.getDeviceNetworkId()}"}
     parent.state.goveeAppAPI.devices.each {
-    deviceID = it.device
-        if (deviceID == dni) {
-            if (debugLog) {log.error "retrieveOptions(): ${deviceID}, sku = ${it.model}, supported commands ${it.supportCmds}, menu properties ${it.properties} "}
+        if (it.device == device.getDeviceNetworkId()) {        
+            if (debugLog) {log.error "retrieveOptions(): ${itdeviceID}, sku = ${it.model}, supported commands ${it.supportCmds}, menu properties ${it.properties} "}
             it.properties.each{
-                gvcmd = it.key
-                state."${gvcmd}"=[:]
+                String gvcmd = it.key
+                state."${gvcmd}"=[] as List                
                 value = it.value    
                 if (debugLog) {log.error "retrieveOptions(): command = ${gvcmd}, options = ${value.options}"}
                     value.options.each {
-                    if (debugLog) {log.error "retrieveOptions(): name  = ${it.name}, value for command = ${it.value}"}                        
-                    state."${gvcmd}".put(it.value,it.name)                        
+                    if (debugLog) {log.error "retrieveOptions(): name  = ${it.name}, value for command = ${it.value}"}
+                    String sceneValue = it.value + "=" + it.name        
+                    state."${gvcmd}".add(sceneValue)      
                     }
             }
         }
