@@ -74,7 +74,13 @@ try {
                 else if (code == 200 && command == "mode") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
-                    sendEvent(name: "mode", value: payload)
+                     state."${command}".each {
+                        log.error "sendCommand(): ${it.key} payload ${payload}" 
+                        if (it.key == payload.toString()) {
+                            log.error "sendCommand(): matched on ${it.key} payload ${payload}"
+                            sendEvent(name: "mode", value: it.value)
+                            }
+                        }
                     }        
                 resp.headers.each {
                     if (debugLog) {log.debug "${it.name}: ${it.value}"}                    
@@ -122,7 +128,7 @@ def setupDevice(){
 } */
 
 def installed(){
-//    state.gearmax=max(device.getDataValue("gearsMax"))
+    retrieveOptions()
   
 }
 
@@ -134,11 +140,33 @@ def initialize(){
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-    }    
+    } 
+    retrieveOptions()
 }
 
 
 def logsOff() {
     log.warn "debug logging disabled..."
     device.updateSetting("logEnable", [value: "false", type: "bool"])
+}
+
+def retrieveOptions() {
+    
+    if (debugLog) {log.error "retrieveOptions(): API: ${parent.state.goveeAppAPI} DNI: ${device.getDeviceNetworkId()}"}
+    parent.state.goveeAppAPI.devices.each {
+        if (it.device == device.getDeviceNetworkId()) {        
+            if (debugLog) {log.error "retrieveOptions(): ${itdeviceID}, sku = ${it.model}, supported commands ${it.supportCmds}, menu properties ${it.properties} "}
+            it.properties.each{
+                String gvcmd = it.key
+                state."${gvcmd}"=[] as List                
+                value = it.value    
+                if (debugLog) {log.error "retrieveOptions(): command = ${gvcmd}, options = ${value.options}"}
+                    value.options.each {
+                    if (debugLog) {log.error "retrieveOptions(): name  = ${it.name}, value for command = ${it.value}"}
+                    String sceneValue = it.value + "=" + it.name        
+                    state."${gvcmd}".add(sceneValue)      
+                    }
+            }
+        }
+    }
 }
