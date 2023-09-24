@@ -157,15 +157,15 @@ def setHsb(h,s,b)
 	rgbmap.g = rgb[1]
 	rgbmap.b = rgb[2]   
      
-/*        if (device.currentValue("cloudAPI") == "Retry") {
+        if (device.currentValue("cloudAPI") == "Retry") {
             log.error "setHsb(): CloudAPI already in retry state. Aborting call." 
-        } else { */
+        } else { 
         sendEvent(name: "cloudAPI", value: "Pending")
         sendCommand("light:color", rgbmap)
-//        }
+        }
 //    }
     if(100 != device.currentValue("level")?.toInteger()) {
-//    light_brightness(100)
+    light_brightness(100)
     }
 }
 
@@ -354,22 +354,20 @@ def logsOff() {
 
 def retrieveOptions() {
     
-    if (debugLog) {log.error "retrieveOptions(): ${parent.state.goveeAppAPI}"}
-    dni = device.getDeviceNetworkId()
-    if (debugLog) {log.error "retrieveOptions(): ${dni}"}
+    if (debugLog) {log.error "retrieveOptions(): API: ${parent.state.goveeAppAPI} DNI: ${device.getDeviceNetworkId()}"}
     parent.state.goveeAppAPI.devices.each {
-    deviceID = it.device
-        if (deviceID == dni) {
-            if (debugLog) {log.error "retrieveOptions(): ${deviceID}, sku = ${it.model}, supported commands ${it.supportCmds}, menu properties ${it.properties} "}
+        if (it.device == device.getDeviceNetworkId()) {        
+            if (debugLog) {log.error "retrieveOptions(): ${it.deviceID}, sku = ${it.model}, supported commands ${it.supportCmds}, menu properties ${it.properties} "}
             it.properties.each{
-                gvcmd = it.key
-                state."${gvcmd}"=[:]
-                value = it.value    
+                String gvcmd = it.key
+                state."${gvcmd}"=[:]                
+                Map value = it.value    
                 if (debugLog) {log.error "retrieveOptions(): command = ${gvcmd}, options = ${value.options}"}
                     value.options.each {
                     if (debugLog) {log.error "retrieveOptions(): name  = ${it.name}, value for command = ${it.value}"}                        
                     state."${gvcmd}".put(it.value,it.name)                        
                     }
+                if (debugLog) {log.error "retrieveOptions(): keyset = ${state."${gvcmd}".keySet()}"}
             }
         }
     }
