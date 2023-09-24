@@ -160,8 +160,6 @@ try {
                     if (name == "X-RateLimit-Remaining") {state.DailyLimitRemaining = value}
                     if (name == "API-RateLimit-Remaining") {state.MinRateLimitRemainig = value}
                 }
-                //if(aRngBright){varBrightness=decBrightnessRange(varBrightness)}
-				//log.debug "Recvd Brightness = ${varBrightness}"
 				
 				sendEvent(name: "switch", value: varPower)
 				
@@ -279,7 +277,7 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-def GoveeCommandBuilder(command1, value1, type) {   
+def GoveeCommandBuilder(String command1, value1, String type) {   
     if (type=="ct") {
         if (debugLog) {log.debug "GoveeCommandBuilder(): Color temp action"}
         JsonBuilder cmd1 = new JsonBuilder() 
@@ -354,8 +352,7 @@ def sendCommandLan(String cmd) {
                      destinationAddress: addr])  
   try {    
       if (debugLog) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
-    sendHubCommand(pkt) 
-//    setLastCommandTime()    
+    sendHubCommand(pkt)     
   }
   catch (Exception e) {      
       logDebug e
