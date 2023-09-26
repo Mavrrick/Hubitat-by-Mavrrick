@@ -890,6 +890,7 @@ def retrieveScenes() {
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
             state.diyEffects.add(sceneValue)
+            state.diyEffects = state.diyEffects.sort()
         }
     }
     if (parent.state.lightEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
