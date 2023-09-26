@@ -24,7 +24,7 @@ metadata {
         capability "Initialize"
         capability "ColorControl"          
         attribute "mist_gear", "number"
-        attribute "mist_switch", "number"
+        attribute "mist_switch", "string"
         attribute "mode", "string"
         attribute "cloudAPI", "string"
         attribute "light_scene","string"
