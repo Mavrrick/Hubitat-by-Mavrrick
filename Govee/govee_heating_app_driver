@@ -48,7 +48,7 @@ def mode(modeValue){
     sendCommand("mode", modeValue)
 }    
 
-private def sendCommand(String command, payload) {
+private def sendCommand(command, payload) {
 
 
      def params = [
@@ -65,22 +65,15 @@ try {
 			httpPut(params) { resp ->
 				
                 if (debugLog) {log.debug "response.data="+resp.data}
-                code = resp.data.code
-                if (debugLog) {log.debug "response.data=" + code }
-                if (code == 200 && command == "turn") {
+                if (debugLog) {log.debug "response.data=" + resp.data.code }
+                if (resp.data.code == 200 && command == "turn") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: payload)
                     }    
-                else if (code == 200 && command == "mode") {
+                else if (resp.data.code == 200 && command == "mode") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
-                     state."${command}".each {
-                        log.error "sendCommand(): ${it.key} payload ${payload}" 
-                        if (it.key == payload.toString()) {
-                            log.error "sendCommand(): matched on ${it.key} payload ${payload}"
-                            sendEvent(name: "mode", value: it.value)
-                            }
-                        }
+                    retrieveCmd(command, payload)
                     }        
                 resp.headers.each {
                     if (debugLog) {log.debug "${it.name}: ${it.value}"}                    
@@ -166,6 +159,26 @@ def retrieveOptions() {
                     String sceneValue = it.value + "=" + it.name        
                     state."${gvcmd}".add(sceneValue)      
                     }
+            }
+        }
+    }
+}
+
+def retrieveCmd(cmd, payload) {
+    String atrb = cmd.replaceAll(":", "_")
+    if (debugLog) {log.error "retrieveCmd(): ${parent.state.goveeAppAPI}"}
+    dni = device.getDeviceNetworkId()
+    if (debugLog) {log.error "retrieveCmd(): ${dni}"}
+    parent.state.goveeAppAPI.devices.each {
+        deviceID = it.device
+        if (deviceID == dni) {
+            it.properties."${cmd}".options.each{ 
+            if (debugLog) {log.error "retrieveCmd(): command payload = ${payload} name = ${it.name} value ${it.value}"}   
+                if (it.value.toString() == payload.toString()) {
+                    if (debugLog) {log.error "retrieveCmd(): Match Found for command = ${it} name = ${it.name} value ${it.value}"}
+                    sendEvent(name: cmd , value: it.name)
+                } else { if (debugLog) {log.error "Not a match"} 
+                       }
             }
         }
     }
