@@ -205,8 +205,8 @@ def setSaturation(s)
 
 def setLevel(float v,duration = 0){
     int intv = v.toInteger()
-    int intduration = duration.toInteger()
     if (lanControl && duration>0){
+        int intduration = duration.toInteger()
         sendEvent(name: "switch", value: "on")
         fade(intv,intduration)
     }
