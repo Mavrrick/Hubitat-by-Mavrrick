@@ -54,6 +54,8 @@ preferences
     page(name: 'mainPage', title: 'Govee Integration')
     page(name: 'deviceSelect', title: 'Select Light, Switch, Plug devices')
     page(name: 'deviceSelect2', title: 'Select Appliances')
+    page(name: 'deviceLanManual', title: 'Manual LAN Setup')
+    page(name: 'deviceLanManual2', title: 'Complete device manual add')
     page(name: 'sceneManagement', title: 'Scene Management')
     page(name: 'sceneExtract', title: 'Extract scenes')
     page(name: 'sceneExtract2', title: 'Govee Home Creds')
@@ -104,35 +106,53 @@ def initialize() {
     UI Page: Main menu for the app.
 */
 def mainPage() {
+    app.clearSetting("goveeDevName")
+    app.clearSetting("goveeModel")
+    app.clearSetting("goveeManLanIP")
     List child = getChildDevices()
     def childCount = child.size()
     dynamicPage(name: 'mainPage', title: 'Govee integration Main menu', uninstall: true, install: true, submitOnChange: true)
     {
         section('<b>API Configuration</b>')
         {
-            paragraph "The Govee APi is required for this integration. Please obtain this value befor moving forward. You can obtain the Govee APi from the Govee Home app 'About Us' section."
-            input 'APIKey', 'string', title: 'Enter Your API Key', required: true
+            if (settings.APIKey == null) {
+            paragraph "A Govee API key is recommended for this integration. It is suggested to obtain this value before moving forward to ensure " +
+                "you can see all of your devices. You can obtain the Govee API from the Govee Home app 'About Us' section. Until this is added " +
+                "you can only setup local LAN API api devices, and they will not be able to retrieve status from Govee. Additional options will " +
+                "appear once the api key is entered and saved by clicking done at the bottom of the window"
+            }
+            input 'APIKey', 'string', title: 'Enter Your API Key', required: false
+            
         }
+        if (settings.APIKey != null) {
         section('<b>Govee Device Add Page</b>') {
             href 'deviceSelect', title: 'Device selection', description: 'Select Govee devices to add to your environment'
         }
         section('<b>Govee Apliance Add Page</b>') {
             href 'deviceSelect2', title: 'Device selection', description: 'Select Govee devices to add to your environment'
         }
+        }
+        section('<b>Manual Setup of LAN Enabled device</b>') {
+            href 'deviceLanManual', title: 'Manual Setup Lan Device', description: 'Manual Setup for LAN API Enabled Device'
+        }
         section('<b>Current Integrated Device Information</b>') {
             paragraph "There are <mark>${childCount}</mark> devices integrated"
             paragraph "Your current integrated devices are ${child.label}"
+            if (settings.APIKey != null) {
                 if (childCount > 0) { def maxPoll = 86400 / ((10000 - (50 * childCount)) / childCount).toDouble()
                 maxPoll = maxPoll.round(1)
                 paragraph "With the number of devices have you can poll as frequently as every <mark>${maxPoll}</mark> seconds" }
             paragraph "You have <mark>${state.dailyLimit}</mark> of your 10k Daily APIv1 Calls left."
             paragraph "You have <mark>${state.dailyAppLimit}</mark> of your 100 Daily APIv2 Calls left."
+                    }
         }
+        if (settings.APIKey != null) {
         section('<b>Notification Options</b>') {
             input 'notifyEnabled', 'bool', title: 'Enable Notification', required: false, defaultValue: false
             input name: 'notificationDevice', type: 'capability.notification', title: 'Send notification of rate limit consumption :', multiple: true
-            input 'apiV1threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Lights, Switches, and Plugs', required: false , range: '1..500', defaultValue: 3
-            input 'apiV2threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Appliances', required: false , range: '1..100', defaultValue: 3
+            input 'apiV1threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Lights, Switches, and Plugs.', required: false , range: '1..500', defaultValue: 3
+            input 'apiV2threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Appliances.', required: false , range: '1..100', defaultValue: 3
+        }
         }
         section('<b>Govee Scene Management</b>') {
             href 'sceneManagement', title: 'Scene Management', description: 'Click to setup extraction credential, extract scenes, and manage device association.'
@@ -191,9 +211,9 @@ def deviceSelect() {
         return 'unknown'
     }
 
-    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false)
+    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false, nextPage: "mainPage")
     {
-        section('Please select the Lights, Plugs, Switch you want to integrate')
+        section('Please select the Lights, Plugs, Switch you want to integrate.')
         {
             paragraph 'Please select the devices you wish to integrate.'
             input(name: 'goveeDev', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:true,
@@ -230,9 +250,9 @@ def deviceSelect2() {
 
         return 'unknown'
     }
-    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false)
+    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false, nextPage: "mainPage")
     {
-        section('Please select the Govee Appliances you want to integrate')
+        section('Please select the Govee Appliances you want to integrate.')
         {
             paragraph 'Please select the appliances you wish to add to the integration. '
             input(name: 'goveeApp', type: 'enum', required:false, description: 'Please select the appliances you wish to add to the integration.', multiple:true,
@@ -241,8 +261,44 @@ def deviceSelect2() {
     }
 }
 
+def deviceLanManual() {
+    dynamicPage(name: 'deviceLanManual', title: 'Manual Add for LAN API Enabled Devices', uninstall: false, install: false, nextPage: "deviceLanManual2" )
+    {
+        section('Please enter the parms for the LAN API enabled device you want to integrate.')
+        {
+            paragraph 'Please enter the below needed values to create your device '
+            input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'Bedroom Lights')
+            input(name: 'goveeModel', type: 'string', required:false, title: 'Enter Govee Device Model Number.', description: 'H70C2')
+            input(name: 'goveeManLanIP', type: 'string', required:false, title: 'Enter Govee Device Ip Address.', description: '192.168.1.2')
+            paragraph 'Click the next button when you are ready to create the device. '
+        }
+    }
+}
+
+def deviceLanManual2() {
+    if (settings.goveeModel && settings.goveeManLanIP && settings.goveeDevName) {
+        goveeLightManAdd(settings.goveeModel, settings.goveeManLanIP, settings.goveeDevName)
+    }
+    dynamicPage(name: 'deviceLanManual2', title: 'Results of manual device add', uninstall: false, install: false, nextPage: "mainPage")
+    {
+        if (settings.goveeModel && settings.goveeManLanIP && settings.goveeDevName) {
+            section('<b>Device Manual Add</b>') {
+            paragraph "Attempted manual add of ${settings.goveeDevName} at ip ${settings.goveeManLanIP}."
+            paragraph "Click Next to return to the main menu."
+            } 
+        } else {
+            section('<b>Device Manual Add</b>') {
+            paragraph "Please try again and fill in all needed values."
+            }    
+        }
+    }
+}
+
 def sceneManagement() {
-    dynamicPage(name: 'sceneManagement', title: 'Govee Scene Management menu', uninstall: false, install: false, submitOnChange: false)
+    app.clearSetting("devsku")
+    app.clearSetting("sceneName")
+    app.clearSetting("command")
+    dynamicPage(name: 'sceneManagement', title: 'Govee Scene Management menu', uninstall: false, install: false, submitOnChange: false, nextPage: "mainPage")
     {
         section('<b>Govee Home Creds</b>')
         {
@@ -276,7 +332,7 @@ def sceneManagement() {
 }
 
 def sceneManualAdd() {
-    dynamicPage(name: 'sceneManualAdd', title: 'Govee Manual Add for DIY Scenes', uninstall: false, install: false, submitOnChange: false)
+    dynamicPage(name: 'sceneManualAdd', title: 'Govee Manual Add for DIY Scenes', uninstall: false, install: false, submitOnChange: false, nextPage: "sceneManualAdd2")
     {
         section('<b>Scene Manual Add</b>')
         {
@@ -284,23 +340,25 @@ def sceneManualAdd() {
             input 'devsku', 'string', title: '5 charecter Model (ie H6172)', required: false, default: ""
             input 'sceneName', 'string', title: 'Provide text name for scene', required: false, default: ""
             input 'command', 'string', title: 'String provided by other user Should begin and end with  [ ]', required: false, default: ""
-            href 'sceneManualAdd2', title: 'Complete Manual Add', description: 'Click to perform a manual add'
-
         }
     }
 }
 
 def sceneManualAdd2() {
-    devSku == settings.devsku
-    sceneName == settings.sceneName
-    command == settings.command
-    diyAddManual(settings.devsku, settings.sceneName, settings.command)
-    dynamicPage(name: 'sceneManualAdd2', title: 'Results of manual Add', uninstall: false, install: false, submitOnChange: false)
+    if (settings.devsku && settings.sceneName && settings.command) {
+        diyAddManual(settings.devsku, settings.sceneName, settings.command)
+    }
+    dynamicPage(name: 'sceneManualAdd2', title: 'Results of manual Add', uninstall: false, install: false, submitOnChange: false, nextPage: "sceneManagement")
     {
-        section('<b>Scene Manual Add</b>')
-        {
-            paragraph "Attempted manual add of ${settings.sceneName} command: ${settings.command} for ${settings.devsku}"
-
+            if (settings.devsku && settings.sceneName && settings.command) {
+                section('<b>Scene Manual Add</b>') {
+                    paragraph "Attempted manual add of ${settings.sceneName} command: ${settings.command} for ${settings.devsku}"
+                } 
+            } else {
+                section('<b>Scene Manual Add</b>') {
+                paragraph "Please try again and fill in all needed values"
+                
+            }
         }
     }
 }
@@ -309,7 +367,7 @@ def sceneExtract() {
 //    def sceneData = [:]
 
     logger('sceneExtract() DEVICE INFORMATION', 'debug')
-    if (state.goveeHomeToken) {
+    if (state.goveeHomeToken != null) {
     String goveeHomeToken = "Bearer " + state.goveeHomeToken
 
     def params = [
@@ -392,22 +450,32 @@ def sceneExtract() {
 
         return 'unknown'
     }
-    }
-    dynamicPage(name: 'sceneExtract', title: 'Scene Extract', uninstall: false, install: false, submitOnChange: true)
+    } 
+    dynamicPage(name: 'sceneExtract', title: 'Scene Extract', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
     {
-        section('<b>Extracted command below:</b>') {
-            paragraph "Device name ${devName}"
-            paragraph "Scene name is ${sceneName}"
-            paragraph "Command is <mark>${command.inspect().replaceAll("\'", "\"")}</mark>"
-            paragraph "This command will work with any device with model ${devSku}"
+        if (state.goveeHomeToken != null) {
+            section('<b>Extracted command below:</b>') {
+                paragraph "Device name ${devName}"
+                paragraph "Scene name is ${sceneName}"
+                paragraph "Command is <mark>${command.inspect().replaceAll("\'", "\"")}</mark>"
+                paragraph "This command will work with any device with model ${devSku}"
+            }
+            
+        } else {
+            section('<b>Extracted command below:</b>') {
+                paragraph "You either have not logging into with your Govee Home creds or the login has expired"
+                paragraph "Please return to the Scene Management Menu by clicking next below. Then click on the button to enter your Govee Home Account credentials"
+                paragraph "Once the Credentials are setup you should be able to extract Scenes"
+
+            }
+        }
     }
-}
 }
 
 def sceneExtract2() {
 
-    logger('sceneExtract2() DEVICE INFORMATION', 'debug')
-    dynamicPage(name: 'sceneExtract2', title: 'Govee Home Credentials', uninstall: false, install: false, submitOnChange: true)
+    logger('sceneExtract2() Credential Controll', 'debug')
+    dynamicPage(name: 'sceneExtract2', title: 'API Credential configuration', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
     {
         section('Govee Home Creds')
         {
@@ -431,7 +499,7 @@ def sceneExtract2() {
 }
 
 def about() {
-    dynamicPage(name: 'about', title: 'About Govee Integration with HE', uninstall: false, install: false)
+    dynamicPage(name: 'about', title: 'About Govee Integration with HE', uninstall: false, install: false, nextPage: "mainPage")
     {
         section()
         {
@@ -688,7 +756,42 @@ private goveeLightAdd(goveeAdd) {
 }
      
 
-
+/**
+ *  goveeLightManAdd()
+ *
+ *  Wrapper function for all logging.
+ **/
+private goveeLightManAdd(model, ip, name) {
+    def newDNI = "Govee_" + ip
+    List child = getChildDevices()
+    List childDNI = child.deviceNetworkId
+    logger("goveeLightManAdd() Adding ${name} Model: ${model} at ${ip} with ${newDNI}", 'info')
+    logger('goveeLightManAdd() DEVICE INFORMATION', 'info')
+//    logger ("goveeLightManAdd(): ${state.goveeLightAPI}",'trace')
+//    state.goveeLightAPI.devices.each {
+        String deviceIP = ip                            
+        String deviceModel = model
+        String deviceName = name
+        if (childDNI.contains(newDNI) == false) {
+            logger("goveeLightManAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
+            String ctMin = 2000
+            String ctMax = 9000
+            logger("goveeLightManAdd():  configuring ${deviceName}", 'info')
+            addChildDevice('Mavrrick', 'Govee Manual LAN API Device', "${newDNI}" , location.hubs[0].id, [
+                'name': 'Govee Manual LAN API Device',
+                'label': deviceName,
+                'data': [
+                    'IP': deviceIP,
+                    'deviceModel': deviceModel,
+                    'ctMin': ctMin,
+                    'ctMax': ctMax
+                        ],
+                'completedSetup': true,
+                ])
+        } else { 
+        logger("goveeLightManAdd(): Manual add request ignored as device is already added.", 'info')
+        }
+    }
 
 
 /**
@@ -842,7 +945,7 @@ private def appButtonHandler(button) {
             }
         }        
     } else if (button == "goveeHomeTokenClear") {
-        state?.goveeHomeToken = 'XXXX'
+        state?.goveeHomeToken = null
         state?.goveeHomeExpiry = 0
     }
 }
