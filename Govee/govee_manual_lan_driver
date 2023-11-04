@@ -47,13 +47,8 @@ metadata {
 
 	preferences {		
 		section("Device Info") {
-//            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
-//            input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
-//            if (lanControl) {
-//            input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
-//            }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
 		}
 		
@@ -264,227 +259,25 @@ def decBrightnessRange(v)
 	return Math.round(v)
 }
 
-
-/* private def sendCommand(String command, payload) {
-
-
-     def params = [
-            uri   : "https://developer-api.govee.com",
-            path  : '/v1/devices/control',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-            contentType: "application/json",      
-			body: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel"), cmd: ["name": command, "value": payload]],
-        ]
-    
-
-try {
-
-			httpPut(params) { resp ->
-				
-                if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
-                code = resp.data.code
-                if (code == 200 && command == "turn") {
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: payload)
-                    } 
-                 else if (code == 200 && command == "brightness") {
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: "on")
-                    sendEvent(name: "level", value: payload)
-                    }
-                 else if (code == 200 && command == "colorTem") {
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: "on")
-                    sendEvent(name: "colorMode", value: "CT")
-                    sendEvent(name: "colorTemperature", value: payload)
-                    setCTColorName(intvalue)
-                    }
-                else if (code == 200 && command == "color") {
-                    r=payload.r
-					g=payload.g
-					b=payload.b
-					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
-					hue=HSVlst[0].toInteger()
-					sat=HSVlst[1].toInteger()
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: "on")
-                    sendEvent(name: "colorMode", value: "RGB")
-					sendEvent(name: "hue", value: hue)
-					sendEvent(name: "saturation", value: sat)
-                    }
-                resp.headers.each {
-                    if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
-                    name = it.name
-                    value=it.value
-                    if (name == "X-RateLimit-Remaining") {
-                        state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemaining", value)
-                    }
-                    if (name == "API-RateLimit-Remaining") {
-                        state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainig", value)
-                    }
-            }
-                return resp.data
-		}
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-//        if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
-                if (e.statusCode == 429) {
-            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
-                       sendEvent(name: "cloudAPI", value: "Retry")
-                       pauseExecution(60000)
-                       sendCommand(command, payload)                    
-        } 
-        else {
-          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
-            sendEvent(name: "cloudAPI", value: "Retry")
-            pauseExecution(60000)
-            sendCommand(command, payload)
-        }    
-		return 'unknown'
-	}
-}
-*/
-
-// def getDeviceState(){
-/*        if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("devStatus"," " ,"status"))
-            
-    } else {
-	*/ 
-/*		def params = [
-			uri   : "https://developer-api.govee.com",
-			path  : '/v1/devices/state',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-			query: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel")],
-        ]
-    
-
-
-try {
-
-			httpGet(params) { resp ->
-
-                if (debugLog) { log.debug "getDeviceState():"+resp.data.data.properties }
-				varPower = resp.data.data.properties.find({it.powerState})?.powerState
-				varBrightness = resp.data.data.properties.find({it.brightness})?.brightness
-				mapColor = resp.data.data.properties.find({it.color})?.color                
-				varCT = resp.data.data.properties.find({it.colorTemInKelvin})?.colorTemInKelvin
-
-                resp.headers.each {
-                    if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
-                    name = it.name
-                    value=it.value
-                    if (name == "X-RateLimit-Remaining") {
-                        state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemaining", value)
-                    }
-                    if (name == "API-RateLimit-Remaining") {
-                        state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainig", value)
-                    }
-                }
-                //if(aRngBright){varBrightness=decBrightnessRange(varBrightness)}
-				//log.debug "Recvd Brightness = ${varBrightness}"
-				
-				sendEvent(name: "switch", value: varPower)
-				
-				
-				if(varBrightness){
-					sendEvent(name: "level", value: varBrightness)
-				}
-				
-				
-                if(varCT){
-					sendEvent(name: "colorTemperature", value: varCT)
-					sendEvent(name: "colorMode", value: "CT")
-					setCTColorName(varCT)					
-                }
-                
-				if(mapColor){
-					r=mapColor.r
-					g=mapColor.g
-					b=mapColor.b
-					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
-					hue=HSVlst[0].toInteger()
-					sat=HSVlst[1].toInteger()
-					sendEvent(name: "hue", value: hue)
-					sendEvent(name: "saturation", value: sat)
-					sendEvent(name: "colorMode", value: "RGB")
-				
-				}
-                if (device.currentValue("cloudAPI") == "Retry") {
-                    if (debugLog) {log.error "getDeviceState(): Cloud API in retry state. Reseting "}
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    }				
-				return resp.data
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		return 'unknown'
-	}
-}
-*/
-
-/*
-def poll() {
-    if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
-} */
-
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-/*    if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
-        unschedule(poll)
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-    } */
     if (debugLog) runIn(1800, logsOff)
 }
 
 def updated() {
     if (debugLog) {log.warn "updated(): Driver Udated"}
-/*    if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "updated(): Device is retrievable. Setting up Polling"}
-        unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-    } */
     if (debugLog) runIn(1800, logsOff) 
 }
 
 def configure() {
     if (debugLog) {log.warn "configure(): Configuration Changed"}
-/*    if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "configure(): Device is retrievable. Setting up Polling"}
-        unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-    } */
+
     if (debugLog) runIn(1800, logsOff) 
 }
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
-/*    if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
-    }
-    if (device.currentValue("cloudAPI") == "Retry") {
-        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
-        sendEvent(name: "cloudAPI", value: "Initialized")
-        }
-    if (device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
-        unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-    } */
+    getDevType()
     retrieveScenes()
     if (debugLog) runIn(1800, logsOff)
 }
@@ -492,17 +285,10 @@ def initialize(){
 
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
-//    if(device.getDataValue("commands").contains("color")) {
         sendEvent(name: "hue", value: 0)
         sendEvent(name: "saturation", value: 100)
         sendEvent(name: "level", value: 100) 
-//    }
-/*     if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "installed(): Device is retrievable. Setting up Polling"}
-        unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState() 
-    } */
+        getDevType()
 }
 
 def logsOff() {
@@ -607,193 +393,19 @@ def parse(message) {
 
 def  setEffect(effectNo) {
     effectNumber = effectNo.toString()
-    if (parent.state.lightEffects.containsKey((device.getDataValue("deviceModel"))) && (parent.state.lightEffects.(device.getDataValue("deviceModel")).containsKey(effectNumber))) {
-        String sceneInfo = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).name
-        String sceneCmd = parent.state.lightEffects.(device.getDataValue("deviceModel")).get(effectNumber).cmd
+    if (parent.state.lightEffects.containsKey((device.getDataValue("DevType"))) && (parent.state.lightEffects.(device.getDataValue("DevType")).containsKey(effectNumber))) {
+        String sceneInfo = parent.state.lightEffects.(device.getDataValue("DevType")).get(effectNumber).name
+        String sceneCmd = parent.state.lightEffects.(device.getDataValue("DevType")).get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}: ParentData ${parentData}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
-//    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
         String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
    } else {
-        sendEvent(name: "effectNum", value: effectNumber)
-        sendEvent(name: "switch", value: "on")
-    // Ocean/Deep Sea Light Effect
-    if (effectNo == 1) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBAICHQAAAAEAAf//AAAAALs\\=","owEA3DICAGT/AAD/AAAAAAAAACo\\=","owIaAAIKAQIB/ygB1wAAAAAyAYM\\=","o/8A/5YAAAAAAAAAAAAAAAAAADU\\=","MwUEywAAAAAAAAAAAAAAAAAAAPk\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): all other devices command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Ocean/Deep Sea")
-        sendCommandLan(cmd2)
-     } 
-    // Romantic Effect
-    if (effectNo == 2) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEBwAAAAAAAAAAAAAAAAAAADU\\="]},"transaction":"u_1682169742270","type":1}}'  
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Romantic")
-        sendCommandLan(cmd2)
-    }
-    // Sunset Effect   
-    if (effectNo == 3) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEAQAAAAAAAAAAAAAAAAAAADM\\="]},"transaction":"u_1682169742270","type":1}}'  
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Sunset")
-        sendCommandLan(cmd2)
-    }    
-    // Rainbow Light Effect
-    if (effectNo == 4) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","cmdVersion":0,"data":{"command":["MwUEFgAAAAAAAAAAAAAAAAAAACQ\\="]},"transaction":"u_1682169742270","type":1}}'  
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Rainbow")
-        sendCommandLan(cmd2)
-    }
-    // Fire Light Effect
-    if (effectNo == 5) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABDAIFHQAAABYAAXAyA7sUFFk\\=","owEC1RQC/1kH////AwD/EwD/ASw\\=","owIpJwAABQIB/5kC/18eAgD/Bog\\=","owMAAAD/////bQf/TQf/Dgf/CH4\\=","owQJEgD8EACAAikhAAAGAgH/mbk\\=","owUC/18eAgD/BgAAAP////9tB4s\\=","owb/TQf/Dgf/CAkQAP4QAP0CKTA\\=","owdDAhQUAAH//wCAFBQB6hQG/2I\\=","owgVB/8ICf8ICf8pB/8HEwAAAIM\\=","owkTAPwAAIADKSQAAAEAAf8AADQ\\=","owqAFBQB6RQG/xUH/zkH/44H/3Y\\=","o/9eB/8HE/8PBxcA+QAA/wQAAAw\\=","MwUEMggAAAAAAAAAAAAAAAAAAAg\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Fire")
-        sendCommandLan(cmd2)
-    }
-    // Cozy Light Effect (static Scene to very warm light)
-    if (effectNo == 6) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Cozy Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        sendEvent(name: "colorTemperature", value: 2000)
-	    setCTColorName(2000)
-        sendEvent(name: "effectName", value: "Cozy")
-    }
-    // Forest Effect
-    if (effectNo == 7) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDJgABAAoCAf8ZAbQKCtk\\=","owECyBQF//8AAP//////AP//lBI\\=","owL/ABQBlgAAAAAjAAIPBQIB/wo\\=","owMUA9gAAAH6CgQE/wC0/wBH/5I\\=","owT/4/8AAAAAAAAAABoAAAABAl0\\=","owUB/wUByBQUAu4UAQD/AAAAAJI\\=","o/8AAAAAAAAAAAAAAAAAAAAAAFw\\=","MwUE1AAAAAAAAAAAAAAAAAAAAOY\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Forest")
-        sendCommandLan(cmd2)
-    }
-    // Flower Field Effect
-    if (effectNo == 8) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBQICLKACFAoCAf+WAMwAAJE\\=","owEC4AAH0QBe/wMA/2wA//8A/1g\\=","owJ/AP8AAPUA/wAAABAA2AAaoFk\\=","owMAAAEAATIUAAAAAAD6FAHPAKY\\=","o/9iAAAAAAAAAAAAAAAAAAAAAD4\\=","MwUE3AcAAAAAAAAAAAAAAAAAAOk\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Flower Field")
-        sendCommandLan(cmd2)
-    }
-    // Sunrise Effect
-    if (effectNo == 9) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",1, "level"))
-        sendEvent(name: "level", value: 1)
-        fade(100,1800)        
-        sendEvent(name: "effectName", value: "Sunrise")
-    }
-    // Sunset Effect
-    if (effectNo == 10) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        fade(0,1800)
-        sendEvent(name: "effectName", value: "Sunset")
-    }
-    // Warm White Light Effect (static Scene to very warm light)
-    if (effectNo == 11) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Warm White Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",3500, "ct"))
-        sendEvent(name: "colorTemperature", value: 3500)
-	    setCTColorName(3500)
-        sendEvent(name: "effectName", value: "Warm White")
-    } 
-    // Daylight Light Effect    
-    if (effectNo == 12) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Daylight Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",5600, "ct"))
-        sendEvent(name: "colorTemperature", value: 5600)
-	    setCTColorName(5600)
-        sendEvent(name: "effectName", value: "Daylight")
-    }
-    // Cool White Light Effect    
-    if (effectNo == 13) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Cool White Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
-        sendEvent(name: "colorTemperature", value: 6500)
-	    setCTColorName(6500)
-        sendEvent(name: "effectName", value: "Cool White")
-    }  
-    // Night Light Effect   
-    if (effectNo == 14) {
-        if (debugLog) {log.debug ("setEffect(): Static Night Light Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        sendEvent(name: "colorTemperature", value: 2000)
-	    setCTColorName(2000)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",5, "level"))
-        sendEvent(name: "level", value: 5)
-        sendEvent(name: "effectName", value: "Night Light")
-    }
-    // Focus Effect   
-    if (effectNo == 15) {
-        if (debugLog) {log.debug ("setEffect(): Focus Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",4500, "ct"))
-        sendEvent(name: "colorTemperature", value: 4500)
-	    setCTColorName(4500)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        sendEvent(name: "effectName", value: "Focus")
-    } 
-    // Relax Effect   
-    if (effectNo == 16) {
-        if (debugLog) {log.debug ("setEffect(): Static Relax Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:255, g:194, b:194], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        sendEvent(name: "effectName", value: "Relax")
-    }
-    // True Color Effect   
-    if (effectNo == 17) {
-        if (debugLog) {log.debug ("setEffect(): True Color Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",3350, "ct"))
-        sendEvent(name: "colorTemperature", value: 3350)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "effectName", value: "True Color")
-    }
-    // TV Time Effect   
-    if (effectNo == 18) {
-        if (debugLog) {log.debug ("setEffect(): Static TV Time Effect Called. Calling CT Command directly")}        
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:179, g:134, b:254], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
-        sendEvent(name: "level", value: 45)
-        sendEvent(name: "effectName", value: "TV Time")
-    }
-    // Plant Growth Effect   
-    if (effectNo == 19) {
-        if (debugLog) {log.debug ("setEffect(): Static Plant Growth Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:247, g:154, b:254], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
-        sendEvent(name: "level", value: 45)
-        sendEvent(name: "effectName", value: "Plant Growth")
-    }
-    // Spring Effect
-    if (effectNo == 20) {
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIDKQACCgUCAf8ZAAAAAGU\\=","owEC+jIG/zgA/38AAP8AAAAAANY\\=","owL//4sA/wAAgAAAAAAjAAIeCmA\\=","owMAAf//AAAAAAH6AATxAB3/dTg\\=","owQA/8AA/0sAAAD/AAH6AB0AADU\\=","owUAAQABMgAByDIyAsgyAgD/AFg\\=","o////wAAAAAAAAAAAAAAAAAAAFw\\=","MwUE0gAAAAAAAAAAAAAAAAAAAOA\\="]}}}'  
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Spring")
-        sendCommandLan(cmd2)
-    }
-    // Summer Light Effect
-    if (effectNo == 21) {    
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":["owABBwIEGhAAAAEAAf//AIAUFCk\\=","owECABQBAP8AAACAAACAABqBAtM\\=","owIZFAAB//8AgBQUAgAUAf9RSd0\\=","owMAAIAAAIABGoECGRQAAf//ADQ\\=","owSAFBQCABQB/wAAAACAAACAAs0\\=","owUaGQAAAQAB//8AgBQUAgAUATI\\=","o/8A/wAAAIAAAIAAAAAAAAAAAKM\\=","MwUE6AgAAAAAAAAAAAAAAAAAANI\\="]}}}'
-        if (debugLog) {log.debug ("setEffect(): command to ${cmd2}")}
-        sendEvent(name: "effectName", value: "Summer")
-        sendCommandLan(cmd2)
-    }
-    }   
-  
+       if (debugLog) {log.debug ("setEffect(): Device type or efect number not recognized. Nothing to do")}
+    }     
 }
 
 def setNextEffect() {
@@ -840,10 +452,10 @@ def retrieveScenes() {
     state.scenes = [] as List
     state.diyEffects = [] as List
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent app")}
-    if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
+    if (parent.state.diyEffects.containsKey((device.getDataValue("DevType"))) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
     } else {
-        parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
+        parent.state.diyEffects.(device.getDataValue("DevType")).each {
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -851,10 +463,10 @@ def retrieveScenes() {
             state.diyEffects = state.diyEffects.sort()
         }
     }
-    if (parent.state.lightEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
+    if (parent.state.lightEffects.containsKey((device.getDataValue("DevType"))) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else {
-        parent.state.lightEffects.(device.getDataValue("deviceModel")).each {
+        parent.state.lightEffects.(device.getDataValue("DevType")).each {
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -862,4 +474,125 @@ def retrieveScenes() {
             state.scenes = state.scenes.sort()
         }
     }
+}
+
+def getDevType() {
+//    String state.DevType = null= 
+    switch(device.getDataValue("deviceModel")) {
+        case "H6117":
+        case "H6163":
+        case "H6168":
+        case "H6172":
+        case "H6173":
+        case "H6175":
+        case "H6176":
+        case "H618A":
+        case "H618B":
+        case "H618C":
+        case "H618E":
+        case "H618F":
+        case "H619A":
+        case "H619B": 
+        case "H619C": 
+        case "H619D":
+        case "H619E":
+        case "H619Z":
+        case "H61A0":
+        case "H61A1":
+        case "H61A2":
+        case "H61A3":
+        case "H61A5":
+        case "H61A8":
+        case "H61A9":
+        case "H61B2":
+        case "H61C2": 
+        case "H61C3":
+        case "H61C5":
+        case "H61E1":
+        case "H61E0":
+            if (debugLog) {log.debug ("getDevType(): Found   ${device.getDataValue("deviceModel")} setting DevType to RGBIC_STRIP")}; 
+            device.updateDataValue("DevType", "RGBIC_Strip");
+            break; 
+        case "H6066": 
+        case "H606A":
+        case "H6061":
+            if (debugLog) {log.debug ("getDevType(): Found   ${device.getDataValue("deviceModel")} setting DevType to Hexa_Light")};
+            device.updateDataValue("DevType", "Hexa_Light");            
+            break;
+        case "H6067": //Not added yet
+            device.updateDataValue("DevType", "Tri_Light"); 
+            break;
+        case "H6065":
+            device.updateDataValue("DevType", "Y_Light");
+            break;        
+        case "H6072": 
+        case "H6079":
+            device.updateDataValue("DevType", "Lyra_Lamp");
+            break;
+        case "H6076":
+            device.updateDataValue("DevType", "Basic_Lamp");
+            break;
+        case "H6078":
+            device.updateDataValue("DevType", "Cylinder_Lamp");
+            break;        
+        case "H6052": 
+        case "H6051":
+            device.updateDataValue("DevType", "Table_Lamp");
+            break;
+        case "H70C1":
+        case "H70C2":
+        case "H70CB":
+            device.updateDataValue("DevType", "XMAS_Light");
+            break;
+        case "H610A": 
+        case "H610B": 
+        case "H6062":
+            device.updateDataValue("DevType", "Wall_Light_Bar");
+            break;
+        case "H6046":
+        case "H6056":
+        case "H6047":
+        case "H70CB":
+            device.updateDataValue("DevType", "TV_Light_Bar"); 
+            break;        
+        case "H6088":
+        case "H6087":
+        case "H608A": 
+        case "H608B":
+        case "H608C":
+            device.updateDataValue("DevType", "Indoor_Pod_Lights");
+            break;        
+        case "H705A":
+        case "H705B":
+        case "H705C":
+        case "H706A":
+        case "H706B":
+        case "H706C":
+            device.updateDataValue("DevType", "Outdoor_Perm_Light");
+            break;
+        case "H7060":
+        case "H7061":
+        case "H7062":
+        case "H7065":
+        case "H7050":
+        case "H7051":
+        case "H7055":
+            device.updateDataValue("DevType", "Outdoor_Pod_Light");
+            break;
+        case "H70B1":
+            device.updateDataValue("DevType", "Curtain_Light");
+            break;
+        case "H7020":
+        case "H7021":
+        case "H7028":
+        case "H7041":
+        case "H7042":
+            device.updateDataValue("DevType", "Outdoor_String_Light");
+            break;
+        default: 
+            if (debugLog) {log.debug ("getDevType(): Unknown device Type. Model: (${device.getDataValue("deviceModel")}) Defaulting to RGBIC Strip.")}; 
+            device.updateDataValue("DevType", "RGBIC_Strip");    
+        break; 
+        
+    }       
 }
