@@ -1015,6 +1015,9 @@ private def lightEffectSetup() {
     if (childTypes.contains("TV_Light_Bar")) {
         lightEffect_TV_Light_Bar()
     }
+    if (childTypes.contains("Outdoor_Flood_Light")) {
+        lightEffect_Outdoor_Flood_Light()
+    }
 }
 
 private def lightEffect_Table_Lamp() {
