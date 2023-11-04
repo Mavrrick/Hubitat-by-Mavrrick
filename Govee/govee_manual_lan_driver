@@ -570,14 +570,16 @@ def getDevType() {
         case "H706C":
             device.updateDataValue("DevType", "Outdoor_Perm_Light");
             break;
-        case "H7060":
-        case "H7061":
-        case "H7062":
-        case "H7065":
         case "H7050":
         case "H7051":
         case "H7055":
             device.updateDataValue("DevType", "Outdoor_Pod_Light");
+            break;
+        case "H7060":
+        case "H7061":
+        case "H7062":
+        case "H7065":
+            device.updateDataValue("DevType", "Outdoor_Flood_Light");
             break;
         case "H70B1":
             device.updateDataValue("DevType", "Curtain_Light");
