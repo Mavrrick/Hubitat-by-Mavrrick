@@ -661,10 +661,10 @@ def parse(message) {
 
 def  setEffect(effectNo) {
     effectNumber = effectNo.toString()
-    if (parent.state.lightEffects.containsKey((device.getDataValue("DevType"))) && (parent.state.lightEffects.(device.getDataValue("DevType")).containsKey(effectNumber))) {
-        String sceneInfo = parent.state.lightEffects.(device.getDataValue("DevType")).get(effectNumber).name
-        String sceneCmd = parent.state.lightEffects.(device.getDataValue("DevType")).get(effectNumber).cmd
-        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}: ParentData ${parentData}")}
+    if ((parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}" != null) && (parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".containsKey(effectNumber))) {
+        String sceneInfo =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).name
+        String sceneCmd =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).cmd
+        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
@@ -783,8 +783,7 @@ def  setEffect(effectNo) {
         sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "Plant Growth")
     }
-    }   
-  
+    }     
 }
 
 def setNextEffect() {
@@ -842,10 +841,11 @@ def retrieveScenes() {
             state.diyEffects = state.diyEffects.sort()
         }
     }
-    if (parent.state.lightEffects.containsKey((device.getDataValue("DevType"))) == false) {
+    if ( parent.state.lightEffect_Hexa_Light == null ) {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else {
-        parent.state.lightEffects.(device.getDataValue("DevType")).each {
+        if (debugLog) {log.debug ("retrieveScenes(): ${parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}"}")} 
+        parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
