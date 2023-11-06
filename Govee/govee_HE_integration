@@ -1429,7 +1429,7 @@ private def lightEffect_Outdoor_Pod_Light() {
     state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
-private def lightEffec_Outdoor_Perm_Light() {
+private def lightEffect_Outdoor_Perm_Light() {
     lightEffectsAdd = [:]
     lightEffectsAdd = [
     Outdoor_Perm_Light:[ //Permanent Outdoor Lights 30M
