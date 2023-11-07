@@ -267,9 +267,9 @@ def deviceLanManual() {
         section('Please enter the parms for the LAN API enabled device you want to integrate.')
         {
             paragraph 'Please enter the below needed values to create your device '
-            input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'Bedroom Lights')
-            input(name: 'goveeModel', type: 'string', required:false, title: 'Enter Govee Device Model Number.', description: 'H70C2')
-            input(name: 'goveeManLanIP', type: 'string', required:false, title: 'Enter Govee Device Ip Address.', description: '192.168.1.2')
+            input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
+            input(name: 'goveeModel', type: 'string', required:false, title: 'Enter Govee Device Model Number.', description: 'E.g. H####')
+            input(name: 'goveeManLanIP', type: 'string', required:false, title: 'Enter Govee Device Ip Address.', description: 'E.g. 192.168.1.2')
             paragraph 'Click the next button when you are ready to create the device. '
         }
     }
@@ -318,12 +318,12 @@ def sceneManagement() {
         }
         section('<b>Govee Scene Extract</b>') {
             href 'sceneExtract', title: 'Extract Scene', description: 'Click here to perform scene extract'
-            paragraph "Click button below to scenes to all children device"
-            input "pushScenesUpdate" , "button",  title: "Click here to update all devices awareness of scenes"
+            paragraph "Click button below to refresh scenes to all children device"
+            input "pushScenesUpdate" , "button",  title: "Refresh Device Scene Awareness"
             paragraph "Click button below to reload preload scenes"
-            input "sceneInitialize" , "button",  title: "Click here to reload preloaded scene information"
+            input "sceneInitialize" , "button",  title: "Reload Preloaded Scene Data"
             paragraph "Click button below to clear DIY scenes"
-            input "sceneDIYInitialize" , "button",  title: "Click here to clear DIY scene information"
+            input "sceneDIYInitialize" , "button",  title: "Clear/Initialize DIY Scene Information"
         }
         section('<b>Scene Manual Add</b>')
         {
@@ -963,6 +963,7 @@ private def appButtonHandler(button) {
 
 /// All Light efects mapping to commands for all devices.
 private def lightEffectSetup() {
+    state.remove("lightEffects")
     List child = getChildDevices()
     List childModels = child.data.deviceModel
     List childTypes = child.data.DevType
@@ -1021,9 +1022,8 @@ private def lightEffectSetup() {
 }
 
 private def lightEffect_Table_Lamp() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Table_Lamp:[ //Aura Table Lamp
+    state.lightEffect_Table_Lamp = [:]
+    state.lightEffect_Table_Lamp = [
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
         2:["name":"Romantic", "cmd":['"owABCgcJVWT///8FDO5x/xgZGho\\="','"owEbHB0eHyAhIiMYiwD/AAECA9U\\="','"owIEBQYHCAkKCwwNDg8QERITFLU\\="','"owMVFhck/P8AYGFiY2RlZmdoaZI\\="','"owRqa2xtbm9wcXJzdHV2d3h5et0\\="','"owV7fH1+f4CBgoMk/38AJCUmJ3k\\="','"owYoKSorLC0uLzAxMjM0NTY3OJ0\\="','"owc5Ojs8PT4/QEFCQ0RFRkcY/3s\\="','"owivAEhJSktMTU5PUFFSU1RVVlM\\="','"o/9XWFlaW1xdXl8AAAAAAAAAAAs\\="','"MwUEMgEAAAAAAAAAAAAAAAAAAAE\\="']],
         3:["name":"Sunset", "cmd":['"owABCwcOAGQAAAAJDP8AAAABAj0\\="','"owEDBAUGBwgJCgsM/wgADA0OD1o\\="','"owIQERITFBUWFwv/UQAYGRobHBg\\="','"owMdHh8gISIB/1AAIxj/ZgAkJZI\\="','"owQmJygpKissLS4vMDEyMzQ1NpE\\="','"owU3ODk6Oxj/fwA8PT4/QEFCQwk\\="','"owZERUZHSElKS0xNTk9QUVJTGL0\\="','"owf/ngBUVVZXWFlaW1xdXl9gYcQ\\="','"owhiY2RlZmdoaWprDP/uAGxtbtg\\="','"owlvcHFyc3R1dncM//8AeHl6e8k\\="','"o/98fX5/gIGCgwAAAAAAAAAAAFw\\="','"MwUELQEAAAAAAAAAAAAAAAAAAB4\\="']],
@@ -1037,14 +1037,11 @@ private def lightEffect_Table_Lamp() {
 		21:["name":"Summer", "cmd":['"owABBwIEGhAAAAEAAf//AIAUFCk\\="','"owECABQBAP8AAACAAACAABqBAtM\\="','"owIZFAAB//8AgBQUAgAUAf9RSd0\\="','"owMAAIAAAIABGoECGRQAAf//ADQ\\="','"owSAFBQCABQB/wAAAACAAACAAs0\\="','"owUaGQAAAQAB//8AgBQUAgAUATI\\="','"o/8A/wAAAIAAAIAAAAAAAAAAAKM\\="','"MwUE+CcAAAAAAAAAAAAAAAAAAO0\\="']],
         103:["name":"Aurora", "cmd":['"MwUEHAAAAAAAAAAAAAAAAAAAAC4\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Y_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Y_Light:[ // Govee Glide Y Lights
+    state.lightEffect_Y_Light = [:]
+    state.lightEffect_Y_Light = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFU8DBAEgBQAEABKJAGQ\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUETQsCRwAAAAAAAAAAAAAAADE\\="']],
         2:["name":"Romantic", "cmd":['"owABAgQnFUIBAAEFAAWLAP/kAEQ\\="','"o//n/zuD/2lK/5F2AAAAAAAAADg\\="','"MwUEWgsCRwAAAAAAAAAAAAAAACY\\="']],
         3:["name":"Sunset Glow", "cmd":['"owABAgQmFSQDAgEeBQAFZACX34E\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUETwsCRwAAAAAAAAAAAAAAADM\\="']],
@@ -1091,14 +1088,11 @@ private def lightEffect_Y_Light() {
         133:["name":"Flow", "cmd":['"owABAgQmGjIDFAwDAP8BBQAEMXw\\="','"o///kwAPrf//AP8AbgAAAAAAAAM\\="','"MwUE1RwCRwAAAAAAAAAAAAAAAL4\\="']],
         134:["name":"Movie", "cmd":['"owABAgQAAAAPCQB4tABfuABfuG4\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEyRwARwAAAAAAAAAAAAAAAKA\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
-private def lightEffect_Hexa_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Hexa_Light:[ // Gove Glide Hexa Pro
+private def lightEffect_Hexa_Light() {    
+    state.lightEffect_Hexa_Light = [:]
+    state.lightEffect_Hexa_Light = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFS0CAgFkBQAEABKJAEU\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUE2AkCLQAAAAAAAAAAAAAAAMw\\="']],
         2:["name":"Romantic", "cmd":['"owABAgQmFTIBAgFIBQAFiwD/5H8\\="','"o/8A5/87g/9pSv+RdgAAAAAAADg\\="','"MwUE4gkCLQAAAAAAAAAAAAAAAPY\\="']],
         3:["name":"Sunset Glow", "cmd":['"owABAgQmFQoBAgFkBQAFZACX39c\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUE2gkCLQAAAAAAAAAAAAAAAM4\\="']],
@@ -1144,15 +1138,12 @@ private def lightEffect_Hexa_Light() {
         133:["name":"Intersection", "cmd":['"owABAgQrIUIBCwEFAAb/AAAA/+Q\\="','"o/8AAAD///8AAP//iwD/AAAAANc\\="','"MwUE8AkLLQAAAAAAAAAAAAAAAO0\\="']],
         134:["name":"Kaleidoscope", "cmd":['"owABAwQmGVQBAgEFAAgKN/8K//Y\\="','"owFb/0xelkz/TP/t/+IM/wyeDB8\\="','"o/8p/wAAAAAAAAAAAAAAAAAAAIo\\="','"MwUE8QkCLQAAAAAAAAAAAAAAAOU\\="']],
         135:["name":"Profound", "cmd":['"owABAgQmGTIBAgEFAAZvLb2mY5I\\="','"o//MspjcOob/AQEBgzjsAAAAAHM\\="','"MwUEVx0CLQAAAAAAAAAAAAAAAFc\\="']]
-        ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
+        ]    
 }
 
 private def lightEffect_Lyra_Lamp() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Lyra_Lamp:[ // Lyra Lamp
+    state.lightEffect_Lyra_Lamp = [:]
+    state.lightEffect_Lyra_Lamp = [
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"owABBwIDIGQAAAUAAf//AAAAAOQ\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaQAAAAQAB//8AAAAAAvg\\="','"owPIMgH/AAAAAAAAAAAAJkAAAMI\\="','"owQBAgP//wDIAAD/AAJkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUENAgAAAAAAAAAAAAAAAAAAA4\\="']],
@@ -1221,14 +1212,11 @@ private def lightEffect_Lyra_Lamp() {
         155:["name":"Sunset Glow", "cmd":['"MwUEGwAAAAAAAAAAAAAAAAAAACk\\="']],
         156:["name":"Rustling leaves", "cmd":['"owABBAICGgAAAAEAAf//AQAAAL0\\="','"owEA3DIBAP8AAAAAAAAAABoAAqo\\="','"owIZFwIB/ygB1yAUAAAyAf//AKo\\="','"o/8QANkAAAAAAAAAAAAAAAAAAJU\\="','"MwUEPQgAAAAAAAAAAAAAAAAAAAc\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Basic_Lamp() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Basic_Lamp:[ // Basics Floor Lamp
+    state.lightEffect_Basic_Lamp = [:]
+    state.lightEffect_Basic_Lamp = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBgIDGgAAAAEAAf8AAIAUFMA\\="','"owEAgBQBAP8AAACAAACAAB0AANU\\="','"owIAAQIB/wAAgBQUANtkAv//AGE\\="','"owMA/wAAAIAAAIAAHQAAAAECAUA\\="','"owT/AAKAFBQA22QCAP8A//8AAJg\\="','"o/8AgAAAgAAAAAAAAAAAAAAAAFw\\="','"MwUEbAgAAAAAAAAAAAAAAAAAAFY\\="']],
         2:["name":"Romantic", "cmd":['"owABBAICIAAAAAMCAXAPA/cUFA0\\="','"owEDABQD/38A//8A/3MHEQD4AFQ\\="','"owIAgAAaAAAAAQAB/2UAwRQUAGA\\="','"o/+AFAGwB/8AAIAAAIAAAAAAAIE\\="','"MwUEcQgAAAAAAAAAAAAAAAAAAEs\\="']],
         3:["name":"Sunset", "cmd":['"owABBwIDIGAAAAUAAf//AAAAAOA\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaAAAAAQAB//8AAAAAArg\\="','"owPIMgH/AAAAAAAAAAAAJgAAAII\\="','"owQBAgP//wLIAAD/AABkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEaQgAAAAAAAAAAAAAAAAAAFM\\="']],
@@ -1297,17 +1285,14 @@ private def lightEffect_Basic_Lamp() {
         154:["name":"Birthday", "cmd":['"owABCAIDLAACCgQCAv8ZANkAALQ\\="','"owH/GQDdAAAC+goF/zgA/38AACk\\="','"owL/AAD//4sA/wAAgAAAAAAjAIk\\="','"owMCCgQAAf//AJ4AAAH1AATxADI\\="','"owQd/3UA/8AA/0sAAAD/AAH6A7w\\="','"owUpAAAAAQABxHQAmxQUAPkKBlE\\="','"owb/Dwf/fwD//wAA/wAA//8AAC0\\="','"o///AACAAACAAQAAAAAAAAAAAKI\\="','"MwUErwkAAAAAAAAAAAAAAAAAAJQ\\="']],
         155:["name":"Valentine's Day", "cmd":['"owABBgIDGgAAAAEAAUZGAAAUFL8\\="','"owEAABQB/zlbAACAAACAACYAAAw\\="','"owIABgIB/wADABQUAwAUBf8AALU\\="','"owP/B57/B0b/LlT/HAcAAfkQAfA\\="','"owT5AB0AAgQDAgH/MQMAFBQDAIs\\="','"o/8UArYH/v8AAAAB+RAB+QAAAOo\\="','"MwUEsAkAAAAAAAAAAAAAAAAAAIs\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 
 
 
 private def lightEffect_Outdoor_String_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Outdoor_String_Light:[ //String Lights
+    state.lightEffect_Outdoor_String_Light = [:]
+    state.lightEffect_Outdoor_String_Light = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1361,15 +1346,13 @@ private def lightEffect_Outdoor_String_Light() {
         142:["name":"Tension", "cmd":['"owABBQICIAABAAoCAf8UAAAAAGQ\\="','"owECAAADUAAAyAAA/wAAEQH+ACo\\="','"owIAAAAgAAEACgIB/xQAAAAAAmA\\="','"owMAAAP/AADIAABQAAATAf4AACg\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDggAAAAAAAAAAAAAAAAAADQ\\="']],
         143:["name":"Heartbeat", "cmd":['"MwUEQQAAAAAAAAAAAAAAAAAAAHM\\="']],
         144:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\\\u003d"','"owEDgBQDAAD/bwf+yQb/BADyEIk\\\\u003d"','"owIA9wAaAAILBgABUxUA6hQUAO4\\\\u003d"','"o//tFAH+/v4AAIAAAPYAAAAAACw\\\\u003d"','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\\\u003d"']],
-        145:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]       ]
+        145:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]       
     ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Outdoor_Pod_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Outdoor_Pod_Light:[ //Smart Ground Lights 36ft
+    state.lightEffect_Outdoor_Pod_Light = [:]
+    state.lightEffect_Outdoor_Pod_Light = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1424,15 +1407,13 @@ private def lightEffect_Outdoor_Pod_Light() {
         142:["name":"Tension", "cmd":['"owABBQICIAABAAoCAf8UAAAAAGQ\\="','"owECAAADUAAAyAAA/wAAEQH+ACo\\="','"owIAAAAgAAEACgIB/xQAAAAAAmA\\="','"owMAAAP/AADIAABQAAATAf4AACg\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDggAAAAAAAAAAAAAAAAAADQ\\="']],
         143:["name":"Heartbeat", "cmd":['"MwUEQQAAAAAAAAAAAAAAAAAAAHM\\="']],
         144:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\\\u003d"','"owEDgBQDAAD/bwf+yQb/BADyEIk\\\\u003d"','"owIA9wAaAAILBgABUxUA6hQUAO4\\\\u003d"','"o//tFAH+/v4AAIAAAPYAAAAAACw\\\\u003d"','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\\\u003d"']],
-        145:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]        ]
+        145:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]        
     ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Outdoor_Perm_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Outdoor_Perm_Light:[ //Permanent Outdoor Lights 30M
+    state.lightEffect_Outdoor_Perm_Light = [:]
+    state.lightEffect_Outdoor_Perm_Light = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1487,15 +1468,13 @@ private def lightEffect_Outdoor_Perm_Light() {
         143:["name":"Tension", "cmd":['"owABBQICIAABAAoCAf8UAAAAAGQ\\="','"owECAAADUAAAyAAA/wAAEQH+ACo\\="','"owIAAAAgAAEACgIB/xQAAAAAAmA\\="','"owMAAAP/AADIAABQAAATAf4AACg\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDggAAAAAAAAAAAAAAAAAADQ\\="']],
         144:["name":"Heartbeat", "cmd":['"MwUEQQAAAAAAAAAAAAAAAAAAAHM\\="']],
         145:["name":"Nebula", "cmd":['"owABBAICIAAAAAkAAf8AAYAUFPA\\\\u003d"','"owEDgBQDAAD/bwf+yQb/BADyEIk\\\\u003d"','"owIA9wAaAAILBgABUxUA6hQUAO4\\\\u003d"','"o//tFAH+/v4AAIAAAPYAAAAAACw\\\\u003d"','"MwUE/AcAAAAAAAAAAAAAAAAAAMk\\\\u003d"']],
-        146:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]        ]
+        146:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']]
     ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Wall_Light_Bar() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Wall_Light_Bar:[ //Glide Wall Bar Lights
+    state.lightEffect_Wall_Light_Bar = [:]
+    state.lightEffect_Wall_Light_Bar = [
         1:["name":"Deep Sea", "cmd":['"owABBwoDIgADDAAAAczMAQAUFIE\\="','"owED8hQCB1b/AAD/AACAAACAABQ\\="','"owIBAgAB/ycAAgQBAgH//wMAFGg\\="','"owMUAfkUBP9Mhv//AAD/AAZG/ig\\="','"owQSAPIAAIAFAQEA/ycAAgQBAh8\\="','"owUB//8DABQUAfkUBP9Mhv//AHk\\="','"o/8A/wAGRv4QAPIAAIAFAQEB/4Q\\="','"MwUEVgkAAAAAAAAAAAAAAAAAAG0\\="']], 
         2:["name":"Romantic", "cmd":['"owABAwoBIgAAAAECAf9/APIUFPg\\="','"owEA5RQC/wAAjwf+AACAAACAANg\\="','"o/8AAgAB/wAAAAAAAAAAAAAAAKA\\="','"MwUEbAkAAAAAAAAAAAAAAAAAAFc\\="']], 
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -1573,15 +1552,13 @@ private def lightEffect_Wall_Light_Bar() {
         164:["name":"Blossom", "cmd":['"owABBgoCK1UAAAUAAf//AOUUFDM\\="','"owEC5RQF/z+M/9MzaP8sPJP+xCk\\="','"owIw/xAA9wAAgAEBAgAB/ytQAI4\\="','"owMABQAB//8A5RQUAuUUBf8/jPs\\="','"owT//wBo/ywHgf/EMP8SAPcAAIs\\="','"o/+AAQECAAH/AAAAAAAAAAAAACA\\="','"MwUEhQkAAAAAAAAAAAAAAAAAAL4\\="']],
         165:["name":"Split", "cmd":['"owABCgoEKDcAAAMCAf/MAvQUFHw\\="','"owEB9BQEAP///zVX//8AAP8AFDE\\="','"owIA7wAAgAEBAgAB/ygwAAADAis\\="','"owMB/8wC9BQUAfQUBAD///9AWmQ\\="','"owT//wAA/wAWAO8AAIABAQIAASI\\="','"owX/KCMAAAICAf//AvQUFALyFEE\\="','"owYE//8AAP8AAP///2KWFwDyALA\\="','"owcAgAEBAgAB/yglAAACAgH//9Q\\="','"owgC9BQUAvIUBP//AAD/AAD//0I\\="','"o///WHsVAPIAAIABAQIAAf8AABs\\="','"MwUEhgkAAAAAAAAAAAAAAAAAAL0\\="']], 
         166:["name":"Left side on", "cmd":['"MzMBAAAAAAAAAAAAAAAAAAAAAAE\\="']],
-        167:["name":"Right side on", "cmd":['"MzMQAAAAAAAAAAAAAAAAAAAAABA\\="']]        ]
+        167:["name":"Right side on", "cmd":['"MzMQAAAAAAAAAAAAAAAAAAAAABA\\="']]        
     ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Indoor_Pod_Lights() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Indoor_Pod_Lights:[ // Sconeses
+    state.lightEffect_Indoor_Pod_Lights = [:]
+    state.lightEffect_Indoor_Pod_Lights = [
         1:["name":"Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']], 
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']], 
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1635,14 +1612,11 @@ private def lightEffect_Indoor_Pod_Lights() {
         142:["name":"Tension", "cmd":['"owABBQICIAABAAoCAf8UAAAAAGQ\\="','"owECAAADUAAAyAAA/wAAEQH+ACo\\="','"owIAAAAgAAEACgIB/xQAAAAAAmA\\="','"owMAAAP/AADIAABQAAATAf4AACg\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDggAAAAAAAAAAAAAAAAAADQ\\="']], 
         143:["name":"Heartbeat", "cmd":['"MwUEQQAAAAAAAAAAAAAAAAAAAHM\\="']] 
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_XMAS_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    XMAS_Light:[ 
+    state.lightEffect_XMAS_Light = [:]
+    state.lightEffect_XMAS_Light = [
 		1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE/ScAAAAAAAAAAAAAAAAAAOg\\="']],
 		2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -1756,14 +1730,11 @@ private def lightEffect_XMAS_Light() {
 		201:["name":"Daze", "cmd":['"owABBgIDIAACEBAAAf8AA8tLS7E\\="','"owEBoAED1f8n/4kl+P8nAQDeAKA\\="','"owIAgAAgAAIQEAAB/wABy0tLATY\\="','"owOgAQP/ZMVAOv7EXf8BAN4AAGE\\="','"owSAABoAAAABAAEICAEAS0sBAD0\\="','"o/8BAf///wEA3gAAgAAAAAAAAPw\\="','"MwUESSgAAAAAAAAAAAAAAAAAAFM\\="']],
 		202:["name":"Awaken", "cmd":['"owABBwIDIyUAAAEAAf+AAbUUFGk\\="','"owED6BQECW7/SJ7///31AAAAAB8\\="','"owIAgBAA/wAjIwAAAQAB/4EBtQQ\\="','"owMUFAPmFAQJbv9Inv///fUAABM\\="','"owQAAACAEgD/ABoAAhEBAAH/ADw\\="','"owUC/xRkAIAUAf///wAAgBEA7T0\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUESigAAAAAAAAAAAAAAAAAAFA\\="']] 
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_RGBIC_Strip() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    RGBIC_Strip:[ // Neon Rope Light 2m
+    state.lightEffect_RGBIC_Strip = [:]
+    state.lightEffect_RGBIC_Strip = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -1917,54 +1888,39 @@ private def lightEffect_RGBIC_Strip() {
         240:["name":"Crazy", "cmd":['"owABBQICIwABADIAAf+BAegUFCE\\="','"owED9RcE/5EA/wCEpwD/L/+QFV8\\="','"owID/wAAgAAjAAEAMgAB/4EB6Fs\\="','"owMUFAP1FwT/kQD/AISnAP8v/9g\\="','"o/+QFwP/AACAAAAAAAAAAAAAAKc\\="','"MwUEqggAAAAAAAAAAAAAAAAAAJA\\="']],
         241:["name":"Fascination", "cmd":['"owABCwIFIGADFAAAAf8AAIAUFIc\\="','"owECABQDAP//AAAAAAAAEQD9AFs\\="','"owIAgAEgRgMNAQAB/wAAgBQUAzQ\\="','"owMAFAMAAP8AAAAA/6gRAP4AAPA\\="','"owSAARoAAAABAAH/AACAFBQAgMM\\="','"owUUAYsA/wAAgAAAgAAmAAEAMtI\\="','"owYAAi8AAMMUFP8AANQUFAEAFHU\\="','"owcDiwD/AAAAAP+eFQD+AACAA9o\\="','"owgmAAEAGQACKAAArBQU/wAAulY\\="','"owkUFAGAFAP/AOQAAAAA//8XADA\\="','"o//9AACAAwAAAAAAAAAAAAAAACI\\="','"MwUEqwgAAAAAAAAAAAAAAAAAAJE\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Curtain_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Curtain_Light:[ //Aura Table Lamp
+    state.lightEffect_Curtain_Light = [:]
+    state.lightEffect_Curtain_Light = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Tri_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Tri_Light:[ //Aura Table Lamp
+    state.lightEffect_Tri_Light = [:]
+    state.lightEffect_Tri_Light = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Cylinder_Lamp() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Cylinder_Lamp:[ //Aura Table Lamp
+    state.lightEffect_Cylinder_Lamp = [:]
+    state.lightEffect_Cylinder_Lamp = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_TV_Light_Bar() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    TV_Light_Bar:[ //Aura Table Lamp
+    state.lightEffect_TV_Light_Bar = [:]
+    state.lightEffect_TV_Light_Bar = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
-    ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
 
 private def lightEffect_Outdoor_Flood_Light() {
-    lightEffectsAdd = [:]
-    lightEffectsAdd = [
-    Outdoor_Flood_Light:[ //4 Pack RGBIC Flood Lights
+    state.lightEffect_Outdoor_Flood_Light = [:]
+    state.lightEffect_Outdoor_Flood_Light = [
         101:["name":"Firefly", "cmd":['"owABBAICHQAAAAEAAfFMA8kKCsw\\="','"owED7RQCB/9eCP53AACAAACAAH0\\="','"owIdAAICAQAB/2YDzAoKAQABAug\\="','"o///5Af/hwcAAIAAAIAFAAAAADo\\="','"MwUEKQoAAAAAAAAAAAAAAAAAABE="']],
         102:["name":"Karst Cave", "cmd":['"owABAwIBJgAAAAEAAf+YA8QKCiQ\\="','"owEB/BQFvQD/AAD//wAAAP8A/ww\\="','"o/9/AAAA+gAAAAAAAAAAAAAAANk\\="','"MwUELgoAAAAAAAAAAAAAAAAAABY="']],
         103:["name":"Glacier", "cmd":['"owABBAICGgAAAAEAAdrTAMYUFHM\\="','"owEAgBQBAP//FADEAACAARoAAHw\\="','"owIAAQAB0H8ByRQUAIAUAQfJ/2I\\="','"o/8EAPIAAIAAAAAAAAAAAAAAACo\\="','"MwUEJAoAAAAAAAAAAAAAAAAAABw="']],
@@ -1997,7 +1953,6 @@ private def lightEffect_Outdoor_Flood_Light() {
         130:["name":"Summer", "cmd":['"owABBQICIAAAAAEAAf//AP8UFHg\\="','"owEA7xQD//Jh/+BG/9dwAACAALc\\="','"owIAgAApAAEABAIB/0kC2BQUAGI\\="','"owP5FAb//wAAAAAAAAAAAAAAAEs\\="','"o/8AAAAAFAD5AACAAAAAAAAAADE\\="','"MwUEPAoAAAAAAAAAAAAAAAAAAAQ="']], 
         131:["name":"Fall", "cmd":['"owABBAICIAAAAAEAAf//AP8UFHk\\="','"owEA7xQD/38A/2EH/7sHAACAAIA\\="','"owIAgAAaAAEAAQAB//8B/xQUAMQ\\="','"o//vFAH/AAAUALIAAIABAAAAAH4\\="','"MwUEPQoAAAAAAAAAAAAAAAAAAAU="']], 
         132:["name":"Winter", "cmd":['"owABBAICGgACBgEAAf8fAMkUFJE\\="','"owEAgBQB////AACAAACAABoAAdM\\="','"owIABgAB/0cByTL6AOoUAX/z/5I\\="','"o/8EAPQAAIAAAAAAAAAAAAAAACw\\="','"MwUEPgoAAAAAAAAAAAAAAAAAAAY="']], 
-        133:["name":"Seasonal", "cmd":['"owABBAICGgABAAQAAf//AAAUFLg\\="','"owEBADIB/71WFgD3AACABSMAAMM\\="','"owIAAQABgWUAgBQUAPgyBAD/APQ\\="','"o/8A////fwD///8DAOUAAIADAEY\\="','"MwUEPwoAAAAAAAAAAAAAAAAAAAc="']]        ]
+        133:["name":"Seasonal", "cmd":['"owABBAICGgABAAQAAf//AAAUFLg\\="','"owEBADIB/71WFgD3AACABSMAAMM\\="','"owIAAQABgWUAgBQUAPgyBAD/APQ\\="','"o/8A////fwD///8DAOUAAIADAEY\\="','"MwUEPwoAAAAAAAAAAAAAAAAAAAc="']]        
     ]
-    state.lightEffects = state.lightEffects + lightEffectsAdd
 }
