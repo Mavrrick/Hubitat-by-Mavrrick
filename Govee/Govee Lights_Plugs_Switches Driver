@@ -661,10 +661,10 @@ def parse(message) {
 
 def  setEffect(effectNo) {
     effectNumber = effectNo.toString()
-    if (parent.state.lightEffects.containsKey((device.getDataValue("DevType"))) && (parent.state.lightEffects.(device.getDataValue("DevType")).containsKey(effectNumber))) {
-        String sceneInfo = parent.state.lightEffects.(device.getDataValue("DevType")).get(effectNumber).name
-        String sceneCmd = parent.state.lightEffects.(device.getDataValue("DevType")).get(effectNumber).cmd
-        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}: ParentData ${parentData}")}
+    if ((parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}" != null) && (parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".containsKey(effectNumber))) {
+        String sceneInfo =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).name
+        String sceneCmd =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).cmd
+        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
@@ -783,8 +783,7 @@ def  setEffect(effectNo) {
         sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "Plant Growth")
     }
-    }   
-  
+    }     
 }
 
 def setNextEffect() {
@@ -793,9 +792,7 @@ if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentV
     unschedule(fadeDown)
       if (effectNum == 0) {
         setEffect(1)
-      } else if (effectNum == 21) {
-          setEffect(101)
-      } else {
+        } else {
             if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
             int nextEffect = device.currentValue("effectNum").toInteger()+1
             setEffect(nextEffect)
@@ -808,9 +805,7 @@ if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentV
     unschedule(fadeDown)
       if (effectNum == 0) {
         setEffect(13)
-      } else if (effectNum == 101) {
-          setEffect(21)
-      } else {
+        } else {
             if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
             int prevEffect = device.currentValue("effectNum").toInteger()-1
             setEffect(prevEffect)
@@ -835,10 +830,11 @@ def retrieveScenes() {
     state.scenes = [] as List
     state.diyEffects = [] as List
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent app")}
-    if (parent.state.diyEffects.containsKey((device.getDataValue("DevType"))) == false) {
+    if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${parent.state.diyEffects.keySet()}")}
+    if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
     } else {
-        parent.state.diyEffects.(device.getDataValue("DevType")).each {
+        parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -846,10 +842,11 @@ def retrieveScenes() {
             state.diyEffects = state.diyEffects.sort()
         }
     }
-    if (parent.state.lightEffects.containsKey((device.getDataValue("DevType"))) == false) {
+    if ( parent.state.lightEffect_Hexa_Light == null ) {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else {
-        parent.state.lightEffects.(device.getDataValue("DevType")).each {
+        if (debugLog) {log.debug ("retrieveScenes(): ${parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}"}")} 
+        parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -962,6 +959,7 @@ def getDevType() {
         case "H7061":
         case "H7062":
         case "H7065":
+        case "H7066":
             device.updateDataValue("DevType", "Outdoor_Flood_Light");
             break;
         case "H70B1":
