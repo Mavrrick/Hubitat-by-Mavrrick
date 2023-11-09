@@ -913,7 +913,7 @@ private def appButtonHandler(button) {
     } else if (button == "pushScenesUpdate") {
         List child = getChildDevices()
         child.each {
-        logger('appButtonHandler(): API key has been updated. Calling child devices to udpate', 'debug')
+        logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
         it.initialize()
         }
     } else if (button == "sceneDIYInitialize") {
