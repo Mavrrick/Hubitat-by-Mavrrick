@@ -522,12 +522,17 @@ def setNextEffect() {
 if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
     unschedule(fadeUp)
     unschedule(fadeDown)
-      if (effectNum == 0) {
+    if (debugLog) {log.debug ("setNextEffect(): current effectNum ${device.currentValue("effectNum")}")}
+    if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == device.getDataValue("maxScene")) {
         setEffect(1)
-        } else {
-            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
-            int nextEffect = device.currentValue("effectNum").toInteger()+1
-            setEffect(nextEffect)
+    } 
+    else if (device.currentValue("effectNum") == "21") {
+        if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
+        setEffect(101) 
+    } else {
+        if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
+        int nextEffect = device.currentValue("effectNum").toInteger()+1
+        setEffect(nextEffect)
         }  
 }
       
@@ -535,8 +540,10 @@ def setPreviousEffect() {
 if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
     unschedule(fadeUp)
     unschedule(fadeDown)
-      if (effectNum == 0) {
-        setEffect(13)
+      if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == "1") {
+        setEffect(device.getDataValue("maxScene"))
+        } else if (device.currentValue("effectNum") == 101) {
+         setEffect(21) 
         } else {
             if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
             int prevEffect = device.currentValue("effectNum").toInteger()-1
@@ -578,11 +585,16 @@ def retrieveScenes() {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else { 
         parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
+            if (it.getKey() == "999") {
+                if (debugLog) {log.debug ("retrieveScenes(): Processing max scene value ${it.getKey()} of ${it.value.maxScene}")}
+                device.updateDataValue("maxScene", it.value.maxScene.toString())
+            } else {
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
             state.scenes.add(sceneValue)
             state.scenes = state.scenes.sort()
+            }
         }
     }
 }
