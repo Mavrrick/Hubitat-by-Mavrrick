@@ -64,42 +64,6 @@ preferences
     page(name: 'about', title: 'About')
 }
 
-def initialize() {
-    state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
-    List child = getChildDevices()
-    List childDNI = child.deviceNetworkId
-    if (settings.APIKey != state.APIKey ) {
-        child.each {
-            logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
-            it.initialize()
-        }
-        state?.APIKey = settings.APIKey
-    }
-    if (goveeDev) {
-        def goveeAdd = settings.goveeDev - child.label
-        logger("initialize() Found child devices ${child} with DNI's ${childDNI}", 'debug')
-        logger("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.", 'info')
-        if (goveeAdd) {
-            goveeLightAdd(goveeAdd)
-                }
-        lightEffectSetup()
-        }
-          else {
-        logger('initialize() No devices to add', 'info')
-          }
-// Add appliances
-    if (goveeApp) {
-        def  goveeAdd2 = settings.goveeApp - child.label
-        logger("initialize() Govee Appliances to add ${goveeAdd2}.", 'info')
-        if (goveeAdd2) {
-            goveeAppAdd(goveeAdd2)
-                }
-    }
-          else {
-        logger('initialize() No appliances to add', 'info')
-          }
-}
-
 /*
     mainPage
 
@@ -305,8 +269,9 @@ def sceneManagement() {
         {
             paragraph "Please provide your gove home token."
             href 'sceneExtract2', title: 'Govee Home Creds', description: 'Setup Gove Home Creds to obtain token'
-            if (now() > state.goveeHomeExpiry) {
-            paragraph "Token has <mark>expired</mark>. Please click the Govee Home Creds button above to refresh"
+            if (now() > state.goveeHomeExpiry) {                
+            paragraph "Token has <mark>expired</mark>. Attempting to auto-renew"
+            appButtonHandler("goveeHomeLogin")    
             } else {
                 paragraph "Token is <mark>valid</mark>"
             }
@@ -498,7 +463,9 @@ def sceneExtract2() {
                 if (now() > state.goveeHomeExpiry) {
                     paragraph "Token has <mark>not valid</mark>. Please Login"
                 } else {
+                    Date dateExpire = new Date(state.goveeHomeExpiry)
                 paragraph "Token is <mark>valid</mark>"
+                paragraph "Token expires on ${dateExpire}"
                 }
             } else {
                 paragraph "Please add a Email and Password to Obtain your Govee Home Token"
@@ -529,15 +496,48 @@ def installed() {
     state.isInstalled = true
     state.diyEffects = [:]
     state.lightEffects = [:]
-    initialize()
 }
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
-    initialize()
-    if (state?.diyEffects == null) {
+        if (state?.diyEffects == null) {
         state?.diyEffects = [:]
     }
+    if (state?.lightEffects == null) {
+        state?.diyEffects = [:]
+    }
+    state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
+    List child = getChildDevices()
+//    List childDNI = child.deviceNetworkId
+    if (settings.APIKey != state.APIKey ) {
+        child.each {
+            logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
+            it.apiKeyUpdate()
+        }
+        state?.APIKey = settings.APIKey
+    }
+    if (goveeDev) {
+        def goveeAdd = settings.goveeDev - child.label
+        logger("initialize() Found child devices ${child}", 'debug')
+        logger("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.", 'info')
+        if (goveeAdd) {
+            goveeLightAdd(goveeAdd)
+                }
+        }
+          else {
+        logger('initialize() No devices to add', 'info')
+          }
+// Add appliances
+    if (goveeApp) {
+        def  goveeAdd2 = settings.goveeApp - child.label
+        logger("initialize() Govee Appliances to add ${goveeAdd2}.", 'info')
+        if (goveeAdd2) {
+            goveeAppAdd(goveeAdd2)
+                }
+    }
+          else {
+        logger('initialize() No appliances to add', 'info')
+          }
 }
 
 def uninstalled() {
@@ -682,8 +682,9 @@ private logger(msg, level = 'debug') {
  **/
 private goveeLightAdd(goveeAdd) {
     def devices = goveeAdd
-    List child = getChildDevices()
-    List childDNI = child.deviceNetworkId
+//    List child = getChildDevices()
+//    List childDNI = child.deviceNetworkId
+    List childDNI = getChildDevices().deviceNetworkId
     logger("goveeLightAdd() $devices are selcted to be integrated", 'info')
     logger('goveeLightAdd() DEVICE INFORMATION', 'info')
     logger ("goveeLightAdd(): ${state.goveeLightAPI}",'trace')
@@ -773,8 +774,9 @@ private goveeLightAdd(goveeAdd) {
  **/
 private goveeLightManAdd(model, ip, name) {
     def newDNI = "Govee_" + ip
-    List child = getChildDevices()
-    List childDNI = child.deviceNetworkId
+//    List child = getChildDevices()
+//    List childDNI = child.deviceNetworkId
+    List childDNI = getChildDevices().deviceNetworkId    
     logger("goveeLightManAdd() Adding ${name} Model: ${model} at ${ip} with ${newDNI}", 'info')
     logger('goveeLightManAdd() DEVICE INFORMATION', 'info')
         String deviceIP = ip                            
@@ -808,8 +810,9 @@ private goveeLightManAdd(model, ip, name) {
  **/
 private goveeAppAdd(goveeAdd2) {
     def devices = goveeAdd2
-    List child = getChildDevices()
-    List childDNI = child.deviceNetworkId
+//    List child = getChildDevices()
+//    List childDNI = child.deviceNetworkId
+    List childDNI = getChildDevices().deviceNetworkId
     logger("goveeAppAdd() $devices are selcted to be integrated", 'info')
     logger('goveeAppAdd() Appliance INFORMATION', 'info')
         logger ("goveeAppAdd(): ${state.goveeAppAPI}",'trace')
@@ -908,13 +911,30 @@ private goveeAppAdd(goveeAdd2) {
 private def appButtonHandler(button) {
     if (button == "sceneInitialize") {
         log.debug "appButtonHandler(): Initializing Scene data"
-        state?.lightEffects = [:]
+//        state?.lightEffects = [:]
+        state.remove("lightEffect_Lyra_Lamp")
+        state.remove("lightEffect_Table_Lamp")
+        state.remove("lightEffect_Y_Light")
+        state.remove("lightEffect_Hexa_Light")
+        state.remove("lightEffect_Basic_Lamp")
+        state.remove("lightEffect_Outdoor_String_Light")
+        state.remove("lightEffect_Outdoor_Pod_Light")
+        state.remove("lightEffect_Outdoor_Perm_Light")
+        state.remove("lightEffect_Wall_Light_Bar")
+        state.remove("lightEffect_Indoor_Pod_Lights")
+        state.remove("lightEffect_XMAS_Light")  
+        state.remove("lightEffect_RGBIC_Strip")
+        state.remove("lightEffect_Curtain_Light")
+        state.remove("lightEffect_Tri_Light")
+        state.remove("lightEffect_Cylinder_Lamp")
+        state.remove("lightEffect_TV_Light_Bar")
+        state.remove("lightEffect_Outdoor_Flood_Light")
         lightEffectSetup()
     } else if (button == "pushScenesUpdate") {
         List child = getChildDevices()
         child.each {
         logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
-        it.initialize()
+        it.configure()
         }
     } else if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
@@ -963,11 +983,9 @@ private def appButtonHandler(button) {
 
 /// All Light efects mapping to commands for all devices.
 private def lightEffectSetup() {
-    state.remove("lightEffects")
-    List child = getChildDevices()
-    List childModels = child.data.deviceModel
-    List childTypes = child.data.DevType
-    logger("lightEffectSetup() Child device ${child} Model ${childModels} Types ${childTypes}", 'debug')
+    state.remove("lightEffects") // remove legacy value if still exists.
+    List childTypes = getChildDevices().data.DevType
+    logger("lightEffectSetup() Child Types ${childTypes}", 'debug')
     if (childTypes.contains("RGBIC_Strip")) {
         lightEffect_RGBIC_Strip()
     }
@@ -1019,11 +1037,12 @@ private def lightEffectSetup() {
     if (childTypes.contains("Outdoor_Flood_Light")) {
         lightEffect_Outdoor_Flood_Light()
     }
+    logger("lightEffectSetup() Light Effect Setup Complete", 'debug')
 }
 
 private def lightEffect_Table_Lamp() {
-    state.lightEffect_Table_Lamp = [:]
-    state.lightEffect_Table_Lamp = [
+    atomicState.lightEffect_Table_Lamp = [:]
+    atomicState.lightEffect_Table_Lamp = [
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
         2:["name":"Romantic", "cmd":['"owABCgcJVWT///8FDO5x/xgZGho\\="','"owEbHB0eHyAhIiMYiwD/AAECA9U\\="','"owIEBQYHCAkKCwwNDg8QERITFLU\\="','"owMVFhck/P8AYGFiY2RlZmdoaZI\\="','"owRqa2xtbm9wcXJzdHV2d3h5et0\\="','"owV7fH1+f4CBgoMk/38AJCUmJ3k\\="','"owYoKSorLC0uLzAxMjM0NTY3OJ0\\="','"owc5Ojs8PT4/QEFCQ0RFRkcY/3s\\="','"owivAEhJSktMTU5PUFFSU1RVVlM\\="','"o/9XWFlaW1xdXl8AAAAAAAAAAAs\\="','"MwUEMgEAAAAAAAAAAAAAAAAAAAE\\="']],
         3:["name":"Sunset", "cmd":['"owABCwcOAGQAAAAJDP8AAAABAj0\\="','"owEDBAUGBwgJCgsM/wgADA0OD1o\\="','"owIQERITFBUWFwv/UQAYGRobHBg\\="','"owMdHh8gISIB/1AAIxj/ZgAkJZI\\="','"owQmJygpKissLS4vMDEyMzQ1NpE\\="','"owU3ODk6Oxj/fwA8PT4/QEFCQwk\\="','"owZERUZHSElKS0xNTk9QUVJTGL0\\="','"owf/ngBUVVZXWFlaW1xdXl9gYcQ\\="','"owhiY2RlZmdoaWprDP/uAGxtbtg\\="','"owlvcHFyc3R1dncM//8AeHl6e8k\\="','"o/98fX5/gIGCgwAAAAAAAAAAAFw\\="','"MwUELQEAAAAAAAAAAAAAAAAAAB4\\="']],
@@ -1041,8 +1060,8 @@ private def lightEffect_Table_Lamp() {
 }
 
 private def lightEffect_Y_Light() {
-    state.lightEffect_Y_Light = [:]
-    state.lightEffect_Y_Light = [
+    atomicState.lightEffect_Y_Light = [:]
+    atomicState.lightEffect_Y_Light = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFU8DBAEgBQAEABKJAGQ\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUETQsCRwAAAAAAAAAAAAAAADE\\="']],
         2:["name":"Romantic", "cmd":['"owABAgQnFUIBAAEFAAWLAP/kAEQ\\="','"o//n/zuD/2lK/5F2AAAAAAAAADg\\="','"MwUEWgsCRwAAAAAAAAAAAAAAACY\\="']],
         3:["name":"Sunset Glow", "cmd":['"owABAgQmFSQDAgEeBQAFZACX34E\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUETwsCRwAAAAAAAAAAAAAAADM\\="']],
@@ -1093,8 +1112,8 @@ private def lightEffect_Y_Light() {
 }
 
 private def lightEffect_Hexa_Light() {    
-    state.lightEffect_Hexa_Light = [:]
-    state.lightEffect_Hexa_Light = [
+    atomicState.lightEffect_Hexa_Light = [:]
+    atomicState.lightEffect_Hexa_Light = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFS0CAgFkBQAEABKJAEU\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUE2AkCLQAAAAAAAAAAAAAAAMw\\="']],
         2:["name":"Romantic", "cmd":['"owABAgQmFTIBAgFIBQAFiwD/5H8\\="','"o/8A5/87g/9pSv+RdgAAAAAAADg\\="','"MwUE4gkCLQAAAAAAAAAAAAAAAPY\\="']],
         3:["name":"Sunset Glow", "cmd":['"owABAgQmFQoBAgFkBQAFZACX39c\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUE2gkCLQAAAAAAAAAAAAAAAM4\\="']],
@@ -1145,8 +1164,8 @@ private def lightEffect_Hexa_Light() {
 }
 
 private def lightEffect_Lyra_Lamp() {
-    state.lightEffect_Lyra_Lamp = [:]
-    state.lightEffect_Lyra_Lamp = [
+    atomicState.lightEffect_Lyra_Lamp = [:]
+    atomicState.lightEffect_Lyra_Lamp = [
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"owABBwIDIGQAAAUAAf//AAAAAOQ\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaQAAAAQAB//8AAAAAAvg\\="','"owPIMgH/AAAAAAAAAAAAJkAAAMI\\="','"owQBAgP//wDIAAD/AAJkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUENAgAAAAAAAAAAAAAAAAAAA4\\="']],
@@ -1219,8 +1238,8 @@ private def lightEffect_Lyra_Lamp() {
 }
 
 private def lightEffect_Basic_Lamp() {
-    state.lightEffect_Basic_Lamp = [:]
-    state.lightEffect_Basic_Lamp = [
+    atomicState.lightEffect_Basic_Lamp = [:]
+    atomicState.lightEffect_Basic_Lamp = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBgIDGgAAAAEAAf8AAIAUFMA\\="','"owEAgBQBAP8AAACAAACAAB0AANU\\="','"owIAAQIB/wAAgBQUANtkAv//AGE\\="','"owMA/wAAAIAAAIAAHQAAAAECAUA\\="','"owT/AAKAFBQA22QCAP8A//8AAJg\\="','"o/8AgAAAgAAAAAAAAAAAAAAAAFw\\="','"MwUEbAgAAAAAAAAAAAAAAAAAAFY\\="']],
         2:["name":"Romantic", "cmd":['"owABBAICIAAAAAMCAXAPA/cUFA0\\="','"owEDABQD/38A//8A/3MHEQD4AFQ\\="','"owIAgAAaAAAAAQAB/2UAwRQUAGA\\="','"o/+AFAGwB/8AAIAAAIAAAAAAAIE\\="','"MwUEcQgAAAAAAAAAAAAAAAAAAEs\\="']],
         3:["name":"Sunset", "cmd":['"owABBwIDIGAAAAUAAf//AAAAAOA\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaAAAAAQAB//8AAAAAArg\\="','"owPIMgH/AAAAAAAAAAAAJgAAAII\\="','"owQBAgP//wLIAAD/AABkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEaQgAAAAAAAAAAAAAAAAAAFM\\="']],
@@ -1296,8 +1315,8 @@ private def lightEffect_Basic_Lamp() {
 
 
 private def lightEffect_Outdoor_String_Light() {
-    state.lightEffect_Outdoor_String_Light = [:]
-    state.lightEffect_Outdoor_String_Light = [
+    atomicState.lightEffect_Outdoor_String_Light = [:]
+    atomicState.lightEffect_Outdoor_String_Light = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1379,8 +1398,8 @@ private def lightEffect_Outdoor_String_Light() {
 }
 
 private def lightEffect_Outdoor_Pod_Light() {
-    state.lightEffect_Outdoor_Pod_Light = [:]
-    state.lightEffect_Outdoor_Pod_Light = [
+    atomicState.lightEffect_Outdoor_Pod_Light = [:]
+    atomicState.lightEffect_Outdoor_Pod_Light = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1441,8 +1460,8 @@ private def lightEffect_Outdoor_Pod_Light() {
 }
 
 private def lightEffect_Outdoor_Perm_Light() {
-    state.lightEffect_Outdoor_Perm_Light = [:]
-    state.lightEffect_Outdoor_Perm_Light = [
+    atomicState.lightEffect_Outdoor_Perm_Light = [:]
+    atomicState.lightEffect_Outdoor_Perm_Light = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1546,8 +1565,8 @@ private def lightEffect_Outdoor_Perm_Light() {
 }
 
 private def lightEffect_Wall_Light_Bar() {
-    state.lightEffect_Wall_Light_Bar = [:]
-    state.lightEffect_Wall_Light_Bar = [
+    atomicState.lightEffect_Wall_Light_Bar = [:]
+    atomicState.lightEffect_Wall_Light_Bar = [
         1:["name":"Deep Sea", "cmd":['"owABBwoDIgADDAAAAczMAQAUFIE\\="','"owED8hQCB1b/AAD/AACAAACAABQ\\="','"owIBAgAB/ycAAgQBAgH//wMAFGg\\="','"owMUAfkUBP9Mhv//AAD/AAZG/ig\\="','"owQSAPIAAIAFAQEA/ycAAgQBAh8\\="','"owUB//8DABQUAfkUBP9Mhv//AHk\\="','"o/8A/wAGRv4QAPIAAIAFAQEB/4Q\\="','"MwUEVgkAAAAAAAAAAAAAAAAAAG0\\="']], 
         2:["name":"Romantic", "cmd":['"owABAwoBIgAAAAECAf9/APIUFPg\\="','"owEA5RQC/wAAjwf+AACAAACAANg\\="','"o/8AAgAB/wAAAAAAAAAAAAAAAKA\\="','"MwUEbAkAAAAAAAAAAAAAAAAAAFc\\="']], 
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -1631,8 +1650,8 @@ private def lightEffect_Wall_Light_Bar() {
 }
 
 private def lightEffect_Indoor_Pod_Lights() {
-    state.lightEffect_Indoor_Pod_Lights = [:]
-    state.lightEffect_Indoor_Pod_Lights = [
+    atomicState.lightEffect_Indoor_Pod_Lights = [:]
+    atomicState.lightEffect_Indoor_Pod_Lights = [
         1:["name":"Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']], 
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']], 
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -1690,8 +1709,8 @@ private def lightEffect_Indoor_Pod_Lights() {
 }
 
 private def lightEffect_XMAS_Light() {
-    state.lightEffect_XMAS_Light = [:]
-    state.lightEffect_XMAS_Light = [
+    atomicState.lightEffect_XMAS_Light = [:]
+    atomicState.lightEffect_XMAS_Light = [
 		1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE/ScAAAAAAAAAAAAAAAAAAOg\\="']],
 		2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -1809,8 +1828,8 @@ private def lightEffect_XMAS_Light() {
 }
 
 private def lightEffect_RGBIC_Strip() {
-    state.lightEffect_RGBIC_Strip = [:]
-    state.lightEffect_RGBIC_Strip = [
+    atomicState.lightEffect_RGBIC_Strip = [:]
+    atomicState.lightEffect_RGBIC_Strip = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -1968,8 +1987,8 @@ private def lightEffect_RGBIC_Strip() {
 }
 
 private def lightEffect_Curtain_Light() {
-    state.lightEffect_Curtain_Light = [:]
-    state.lightEffect_Curtain_Light = [
+    atomicState.lightEffect_Curtain_Light = [:]
+    atomicState.lightEffect_Curtain_Light = [
         1:["name":"Wave", "cmd":['"owABIAxTuG5NZAEEdQAAbACJUOc\\="','"owFORw0KGgoAAAANSUhEUgAAAKY\\="','"owIUAAAAGggCAAAAOOHrKgAAAL0\\="','"owMzSURBVDgRY2AYBaMhMBoCo7U\\="','"owQhMKAhwPj//3+yHcBEtk6gRkU\\="','"owWWSd/J16RzYwM7wfIzxQ5G/M\\="','"owYAOAcGgy8DvRUAAAAASUVORJ0\\="','"oweuQmCCAABkAegDhQAAfACJUAQ\\="','"owhORw0KGgoAAAANSUhEUgAAAK8\\="','"owkUAAAAGggCAAAAOOHrKgAAALY\\="','"owpDSURBVDgRY2AYBaMhMGhDgNw\\="','"owvx////ZDuOiWydQI0sk76Tr/8\\="','"owydIpsp0szI8H6AAowiZ7MwHC4\\="','"ow0aoNBmYbg/YDZfGSCbKYoqAGY\\="','"ow4jdAkOQ3Q6ewAAAABJRU5EriM\\="','"ow9CYIIAAGQB6AOIAAB/AIlQTuI\\="','"oxBHDQoaCgAAAA1JSERSAAAAFO0\\="','"oxEAAAAaCAIAAAA44esqAAAARvw\\="','"oxJJREFUOBFjYBh5gPH///9k+/M\\="','"oxOaiWydQI0sk76Tr50imynSzLE\\="','"oxTI8H6AAowiZ7MwHBqKoc3CcGs\\="','"oxV/aDr7ytB09q2h6GxGBrYByk0\\="','"oxaSACwZCvyncH8MAAAAAElFTgI\\="','"oxdErkJgggAAZAHoA4UAAHwAiQA\\="','"oxhQTkcNChoKAAAADUlIRFIAAO8\\="','"oxkAFAAAABoIAgAAADjh6yoAAKY\\="','"oxoAQ0lEQVQ4EWNgGAWjITBoQ0w\\="','"oxuA8f///2Q7jolsnUCNLJO+k8A\\="','"oxyvnSKbKdLMyPB+gAKMImezMI0\\="','"ox0cGqDQZmG4P2A2XxkgmymKKmo\\="','"ox4AI3QJDkN0OnsAAAAASUVORJ0\\="','"o/+uQmCCAABkAegDAAAAAAAAANw\\="','"MwUEJR3/AAAAAAAAAAAAAAAAAPU\\="']],
         2:["name":"Love Heart", "cmd":['"owABFAxT/6YAQAABPgEANQGJUCM\\="','"owFORw0KGgoAAAANSUhEUgAAAKY\\="','"owIUAAAAGggCAAAAOOHrKgAAAL0\\="','"owP8SURBVDgR7ZM9EoIwEIWDw1s\\="','"owQJLKwpxVM4lBzYkvEUaklt4SE\\="','"owUV9GWevqxryIC2xpm4f9++Jec\\="','"owaEEP5r0QlUqm5DKxvGGT+zbKA\\="','"owdWqZoFyJ26LexxuDHSGx7ZQ18\\="','"owjYqJVSK4Q+SdVlDTTiIBHmkuo\\="','"owkmXVU42Vd5/K8l29yP8Mdqj2c\\="','"owpdiwpyZaA1hk/KSDiSz8ldmNU\\="','"ows1EuxIFhVIFCTYtpxpx/esx5A\\="','"owx2Z1Zo0Ycr3vbPykvFKQsqKX8\\="','"ow3vhgv8plsXpkUKpAqeMK/rTDs\\="','"ow5edzt9GOjHK+EuuXQoKxJuGrk\\="','"ow8bTlnfDsyOb8oMZfVJWlmvTKM\\="','"oxDY6jOSJfMwouJ1+E6TTTNjM/g\\="','"oxGBXZ9UllTZpCF+suLrxAM5TEw\\="','"oxJaNdTb2RsAAAAASUVORK5CYJk\\="','"o/+CAV//Af//AAAAAAAAAAAAAH4\\="','"MwUENx3/AAAAAAAAAAAAAAAAAOc\\="']],
         3:["name":"Sunset", "cmd":['"owABJAxT/wBcAAADEAEABwGJULc\\="','"owFORw0KGgoAAAANSUhEUgAAAKY\\="','"owIUAAAAGggCAAAAOOHrKgAAAL0\\="','"owPOSURBVDgR7ZHBFYJADERn8es\\="','"owTgRS3IAqzAUuxCSqEBLMAqrPU\\="','"owVCb15wlkDIulnUmwdygLzM/G4\\="','"owbZsABLLTfwVzfQ4aD7BO2+aVk\\="','"oweUDLjQ/wOspBxDPoEpS2S+xT0\\="','"owgbKYZKfSK7JvWkTTPA84ynNpY\\="','"owkMimvnGpfvcO/lXa4CkWRVnnc\\="','"owrGuEiyPHUgqU7f3JvlMcl6yJQ\\="','"owuoWmmEa7SjXHznnsDFdHrCo/g\\="','"owyAHl1PsnaNrQsrSdV6VhvcLLw\\="','"ow1wxXqPp52w59BO1JOcLA5m21k\\="','"ow54i2kvhnDm7ygXb2Em6ANcjsk\\="','"ow+Nygu6wjSzs69tPAAAAABJRV4\\="','"oxBORK5CYIIDX2QB//+7AACyAIc\\="','"oxGJUE5HDQoaCgAAAA1JSERSAG8\\="','"oxIAABQAAAAaCAIAAAA44esqAK0\\="','"oxMAAHlJREFUOBFjYBiSgBGXq9w\\="','"oxTvuqLIKO9G4UI42DUDdf4TYIQ\\="','"oxVCVs704R+mfiya4TpVtP5B9Hk\\="','"oxbfuQYyCFM/ivHIVsF1AgWR2Z0\\="','"oxfIanBqRlaEi41TM8SpEG3IbEo\\="','"oxhkg7D4GSgN9zZcKaaHgVLYNYM\\="','"oxlD9MN1AhmYQY0sO8oeDYHREHo\\="','"oxoYDCEAAKblHAz50hduAAAAAI0\\="','"oxtJRU5ErkJgggJX/wL//4YAAJ4\\="','"oxx9AIlQTkcNChoKAAAADUlIRE0\\="','"ox1SAAAAFAAAABoIAgAAADjh69o\\="','"ox4qAAAARElEQVQ4EWP8z0A+YKw\\="','"ox8iXysDwxDVzMLAoEa2t4eon3Y\\="','"oyApcjajAQP5aYwim8nUfAEcvSs\\="','"oyGMDEPM2ZBESaafB1oz2TlqVEA\\="','"oyIjvUMAAKKmBEkH8jvaAAAAAAE\\="','"o/9JRU5ErkJgggAAGgP//wAAAE0\\="','"MwUEJB3/AAAAAAAAAAAAAAAAAPQ\\="']],
@@ -2103,29 +2122,29 @@ private def lightEffect_Curtain_Light() {
 }
 
 private def lightEffect_Tri_Light() {
-    state.lightEffect_Tri_Light = [:]
-    state.lightEffect_Tri_Light = [
+    atomicState.lightEffect_Tri_Light = [:]
+    atomicState.lightEffect_Tri_Light = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
 }
 
 private def lightEffect_Cylinder_Lamp() {
-    state.lightEffect_Cylinder_Lamp = [:]
-    state.lightEffect_Cylinder_Lamp = [
+    atomicState.lightEffect_Cylinder_Lamp = [:]
+    atomicState.lightEffect_Cylinder_Lamp = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
 }
 
 private def lightEffect_TV_Light_Bar() {
-    state.lightEffect_TV_Light_Bar = [:]
-    state.lightEffect_TV_Light_Bar = [
+    atomicState.lightEffect_TV_Light_Bar = [:]
+    atomicState.lightEffect_TV_Light_Bar = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
 }
 
 private def lightEffect_Outdoor_Flood_Light() {
-    state.lightEffect_Outdoor_Flood_Light = [:]
-    state.lightEffect_Outdoor_Flood_Light = [
+    atomicState.lightEffect_Outdoor_Flood_Light = [:]
+    atomicState.lightEffect_Outdoor_Flood_Light = [
         101:["name":"Firefly", "cmd":['"owABBAICHQAAAAEAAfFMA8kKCsw\\="','"owED7RQCB/9eCP53AACAAACAAH0\\="','"owIdAAICAQAB/2YDzAoKAQABAug\\="','"o///5Af/hwcAAIAAAIAFAAAAADo\\="','"MwUEKQoAAAAAAAAAAAAAAAAAABE="']],
         102:["name":"Karst Cave", "cmd":['"owABAwIBJgAAAAEAAf+YA8QKCiQ\\="','"owEB/BQFvQD/AAD//wAAAP8A/ww\\="','"o/9/AAAA+gAAAAAAAAAAAAAAANk\\="','"MwUELgoAAAAAAAAAAAAAAAAAABY="']],
         103:["name":"Glacier", "cmd":['"owABBAICGgAAAAEAAdrTAMYUFHM\\="','"owEAgBQBAP//FADEAACAARoAAHw\\="','"owIAAQAB0H8ByRQUAIAUAQfJ/2I\\="','"o/8EAPIAAIAAAAAAAAAAAAAAACo\\="','"MwUEJAoAAAAAAAAAAAAAAAAAABw="']],
