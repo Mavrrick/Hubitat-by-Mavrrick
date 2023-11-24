@@ -986,59 +986,61 @@ private def lightEffectSetup() {
     state.remove("lightEffects") // remove legacy value if still exists.
     List childTypes = getChildDevices().data.DevType
     logger("lightEffectSetup() Child Types ${childTypes}", 'debug')
-    if (childTypes.contains("RGBIC_Strip")) {
+    if (childTypes.contains("RGBIC_Strip") && state.lightEffect_RGBIC_Strip == null) {
+            logger("lightEffectSetup() executing lightEffect_RGBIC_Strip()", 'debug')
         lightEffect_RGBIC_Strip()
     }
-    if (childTypes.contains("Table_Lamp")) {
+    if (childTypes.contains("Table_Lamp") && state.lightEffect_Table_Lamp == null) {
         lightEffect_Table_Lamp()
     }
-    if (childTypes.contains("Y_Light")) {
+    if (childTypes.contains("Y_Light") && state.lightEffect_Y_Light == null) {
         lightEffect_Y_Light()
     }
-    if (childTypes.contains("Hexa_Light")) {
+    if (childTypes.contains("Hexa_Light") && state.lightEffect_Hexa_Light == null) {
         lightEffect_Hexa_Light()
     }
-    if (childTypes.contains("Lyra_Lamp")) {
+    if (childTypes.contains("Lyra_Lamp") && state.lightEffect_Lyra_Lamp == null) {
         lightEffect_Lyra_Lamp()
     }
-    if (childTypes.contains("Basic_Lamp")) {
+    if (childTypes.contains("Basic_Lamp") && state.lightEffect_Basic_Lamp == null) {
         lightEffect_Basic_Lamp()
     }
-    if (childTypes.contains("XMAS_Light")) {
+    if (childTypes.contains("XMAS_Light") && state.lightEffect_XMAS_Light == null) {
         lightEffect_XMAS_Light()
     }
-    if (childTypes.contains("Wall_Light_Bar")) {
+    if (childTypes.contains("Wall_Light_Bar") && state.lightEffect_Wall_Light_Bar == null) {
         lightEffect_Wall_Light_Bar()
     }
-    if (childTypes.contains("Indoor_Pod_Lights")) {
+    if (childTypes.contains("Indoor_Pod_Lights") && state.lightEffect_Indoor_Pod_Lights == null) {
         lightEffect_Indoor_Pod_Lights()
     }
-    if (childTypes.contains("Outdoor_Perm_Light")) {
+    if (childTypes.contains("Outdoor_Perm_Light") && state.lightEffect_Outdoor_Perm_Light == null) {
         lightEffect_Outdoor_Perm_Light()
     }
-    if (childTypes.contains("Outdoor_Pod_Light")) {
+    if (childTypes.contains("Outdoor_Pod_Light") && state.lightEffect_Outdoor_Pod_Light == null) {
         lightEffect_Outdoor_Pod_Light()
     }
-    if (childTypes.contains("Curtain_Light")) {
+    if (childTypes.contains("Curtain_Light") && state.lightEffect_Curtain_Light == null) {
         lightEffect_Curtain_Light()
     }
-    if (childTypes.contains("Outdoor_String_Light")) {
+    if (childTypes.contains("Outdoor_String_Light") && state.lightEffect_Outdoor_String_Light == null) {
         lightEffect_Outdoor_String_Light()
     }
-    if (childTypes.contains("Tri_Light")) {
+    if (childTypes.contains("Tri_Light") && state.lightEffect_Tri_Light == null) {
         lightEffect_Tri_Light()
     }
-    if (childTypes.contains("Cylinder_Lamp")) {
+    if (childTypes.contains("Cylinder_Lamp") && state.lightEffect_Cylinder_Lamp == null) {
         lightEffect_Cylinder_Lamp()
     }
-    if (childTypes.contains("TV_Light_Bar")) {
+    if (childTypes.contains("TV_Light_Bar") && state.lightEffect_TV_Light_Bar == null) {
         lightEffect_TV_Light_Bar()
     }
-    if (childTypes.contains("Outdoor_Flood_Light")) {
+    if (childTypes.contains("Outdoor_Flood_Light") && state.lightEffect_Outdoor_Flood_Light == null) {
         lightEffect_Outdoor_Flood_Light()
     }
     logger("lightEffectSetup() Light Effect Setup Complete", 'debug')
 }
+
 
 private def lightEffect_Table_Lamp() {
     atomicState.lightEffect_Table_Lamp = [:]
