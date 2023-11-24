@@ -343,14 +343,7 @@ def refresh() {
 }
 
 def updated() {
-    if (debugLog) {log.warn "updated(): Driver Udated"}
-    if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "updated(): Device is retrievable. Setting up Polling"}
-        unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-    }
-    if (debugLog) runIn(1800, logsOff) 
+    configure()
 }
 
 def configure() {
@@ -366,10 +359,6 @@ def configure() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}
-    if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
-    }
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
@@ -459,4 +448,11 @@ def getIPString() {
 def parse(message) {  
   log.error "Got something to parseUDP"
   log.error "UDP Response -> ${message}"    
+}
+
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
+    }
 }
