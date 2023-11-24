@@ -294,7 +294,7 @@ try {
 
 def updated() {
 if (logEnable) runIn(1800, logsOff)
-
+    retrieveOptions()
 }
 
 
@@ -304,16 +304,10 @@ def installed(){
 }
 
 def initialize() {
-    if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
-    }
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-        unschedule()
     }
-    retrieveOptions()
 }
 
 def logsOff() {
@@ -357,5 +351,12 @@ def retrieveCmd(cmd, payload) {
                 }
             }
         }
+    }
+}
+
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
     }
 }
