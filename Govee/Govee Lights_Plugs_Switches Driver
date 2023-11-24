@@ -491,42 +491,32 @@ def refresh() {
 }
 
 def updated() {
-    if (debugLog) {log.warn "updated(): Driver Udated"}
-    if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "updated(): Device is retrievable. Setting up Polling"}
-        unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-    }
-    if (lanControl && ip) { 
-        getDevType()
-        parent.lightEffectSetup()
-        retrieveScenes()
-    }    
-    if (debugLog) runIn(1800, logsOff) 
+    configure() 
 }
 
 def configure() {
-    if (debugLog) {log.warn "configure(): Configuration Changed"}
+    if (debugLog) {log.warn "configure(): Driver Updated"}
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "configure(): Device is retrievable. Setting up Polling"}
         unschedule()
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
-        if (lanControl && ip) {
+    if (lanControl && ip) { 
         getDevType()
+        if ( parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
+            if (debugLog) {log.warn "configure(): No Scenes present for device type. Initiate setup in parent app"}
+            parent.lightEffectSetup()
+            retrieveScenes()
+        } else {
         retrieveScenes()
-    }
+        }
+    }    
     if (debugLog) runIn(1800, logsOff) 
 }
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
-    if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
-    }
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
@@ -536,10 +526,6 @@ def initialize(){
         unschedule()
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
-    }
-    if (lanControl && ip) {
-        getDevType()
-        retrieveScenes()
     }
     if (debugLog) runIn(1800, logsOff)
 }
@@ -849,10 +835,10 @@ def retrieveScenes() {
             state.diyEffects = state.diyEffects.sort()
         }
     }
-    if ( parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
+    if ( parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else { 
-        parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
+        parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
             if (it.getKey() == "999") {
                 if (debugLog) {log.debug ("retrieveScenes(): Processing max scene value ${it.getKey()} of ${it.value.maxScene}")}
                 device.updateDataValue("maxScene", it.value.maxScene.toString())
@@ -988,4 +974,11 @@ def getDevType() {
         break; 
         
     }       
+}
+
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "apiKeyUpdate(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
+    }
 }
