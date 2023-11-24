@@ -266,19 +266,23 @@ def refresh() {
 
 def updated() {
     if (debugLog) {log.warn "updated(): Driver Udated"}
-    if (debugLog) runIn(1800, logsOff) 
+    configure()
 }
 
 def configure() {
     if (debugLog) {log.warn "configure(): Configuration Changed"}
-
+    if ( parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
+    if (debugLog) {log.warn "configure(): No Scenes present for device type. Initiate setup in parent app"}
+        parent.lightEffectSetup()
+        retrieveScenes()
+        } else {
+        retrieveScenes()
+        }
     if (debugLog) runIn(1800, logsOff) 
 }
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
-    getDevType()
-    retrieveScenes()
     if (debugLog) runIn(1800, logsOff)
 }
 
@@ -289,6 +293,8 @@ def installed(){
         sendEvent(name: "saturation", value: 100)
         sendEvent(name: "level", value: 100) 
         getDevType()
+        parent.lightEffectSetup()
+        retrieveScenes()
 }
 
 def logsOff() {
@@ -581,10 +587,10 @@ def retrieveScenes() {
             state.diyEffects = state.diyEffects.sort()
         }
     }
-    if ( parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
+    if ( parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
         if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
     } else { 
-        parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
+        parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
             if (it.getKey() == "999") {
                 if (debugLog) {log.debug ("retrieveScenes(): Processing max scene value ${it.getKey()} of ${it.value.maxScene}")}
                 device.updateDataValue("maxScene", it.value.maxScene.toString())
@@ -720,4 +726,11 @@ def getDevType() {
         break; 
         
     }       
+}
+
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Lan Only Device"}
+//        device.updateDataValue("apiKey", parent?.APIKey)
+    }
 }
