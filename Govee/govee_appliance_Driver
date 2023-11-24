@@ -129,25 +129,19 @@ try {
 
 def updated() {
 if (logEnable) runIn(1800, logsOff)
-
+    retrieveOptions()
 }
 
 
 def installed(){
-    retrieveOptions()
-  
+    retrieveOptions()  
 }
 
 def initialize() {
-    if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
-    }
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
     }
-    retrieveOptions()
 }
 
 def logsOff() {
@@ -155,8 +149,7 @@ def logsOff() {
     device.updateSetting("logEnable", [value: "false", type: "bool"])
 }
 
-def retrieveOptions() {
-    
+def retrieveOptions() {    
     if (debugLog) {log.error "retrieveOptions(): API: ${parent.state.goveeAppAPI} DNI: ${device.getDeviceNetworkId()}"}
     parent.state.goveeAppAPI.devices.each {
         if (it.device == device.getDeviceNetworkId()) {        
@@ -193,5 +186,12 @@ def retrieveCmd(cmd, payload) {
                        }
             }
         }
+    }
+}
+
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
     }
 }
