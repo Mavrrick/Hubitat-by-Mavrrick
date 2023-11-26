@@ -696,7 +696,7 @@ private goveeLightAdd(goveeAdd) {
         String retrievable = it.retrievable
         String supportCmds = it.supportCmds
         if (childDNI.contains(deviceID) == false) {
-            logger("goveeLightAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
+            logger("goveeLightAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug')            
             if (supportCmds.contains('colorTem') && supportCmds.contains('color')) {
                 String ctMin = it.properties.colorTem.range.min
                 String ctMax = it.properties.colorTem.range.max
@@ -716,7 +716,27 @@ private goveeLightAdd(goveeAdd) {
                             ],
                         'completedSetup': true,
                     ])
-                }
+                } 
+            } else if (deviceModel == "H6091" || deviceModel == "H6092") {
+                String ctMin = 'N/A'
+                String ctMax = 'N/A'
+                devices.findAll { it == deviceName } .each {
+                    logger("goveeLightAdd()  configuring ${deviceName}", 'info')
+                    addChildDevice('Mavrrick', 'Govee Galaxy Projector', "${deviceID}" , location.hubs[0].id, [
+                        'name': 'Govee Galaxy Projector',
+                        'label': deviceName,
+                        'data': [
+                            'deviceID': deviceID,
+                            'deviceModel': deviceModel,
+                            'retrievable': retrievable,
+                            'apiKey': settings.APIKey,
+                            'commands': supportCmds,
+                            'ctMin': ctMin,
+                            'ctMax': ctMax
+                            ],
+                        'completedSetup': true,
+                    ])
+                }               
             } else if (supportCmds.contains('brightness')) {
                 String ctMin = 'N/A'
                 String ctMax = 'N/A'
@@ -833,7 +853,6 @@ private goveeAppAdd(goveeAdd2) {
                         'data': [
                             'deviceID': deviceID,
                             'deviceModel': deviceModel,
-                            // Appliances are not retrieveable   'retrievable': retrievable,
                             'apiKey': settings.APIKey,
                             'commands': supportCmds
                             ],
@@ -850,7 +869,6 @@ private goveeAppAdd(goveeAdd2) {
                             'data': [
                                 'deviceID': deviceID,
                                 'deviceModel': deviceModel,
-                                // Appliances are not retrieveable   'retrievable': retrievable,
                                 'apiKey': settings.APIKey,
                                 'commands': supportCmds   
                              ],
@@ -867,7 +885,6 @@ private goveeAppAdd(goveeAdd2) {
                             'data': [
                                 'deviceID': deviceID,
                                 'deviceModel': deviceModel,
-                                // Appliances are not retrieveable   'retrievable': retrievable,
                                 'apiKey': settings.APIKey,
                                 'commands': supportCmds
                             ],
@@ -884,7 +901,6 @@ private goveeAppAdd(goveeAdd2) {
                             'data': [
                                 'deviceID': deviceID,
                                 'deviceModel': deviceModel,
-                                // Appliances are not retrieveable   'retrievable': retrievable,
                                 'apiKey': settings.APIKey,
                                 'commands': supportCmds
                             ],
@@ -929,6 +945,7 @@ private def appButtonHandler(button) {
         state.remove("lightEffect_Cylinder_Lamp")
         state.remove("lightEffect_TV_Light_Bar")
         state.remove("lightEffect_Outdoor_Flood_Light")
+        state.remove("lightEffect_Galaxy_Projector")
         lightEffectSetup()
     } else if (button == "pushScenesUpdate") {
         List child = getChildDevices()
@@ -1037,6 +1054,9 @@ private def lightEffectSetup() {
     }
     if (childTypes.contains("Outdoor_Flood_Light") && state.lightEffect_Outdoor_Flood_Light == null) {
         lightEffect_Outdoor_Flood_Light()
+    }
+    if (childTypes.contains("Galaxy_Projector") && state.lightEffect_Galaxy_Projector == null) {
+        lightEffect_Galaxy_Projector()
     }
     logger("lightEffectSetup() Light Effect Setup Complete", 'debug')
 }
@@ -2181,5 +2201,49 @@ private def lightEffect_Outdoor_Flood_Light() {
         132:["name":"Winter", "cmd":['"owABBAICGgACBgEAAf8fAMkUFJE\\="','"owEAgBQB////AACAAACAABoAAdM\\="','"owIABgAB/0cByTL6AOoUAX/z/5I\\="','"o/8EAPQAAIAAAAAAAAAAAAAAACw\\="','"MwUEPgoAAAAAAAAAAAAAAAAAAAY="']], 
         133:["name":"Seasonal", "cmd":['"owABBAICGgABAAQAAf//AAAUFLg\\="','"owEBADIB/71WFgD3AACABSMAAMM\\="','"owIAAQABgWUAgBQUAPgyBAD/APQ\\="','"o/8A////fwD///8DAOUAAIADAEY\\="','"MwUEPwoAAAAAAAAAAAAAAAAAAAc="']],
         999:["maxScene":133]
+    ]
+}
+
+private def lightEffect_Galaxy_Projector() {
+    atomicState.lightEffect_Galaxy_Projector = [:]
+    atomicState.lightEffect_Galaxy_Projector = [
+        101:["name":"Dusk", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEGwACAAAAAAAAAAAAAAAAACs\\="']], 
+        102:["name":"Stargazing", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEGQARAgAAAAAAAAAAAAAAADg\\="']], 
+        103:["name":"Awakening", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAKB4BPCwAAUH/AB8\\="','"o/8FCVnP5P/////67QJ5AAAAAE4\\="','"MwUEsB0bAgAAAAAAAAAAAAAAAIY\\="']], 
+        104:["name":"Sleep", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAKB4BMgUBATz/AEQ\\="','"o/8FBgB1wkhOygIAAAAAAAAAACY\\="','"MwUEsR0cAgAAAAAAAAAAAAAAAIA\\="']], 
+        105:["name":"Dreamland", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegABZBcBXxEAACj/AG0\\="','"o/8eA////wIAAAAAAAAAAAAAALw\\="','"MwUEsh0BAAAAAAAAAAAAAAAAAJw\\="']], 
+        106:["name":"Stars", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegABZCIBWhwAAQL/AHs\\="','"o/8eBgB1wmxx2QIFAAAAAAAAADA\\="','"MwUEsx0VAgAAAAAAAAAAAAAAAIs\\="']], 
+        107:["name":"Nebulae", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegABZBwAKB4AACj/AB8\\="','"o/8eA////wIAAAAAAAAAAAAAALw\\="','"MwUEtB0CAAAAAAAAAAAAAAAAAJk\\="']], 
+        108:["name":"Interstellar Travel", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegABZCcBVQoAAQ3/AGg\\="','"o/8FA2YAhAIFAAAAAAAAAAAAAL8\\="','"MwUEtR0DAAAAAAAAAAAAAAAAAJk\\="']], 
+        109:["name":"Cosmic Waves", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEIAAOAgAAAAAAAAAAAAAAAB4="']],
+        110:["name":"Big Universe", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegABZAwBWhEBAA//AFU\\="','"o/88A7Fj0wQFAHkAAAAAAAAAABo\\="','"MwUEth0SAgAAAAAAAAAAAAAAAIk\\="']], 
+        111:["name":"Space Walk", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEHQAMAgAAAAAAAAAAAAAAACE\\="']], 
+        112:["name":"Interstellar Voyage", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEGgAfAgAAAAAAAAAAAAAAADU\\="']], 
+        113:["name":"Vast Cosmos", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEHAAXAgAAAAAAAAAAAAAAADs\\="']], 
+        114:["name":"Aurora Borealis", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEHgANAgAAAAAAAAAAAAAAACM\\="']], 
+        115:["name":"Jungle Secrets", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEGAAgAgAAAAAAAAAAAAAAAAg\\="']], 
+        116:["name":"Spring Breeze", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAKB4BPBwBAVD/AD8\\="','"o/8PBv/6g/+/wgJ5AAAAAAAAACo\\="','"MwUEtx0TAgAAAAAAAAAAAAAAAIk\\="']], 
+        117:["name":"Running Water", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEFwAWAgAAAAAAAAAAAAAAADE\\="']], 
+        118:["name":"Forest", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAZB4BZFAAAVr/AGw\\="','"o/8SDHLKAJnVE77oANrzYgIJALM\\="','"MwUEgh5CAgAAAAAAAAAAAAAAAO4\\="']], 
+        119:["name":"Sunset", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAKB4BXxkAAWT/AGw\\="','"o/8BA//ibwJ5AAAAAAAAAAAAAFc\\="','"MwUEgx5KAgAAAAAAAAAAAAAAAOc\\="']], 
+        120:["name":"Ocean", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAZB4BZFoAAWT/AFg\\="','"o/9QBgAA/1Ol4QIJAAAAAAAAAOk\\="','"MwUEhB5FAgAAAAAAAAAAAAAAAO8\\="']], 
+        121:["name":"Bonfire", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAHgoBPFoAAWT/AG4\\="','"o/9UBv+GAPCwAAIJAAAAAAAAADw\\="','"MwUEhR5IAgAAAAAAAAAAAAAAAOM\\="']], 
+        122:["name":"Soothing", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAZBQBRgYAAWT/ACw\\="','"o/8FCdrzYv/ib//wbAQAAHkAAHc\\="','"MwUEuB0eAgAAAAAAAAAAAAAAAIs\\="']], 
+        123:["name":"Romantic", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEHwAYAgAAAAAAAAAAAAAAADc\\="']], 
+        124:["name":"Profound", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAZBQBPBcBAUH/AGM\\="','"o/8PBksZtwA6twIUAAAAAAAAACs\\="','"MwUEuR0aAgAAAAAAAAAAAAAAAI4\\="']], 
+        125:["name":"Mysterious", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegABZBwBSycBAAr/AGc\\="','"o/8PBgBWogASiQIFAAAAAAAAAD0\\="','"MwUEuh0EAAAAAAAAAAAAAAAAAJE\\="']], 
+        126:["name":"Quiet", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAKB4BRgYAATf/ADk\\="','"o/8FBgZRwYMNtwZ5AAAAFAAAAJs\\="','"MwUEux0FAAAAAAAAAAAAAAAAAJE\\="']], 
+        127:["name":"Joyful", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABA1YLegAAPAoBZBkAAVD/AGI\\="','"owEoEvV7//+vh/+13v/9oN22/5w\\="','"o/+2/6cEAAAJAAAAAAAAAAAAAL8\\="','"MwUEjB5DAgAAAAAAAAAAAAAAAOE\\="']], 
+        128:["name":"Spring Shower", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAALRgBLUEBATz/ABw\\="','"o/8oBgCgxj7P5AJ5AAAAAAAAAHo\\="','"MwUEhh4+AgAAAAAAAAAAAAAAAJY\\="']], 
+        129:["name":"Drizzle", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAALRgBKFABAUv/AH8\\="','"o/8oBtn/fuv/mQIAAAAAAAAAAKU\\="','"MwUEhx5LAgAAAAAAAAAAAAAAAOI\\="']], 
+        130:["name":"Thunderstorm", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAALRgBRmIBAUH/ACk\\="','"o/9dCQA0oGQAl2OL2gQAAAIAAFs\\="','"MwUEiB5MAgAAAAAAAAAAAAAAAOo\\="']], 
+        131:["name":"Sunny Rain", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAACwoBM2IBAUP/AGo\\="','"o/8YCQH/p33/Zpz/3wIJAAAAAEc\\="','"MwUEiR5GAgAAAAAAAAAAAAAAAOE\\="']], 
+        132:["name":"Heavy Rain", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAACwoBM2QBATL/AB0\\="','"o/9VDAAPrQA0oABMlmxx2QIJACY\\="','"MwUEih5HAgAAAAAAAAAAAAAAAOM\\="']], 
+        133:["name":"Sprinkle", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAPAoBHhABATL/AHM\\="','"o/88BgCStP+13gIJAAAAAAAAAN8\\="','"MwUEix5JAgAAAAAAAAAAAAAAAOw\\="']], 
+        134:["name":"Christmas", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAHgoBR1oAAWT/ABU\\="','"o/9hBv9AAgfKAAQJAAAAAAAAAEY\\="','"MwUEjR4/AgAAAAAAAAAAAAAAAJw\\="']], 
+        135:["name":"Halloween", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAPAoBZFoBAVH/ACA\\="','"o/9GCYMNt/+OQgAAAAIJAAAAABI\\="','"MwUEjh49AgAAAAAAAAAAAAAAAJ0\\="']], 
+        136:["name":"Thanksgiving", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAKB4BUw8BAVr/AEk\\="','"o/8MBv+cAP/mAAYJAAAAeQAAAFo\\="','"MwUEjx5AAgAAAAAAAAAAAAAAAOE\\="']], 
+        137:["name":"Party", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABA1YLegAAZDIBWlMAAUH/AGc\\="','"owFkDwBl/7YA//9r9v+AbP+5Smc\\="','"o/8CCQAAAAAAAAAAAAAAAAAAAFc\\="','"MwUEkB5EAgAAAAAAAAAAAAAAAPo\\="']], 
+		999:["maxScene":137]
     ]
 }
