@@ -843,23 +843,7 @@ private goveeAppAdd(goveeAdd2) {
             String supportCmds = it.supportCmds
             if (childDNI.contains(deviceID) == false) {
                 logger("goveeAppAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
-                if (supportCmds.contains('gear')) {
-                    logger("goveeAppAdd() $deviceName    Address: $deviceID    Model: $deviceModel", 'debug')
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeAppAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', 'Govee Appliance Driver', "${deviceID}" , location.hubs[0].id, [
-                        'name': 'Govee Appliance',
-                        'label': deviceName,
-                        'data': [
-                            'deviceID': deviceID,
-                            'deviceModel': deviceModel,
-                            'apiKey': settings.APIKey,
-                            'commands': supportCmds
-                            ],
-                        'completedSetup': true,
-                        ])
-                    }
-                } else if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch') && supportCmds.contains('whiteNoise:switch') ) {
+                if (supportCmds.contains('mist:switch') && supportCmds.contains('light:switch') && supportCmds.contains('whiteNoise:switch') ) {
                     logger("goveeAppAdd() $deviceName    Address: $deviceID    Model: $deviceModel", 'debug')
                     devices.findAll { it == deviceName } .each {
                         logger("goveeAppAdd()  configuring ${deviceName}", 'info')
@@ -889,6 +873,22 @@ private goveeAppAdd(goveeAdd2) {
                                 'commands': supportCmds
                             ],
                             'completedSetup': true,
+                        ])
+                    }
+                } else if (supportCmds.contains('gear')) {
+                    logger("goveeAppAdd() $deviceName    Address: $deviceID    Model: $deviceModel", 'debug')
+                    devices.findAll { it == deviceName } .each {
+                        logger("goveeAppAdd()  configuring ${deviceName}", 'info')
+                        addChildDevice('Mavrrick', 'Govee Appliance Driver', "${deviceID}" , location.hubs[0].id, [
+                        'name': 'Govee Appliance',
+                        'label': deviceName,
+                        'data': [
+                            'deviceID': deviceID,
+                            'deviceModel': deviceModel,
+                            'apiKey': settings.APIKey,
+                            'commands': supportCmds
+                            ],
+                        'completedSetup': true,
                         ])
                     }
                 } else {
