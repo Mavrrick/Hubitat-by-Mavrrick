@@ -1,17 +1,17 @@
 {
-  "packageName": "Govee Integration v2",
-  "author": "Mavrrick",
-  "version": "1.0",
-  "minimumHEVersion": "2.3.6",
-  "dateReleased": "2023-12-09",
-  "releaseNotes": "Initial release of Govee Integration with new API",
-	"bundles": [
-		{
-		"id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
-		"name": "Govee_Integration_v2",
-		"namespace": "Mavrrick",
-		"location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/dev/Govee/bundle/Govee_Integration_v2.zip",
-		"required": true
-		}
-	]
+    "packageName": "Govee Integration v2",
+    "author": "Mavrrick",
+    "version": "1.0",
+    "minimumHEVersion": "2.3.6",
+    "dateReleased": "2023-12-09",
+    "releaseNotes": "Initial release of Govee Integration with new API",
+    "bundles": [
+        {
+            "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
+            "name": "Govee_Integration_v2",
+            "namespace": "Mavrrick",
+            "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/dev/Govee/bundle/Govee_Integration_v2.zip",
+            "required": true
+        }
+    ]
 }
