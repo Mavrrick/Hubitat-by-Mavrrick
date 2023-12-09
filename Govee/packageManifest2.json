@@ -3,7 +3,7 @@
   "author": "Mavrrick",
   "version": "1.0",
   "minimumHEVersion": "2.3.6",
-  "dateReleased": "2023-12-09"
+  "dateReleased": "2023-12-09",
   "releaseNotes": "Initial release of Govee Integration with new API",
 	"bundles": [
 		{
