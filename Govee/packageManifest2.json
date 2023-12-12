@@ -4,7 +4,7 @@
   "version": "2.0.4",
   "minimumHEVersion": "2.3.6",
   "dateReleased": "2023-12-09",
-  "releaseNotes": "2.04 Added two drivers to help with devices that did match capabilities\nUpdate Aroma difuser driver\nInitial release of Govee Integration with new API",
+  "releaseNotes": "2.04 Added two drivers to help with devices that did not match capabilities\nUpdate Aroma difuser driver\nInitial release of Govee Integration with new API",
    "bundles": [
 		{
 		"id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
