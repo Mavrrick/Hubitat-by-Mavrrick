@@ -503,9 +503,9 @@ def updated() {
         if (state?.diyEffects == null) {
         state?.diyEffects = [:]
     }
-    if (state?.lightEffects == null) {
+/*    if (state?.lightEffects == null) {
         state?.diyEffects = [:]
-    }
+    } */
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
     List child = getChildDevices()
 //    List childDNI = child.deviceNetworkId
