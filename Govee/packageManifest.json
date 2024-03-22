@@ -8,7 +8,7 @@
   "apps": [
     {
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
-      "name": "Govee Integration",
+      "name": "Govee Integration v1",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_HE_integration",
       "required": true,
