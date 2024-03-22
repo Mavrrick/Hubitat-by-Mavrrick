@@ -15,7 +15,7 @@
  */
 
 definition(
-    name: 'Govee Integration ',
+    name: 'Govee Integration v1',
     namespace: 'Mavrrick',
     author: 'CRAIG KING',
     description: 'Govee Integration for HE',
