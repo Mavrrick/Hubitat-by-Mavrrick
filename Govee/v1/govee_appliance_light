@@ -1,0 +1,362 @@
+// Hubitat driver for Govee Appliances with Lights using Cloud API
+// Version 1.0.19
+//
+// 2022-09-12 -	Initial Driver release for Govee Appliance devices
+// 2022-10-19 - Added Attributes to driver
+// 2022-11-3 - Send Rate Limits to parent.
+// 2022-11-5 - Added update to Switch value to On when Gear or Mode are used
+// 2022-11-20 - Added a pending change condition and validation that the call was successful
+// ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
+// 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
+// 2022-12-19 Added Actuator capbility to more easily integrate with RM
+// 2023-4-4   API Key update is now possible
+// 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
+
+// "supportCmds": [ "turn", "mode", "mist:switch", "mist:duration", "mist:gear", "light:switch", "light:duration", "light:brightness", "light:color", "light:scene" ]
+
+import hubitat.helper.InterfaceUtils
+import hubitat.helper.HexUtils
+
+metadata {
+	definition(name: "Govee Appliance Driver with Lights", namespace: "Mavrrick", author: "Mavrrick") {
+		capability "Switch"
+		capability "Actuator"
+        capability "Initialize"
+        capability "ColorControl"          
+        attribute "mist_gear", "number"
+        attribute "mist_switch", "string"
+        attribute "mode", "string"
+        attribute "cloudAPI", "string"
+        attribute "light_scene","string"
+        attribute "light_brightness","number"
+        attribute "light_switch","string"        
+
+//legacy commands for Appliance devices        
+        command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the device operating mode. Valid values are   "]]
+
+//new commands for Appliance devices        
+        command "mist_switch_on" , [[name: "Mist on/off", description: "will turn on missting effect  "]]
+        command "mist_switch_off" , [[name: "Mist on/off", description: "will turn off the misting effect "]]
+        command "mist_duration" , [[name: "Mist duration", type: 'NUMBER', description: "will set a sleep timer for the misting  "]]
+        command "mist_gear" , [[name: "Mist Speed", type: 'NUMBER', description: "Gear will adjust speed of misting from device  "]]
+		command "light_switch_on" , [[name: "light on", description: "Will turn Light on"]]
+		command "light_switch_off" , [[name: "light off", description: "will turn light off "]]
+        command "light_duration" , [[name: "light duration", type: 'NUMBER', description: "Will set sleep timer for light "]]
+        command "light_brightness" , [[name: "Brightness", type: 'NUMBER', description: "Not currently working  ", range: '0..100']]
+        command "light_scene" , [[name: "light scene", type: 'NUMBER', description: "Allows you to select scene for light effects  "]]
+        
+    }
+
+	preferences {		
+		section("Device Info") {
+            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+		}
+		
+	}
+}
+
+def parse(String description) {
+
+}
+
+
+/*
+Commands for standard functions for entire device
+*/
+def on() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("turn", "on")
+}
+
+def off() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("turn", "off")
+}
+
+def mode(modeValue){
+    sendEvent(name: "cloudAPI", value: "Pending")    
+    sendCommand("mode", modeValue)
+}
+
+/*
+Commands for Misting functions functions
+*/
+
+def mist_duration(duration){
+    sendEvent(name: "cloudAPI", value: "Pending")
+    sendCommand("mist:duration", duration)
+} 
+
+def mist_gear(gear){
+    sendEvent(name: "cloudAPI", value: "Pending")
+    sendCommand("mist:gear", gear)
+}
+
+def mist_switch_on() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("mist:switch", 1 )
+}
+
+def mist_switch_off() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("mist:switch", 0 )
+}
+
+/*
+Standard commands for Light functions of device.
+*/
+
+def light_switch_on() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("light:switch", 1 )
+}
+
+def light_switch_off() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("light:switch", 0 )
+}
+
+def light_brightness(bright) {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("light:brightness", bright)
+}
+
+def light_duration(ltdur) {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("light:duration", ltdur)
+}
+
+def light_scene(sceneNum) {
+    sendEvent(name: "cloudAPI", value: "Pending")
+    sendCommand("light:switch", 1 )
+	sendCommand("light:scene", sceneNum)
+}
+
+def setColor(value) {
+    if (debugLog) { log.debug "setColor(): HSBColor = "+ value + "${device.currentValue("level")}"}
+	if (value instanceof Map) {
+		def h = value.containsKey("hue") ? value.hue : null
+		def s = value.containsKey("saturation") ? value.saturation : null
+		def b = value.containsKey("level") ? value.level : null
+        if (b == null) { b = device.currentValue("level") }
+		setHsb(h, s, b)
+	} else {
+        if (debugLog) {log.debug "setColor(): Invalid argument for setColor: ${value}"}
+    }
+}
+
+def setHsb(h,s,b)
+{
+
+	hsbcmd = [h,s,b]
+    if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
+
+	rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
+	def rgbmap = [:]
+	rgbmap.r = rgb[0]
+	rgbmap.g = rgb[1]
+	rgbmap.b = rgb[2]   
+     
+        if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setHsb(): CloudAPI already in retry state. Aborting call." 
+        } else { 
+        sendEvent(name: "cloudAPI", value: "Pending")
+        sendCommand("light:color", rgbmap)
+        }
+//    }
+    if(100 != device.currentValue("level")?.toInteger()) {
+    light_brightness(100)
+    }
+}
+
+def setHue(h)
+{
+    setHsb(h,device.currentValue( "saturation" )?:100,device.currentValue("level")?:100)
+}
+
+def setSaturation(s)
+{
+	setHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
+}
+
+/*
+Method for sending commands to Govee Cloud API
+*/
+
+private def sendCommand(String command, payload) {
+
+
+     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/appliance/devices/control',
+			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+            contentType: "application/json",      
+			body: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel"), cmd: ["name": command, "value": payload]],
+        ]
+    
+
+try {
+
+			httpPut(params) { resp ->
+				
+                if (debugLog) {log.debug "response.data="+resp.data}
+		        if (debugLog) { log.debug "response.data=" + resp.data.code }
+                if (resp.data.code == 200 && command == "turn") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: payload)
+                    }    
+                else if (resp.data.code == 200 && command == "mode") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
+                    retrieveCmd(cmd, payload)
+                    }
+                else if (resp.data.code == 200 && command == "mist:switch") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    retrieveCmd(command, payload)
+                    }
+                else if (resp.data.code == 200 && command == "light:switch") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    retrieveCmd(command, payload)
+                    }
+                else if (resp.data.code == 200 && command == "light:brightness") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "light_brightness", value: payload)
+                    }
+                else if (resp.data.code == 200 && command == "mist:gear") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "mist_switch", value: "on")
+                    retrieveCmd(command, payload)
+                    }
+                else if (resp.data.code == 200 && command == "mist:duration") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "mist_switch", value: "on")
+                    sendEvent(name: "mist_duration", value: payload)
+                    }
+                else if (resp.data.code == 200 && command == "light:duration") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "light_switch", value: "on")
+                    sendEvent(name: "light_duration", value: payload)
+                    }
+                else if (resp.data.code == 200 && command == "light:scene") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "light_switch", value: "on")
+                    sendEvent(name: "colorMode", value: "EFFECTS")
+                    retrieveCmd(command, payload)                   
+                    }
+               else if (resp.data.code == 200 && command == "light:color") {
+                    r=payload.r
+					g=payload.g
+					b=payload.b
+					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
+					hue=HSVlst[0].toInteger()
+					sat=HSVlst[1].toInteger()
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "light:switch", value: "on")
+                    sendEvent(name: "colorMode", value: "RGB")
+					sendEvent(name: "hue", value: hue)
+					sendEvent(name: "saturation", value: sat)
+                    }
+                resp.headers.each {
+                    if (debugLog) {log.debug "${it.name}: ${it.value}"}                    
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {
+                        state.DailyLimitRemaining = value
+                        parent.apiRateLimits("DailyLimitRemainingV2", value)
+                    }
+                    if (name == "API-RateLimit-Remaining") {
+                        state.MinRateLimitRemainig = value
+                        parent.apiRateLimits("MinRateLimitRemainigV2", value)
+                    }
+            }
+				return resp.data
+		        return resp.header
+		}
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+        if (e.statusCode == 429) {
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
+        else {
+          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+//            sendEvent(name: "cloudAPI", value: "Retry")
+//            pauseExecution(60000)
+//            sendCommand(command, payload)
+        }
+		return 'unknown'
+	}
+}
+
+
+def updated() {
+if (logEnable) runIn(1800, logsOff)
+    retrieveOptions()
+}
+
+
+def installed(){
+    retrieveOptions()
+  
+}
+
+def initialize() {
+    if (device.currentValue("cloudAPI") == "Retry") {
+        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
+        sendEvent(name: "cloudAPI", value: "Initialized")
+    }
+}
+
+def logsOff() {
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable", [value: "false", type: "bool"])
+}
+
+def retrieveOptions() {
+    
+    if (debugLog) {log.error "retrieveOptions(): API: ${parent.state.goveeAppAPI} DNI: ${device.getDeviceNetworkId()}"}
+    parent.state.goveeAppAPI.devices.each {
+        if (it.device == device.getDeviceNetworkId()) {        
+            if (debugLog) {log.error "retrieveOptions(): ${it.deviceID}, sku = ${it.model}, supported commands ${it.supportCmds}, menu properties ${it.properties} "}
+            it.properties.each{
+                String gvcmd = it.key
+                state."${gvcmd}"=[:]                
+                Map value = it.value    
+                if (debugLog) {log.error "retrieveOptions(): command = ${gvcmd}, options = ${value.options}"}
+                    value.options.each {
+                    if (debugLog) {log.error "retrieveOptions(): name  = ${it.name}, value for command = ${it.value}"}                        
+                    state."${gvcmd}".put(it.value,it.name)                        
+                    }
+                if (debugLog) {log.error "retrieveOptions(): keyset = ${state."${gvcmd}".keySet()}"}
+            }
+        }
+    }
+}
+
+def retrieveCmd(cmd, payload) {
+    String atrb = cmd.replaceAll(":", "_")
+    if (debugLog) {log.error "retrieveCmd(): ${parent.state.goveeAppAPI}"}
+    dni = device.getDeviceNetworkId()
+    if (debugLog) {log.error "retrieveCmd(): ${dni}"}
+    parent.state.goveeAppAPI.devices.each {
+        deviceID = it.device
+        if (deviceID == dni) {
+            it.properties."${cmd}".options.each{ 
+            if (debugLog) {log.error "retrieveCmd(): command = ${it} name = ${it.name} value ${it.value}"}   
+                if (it.value.toString() == payload.toString()) {
+                    sendEvent(name: cmd , value: it.name)
+                }
+            }
+        }
+    }
+}
+
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
+    }
+}
