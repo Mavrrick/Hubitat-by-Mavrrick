@@ -1,0 +1,197 @@
+// Hubitat driver for Govee Appliances using Cloud API
+// Version 1.0.19
+//
+// 2022-09-12 -	Initial Driver release for Govee Appliance devices
+// 2022-10-19 - Added Attributes to driver
+// 2022-11-3 - Send Rate Limits to parent.
+// 2022-11-5 - Added update to Switch value to On when Gear or Mode are used
+// 2022-11-20 - Added a pending change condition and validation that the call was successful
+// ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
+// 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
+// 2022-12-19 Added Actuator capbility to more easily integrate with RM
+// 2023-4-4   API Key update is now possible
+// 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
+
+metadata {
+	definition(name: "Govee Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
+		capability "Switch"
+		capability "Actuator"
+        capability "Initialize"
+		attribute "gear", "number"
+        attribute "mode", "number"
+        attribute "cloudAPI", "string"
+        
+		command "gear" , [[name: "Fan or Mist Speed", type: 'NUMBER', description: "Gear will adjust values for Fan speed or Misting depending on what device you have. Valid values are  "]]
+		command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the device operating mode. Valid values are   "]]
+
+        
+    }
+
+	preferences {		
+		section("Device Info") {
+            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+		}
+		
+	}
+}
+
+def parse(String description) {
+
+}
+
+def on() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("turn", "on")
+}
+
+def off() {
+    sendEvent(name: "cloudAPI", value: "Pending")
+	sendCommand("turn", "off")
+} 
+
+def gear(gear){
+    sendEvent(name: "cloudAPI", value: "Pending")
+    sendCommand("gear", gear)
+}
+
+def mode(modeValue){
+    sendEvent(name: "cloudAPI", value: "Pending")    
+    sendCommand("mode", modeValue)
+}    
+
+private def sendCommand(String command, payload) {
+
+
+     def params = [
+            uri   : "https://developer-api.govee.com",
+            path  : '/v1/appliance/devices/control',
+			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+            contentType: "application/json",      
+			body: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel"), cmd: ["name": command, "value": payload]],
+        ]
+    
+
+try {
+
+			httpPut(params) { resp ->
+				
+                if (debugLog) {log.debug "response.data="+ resp.data}
+		        if (debugLog) { log.debug "response.data=" + resp.data.code }
+                if (resp.data.code == 200 && command == "turn") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: payload)
+                    }    
+                else if (resp.data.code == 200 && command == "mode") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
+                    retrieveCmd(command, payload)
+                    }
+                else if (resp.data.code == 200 && command == "gear") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
+                    sendEvent(name: "gear", value: payload)
+                    }
+                resp.headers.each {
+                    if (debugLog) {log.debug "${it.name}: ${it.value}"}                    
+                    name = it.name
+                    value=it.value
+                    if (name == "X-RateLimit-Remaining") {
+                        state.DailyLimitRemaining = value
+                        parent.apiRateLimits("DailyLimitRemainingV2", value)
+                    }
+                    if (name == "API-RateLimit-Remaining") {
+                        state.MinRateLimitRemainig = value
+                        parent.apiRateLimits("MinRateLimitRemainigV2", value)
+                    }
+            }
+				return resp.data
+		        return resp.header
+		}
+	} catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+        if (e.statusCode == 429) {
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
+            sendEvent(name: "cloudAPI", value: "Retry")
+            pauseExecution(60000)
+            sendCommand(command, payload)
+        } 
+        else {
+          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
+//            sendEvent(name: "cloudAPI", value: "Retry")
+//            pauseExecution(60000)
+//            sendCommand(command, payload)
+        }
+		return 'unknown'
+	}
+}
+
+
+def updated() {
+if (logEnable) runIn(1800, logsOff)
+    retrieveOptions()
+}
+
+
+def installed(){
+    retrieveOptions()  
+}
+
+def initialize() {
+    if (device.currentValue("cloudAPI") == "Retry") {
+        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
+        sendEvent(name: "cloudAPI", value: "Initialized")
+    }
+}
+
+def logsOff() {
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable", [value: "false", type: "bool"])
+}
+
+def retrieveOptions() {    
+    if (debugLog) {log.error "retrieveOptions(): API: ${parent.state.goveeAppAPI} DNI: ${device.getDeviceNetworkId()}"}
+    parent.state.goveeAppAPI.devices.each {
+        if (it.device == device.getDeviceNetworkId()) {        
+            if (debugLog) {log.error "retrieveOptions(): ${itdeviceID}, sku = ${it.model}, supported commands ${it.supportCmds}, menu properties ${it.properties} "}
+            it.properties.each{
+                String gvcmd = it.key
+                state."${gvcmd}"=[] as List                
+                value = it.value    
+                if (debugLog) {log.error "retrieveOptions(): command = ${gvcmd}, options = ${value.options}"}
+                    value.options.each {
+                    if (debugLog) {log.error "retrieveOptions(): name  = ${it.name}, value for command = ${it.value}"}
+                    String sceneValue = it.value + "=" + it.name        
+                    state."${gvcmd}".add(sceneValue)      
+                    }
+            }
+        }
+    }
+}
+
+def retrieveCmd(cmd, payload) {
+    String atrb = cmd.replaceAll(":", "_")
+    if (debugLog) {log.error "retrieveCmd(): ${parent.state.goveeAppAPI}"}
+    dni = device.getDeviceNetworkId()
+    if (debugLog) {log.error "retrieveCmd(): ${dni}"}
+    parent.state.goveeAppAPI.devices.each {
+        deviceID = it.device
+        if (deviceID == dni) {
+            it.properties."${cmd}".options.each{ 
+            if (debugLog) {log.error "retrieveCmd(): command = ${it} name = ${it.name} value ${it.value}"}   
+                if (it.value.toString() == payload.toString()) {
+                    if (debugLog) {log.error "retrieveCmd(): Match Found for command = ${it} name = ${it.name} value ${it.value}"}
+                    sendEvent(name: cmd , value: it.name)
+                } else { if (debugLog) {log.error "retrieveCmd(): command = ${it} name = ${it.name} value ${it.value}"} 
+                       }
+            }
+        }
+    }
+}
+
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.warn "initialize(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
+    }
+}
