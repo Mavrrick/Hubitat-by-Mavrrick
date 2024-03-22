@@ -10,7 +10,7 @@
       "id": "7a0aa2d6-ff3c-438e-8fd7-5af1ec4afeeb",
       "name": "Govee Integration",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_HE_integration",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_HE_integration",
       "required": true,
       "oauth": false,
       "primary": false
@@ -21,63 +21,63 @@
       "id": "a197748e-a6df-492a-9162-1d495f8e10e9",
       "name": "Govee Lights, Plugs, and Switches Driver",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Govee%20Lights_Plugs_Switches%20Driver",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/Govee%20Lights_Plugs_Switches%20Driver",
       "required": true
     },
     {
       "id": "e222310a-5f06-4ab7-865a-de901df4c17c",
       "name": "Govee Appliance Driver",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_appliance_Driver",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_Driver",
       "required": true
     },
     {
       "id": "82da81d1-097a-4b64-ba3f-e8773fc69959",
       "name": "Govee Plugs and Switches Driver",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_plug_switch_driver",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_plug_switch_driver",
       "required": true
     },
     {
       "id": "d03d22f5-5c4b-4b46-8db8-8e94abd6cafd",
       "name": "Govee White Light Driver",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_white_light_driver",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_white_light_driver",
       "required": true
     },
     {
       "id": "3ecd724a-2248-4ae4-87a7-8b349737bd26",
       "name": "Govee Heating Appliance Driver",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_heating_app_driver",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_heating_app_driver",
       "required": true
     },
     {
       "id": "f1a59218-a6ea-4403-9119-54243ae01a98",
       "name": "Govee Appliance Driver with Lights",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_appliance_light",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_light",
       "required": true
     },
     {
       "id": "c5661c46-80b5-4273-afce-e2e6a054289b",
       "name": "Govee Appliance Driver with Lights and WhitenNoise",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_appliance_light_whiteNoise",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_light_whiteNoise",
       "required": true
     },
     {
       "id": "80423110-a9f5-4292-9689-e7500e8b691f",
       "name": "Govee Manual LAN API Device",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_manual_lan_driver",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_manual_lan_driver",
       "required": true
     },
     {
       "id": "cdfa06fa-0956-48f7-aa32-e42c368fe8c7",
       "name": "Govee Galaxy Projector",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/govee_galaxy_projector",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_galaxy_projector",
       "required": true
     }
   ]
