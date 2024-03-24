@@ -1,5 +1,5 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.20
+// Version 1.0.19
 //
 // 2022-11-03 Initial Driver release for Govee Heating Appliance devices
 // 2022-11-20 Added a pending change condition and validation that the call was successful
@@ -9,7 +9,8 @@
 // 2022-12-19 Added Actuator capbility to more easily integrate with RM
 // 2023-4-4   API key update now possible
 // 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
-// 2024-4-10  Added polling on/off time periods, modeDescription, activePollingPeriod, lastPollActivity, stopAllPolling command, bug fixes for missing gear value (SanderSoft)
+// 2024-3-10  Added polling On/off time periods, modeDescription, activePollingPeriod, lastPollActivity, stopAllPolling command, bug fixes for missing gear value (SanderSoft)
+// 2024-3-24  Added additional checks to verify/isure that null vales for polling times are handled.
 
 #include Mavrrick.Govee_Cloud_API
 import groovy.time.TimeCategory
@@ -19,11 +20,11 @@ import groovy.time.TimeCategory
 
 
 metadata {
-	definition(name: "Govee v2 Kettle Driver", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Actuator"
+    definition(name: "Govee v2 Kettle Driver", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Actuator"
         capability "Initialize"
-		capability "Refresh"
+        capability "Refresh"
         capability "TemperatureMeasurement"
         capability "Configuration"
 
@@ -38,12 +39,12 @@ metadata {
 
         command "stopAllPolling"
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'DIY',      'Boiling',       'Tea',   'Coffee'], description: "Mode of device"],
-            [name: "gearMode", type: "NUMBER",  description: "Mode Value", range: 1..4, required: false]]
+                                [name: "gearMode", type: "NUMBER",  description: "Mode Value", range: 1..4, required: false]]
         command "tempSetPoint", [[type: "NUMBER", description: "Entered your desired temp. Celsius range is 40-100, Fahrenheit range is 104-212", required: true],
-            [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true]]
+                                 [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true]]
     }
 
-	preferences {
+    preferences {
         section("Device Info and Preferences") {
             input(name: "pollRate", type: "number", title: "<b>Polling Rate</b> (seconds)\nDefault:300 seconds.", description: "Minimum level is 15 seconds.", required: true, defaultValue:300, submitOnChange: true, width:4)
             input(name: "pollStartDateTime", type: "time", title: "<b>Start time for the Polling Rate period.</b>.", required: true, description: "When to start polling the kettle." , submitOnChange: true)
@@ -51,9 +52,10 @@ metadata {
             input(name: "debugLog", type: "bool", title: "Debug Logging for 30 minutes", defaultValue: false)
         }
     }
-		}
+}
 
 Boolean isValidPollingTime() {
+    setTimePollDefaults()
     boolean isPollingPeriod = timeOfDayIsBetween(toDateTime(pollStartDateTime), toDateTime(pollEndDateTime), new Date())
 }
 
@@ -95,25 +97,25 @@ void setPollingInterval() {
         if (debugLog) log.info "${device.name}: setPollingInterval(): pollRate= ${pollRate} seconds, NO polling of this device is occuring."
         unschedule()
         if (debugLog) runIn(1800, logsOff)
-	}
+    }
 }
 
 def on() {
-         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "on(): CloudAPI already in retry state. Aborting call."
-         } else {
+    if (device.currentValue("cloudAPI") == "Retry") {
+        log.error "on(): CloudAPI already in retry state. Aborting call."
+    } else {
         sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
-            }
+        sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
+    }
 }
 
 def off() {
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "off(): CloudAPI already in retry state. Aborting call."
-         } else {
+    if (device.currentValue("cloudAPI") == "Retry") {
+        log.error "off(): CloudAPI already in retry state. Aborting call."
+    } else {
         sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
-            }
+        sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
+    }
 }
 
 def workingMode(mode, gear=0){
@@ -121,24 +123,24 @@ def workingMode(mode, gear=0){
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "DIY":
-            modenum = 1;
-            gearNum = gear;
+        modenum = 1;
+        gearNum = gear;
         break;
         case "Boiling":
-            modenum = 2;
-            gearNum = 0;
+        modenum = 2;
+        gearNum = 0;
         break;
         case "Tea":
-            modenum = 3;
-            gearNum = gear;
+        modenum = 3;
+        gearNum = gear;
         break;
         case "Coffee":
-            modenum = 4;
-            gearNum = gear;
+        modenum = 4;
+        gearNum = gear;
         break;
-    default:
-    log.debug "not valid value for mode";
-    break;
+        default:
+            log.debug "not valid value for mode";
+        break;
     }
     values = '{"workMode":'+modenum+',"modeValue":'+gearNum+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
@@ -152,10 +154,10 @@ def tempSetPoint(setpoint, unit) {
 
 def updated() {
     if (debugLog) runIn(1800, logsOff) else logsOff()
-    if (pollRate > 0 && pollRate < 15) {
-        log.error "Polling rate of '${pollRate}' is too frequent and will degrade your Hubitat hub.  The pollRate value must be >= 15 seconds. The PollRate has been reset to the default of 300 seconds (4x per min)."
-        device.updateSetting('pollRate', [type: "number", value: 300])
-    }
+        if (pollRate > 0 && pollRate < 15) {
+            log.error "Polling rate of '${pollRate}' is too frequent and will degrade your Hubitat hub.  The pollRate value must be >= 15 seconds. The PollRate has been reset to the default of 300 seconds (4x per min)."
+            device.updateSetting('pollRate', [type: "number", value: 300])
+        }
     def startDateTime = toDateTime(pollStartDateTime)
     def endDateTime   = toDateTime(pollEndDateTime)
     use(groovy.time.TimeCategory) {
@@ -172,18 +174,22 @@ def updated() {
         sendEvent(name: 'activePollingPeriod', value: activePollingPeriod)
     }
     setPollingInterval()
-retrieveStateData()
+    retrieveStateData()
     poll()
 }
 
 
 def installed(){
     // Set up defaults for polling
-    device.updateSetting('pollRate', [type: "number", value: 300])
-    device.updateSetting('pollStartDateTime', [type: "time", value: timeToday("06:00")])
-    device.updateSetting('pollEndDateTime',   [type: "time", value: timeToday("18:00")])
+    setTimePollDefaults()
     getDeviceState()
     poll()
+}
+
+void setTimePollDefaults() {
+    if (pollRate==null) device.updateSetting('pollRate', [type: "number", value: 300])
+    if (pollStartDateTime==null) device.updateSetting('pollStartDateTime', [type: "time", value: timeToday("06:00")])
+    if (pollEndDateTime==null) device.updateSetting('pollEndDateTime',   [type: "time", value: timeToday("18:00")])
 }
 
 def initialize() {
@@ -191,7 +197,7 @@ def initialize() {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
     }
-    if (pollRate==null) device.updateSetting('pollRate', [type: "number", value: 300])
+    setTimePollDefaults()
     setPollingInterval()
     poll()
 }
