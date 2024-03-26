@@ -17,6 +17,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonBuilder
 
 #include Mavrrick.Govee_Cloud_API
+#include Mavrrick.Govee_LAN_API
 
 def commandPort() { "4003" }
 
@@ -39,39 +40,15 @@ metadata {
             if (lanControl) {
             input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)}
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
-def on() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-        sendEvent(name: "switch", value: "on")}
-    else {
-         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "on(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
-            }
-        }
-}
-
-def off() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-        sendEvent(name: "switch", value: "off")}
-    else {
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "off(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
-            }
-        }
-}
-
+///////////////////////////////////////////////
+// Methods to setup manage device properties //
+///////////////////////////////////////////////
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
@@ -123,94 +100,24 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-def GoveeCommandBuilder(String command1, value1, String type) {   
-    if (type=="ct") {
-        if (debugLog) {log.debug "GoveeCommandBuilder(): Color temp action"}
-        JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            color {
-            r 0
-            g 0
-            b 0
+/////////////////////////
+// Commands for Driver //
+/////////////////////////
+
+def on() {
+    if (lanControl) {
+        lanOn() }
+    else {
+        cloudOn()
         }
-            colorTemInKelvin value1}
-    }
-    def  command = cmd1.toString()
-        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command    
-    }
-   else if (type=="rgb") {
-       if (debugLog) {log.debug "GoveeCommandBuilder(): rgb"}
-        JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            color {
-            r value1.r
-            g value1.g
-            b value1.b
-                
+}
+
+def off() {
+    if (lanControl) {
+        lanOff() }
+    else {
+        cloudOff()
         }
-            colorTemInKelvin 0}
-    }
-    def  command = cmd1.toString()
-       if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command    
-    }
-       else if (type=="status") {
-           if (debugLog) {log.debug "GoveeCommandBuilder():status"}
-        JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            }
-    }
-    def  command = cmd1.toString()
-           if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command    
-    }
-    else { 
-        if (debugLog) {log.debug "GoveeCommandBuilder():other action"}
-    JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            value value1}
-        }
-    def  command = cmd1.toString()
-        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command
-}
-}
-
-def sendCommandLan(String cmd) {
-  def addr = getIPString();
-    if (debugLog) {log.debug ("sendCommandLan(): ${cmd}")}
-
-  pkt = new hubitat.device.HubAction(cmd,
-                     hubitat.device.Protocol.LAN,
-                     [type: hubitat.device.HubAction.Type.LAN_TYPE_UDPCLIENT,
-                     ignoreResponse    : false,
-                     callback: parse,
-                     parseWarning: true,
-                     destinationAddress: addr])  
-  try {    
-      if (debugLog) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
-    sendHubCommand(pkt)     
-  }
-  catch (Exception e) {      
-      logDebug e
-  }      
-}
-
-def getIPString() {
-   return ip+":"+commandPort()
 }
 
 
-def parse(message) {  
-  log.error "Got something to parseUDP"
-  log.error "UDP Response -> ${message}"    
-}

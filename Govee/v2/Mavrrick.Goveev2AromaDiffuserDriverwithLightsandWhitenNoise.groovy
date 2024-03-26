@@ -16,9 +16,10 @@
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
+import groovy.json.JsonSlurper
 
 #include Mavrrick.Govee_Cloud_API
-#include Mavrrick.Govee_Cloud_MQTT
+#include Mavrrick.Govee_Cloud_MQTT 
 
 metadata {
 	definition(name: "Govee v2 Aroma Diffuser  Driver with Lights and WhitenNoise", namespace: "Mavrrick", author: "Mavrrick") {
@@ -38,6 +39,7 @@ metadata {
         attribute "whiteNoise_duration", "number"
         attribute "whiteNoise_volume", "number"
         attribute "whiteNoise_music", "string"
+        attribute "connectionState", "string"         
         attribute "lackWaterEvent", "string"        
      
         command "mode" , [[name: modeValue, type: 'NUMBER', description: "Mode will adjust the device operating mode. Valid values are   "]]      
@@ -60,14 +62,92 @@ metadata {
 	preferences {		
 		section("Device Info") {
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
-/*
-Commands for standard functions for entire device
-*/
+//////////////////////////////////////
+// Standard Methods for all drivers //
+//////////////////////////////////////
+
+// reset of device settings when preferences updated.
+def updated() {
+    if (debugLog) {log.info "updated(): device updated "}
+    unschedule()
+    if (debugLog) runIn(1800, logsOff)
+    poll()
+    retrieveStateData()
+    disconnect()
+	pauseExecution(1000)
+    mqttConnectionAttempt()
+}
+
+// linital setup when device is installed.
+def installed(){
+    poll ()
+    retrieveStateData()
+    disconnect()
+    pauseExecution(1000)
+    mqttConnectionAttempt()
+}
+
+// initialize devices upon install and reboot.
+def initialize() {
+     if (device.currentValue("cloudAPI") == "Retry") {
+        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
+        sendEvent(name: "cloudAPI", value: "Initialized")
+    }
+    unschedule()
+    if (debugLog) runIn(1800, logsOff)
+    poll()
+    disconnect()
+    pauseExecution(1000)
+    mqttConnectionAttempt()
+}
+
+// update data for the device
+def refresh() {
+    if (debugLog) {log.info "refresh(): Performing refresh"}
+    unschedule(poll)
+    poll()
+    if (device.currentValue("connectionState") == "connected") {
+    }
+}
+
+// retrieve setup values and initialize polling and logging
+def configure() {
+    if (debugLog) {log.info "configure(): Driver Updated"}
+    unschedule()
+    if (pollRate > 0) runIn(pollRate,poll)     
+    retrieveStateData()    
+    if (debugLog) runIn(1800, logsOff)
+    disconnect()
+    pauseExecution(1000)
+    mqttConnectionAttempt()
+}
+
+////////////////////
+// Helper methods //
+////////////////////
+
+logsOff  // turn off logging for the device
+def logsOff() {
+    log.info "debug logging disabled..."
+    device.updateSetting("logEnable", [value: "false", type: "bool"])
+}
+
+poll // retrieve device status
+def poll() {
+    if (debugLog) {log.info "poll(): Poll Initated"}
+	getDeviceState()
+    if (pollRate > 0) runIn(pollRate,poll)
+}	
+
+//////////////////////
+// Driver Commands // 
+/////////////////////
 
 def on() {
          if (device.currentValue("cloudAPI") == "Retry") {
@@ -358,50 +438,4 @@ try {
         }
 		return 'unknown'
 	}
-}
-
-def updated() {
-if (logEnable) runIn(1800, logsOff)
-    retrieveStateData()
-}
-
-
-def installed(){
-    getDeviceState()    
-    retrieveStateData() 
-}
-
-def initialize() {
-    if (device.currentValue("cloudAPI") == "Retry") {
-        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
-        sendEvent(name: "cloudAPI", value: "Initialized")
-    }
-    unschedule(poll)
-    if (pollRate > 0) runIn(pollRate,poll)
-}
-
-def logsOff() {
-    log.warn "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
-}
-
-def poll() {
-    if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
-}
-
-def refresh() {
-    if (debugLog) {log.warn "refresh(): Performing refresh"}
-    unschedule(poll)
-    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceState()
-    if (debugLog) runIn(1800, logsOff)
-}
-
-def configure() {
-    if (debugLog) {log.warn "configure(): Driver Updated"}
-    unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)     
-    retrieveStateData()    
-    if (debugLog) runIn(1800, logsOff) 
 }

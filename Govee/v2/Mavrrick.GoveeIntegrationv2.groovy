@@ -509,18 +509,6 @@ def updated() {
           else {
         logger('initialize() No devices to add', 'info')
           }
-        List childDNI = getChildDevices().deviceNetworkId
-        if (childDNI.contains("Govee_MQTT_Listener") == false) {
-        logger("goveeDevAdd()  configuring Govee_MQTT_Listener", 'info')
-        addChildDevice('Mavrrick', 'Govee v2 MQTT Listener', "Govee_MQTT_Listener" , location.hubs[0].id, [
-            'name': 'Govee_MQTT_Listener',
-            'label': 'Govee_MQTT_Listener',
-             'data': [
-                'apiKey': settings.APIKey
-             ],
-             'completedSetup': true,
-         ])
-    }
 }
 
 def uninstalled() {
@@ -1264,21 +1252,6 @@ def apiRateLimits(type, value) {
             log.debug 'validated api limit to low. Sending notificatoin'
             sendnotification('Govee Appliance API rate Limit', state.dailyAppLimit)
         }
-    }
-}
-
-///////////////////////////////////////////
-// MQTT Helper to route events to device // 
-///////////////////////////////////////////
-
-def mqttEventCreate(deviceID, instance, state){
-    log.debug "mqttEventCreate(): ${deviceID} ${instance} ${state}"
-    device = getChildDevice('Govee_'+deviceID)
-    if (device == null) {
-        logger("The MQTT event is for a device that is not setup", 'info')
-    } else {
-        logger("Posting MQTT vent to device", 'info')
-        device.mqttPost(instance, state)
     }
 }
 
