@@ -130,7 +130,11 @@ def off() {
 }
 
 def tempSetPoint(setpoint, unit, autoStop) {
-    values = '{"autostop": '+autoStop+'"temperature": '+setpoint+',"unit": "'+unit+'"}'
+    if (autoStop == "Auto Stop") {
+        values = '{"autostop": 1, "temperature": '+setpoint+',"unit": "'+unit+'"}'
+    } else if (autoStop == "Maintain") {
+        values = '{"autostop": 0, "temperature": '+setpoint+',"unit": "'+unit+'"}'
+    }
     sendCommand("sliderTemperature", values, "devices.capabilities.temperature_setting")
 }
 
