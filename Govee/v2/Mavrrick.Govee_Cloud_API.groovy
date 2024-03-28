@@ -154,8 +154,9 @@ try {
                    def jsonSlurper = new JsonSlurper()
                    def payloadJson = jsonSlurper.parseText(payload2)
                    sendEvent(name: "cloudAPI", value: "Success")
-                   if (payloadJson == "Celsius") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "C");
-                   if (payloadJson == "Fahrenheit") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "F");                   
+                   if (payloadJson == "Celsius") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "C")
+                   if (payloadJson == "Fahrenheit") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "F")
+                   sendEvent(name: "tempSetPointUnit", value: unit[0])
                    if (descLog) { log.info "${device.label} TargetTemp was set to ${payload2}"}
                    }
                else if (code == 200 && command == "colorRgb") {
