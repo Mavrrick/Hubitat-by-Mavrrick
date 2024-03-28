@@ -11,6 +11,7 @@
 // 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
 
 #include Mavrrick.Govee_Cloud_API
+#include Mavrrick.Govee_Cloud_Life
 
 import groovy.json.JsonSlurper 
 
@@ -30,12 +31,13 @@ metadata {
         attribute "pollInterval", "number"
         attribute "cloudAPI", "string"
         attribute "online", "string"
-        attribute "tempSetPoint", "string"
+        attribute "tempSetPoint", "number"
 
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'DIY',      'Boiling',       'Tea',   'Coffee'], description: "Mode of device"],
             [name: "gearMode", type: "NUMBER",  description: "Mode Value", range: 1..4, required: false]]
         command "tempSetPoint", [[type: "NUMBER", description: "Entered your desired temp. Celsius range is 40-100, Fahrenheit range is 104-212", required: true],
-            [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true]]
+            [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true],
+            [name: "autoStop", type: "ENUM", constraints: [ 'Auto Stop', 'Maintain'],  description: "Post Working State", defaultValue: "Auto Stop", required: true]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
     }
 
@@ -127,36 +129,8 @@ def off() {
         cloudOff()
 }
 
-/* def workingMode(mode, gear = 0){
-    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
-    sendEvent(name: "cloudAPI", value: "Pending")
-    switch(mode){
-        case "DIY":
-            modenum = 1;
-            gearNum = gear;
-        break;
-        case "Boiling":
-            modenum = 2;
-            gearNum = 0;
-        break;
-        case "Tea":
-            modenum = 3;
-            gearNum = gear;
-        break;
-        case "Coffee":
-            modenum = 4;
-            gearNum = gear;
-        break;
-    default:
-    log.debug "not valid value for mode";
-    break;
-    }
-    values = '{"workMode":'+modenum+',"modeValue":'+gearNum+'}'
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
-}    */ 
-
-def tempSetPoint(setpoint, unit) {
-    values = '{"temperature": '+setpoint+',"unit": "'+unit+'"}'
+def tempSetPoint(setpoint, unit, autoStop) {
+    values = '{"autostop": '+autoStop+'"temperature": '+setpoint+',"unit": "'+unit+'"}'
     sendCommand("sliderTemperature", values, "devices.capabilities.temperature_setting")
 }
 

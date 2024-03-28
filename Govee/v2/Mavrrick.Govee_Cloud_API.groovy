@@ -150,6 +150,14 @@ try {
                    setModeDescription()
                    if (descLog) { log.info "${device.label} workMode was set to ${payload2}"}
                    }
+               else if (code == 200 && command == "sliderTemperature") {
+                   def jsonSlurper = new JsonSlurper()
+                   def payloadJson = jsonSlurper.parseText(payload2)
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   if (payloadJson == "Celsius") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "C");
+                   if (payloadJson == "Fahrenheit") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "F");                   
+                   if (descLog) { log.info "${device.label} TargetTemp was set to ${payload2}"}
+                   }
                else if (code == 200 && command == "colorRgb") {
                     int r = (payload2 >> 16) & 0xFF;
                     int g = (payload2 >> 8) & 0xFF;
@@ -575,13 +583,13 @@ void setModeDescription() {
 
 def apiKeyUpdate() {
     if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.warn "apiKeyUpdate(): Detected new API Key. Applying"}
+        if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
     }
 }
 
 def randomUUID(){
     requestID = UUID.randomUUID().toString()
-    if (debugLog) {log.warn "randomUUID(): random uuid is ${requestID}"}
+    if (debugLog) {log.debug "randomUUID(): random uuid is ${requestID}"}
     return requestID
 }

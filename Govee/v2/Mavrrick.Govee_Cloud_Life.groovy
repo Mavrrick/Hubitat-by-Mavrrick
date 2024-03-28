@@ -82,7 +82,7 @@ def workingMode(mode, gear = 0){
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
-def changeInterval(v) {
+def changeInterval(v=300) {
     log.debug "changeInterval(): Request to change polling interval to ${v}"
     unschedule(poll)
     device.updateSetting('pollRate', [type: "number", value: v])
