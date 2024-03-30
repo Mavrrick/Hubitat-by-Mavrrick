@@ -145,6 +145,7 @@ try {
                    def jsonSlurper = new JsonSlurper()
                    def payloadJson = jsonSlurper.parseText(payload2)
                    sendEvent(name: "cloudAPI", value: "Success")
+                   sendEvent(name: "switch", value: "on")
                    sendEvent(name: "mode", value: payloadJson.workMode)
                    sendEvent(name: "modeValue", value: payloadJson.modeValue)
                    setModeDescription(payloadJson.workMode)
@@ -156,6 +157,7 @@ try {
                    log.debug "${device.label} payloadJson= ${payloadJson}"
                    sendEvent(name: "cloudAPI", value: "Success")
                    def units = payloadJson?.unit.charAt(0)
+                   sendEvent(name: "switch", value: "on")
                    sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
                    sendEvent(name: "targetTempUnit", value: units)
                    if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
@@ -166,6 +168,7 @@ try {
                    log.debug "${device.label} payloadJson= ${payloadJson}"
                    sendEvent(name: "cloudAPI", value: "Success")
                    def units = payloadJson?.unit.charAt(0)
+                   sendEvent(name: "switch", value: "on")
                    sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
                    sendEvent(name: "targetTempUnit", value: units)
                    if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}

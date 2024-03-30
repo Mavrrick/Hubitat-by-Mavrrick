@@ -31,6 +31,7 @@ metadata {
         attribute "pollInterval", "number"
         attribute "cloudAPI", "string"
         attribute "online", "string"
+        attribute "targetTempUnit", "string"
         attribute "tempSetPoint", "number"
         attribute "tempSetPointUnit", "enum", ['F','C']        
 

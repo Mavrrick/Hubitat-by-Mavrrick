@@ -51,67 +51,6 @@ def setPreviousEffect() {
         }          
 }
 
-/* def workingModeUnified(mode, gear, int number){
-    def modenum = state.workMode.options[0].find{it.name==mode}?.value
-    switch(mode) {
-        case "DIY":
-            gearnum = number; //>0?:1;
-        break;
-        case "Manual":
-            gearnum = number; //>0?:1;
-        break;        
-        case "Boiling":
-            gearnum = 0;
-        break;
-        case "Tea":
-            gearnum = number;  // >0?:1;
-        break;
-        case "Coffee":
-            gearnum = number; //>0?:1;
-        break;
-        case "Custom":
-            modenum = 2;
-            gearnum = number; //>0?:1;
-        break;
-        case "Auto":
-            modenum = 3;
-            gearnum = 0;
-        break;
-        case "Sleep":
-            modenum = 5;
-            gearnum = 0;
-        break;
-        case "gearMode":
-            modenum = 1;
-            switch(gear) {
-                case "Low":
-                    gearnum = 1;
-                break;
-                case "Medium":
-                    gearnum = 2;
-                break;
-                case "High":
-                    gearnum = 3;
-                break;
-                    default:
-                    gearnum = gear;
-                break;
-        }
-        break;
-        case "Fan":
-        modenum = 9;        
-        gearnum = 0;
-        break
-        default:
-        gearnum = gear;
-        break
-    }
-    log.debug "workingMode(${mode},${gear}): Processing Working Mode command. modenum:${modenum} gearnum:${gearnum}"
-    sendEvent(name: "cloudAPI", value: "Pending")    
-    values = '{"workMode":'+modenum+',"modeValue":'+gearnum+'}'
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
-} */ 
-
 def changeInterval(v=300) {
     log.debug "changeInterval(): Request to change polling interval to ${v}"
     unschedule(poll)
