@@ -32,13 +32,14 @@ metadata {
         attribute "cloudAPI", "string"
         attribute "online", "string"
         attribute "tempSetPoint", "number"
+        attribute "tempSetPointUnit", "enum", ['F','C']        
 
-        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'DIY',      'Boiling',       'Tea',   'Coffee'], description: "Mode of device"],
+        command "workingMode", [[name: "mode*", type: "ENUM", constraints: [ 'DIY',      'Boiling',       'Tea',   'Coffee'], description: "Mode of device"],
             [name: "gearMode", type: "NUMBER",  description: "Mode Value", range: 1..4, required: false]]
-        command "tempSetPoint", [[type: "NUMBER", description: "Entered your desired temp. Celsius range is 40-100, Fahrenheit range is 104-212", required: true],
-            [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true],
-            [name: "autoStop", type: "ENUM", constraints: [ 'Auto Stop', 'Maintain'],  description: "Post Working State", defaultValue: "Auto Stop", required: true]]
-        command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
+        command "tempSetPoint", [[name: "tempSetPoint*", type: "NUMBER", description: "Entered your desired temp. Celsius range is 40-100, Fahrenheit range is 104-212", required: true],
+            [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true]]
+//            [name: "autoStop", type: "ENUM", constraints: [ 'Auto Stop', 'Maintain'],  description: "Post Working State", defaultValue: "Auto Stop", required: true]]
+        command "changeInterval", [[name: "changeInterval*", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
     }
 
 	preferences {		
@@ -129,12 +130,46 @@ def off() {
         cloudOff()
 }
 
-def tempSetPoint(setpoint, unit, autoStop) {
-    if (autoStop == "Auto Stop") {
+def tempSetPoint(setpoint=185, unit='Farenheit') {
+    if (unit == 'Celsius' && setpoint >100) {
+        log.warn "tempSetPoint(): The setPoint value of '${setpoint}' was higher than the allowed maximum for '${unit}' scale and was changed to the 'Fahrenheit' scale"    
+        unit='Fahrenheit'
+    }
+/*     if (autoStop == "Auto Stop") {
         values = '{"autostop": 1, "temperature": '+setpoint+',"unit": "'+unit+'"}'
     } else if (autoStop == "Maintain") {
         values = '{"autostop": 0, "temperature": '+setpoint+',"unit": "'+unit+'"}'
-    }
+    } */
+    values = '{"temperature": '+setpoint+',"unit": "'+unit+'"}'
     sendCommand("sliderTemperature", values, "devices.capabilities.temperature_setting")
 }
 
+
+def workingMode(mode, gear=0){
+    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
+    sendEvent(name: "cloudAPI", value: "Pending")
+    if (gear == null) { gear = 0 }
+    switch(mode){
+        case "DIY":
+            modenum = 1;
+            gearNum = gear>0?:1;
+        break;
+        case "Boiling":
+            modenum = 2;
+            gearNum = 0;
+        break;
+        case "Tea":
+            modenum = 3;
+            gearNum = gear>0?:1;
+        break;
+        case "Coffee":
+            modenum = 4;
+            gearNum = gear>0?:1;
+        break;
+    default:
+    log.debug "not valid value for mode";
+    break;
+    }
+    values = '{"workMode":'+modenum+',"modeValue":'+gearNum+'}'
+    sendCommand("workMode", values, "devices.capabilities.work_mode")
+}  

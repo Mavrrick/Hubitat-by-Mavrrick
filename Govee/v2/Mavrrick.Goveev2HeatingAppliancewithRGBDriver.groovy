@@ -28,6 +28,7 @@ metadata {
         capability "TemperatureMeasurement"
         capability "SwitchLevel"
         capability "LightEffects"
+		capability "ColorMode"        
         capability "Configuration" 
        
         attribute "mode", "number"
@@ -39,6 +40,8 @@ metadata {
         attribute "airDeflector", "string"
         attribute "nightLight", "string"
         attribute "targetTemp", "string"
+        attribute "targetTempUnit", "string"
+        attribute "colorRGBNum", "number"
         
         command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]
         command "airDeflectoron_off", [[name: "Air Deflector/Oscillation", type: "ENUM", constraints: ['On',      'Off'] ] ]
@@ -138,40 +141,43 @@ def off() {
         cloudOff()
 }
 
-/* def workingMode(mode, gear){
+def workingMode(mode, gear){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "gearMode":
             modenum = 1;
+              switch(gear){
+                  case "Low":
+                      gearnum = 1;
+                  break;
+                  case "Medium":
+                      gearnum = 2;
+                  break;
+                  case "High":
+                      gearnum = 3;
+                  break;
+                  default:
+                  gearnum = 0;
+                  break;
+              }
         break;
         case "Fan":
             modenum = 9;
+            gearnum = 0
         break;
         case "Auto":
             modenum = 3;
+            gearnum = 0
         break;
     default:
     log.debug "not valid value for mode";
     break;
     }
-      switch(gear){
-        case "Low":
-            gearnum = 1;
-        break;
-        case "Medium":
-            gearnum = 2;
-        break;
-        case "High":
-            gearnum = 3;
-        break;
-    default:
-    gearnum = 0;
-    break;
-    }
+
     values = '{"workMode":'+modenum+',"modeValue":'+gearnum+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-} */
+} 
 
 def targetTemperature(setpoint, unit, autostop) {
     if (autostop == "Auto Stop") { autoStopVal = 1}
@@ -179,3 +185,4 @@ def targetTemperature(setpoint, unit, autostop) {
     values = '{"autoStop": '+autoStopVal+',"temperature": '+setpoint+',"unit": "'+unit+'"}'
     sendCommand("targetTemperature", values, "devices.capabilities.temperature_setting")
 }
+

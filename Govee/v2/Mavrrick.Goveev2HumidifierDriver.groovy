@@ -39,7 +39,7 @@ metadata {
         attribute "lackWaterEvent", "string"
         
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'Manual',      'Custom',       'Auto'], description: "Mode of device"],
-                          [name: "gearMode", type: "NUMBER", description: "When Mode is 1 sets hudifier speed. When set to Auto sets desired Humidity"]]
+                          [name: "gearMode", type: "NUMBER", description: "When Mode is Manual sets hudifier speed. When set to Auto sets desired Humidity"]]
         command "desiredHumidity", [[name: desiredHumidityValue, type: 'NUMBER', description: "Set the desired Humidity the device will try to maintain"]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         
@@ -145,13 +145,12 @@ def off() {
         cloudOff()
 }
 
-/* def workingMode(mode, gear=0){
+def workingMode(mode, gear=0){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "Manual":
-            modenum = 1;
-        
+            modenum = 1;        
         break;
         case "Custom":
             modenum = 2;
@@ -166,4 +165,4 @@ def off() {
     }
     values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}     */
+}    

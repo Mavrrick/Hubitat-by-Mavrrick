@@ -42,7 +42,8 @@ metadata {
         
         command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]        
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'gearMode',      'Custom',       'Auto',       'Sleep'], description: "Mode of device"],
-                          [name: "gearMode",  type: "NUMBER", description: "This will adjust your fan speed."]]        
+                                [name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High', 'N/A'], description: "Default speed of Fan using GearMode. Ignored in any other mode"],
+                                [name: "speed",  type: "INTEGER", description: "This will adjust your fan speed when using custom Mode.", default: 0]]          
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
     }
 
@@ -132,16 +133,30 @@ def off() {
         cloudOff()
 }
 
-/* def workingMode(mode, gear){
+def workingMode(mode, gear, speed=0){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "gearMode":
             modenum = 1;
-        
+            switch(gear){
+                case "Low":
+                    gear = 1;
+                break;
+                case "Medium":
+                    gear = 2;
+                break;
+                case "High":
+                    gear = 3;
+                break;
+                    default:
+                    gear = 0;
+                break;
+                }
         break;
         case "Custom":
             modenum = 2;
+            gear = speed;
         break;
         case "Auto":
             modenum = 3;
@@ -154,8 +169,7 @@ def off() {
     default:
     log.debug "not valid value for mode";
     break;
-    } 
+    }
     values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}     */
-
+} 

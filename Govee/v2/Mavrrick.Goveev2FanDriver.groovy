@@ -142,7 +142,7 @@ def airDeflectoron_off(evt) {
         }
 }
 
-/* def workingMode(mode, gear){
+def workingMode(mode, gear){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
@@ -171,4 +171,4 @@ def airDeflectoron_off(evt) {
     }
     values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}   */
+}  

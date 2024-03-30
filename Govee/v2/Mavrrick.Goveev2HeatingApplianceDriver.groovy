@@ -139,37 +139,40 @@ def targetTemperature(setpoint, unit, autostop) {
     sendCommand("targetTemperature", values, "devices.capabilities.temperature_setting")
 }
 
-/* def workingMode(mode, gear){
+def workingMode(mode, gear){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "gearMode":
             modenum = 1;
+              switch(gear){
+                  case "Low":
+                      gearnum = 1;
+                  break;
+                  case "Medium":
+                      gearnum = 2;
+                  break;
+                  case "High":
+                      gearnum = 3;
+                  break;
+                  default:
+                  gearnum = 0;
+                  break;
+              }
         break;
         case "Fan":
             modenum = 9;
+            gearnum = 0
         break;
         case "Auto":
             modenum = 3;
+            gearnum = 0
         break;
     default:
     log.debug "not valid value for mode";
     break;
     }
-      switch(gear){
-        case "Low":
-            gearnum = 1;
-        break;
-        case "Medium":
-            gearnum = 2;
-        break;
-        case "High":
-            gearnum = 3;
-        break;
-    default:
-    gearnum = 0;
-    break;
-    }
+
     values = '{"workMode":'+modenum+',"modeValue":'+gearnum+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}  */  
+} 

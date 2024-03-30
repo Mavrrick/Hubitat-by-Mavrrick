@@ -132,7 +132,7 @@ def off() {
         cloudOff()
 }
 
-/* def workingMode(mode){
+def workingMode(mode){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
@@ -151,4 +151,4 @@ def off() {
     }
     values = '{"workMode":'+modenum+',"modeValue":0}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}     */
+}    

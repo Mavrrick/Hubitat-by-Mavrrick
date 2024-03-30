@@ -147,18 +147,29 @@ try {
                    sendEvent(name: "cloudAPI", value: "Success")
                    sendEvent(name: "mode", value: payloadJson.workMode)
                    sendEvent(name: "modeValue", value: payloadJson.modeValue)
-                   setModeDescription()
+                   setModeDescription(payloadJson.workMode)
                    if (descLog) { log.info "${device.label} workMode was set to ${payload2}"}
                    }
                else if (code == 200 && command == "sliderTemperature") {
                    def jsonSlurper = new JsonSlurper()
                    def payloadJson = jsonSlurper.parseText(payload2)
+                   log.debug "${device.label} payloadJson= ${payloadJson}"
                    sendEvent(name: "cloudAPI", value: "Success")
-                   if (payloadJson == "Celsius") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "C")
-                   if (payloadJson == "Fahrenheit") sendEvent(name: "targetTemp", value: payloadJson.temperature, unit: "F")
-                   sendEvent(name: "tempSetPointUnit", value: unit[0])
-                   if (descLog) { log.info "${device.label} TargetTemp was set to ${payload2}"}
+                   def units = payloadJson?.unit.charAt(0)
+                   sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
+                   sendEvent(name: "targetTempUnit", value: units)
+                   if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
                    }
+               else if (code == 200 && command == "targetTemperature") {
+                   def jsonSlurper = new JsonSlurper()
+                   def payloadJson = jsonSlurper.parseText(payload2)
+                   log.debug "${device.label} payloadJson= ${payloadJson}"
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   def units = payloadJson?.unit.charAt(0)
+                   sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
+                   sendEvent(name: "targetTempUnit", value: units)
+                   if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
+                   }                 
                else if (code == 200 && command == "colorRgb") {
                     int r = (payload2 >> 16) & 0xFF;
                     int g = (payload2 >> 8) & 0xFF;
@@ -305,9 +316,17 @@ try {
                                 if (instance == "presetScene") sendEvent(name: "presetScene", value: it.state.value);
                             break;
                             case "devices.capabilities.temperature_setting":
-                                if (instance == "targetTemperature" && getTemperatureScale() == "C") sendEvent(name: "targetTemp", value: it.state.value.targetTemperature, unit: "C");
-                                if (instance == "targetTemperature" && getTemperatureScale() == "F") sendEvent(name: "targetTemp", value: celsiusToFahrenheit(it.state.value.targetTemperature), unit: "F");
-                                if (instance == "sliderTemperature") sendEvent(name: "tempSetPoint", value: it.state.value);
+                               switch (instance) {
+                                   case "targetTemperature":
+                                       sendEvent(name: "targetTemp", value: it.state.value.targetTemperature, unit: getTemperatureScale() );
+                                       break;
+                                   case "sliderTemperature":
+                                       sendEvent(name: "targetTemp", value: it.state?.value?.targetTemperature, unit: getTemperatureScale() )
+                                       sendEvent(name: "tempSetPoint", value: it.state?.value);
+                                       break;
+                                   default:
+                                       break;
+                               }
                             break;
                             case "devices.capabilities.property":
                                 if (instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value), unit: "C");
@@ -317,7 +336,7 @@ try {
                             case "devices.capabilities.work_mode":
                                 if (instance == "workMode") sendEvent(name: "mode", value: it.state.value.workMode);
                                 if (instance == "workMode") sendEvent(name: "modeValue", value: it.state.value.modeValue);
-                                setModeDescription();
+                                setModeDescription(it.state.value.workMode);
                             break;                            
                         default: 
                         if (debugLog) {log.debug ("getDeviceState(): Unknown command type}")}; 
@@ -576,9 +595,10 @@ def retrieveCmdParms(type){
     }          
 }
 
-void setModeDescription() {
-    def WorkModeName = state.workMode.options[0].find{it.value==device.currentValue('mode')}?.name
-    if (debugLog) {log.debug "setModeDescription(): WorkModeName=${WorkModeName}"}
+void setModeDescription(mode=null) {
+    mode = mode?:device.currentValue('mode',true)
+    def WorkModeName = state.workMode.options[0].find{it.value==mode}?.name?:"Unknown"
+    if (debugLog) {log.debug "setModeDescription(${mode}): WorkModeName=${WorkModeName}"}
     sendEvent(name: "modeDescription", value: WorkModeName )
 }
 
