@@ -127,13 +127,13 @@ def configure() {
 // Helper methods //
 ////////////////////
 
-logsOff  // turn off logging for the device
+// turn off logging for the device
 def logsOff() {
     log.info "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-poll // retrieve device status
+// retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
 	getDeviceState()

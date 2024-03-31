@@ -147,7 +147,11 @@ try {
                    sendEvent(name: "cloudAPI", value: "Success")
                    sendEvent(name: "switch", value: "on")
                    sendEvent(name: "mode", value: payloadJson.workMode)
-                   sendEvent(name: "modeValue", value: payloadJson.modeValue)
+                   if (payloadJson.modeValue == 0) {
+                       sendEvent(name: "modeValue", value: "N/A")
+                   } else {
+                       sendEvent(name: "modeValue", value: payloadJson.modeValue)
+                   }
                    setModeDescription(payloadJson.workMode)
                    if (descLog) { log.info "${device.label} workMode was set to ${payload2}"}
                    }
@@ -337,8 +341,17 @@ try {
                                 if (instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value, unit: "%");
                             break;  
                             case "devices.capabilities.work_mode":
-                                if (instance == "workMode") sendEvent(name: "mode", value: it.state.value.workMode);
-                                if (instance == "workMode") sendEvent(name: "modeValue", value: it.state.value.modeValue);
+                                if (instance == "workMode") {
+                                    sendEvent(name: "mode", value: it.state.value.workMode)
+                                    if ( it.state.value.modeValue == null || it.state.value.modeValue == 0 ) {
+                                        if (debugLog) {log.debug ("getDeviceState(): workmode value of Null or 0 found}")}
+                                        sendEvent(name: "modeValue", value: "N/A")
+                                    } else {
+                                        sendEvent(name: "modeValue", value: it.state.value.modeValue)
+                                        if (debugLog) {log.debug ("getDeviceState(): workmode value is greater then 0}")}
+                                    }
+                                    };
+//                                if (instance == "workMode") sendEvent(name: "modeValue", value: it.state.value.modeValue);
                                 setModeDescription(it.state.value.workMode);
                             break;                            
                         default: 

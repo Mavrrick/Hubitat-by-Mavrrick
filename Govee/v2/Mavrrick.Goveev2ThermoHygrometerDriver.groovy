@@ -13,6 +13,8 @@
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 
+import groovy.json.JsonSlurper
+
 metadata {
 	definition(name: "Govee v2 Thermo/Hygrometer Driver", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
@@ -81,7 +83,7 @@ def configure() {
 logsOff  // turn off logging for the device
 def logsOff() {
     log.info "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status

@@ -61,7 +61,7 @@ metadata {
 // Standard Methods for all drivers //
 //////////////////////////////////////
 
-Update // reset of device settings when preferences updated.
+// reset of device settings when preferences updated.
 def updated() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
@@ -69,13 +69,13 @@ def updated() {
     retrieveStateData()
 }
 
-Installed // linital setup when device is installed.
+// linital setup when device is installed.
 def installed(){
     poll ()
     retrieveStateData()
 }
 
-Initialize // initialize devices upon install and reboot.
+// initialize devices upon install and reboot.
 def initialize() {
      if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
@@ -86,7 +86,7 @@ def initialize() {
     poll()
 }
 
-Refresh // update data for the device
+// update data for the device
 def refresh() {
     if (debugLog) {log.info "refresh(): Performing refresh"}
     unschedule(poll)
@@ -95,7 +95,7 @@ def refresh() {
     }
 }
 
-Configure // retrieve setup values and initialize polling and logging
+// retrieve setup values and initialize polling and logging
 def configure() {
     if (debugLog) {log.info "configure(): Driver Updated"}
     unschedule()
@@ -108,13 +108,13 @@ def configure() {
 // Helper methods //
 ////////////////////
 
-logsOff  // turn off logging for the device
+// turn off logging for the device
 def logsOff() {
     log.info "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-poll // retrieve device status
+// retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
 	getDeviceState()

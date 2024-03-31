@@ -96,7 +96,7 @@ def configure() {
 logsOff  // turn off logging for the device
 def logsOff() {
     log.info "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status

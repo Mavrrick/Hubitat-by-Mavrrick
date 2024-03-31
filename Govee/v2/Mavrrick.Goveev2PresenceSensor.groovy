@@ -50,7 +50,7 @@ def initialize() {
 
 def logsOff() {
     log.warn "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 def refresh() {
