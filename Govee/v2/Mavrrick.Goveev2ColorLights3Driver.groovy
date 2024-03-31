@@ -85,92 +85,15 @@ metadata {
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
-def on() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-        sendEvent(name: "switch", value: "on")}
-    else {
-         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "on(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
-            }
-        }
-}
-
-def off() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-        sendEvent(name: "switch", value: "off")}
-    else {
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "off(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
-            }
-        }
-}
-
-def setColorTemperature(value,level = null,transitionTime = null)
-{
-    unschedule(fadeUp)
-    unschedule(fadeDown)
-    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
-    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
-    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
-    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-	int intvalue = value.toInteger()
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) setLevel(level,transitionTime);
-        sendEvent(name: "colorTemperature", value: intvalue)
-        sendEvent(name: "switch", value: "on")
-        sendEvent(name: "colorMode", value: "CT")
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
-	    setCTColorName(intvalue)
-        }
-    else {
-       if (device.currentValue("cloudAPI") == "Retry") {
-            log.error "setColorTemperature(): CloudAPI already in retry state. Aborting call." 
-         } else {        
-            sendEvent(name: "cloudAPI", value: "Pending")
-            if (level != null) setLevel(level,transitionTime);
-		    sendCommand("colorTemperatureK", intvalue,"devices.capabilities.color_setting")
-       }
-    }
-}   
-
-
-
-def setCTColorName(int value)
-{
-		if (value < 2600) {
-			sendEvent(name: "colorName", value: "Warm White")
-		}
-		else if (value < 3500) {
-			sendEvent(name: "colorName", value: "Incandescent")
-		}
-		else if (value < 4500) {
-			sendEvent(name: "colorName", value: "White")
-		}
-		else if (value < 5500) {
-			sendEvent(name: "colorName", value: "Daylight")
-		}
-		else if (value >=  5500) {
-			sendEvent(name: "colorName", value: "Cool White")
-		}
-	
-}
+///////////////////////////////////////////////
+// Methods to setup manage device properties //
+///////////////////////////////////////////////
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
@@ -179,7 +102,7 @@ def poll() {
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
+//        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
         unschedule(poll)
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
@@ -257,222 +180,89 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
+/////////////////////////
+// Commands for Driver //
+/////////////////////////
+
+def on() {
+    if (lanControl) {
+        lanOn() }
+    else {
+        cloudOn()
+        }
+}
+
+def off() {
+    if (lanControl) {
+        lanOff() }
+    else {
+        cloudOff()
+        }
+}
+
+
+def setColorTemperature(value,level = null,transitionTime = null)
+{
+    unschedule(fadeUp)
+    unschedule(fadeDown)
+    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
+    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
+    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
+    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
+	int intvalue = value.toInteger()
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+        if (level != null) setLevel(level,transitionTime);
+        sendEvent(name: "colorTemperature", value: intvalue)
+        sendEvent(name: "switch", value: "on")
+        sendEvent(name: "colorMode", value: "CT")
+        if (effectNum != 0){
+            sendEvent(name: "effectNum", value: 0)
+            sendEvent(name: "effectName", value: "None") 
+        }
+	    setCTColorName(intvalue)
+        }
+    else {
+       if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setColorTemperature(): CloudAPI already in retry state. Aborting call." 
+         } else {        
+            sendEvent(name: "cloudAPI", value: "Pending")
+            if (level != null) setLevel(level,transitionTime);
+		    sendCommand("colorTemperatureK", intvalue,"devices.capabilities.color_setting")
+       }
+    }
+} 
+
 def  setEffect(effectNo) {
-            if (lanControl) {
-    effectNumber = effectNo.toString()
-    if ((parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}" != null) && (parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".containsKey(effectNumber))) {
-        String sceneInfo =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).name
-        String sceneCmd =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).cmd
-        if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
-        sendEvent(name: "effectName", value: sceneInfo)
-        sendEvent(name: "effectNum", value: effectNumber)
-        sendEvent(name: "switch", value: "on")
-//    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
-        if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
-        sendCommandLan(cmd2)
-   } else {
-        sendEvent(name: "effectNum", value: effectNumber)
-        sendEvent(name: "switch", value: "on")
-    // Cozy Light Effect (static Scene to very warm light)
-    if (effectNo == 6) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Cozy Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        sendEvent(name: "colorTemperature", value: 2000)
-	    setCTColorName(2000)
-        sendEvent(name: "effectName", value: "Cozy")
+    if (lanControl) {
+        lanSetEffect (effectNo)
+    } else { 
+        cloudSetEffect (effectNo)
     }
-    // Sunrise Effect
-    if (effectNo == 9) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",1, "level"))
-        sendEvent(name: "level", value: 1)
-        fade(100,1800)        
-        sendEvent(name: "effectName", value: "Sunrise")
-    }
-    // Sunset Effect
-    if (effectNo == 10) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        fade(0,1800)
-        sendEvent(name: "effectName", value: "Sunset")
-    }
-    // Warm White Light Effect (static Scene to very warm light)
-    if (effectNo == 11) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Warm White Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",3500, "ct"))
-        sendEvent(name: "colorTemperature", value: 3500)
-	    setCTColorName(3500)
-        sendEvent(name: "effectName", value: "Warm White")
-    } 
-    // Daylight Light Effect    
-    if (effectNo == 12) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Daylight Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",5600, "ct"))
-        sendEvent(name: "colorTemperature", value: 5600)
-	    setCTColorName(5600)
-        sendEvent(name: "effectName", value: "Daylight")
-    }
-    // Cool White Light Effect    
-    if (effectNo == 13) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Cool White Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
-        sendEvent(name: "colorTemperature", value: 6500)
-	    setCTColorName(6500)
-        sendEvent(name: "effectName", value: "Cool White")
-    }  
-    // Night Light Effect   
-    if (effectNo == 14) {
-        if (debugLog) {log.debug ("setEffect(): Static Night Light Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        sendEvent(name: "colorTemperature", value: 2000)
-	    setCTColorName(2000)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",5, "level"))
-        sendEvent(name: "level", value: 5)
-        sendEvent(name: "effectName", value: "Night Light")
-    }
-    // Focus Effect   
-    if (effectNo == 15) {
-        if (debugLog) {log.debug ("setEffect(): Focus Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",4500, "ct"))
-        sendEvent(name: "colorTemperature", value: 4500)
-	    setCTColorName(4500)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        sendEvent(name: "effectName", value: "Focus")
-    } 
-    // Relax Effect   
-    if (effectNo == 16) {
-        if (debugLog) {log.debug ("setEffect(): Static Relax Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:255, g:194, b:194], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        sendEvent(name: "effectName", value: "Relax")
-    }
-    // True Color Effect   
-    if (effectNo == 17) {
-        if (debugLog) {log.debug ("setEffect(): True Color Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",3350, "ct"))
-        sendEvent(name: "colorTemperature", value: 3350)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "effectName", value: "True Color")
-    }
-    // TV Time Effect   
-    if (effectNo == 18) {
-        if (debugLog) {log.debug ("setEffect(): Static TV Time Effect Called. Calling CT Command directly")}        
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:179, g:134, b:254], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
-        sendEvent(name: "level", value: 45)
-        sendEvent(name: "effectName", value: "TV Time")
-    }
-    // Plant Growth Effect   
-    if (effectNo == 19) {
-        if (debugLog) {log.debug ("setEffect(): Static Plant Growth Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:247, g:154, b:254], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
-        sendEvent(name: "level", value: 45)
-        sendEvent(name: "effectName", value: "Plant Growth")
-    }
-    }
-            } else { 
-                log.debug ("setEffect(): Setting effect via cloud api to scene number  ${effectNo}")
-//                effectNumber = effectNo.toString()
-                sendCommand("lightScene", effectNo,"devices.capabilities.dynamic_scene")
-                   }
 }
 
 def setNextEffect() {
     if (lanControl) {
-    if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
-    unschedule(fadeUp)
-    unschedule(fadeDown)
-    if (debugLog) {log.debug ("setNextEffect(): current effectNum ${device.currentValue("effectNum")}")}
-    if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == device.getDataValue("maxScene")) {
-        setEffect(1)
-    } 
-    else if (device.currentValue("effectNum") == "21") {
-        if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
-        setEffect(101) 
+        lanSetNextEffect ()
     } else {
-        if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
-        int nextEffect = device.currentValue("effectNum").toInteger()+1
-        setEffect(nextEffect)
-        }  
-    } else {
-        keys = []
-        names = []
-        keys.addAll(state.scenes.keySet())
-        names.addAll(state.scenes.values())
-//        if (debugLog) {log.debug ("setNextEffect(): current Name ${names.get(state.sceneValue)} value ${keys.get(state.sceneValue)}")}
-        if (state.sceneValue == state.sceneMax) state.sceneValue = 0  
-        if (state.sceneValue == 0) {
-            if (debugLog) {log.debug ("setNextEffect(): Current scene value is 0 setting to first scene in list")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneValue + 1
-        } else {
-            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneValue + 1
-        }  
+        cloudSetNextEffect ()
     }
 } 
       
 def setPreviousEffect() {
     if (lanControl) {
-        if (debugLog) {log.debug ("setPreviousEffect(): Current Color mode ${device.currentValue("colorMode")}")}
-        unschedule(fadeUp)
-        unschedule(fadeDown)
-        if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == "1") {
-            setEffect(device.getDataValue("maxScene"))
-            } else if (device.currentValue("effectNum") == 101) {
-            setEffect(21) 
-            } else {
-                if (debugLog) {log.debug ("setNextEffect(): Increment to next scene}")}
-                int prevEffect = device.currentValue("effectNum").toInteger()-1
-                setEffect(prevEffect)
-        }
+        lanSetPreviousEffect ()
     } else {
-        keys = []
-        names = []
-        keys.addAll(state.scenes.keySet())
-        names.addAll(state.scenes.values())
-//        if (debugLog) {log.debug ("setPreviousEffect(): current Name ${names.get(state.sceneValue)} value ${keys.get(state.sceneValue)}")}       
-            if (state.sceneValue == 0) {
-            if (debugLog) {log.debug ("setPreviousEffect(): Current scene value is 0 setting to first scene in list")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneMax-1 
-        } else {
-            if (debugLog) {log.debug ("setPreviousEffect(): Increment to next scene")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneValue - 1
-        }          
+        cloudSetPreviousEffect ()         
     }
 }
 
 
 def activateDIY(diyActivate) {
     if (lanControl) {
-        String diyEffectNumber = diyActivate.toString()
-        String sceneInfo = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).name
-        String sceneCmd = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd 
-        if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} called ${sceneInfo} with command ${sceneCmd}")}
-        sendEvent(name: "effectName", value: sceneInfo)
-        sendEvent(name: "effectNum", value: diyEffectNumber)
-        sendEvent(name: "switch", value: "on")
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
-        if (debugLog) {log.debug ("activateDIY(): command to be sent to ${cmd2}")}
-        sendCommandLan(cmd2)
+        lanActivateDIY (diyActivate)
     } else {
-             sendCommand("diyScene", diyActivate,"devices.capabilities.dynamic_scene")
+        cloudActivateDIY (diyActivate)
     }
 }
 
@@ -530,3 +320,28 @@ def musicMode(musicMode, sensitivity, autoColor, color) {
 //    values = '{"musicMode":'+musicMode+',"autoColor":'+autocolor2+'}'
     sendCommand("musicMode", values,"devices.capabilities.music_setting")    
 }
+
+////////////////////
+// Helper Methods //
+////////////////////
+
+def setCTColorName(int value)
+{
+		if (value < 2600) {
+			sendEvent(name: "colorName", value: "Warm White")
+		}
+		else if (value < 3500) {
+			sendEvent(name: "colorName", value: "Incandescent")
+		}
+		else if (value < 4500) {
+			sendEvent(name: "colorName", value: "White")
+		}
+		else if (value < 5500) {
+			sendEvent(name: "colorName", value: "Daylight")
+		}
+		else if (value >=  5500) {
+			sendEvent(name: "colorName", value: "Cool White")
+		}	
+}
+
+

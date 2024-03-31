@@ -6,66 +6,60 @@
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_MQTT
 
+import groovy.json.JsonSlurper 
+
 metadata {
 	definition(name: "Govee v2 Presence Sensor", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
-		capability "Refresh" 
+        capability "Refresh"
         capability "MotionSensor"         
         capability "PresenceSensor"
-        attribute "online", "string"
-        attribute "cloudAPI", "string"
+        attribute "connectionState", "string"
     }
 
 	preferences {		
-		section("Device Info") {  
-//            input("tempUnit", "enum", title: "Temp Unit Selection", defaultValue: 'Fahrenheit', options: [    "Fahrenheit",     "Celsius"], required: true)
-//            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
+		section("Device Info") {      
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
-
+//////////////////////////////////////
+// Standard Methods for all drivers //
+//////////////////////////////////////
 
 def updated() {
 if (logEnable) runIn(1800, logsOff)
+    disconnect()
+	pauseExecution(1000)
+    mqttConnectionAttempt()
 }
 
 
 def installed(){
-    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceTempHumid()
+    initialize()
 }
 
 def initialize() {
-    if (device.currentValue("cloudAPI") == "Retry") {
-        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
-        sendEvent(name: "cloudAPI", value: "Initialized")
-    }
+    disconnect()
+    pauseExecution(1000)
+    mqttConnectionAttempt()
 }
 
 def logsOff() {
     log.warn "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
-
-/* def poll() {
-    if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
-} */
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-//    unschedule(poll)
-//    if (pollRate > 0) runIn(pollRate,poll)
-//    getDeviceTempHumid()
     if (debugLog) runIn(1800, logsOff)
 }
 
 def configure() {
-    if (debugLog) {log.warn "configure(): Driver Updated"}
-//    unschedule()
-//    if (pollRate > 0) runIn(pollRate,poll)         
+    if (debugLog) {log.warn "configure(): Driver Updated"}       
     if (debugLog) runIn(1800, logsOff) 
 }
+

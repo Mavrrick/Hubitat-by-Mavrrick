@@ -10,9 +10,10 @@
 // 2023-4-4   API key update now possible
 // 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
 
+// Includes of library objects
 #include Mavrrick.Govee_Cloud_API
-//#include Mavrrick.Govee_Cloud_RGB
-//#include Mavrrick.Govee_Cloud_Level
+
+import groovy.json.JsonSlurper
 
 metadata {
 	definition(name: "Govee v2 Thermo/Hygrometer Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -29,54 +30,65 @@ metadata {
             input("tempUnit", "enum", title: "Temp Unit Selection", defaultValue: 'Fahrenheit', options: [    "Fahrenheit",     "Celsius"], required: true)
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
+//////////////////////////////////////
+// Standard Methods for all drivers //
+//////////////////////////////////////
 
-
+// reset of device settings when preferences updated.
 def updated() {
-if (logEnable) runIn(1800, logsOff)
-}
-
-
-def installed(){
-    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceTempHumid()
-}
-
-def initialize() {
-    if (device.currentValue("cloudAPI") == "Retry") {
-        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
-        sendEvent(name: "cloudAPI", value: "Initialized")
-    }
-        unschedule(poll)
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceTempHumid()
-}
-
-def logsOff() {
-    log.warn "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
-}
-
-def poll() {
-    if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
-}
-
-def refresh() {
-    if (debugLog) {log.warn "refresh(): Performing refresh"}
-    unschedule(poll)
-    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceTempHumid()
+    unschedule()
     if (debugLog) runIn(1800, logsOff)
+    poll()
 }
 
+// linital setup when device is installed.
+def installed(){
+    poll ()
+}
+
+// initialize devices upon install and reboot.
+def initialize() {
+    unschedule()
+    if (debugLog) runIn(1800, logsOff)
+    poll()
+}
+
+// update data for the device
+def refresh() {
+    if (debugLog) {log.info "refresh(): Performing refresh"}
+    unschedule(poll)
+    poll()
+    if (device.currentValue("connectionState") == "connected") {
+    }
+}
+
+// retrieve setup values and initialize polling and logging
 def configure() {
-    if (debugLog) {log.warn "configure(): Driver Updated"}
+    if (debugLog) {log.info "configure(): Driver Updated"}
     unschedule()
     if (pollRate > 0) runIn(pollRate,poll)         
     if (debugLog) runIn(1800, logsOff) 
 }
+
+////////////////////
+// Helper methods //
+////////////////////
+
+logsOff  // turn off logging for the device
+def logsOff() {
+    log.info "debug logging disabled..."
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
+}
+
+poll // retrieve device status
+def poll() {
+    if (debugLog) {log.info "poll(): Poll Initated"}
+	getDeviceTempHumid()
+    if (pollRate > 0) runIn(pollRate,poll)
+}	

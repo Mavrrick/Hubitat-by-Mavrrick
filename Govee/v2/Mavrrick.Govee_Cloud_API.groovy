@@ -7,7 +7,44 @@ library (
  documentationLink: "http://www.example.com/"
 )
 
-// put methods, etc. here
+//////////////////////////////
+// Standard device Commands //
+//////////////////////////////
+
+def cloudOn() {
+         if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "on(): CloudAPI already in retry state. Aborting call." 
+         } else {
+        sendEvent(name: "cloudAPI", value: "Pending")
+	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
+            }
+}
+
+def cloudOff() {
+        if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "off(): CloudAPI already in retry state. Aborting call." 
+         } else {
+        sendEvent(name: "cloudAPI", value: "Pending")
+	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
+            }
+} 
+
+def cloudCT(value, level, transitionTime){
+       if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setColorTemperature(): CloudAPI already in retry state. Aborting call." 
+         } else {  
+           	int intvalue = value.toInteger()
+            sendEvent(name: "cloudAPI", value: "Pending")
+            if (level != null) setLevel(level, transitionTime);
+		    sendCommand("colorTemperatureK", intvalue,"devices.capabilities.color_setting")
+       }
+}
+
+
+
+/////////////////////////////////////////////////////
+// Helper methods to retrieve data or send command //
+/////////////////////////////////////////////////////
 
 private def sendCommand(String command, payload2, type) {
      randomUUID()
@@ -25,17 +62,24 @@ try {
 
 			httpPost(params) { resp ->
 				
-                if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
+                if (debugLog) { log.debug "sendCommand(): Response data is "+resp.data}
                 code = resp.data.code
                 if (code == 200 && command == "powerSwitch") {
                     sendEvent(name: "cloudAPI", value: "Success")
-                    if (payload2 == 1) sendEvent(name: "switch", value: "on")
-                    if (payload2 == 0) sendEvent(name: "switch", value: "off")
+                    if (payload2 == 1) {
+                        sendEvent(name: "switch", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "switch", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
                     } 
                 else if (code == 200 && command == "brightness") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "level", value: payload2)
+                    if (descLog) { log.info "${device.label} Level was set to ${payload2}"}
                     }
                 else if (code == 200 && command == "colorTemperatureK") {
                     sendEvent(name: "cloudAPI", value: "Success")
@@ -43,50 +87,110 @@ try {
                     sendEvent(name: "colorMode", value: "CT")
                     sendEvent(name: "colorTemperature", value: payload2)
                     setCTColorName(payload2)
+                    if (descLog) log.info "${device.label} Color Temp was set to. ${payload2}"
                     }
                 else if (code == 200 && command == "nightlightToggle") {
                     sendEvent(name: "cloudAPI", value: "Success")
-                    if (payload2 == 1) sendEvent(name: "nightLight", value: "on")
-                    if (payload2 == 0) sendEvent(name: "nightLight", value: "off")
+                    if (payload2 == 1) {
+                        sendEvent(name: "nightLight", value: "on")
+                        if (descLog) { log.info "${device.label} nightlight was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "nightLight", value: "off")
+                        if (descLog) { log.info "${device.label} nightlight was turned off"}
+                    }
                     }
                 else if (code == 200 && command == "nightlightScene") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "effectName", value: payload2)
+                    if (descLog) { log.info "${device.label} nightlight scene was set to ${payload2}"}
                     }
                 else if (code == 200 && command == "lightScene") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "colorMode", value: "EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.scenes."${payload2}")
+                    if (descLog) { log.info "${device.label} scene was set to ${payload2}"}
                     }
                 else if (code == 200 && command == "diyScene") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "colorMode", value: "EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.diySceneOptions ."${payload2}")
-                    }                
+                    if (descLog) { log.info "${device.label} DIY scene was set to ${payload2}"}
+                   }                
                else if (code == 200 && command == "airDeflectorToggle") {
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   if (payload2 == 1) {
+                       sendEvent(name: "airDeflector", value: "on")
+                       if (descLog) { log.info "${device.label} Air Deflector was turned on"}
+                   }
+                   if (payload2 == 0) {
+                       sendEvent(name: "airDeflector", value: "off")
+                       if (descLog) { log.info "${device.label} Air Deflector was turned off"}
+                   }
+                   }
+               else if (code == 200 && command == "oscillationToggle") {
                     sendEvent(name: "cloudAPI", value: "Success")
-                    if (payload2 == 1) sendEvent(name: "airDeflector", value: "on")
-                    if (payload2 == 0) sendEvent(name: "airDeflector", value: "off")
-                    }
+                   if (payload2 == 1) {
+                       sendEvent(name: "oscillation", value: "on")
+                       if (descLog) { log.info "${device.label} Oscillation was turned on"}
+                   }
+                   if (payload2 == 0) {
+                       sendEvent(name: "oscillation", value: "off")
+                       if (descLog) { log.info "${device.label} Oscillation was turned off"}
+                   }
+                   }
                else if (code == 200 && command == "workMode") {
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "mode ", value: payload2)
-                    }
-                else if (code == 200 && command == "colorRgb") {
+                   def jsonSlurper = new JsonSlurper()
+                   def payloadJson = jsonSlurper.parseText(payload2)
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   sendEvent(name: "switch", value: "on")
+                   sendEvent(name: "mode", value: payloadJson.workMode)
+                   if (payloadJson.modeValue == 0) {
+                       sendEvent(name: "modeValue", value: "N/A")
+                   } else {
+                       sendEvent(name: "modeValue", value: payloadJson.modeValue)
+                   }
+                   setModeDescription(payloadJson.workMode)
+                   if (descLog) { log.info "${device.label} workMode was set to ${payload2}"}
+                   }
+               else if (code == 200 && command == "sliderTemperature") {
+                   def jsonSlurper = new JsonSlurper()
+                   def payloadJson = jsonSlurper.parseText(payload2)
+                   log.debug "${device.label} payloadJson= ${payloadJson}"
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   def units = payloadJson?.unit.charAt(0)
+                   sendEvent(name: "switch", value: "on")
+                   sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
+                   sendEvent(name: "targetTempUnit", value: units)
+                   if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
+                   }
+               else if (code == 200 && command == "targetTemperature") {
+                   def jsonSlurper = new JsonSlurper()
+                   def payloadJson = jsonSlurper.parseText(payload2)
+                   log.debug "${device.label} payloadJson= ${payloadJson}"
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   def units = payloadJson?.unit.charAt(0)
+                   sendEvent(name: "switch", value: "on")
+                   sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
+                   sendEvent(name: "targetTempUnit", value: units)
+                   if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
+                   }                 
+               else if (code == 200 && command == "colorRgb") {
                     int r = (payload2 >> 16) & 0xFF;
                     int g = (payload2 >> 8) & 0xFF;
                     int b = payload2 & 0xFF;
-					HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
-					hue=HSVlst[0].toInteger()
-					sat=HSVlst[1].toInteger()
+		            HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
+				    hue=HSVlst[0].toInteger()
+	   			    sat=HSVlst[1].toInteger()
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "RGB")
                     sendEvent(name: "colorRGBNum", value: payload2)
 					sendEvent(name: "hue", value: hue)
 					sendEvent(name: "saturation", value: sat)
+                    if (descLog) { log.info "${device.label} Color was set to ${payload2}"}
                     }
                 resp.headers.each {
                     if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
@@ -219,9 +323,17 @@ try {
                                 if (instance == "presetScene") sendEvent(name: "presetScene", value: it.state.value);
                             break;
                             case "devices.capabilities.temperature_setting":
-                                if (instance == "targetTemperature" && getTemperatureScale() == "C") sendEvent(name: "targetTemp", value: it.state.value.targetTemperature, unit: "C");
-                                if (instance == "targetTemperature" && getTemperatureScale() == "F") sendEvent(name: "targetTemp", value: celsiusToFahrenheit(it.state.value.targetTemperature), unit: "F");
-                                if (instance == "sliderTemperature") sendEvent(name: "tempSetPoint", value: it.state.value);
+                               switch (instance) {
+                                   case "targetTemperature":
+                                       sendEvent(name: "targetTemp", value: it.state.value.targetTemperature, unit: getTemperatureScale() );
+                                       break;
+                                   case "sliderTemperature":
+                                       sendEvent(name: "targetTemp", value: it.state?.value?.targetTemperature, unit: getTemperatureScale() )
+                                       sendEvent(name: "tempSetPoint", value: it.state?.value);
+                                       break;
+                                   default:
+                                       break;
+                               }
                             break;
                             case "devices.capabilities.property":
                                 if (instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value), unit: "C");
@@ -229,7 +341,18 @@ try {
                                 if (instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value, unit: "%");
                             break;  
                             case "devices.capabilities.work_mode":
-                                if (instance == "workMode") sendEvent(name: "mode", value: it.state.value);
+                                if (instance == "workMode") {
+                                    sendEvent(name: "mode", value: it.state.value.workMode)
+                                    if ( it.state.value.modeValue == null || it.state.value.modeValue == 0 ) {
+                                        if (debugLog) {log.debug ("getDeviceState(): workmode value of Null or 0 found}")}
+                                        sendEvent(name: "modeValue", value: "N/A")
+                                    } else {
+                                        sendEvent(name: "modeValue", value: it.state.value.modeValue)
+                                        if (debugLog) {log.debug ("getDeviceState(): workmode value is greater then 0}")}
+                                    }
+                                    };
+//                                if (instance == "workMode") sendEvent(name: "modeValue", value: it.state.value.modeValue);
+                                setModeDescription(it.state.value.workMode);
                             break;                            
                         default: 
                         if (debugLog) {log.debug ("getDeviceState(): Unknown command type}")}; 
@@ -488,15 +611,22 @@ def retrieveCmdParms(type){
     }          
 }
 
+void setModeDescription(mode=null) {
+    mode = mode?:device.currentValue('mode',true)
+    def WorkModeName = state.workMode.options[0].find{it.value==mode}?.name?:"Unknown"
+    if (debugLog) {log.debug "setModeDescription(${mode}): WorkModeName=${WorkModeName}"}
+    sendEvent(name: "modeDescription", value: WorkModeName )
+}
+
 def apiKeyUpdate() {
     if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.warn "apiKeyUpdate(): Detected new API Key. Applying"}
+        if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
     }
 }
 
 def randomUUID(){
     requestID = UUID.randomUUID().toString()
-    if (debugLog) {log.warn "randomUUID(): random uuid is ${requestID}"}
+    if (debugLog) {log.debug "randomUUID(): random uuid is ${requestID}"}
     return requestID
 }

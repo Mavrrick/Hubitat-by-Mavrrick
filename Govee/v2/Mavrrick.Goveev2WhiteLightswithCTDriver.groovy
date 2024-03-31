@@ -55,92 +55,16 @@ metadata {
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
-def on() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-        sendEvent(name: "switch", value: "on")}
-    else {
-         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "on(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
-            }
-        }
-}
 
-def off() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-        sendEvent(name: "switch", value: "off")}
-    else {
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "off(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
-            }
-        }
-}
-
-def setColorTemperature(value,level = null,transitionTime = null)
-{
-    unschedule(fadeUp)
-    unschedule(fadeDown)
-    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
-    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
-    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
-    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-	int intvalue = value.toInteger()
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) setLevel(level,transitionTime);
-        sendEvent(name: "colorTemperature", value: intvalue)
-        sendEvent(name: "switch", value: "on")
-        sendEvent(name: "colorMode", value: "CT")
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
-	    setCTColorName(intvalue)
-        }
-    else {
-       if (device.currentValue("cloudAPI") == "Retry") {
-            log.error "setColorTemperature(): CloudAPI already in retry state. Aborting call." 
-         } else {        
-            sendEvent(name: "cloudAPI", value: "Pending")
-            if (level != null) setLevel(level,transitionTime);
-		    sendCommand("colorTemperatureK", intvalue,"devices.capabilities.color_setting")
-       }
-    }
-}   
-
-
-
-def setCTColorName(int value)
-{
-		if (value < 2600) {
-			sendEvent(name: "colorName", value: "Warm White")
-		}
-		else if (value < 3500) {
-			sendEvent(name: "colorName", value: "Incandescent")
-		}
-		else if (value < 4500) {
-			sendEvent(name: "colorName", value: "White")
-		}
-		else if (value < 5500) {
-			sendEvent(name: "colorName", value: "Daylight")
-		}
-		else if (value >=  5500) {
-			sendEvent(name: "colorName", value: "Cool White")
-		}
-	
-}
+///////////////////////////////////////////////
+// Methods to setup manage device properties //
+///////////////////////////////////////////////
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
@@ -149,11 +73,11 @@ def poll() {
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
+//        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
         unschedule(poll)
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
-    if (debugLog) runIn(1800, logsOff)
+//    if (debugLog) runIn(1800, logsOff)
 }
 
 def updated() {
@@ -215,3 +139,81 @@ def logsOff() {
     log.warn "debug logging disabled..."
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
+
+/////////////////////////
+// Commands for Driver //
+/////////////////////////
+
+def on() {
+    if (lanControl) {
+        lanOn() }
+    else {
+        cloudOn()
+        }
+}
+
+def off() {
+    if (lanControl) {
+        lanOff() }
+    else {
+        cloudOff()
+        }
+}
+
+
+def setColorTemperature(value,level = null,transitionTime = null)
+{
+    unschedule(fadeUp)
+    unschedule(fadeDown)
+    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
+    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
+    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
+    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
+	int intvalue = value.toInteger()
+    if (lanControl) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+        if (level != null) setLevel(level,transitionTime);
+        sendEvent(name: "colorTemperature", value: intvalue)
+        sendEvent(name: "switch", value: "on")
+        sendEvent(name: "colorMode", value: "CT")
+        if (effectNum != 0){
+            sendEvent(name: "effectNum", value: 0)
+            sendEvent(name: "effectName", value: "None") 
+        }
+	    setCTColorName(intvalue)
+        }
+    else {
+       if (device.currentValue("cloudAPI") == "Retry") {
+            log.error "setColorTemperature(): CloudAPI already in retry state. Aborting call." 
+         } else {        
+            sendEvent(name: "cloudAPI", value: "Pending")
+            if (level != null) setLevel(level,transitionTime);
+		    sendCommand("colorTemperatureK", intvalue,"devices.capabilities.color_setting")
+       }
+    }
+} 
+
+
+////////////////////
+// Helper Methods //
+////////////////////
+
+def setCTColorName(int value)
+{
+		if (value < 2600) {
+			sendEvent(name: "colorName", value: "Warm White")
+		}
+		else if (value < 3500) {
+			sendEvent(name: "colorName", value: "Incandescent")
+		}
+		else if (value < 4500) {
+			sendEvent(name: "colorName", value: "White")
+		}
+		else if (value < 5500) {
+			sendEvent(name: "colorName", value: "Daylight")
+		}
+		else if (value >=  5500) {
+			sendEvent(name: "colorName", value: "Cool White")
+		}	
+}
+

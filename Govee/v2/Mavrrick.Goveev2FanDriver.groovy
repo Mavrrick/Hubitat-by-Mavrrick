@@ -3,9 +3,10 @@
 //
 // 2022-11-03 Initial Driver release for Govee Fan Appliance devices
 
+// Includes of library objects
 #include Mavrrick.Govee_Cloud_API
-//#include Mavrrick.Govee_Cloud_RGB
-//#include Mavrrick.Govee_Cloud_Level
+
+import groovy.json.JsonSlurper 
 
 metadata {
 	definition(name: "Govee v2 Fan Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -18,6 +19,9 @@ metadata {
 
         attribute "online", "string"
         attribute "mode", "number"
+        attribute "modeValue", "number"
+        attribute "modeDescription", "string"
+        attribute "pollInterval", "number"
         attribute "cloudAPI", "string"
         attribute "online", "string"
         attribute "oscillation", "string"
@@ -25,38 +29,102 @@ metadata {
         command "airDeflectoron_off", [[name: "Oscillation", type: "ENUM", constraints: ['On',      'Off'] ] ]
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'FanSpeed',      'Custom',       'Auto',    'Sleep',    'Nature'], description: "Mode of device"],
                           [name: "gearMode", type: "NUMBER", description: "Only used when mode is FanSpeed"]]
+        command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
     }
 
 	preferences {		
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
-def parse(String description) {
+//////////////////////////////////////
+// Standard Methods for all drivers //
+//////////////////////////////////////
 
+Update // reset of device settings when preferences updated.
+def updated() {
+    unschedule()
+    if (debugLog) runIn(1800, logsOff)
+    retrieveStateData()
+    poll()
 }
 
+Installed // linital setup when device is installed.
+def installed(){
+    retrieveStateData()
+    poll()
+}
+
+Initialize // initialize devices upon install and reboot.
+def initialize() {
+     if (device.currentValue("cloudAPI") == "Retry") {
+        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
+        sendEvent(name: "cloudAPI", value: "Initialized")
+    }
+    unschedule()
+    if (debugLog) runIn(1800, logsOff)
+    poll()
+}
+
+Refresh // update data for the device
+def refresh() {
+    if (debugLog) {log.info "refresh(): Performing refresh"}
+    unschedule(poll)
+    poll()
+    if (device.currentValue("connectionState") == "connected") {
+    }
+}
+
+Configure // retrieve setup values and initialize polling and logging
+def configure() {
+    if (debugLog) {log.info "configure(): Driver Updated"}
+    unschedule()
+    if (pollRate > 0) runIn(pollRate,poll)     
+    retrieveStateData()    
+    if (debugLog) runIn(1800, logsOff) 
+}
+
+////////////////////
+// Helper methods //
+////////////////////
+
+logsOff  // turn off logging for the device
+def logsOff() {
+    log.info "debug logging disabled..."
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
+}
+
+poll // retrieve device status
+def poll() {
+    if (debugLog) {log.info "poll(): Poll Initated"}
+	getDeviceState()
+    if (pollRate > 0) runIn(pollRate,poll)
+}	
+
+//////////////////////
+// Driver Commands // 
+/////////////////////
+
 def on() {
-         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "on(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
-            }
+    if (lanControl) {
+        lanOn() }
+    else {
+        cloudOn()
+        }
 }
 
 def off() {
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "off(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
-            }
-} 
+    if (lanControl) {
+        lanOff() }
+    else {
+        cloudOff()
+        }
+}
 
 def airDeflectoron_off(evt) {
     log.debug "airDeflectoron_off(): Processing Air Deflector command. ${evt}"
@@ -103,52 +171,4 @@ def workingMode(mode, gear){
     }
     values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}   
-
-
-def updated() {
-if (logEnable) runIn(1800, logsOff)
-retrieveStateData()
-}
-
-
-def installed(){
-    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceState()
-}
-
-def initialize() {
-    if (device.currentValue("cloudAPI") == "Retry") {
-        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
-        sendEvent(name: "cloudAPI", value: "Initialized")
-    }
-        unschedule(poll)
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-}
-
-def logsOff() {
-    log.warn "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
-}
-
-def poll() {
-    if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
-}
-
-def refresh() {
-    if (debugLog) {log.warn "refresh(): Performing refresh"}
-    unschedule(poll)
-    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceState()
-    if (debugLog) runIn(1800, logsOff)
-}
-
-def configure() {
-    if (debugLog) {log.warn "configure(): Driver Updated"}
-    unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)     
-    retrieveStateData()    
-    if (debugLog) runIn(1800, logsOff) 
-}
+}  

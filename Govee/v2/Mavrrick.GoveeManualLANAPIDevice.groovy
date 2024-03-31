@@ -75,7 +75,7 @@ def setColorTemperature(value,level = null,transitionTime = null)
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-    if (descLog) log.info "${device.label} Color Temp was set to. $value"
+    if (descLog) log.info "${device.label} Color Temp was set to. ${value}"
 	int intvalue = value.toInteger()
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
         if (level != null) setLevel(level,transitionTime);

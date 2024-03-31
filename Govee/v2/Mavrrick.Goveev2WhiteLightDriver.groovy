@@ -19,6 +19,7 @@ import groovy.json.JsonBuilder
 
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_Level
+#include Mavrrick.Govee_LAN_API
 
 def commandPort() { "4003" }
 
@@ -45,101 +46,11 @@ metadata {
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
-
-def on() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-        sendEvent(name: "switch", value: "on")}
-    else {
-         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "on(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
-            }
-        }
-}
-
-def off() {
-    if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-        sendEvent(name: "switch", value: "off")}
-    else {
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "off(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
-            }
-        }
-}
-
-private def sendCommandLegacy(String command, payload) {
-
-
-     def params = [
-            uri   : "https://developer-api.govee.com",
-            path  : '/v1/devices/control',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-            contentType: "application/json",      
-			body: [device: device.getDataValue("deviceID"), model: device.getDataValue("deviceModel"), cmd: ["name": command, "value": payload]],
-        ]
-    
-
-try {
-
-			httpPut(params) { resp ->
-				
-                if (debugLog) { log.debug "sendCommand(): response.data="+resp.data}
-                code = resp.data.code
-                if (code == 200 && command == "turn") {
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: payload)
-                    } 
-                 else if (code == 200 && command == "brightness") {
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: "on")
-                     sendEvent(name: "level", value: payload)
-                    }
-                resp.headers.each {
-                    if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
-                    name = it.name
-                    value=it.value
-                    if (name == "X-RateLimit-Remaining") {
-                        state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemaining", value)
-                    }
-                    if (name == "API-RateLimit-Remaining") {
-                        state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainig", value)
-                    }
-            }
-                return resp.data
-		}
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-        if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
-                if (e.statusCode == 429) {
-            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
-            sendEvent(name: "cloudAPI", value: "Retry")
-            pauseExecution(60000)
-            sendCommand(command, payload)
-        } 
-        else {
-          log.error "sendCommand():Unknwon Error. Attempting again in one min." 
-            sendEvent(name: "cloudAPI", value: "Retry")
-            pauseExecution(60000)
-            sendCommand(command, payload)
-        }
-		return 'unknown'
-	}
-}
-
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
@@ -148,13 +59,13 @@ def poll() {
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-    if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
+//    if(device.getDataValue("retrievable") =='true'){
+//       if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
         unschedule(poll)
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
-    }
-    if (debugLog) runIn(1800, logsOff)
+//    }
+//    if (debugLog) runIn(1800, logsOff)
 }
 
 def updated() {
@@ -207,60 +118,24 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-def GoveeCommandBuilder(String command1, value1, String type) {   
-    if (type=="status") {
-           if (debugLog) {log.debug "GoveeCommandBuilder():status"}
-        JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            }
-    }
-    def  command = cmd1.toString()
-           if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command    
-    }
-    else { 
-        if (debugLog) {log.debug "GoveeCommandBuilder():other action"}
-    JsonBuilder cmd1 = new JsonBuilder() 
-        cmd1.msg {
-        cmd command1
-        data {
-            value value1}
+/////////////////////////
+// Commands for Driver //
+/////////////////////////
+
+def on() {
+    if (lanControl) {
+        lanOn() }
+    else {
+        cloudOn()
         }
-    def  command = cmd1.toString()
-        if (debugLog) {log.debug "GoveeCommandBuilder():json output ${command}"}
-  return command
-}
 }
 
-def sendCommandLan(String cmd) {
-  def addr = getIPString();
-    if (debugLog) {log.debug ("sendCommandLan(): ${cmd}")}
-
-  pkt = new hubitat.device.HubAction(cmd,
-                     hubitat.device.Protocol.LAN,
-                     [type: hubitat.device.HubAction.Type.LAN_TYPE_UDPCLIENT,
-                     ignoreResponse    : false,
-                     callback: parse,
-                     parseWarning: true,
-                     destinationAddress: addr])  
-  try {    
-      if (debugLog) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
-    sendHubCommand(pkt) 
-    
-  }
-  catch (Exception e) {      
-      logDebug e
-  }      
-}
-
-def getIPString() {
-   return ip+":"+commandPort()
+def off() {
+    if (lanControl) {
+        lanOff() }
+    else {
+        cloudOff()
+        }
 }
 
 
-def parse(message) {  
-  log.error "Got something to parseUDP"
-  log.error "UDP Response -> ${message}"    
-}

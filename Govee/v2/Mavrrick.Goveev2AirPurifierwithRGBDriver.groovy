@@ -12,9 +12,13 @@
 // 2023-4-4   API Key update is now possible
 // 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
 
+// Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_RGB
 #include Mavrrick.Govee_Cloud_Level
+#include Mavrrick.Govee_Cloud_Life
+
+import groovy.json.JsonSlurper 
 
 metadata {
 	definition(name: "Govee v2 Air Purifier with RGB Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -28,73 +32,131 @@ metadata {
         capability "Configuration" 
         
         attribute "online", "string"
-        attribute "gear", "number"
+//        attribute "gear", "number"
         attribute "mode", "number"
+        attribute "modeValue", "number"
+        attribute "modeDescription", "string"
+        attribute "pollInterval", "number"         
         attribute "cloudAPI", "string"
         attribute "filterStatus", "string"  
         
         command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]        
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'gearMode',      'Custom',       'Auto',       'Sleep'], description: "Mode of device"],
-                          [name: "gearMode",  type: "NUMBER", description: "This will adjust your fan speed."]]        
+                                [name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High', 'N/A'], description: "Default speed of Fan using GearMode. Ignored in any other mode"],
+                                [name: "speed",  type: "INTEGER", description: "This will adjust your fan speed when using custom Mode.", default: 0]]          
+        command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
     }
 
 	preferences {		
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4) 
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
 		
 	}
 }
 
-def parse(String description) {
+//////////////////////////////////////
+// Standard Methods for all drivers //
+//////////////////////////////////////
 
+// reset of device settings when preferences updated.
+def updated() {
+    unschedule()
+    if (debugLog) runIn(1800, logsOff)
+    poll()
+    retrieveStateData()
 }
 
+// linital setup when device is installed.
+def installed(){
+    poll ()
+    retrieveStateData()
+}
+
+// initialize devices upon install and reboot.
+def initialize() {
+     if (device.currentValue("cloudAPI") == "Retry") {
+        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
+        sendEvent(name: "cloudAPI", value: "Initialized")
+    }
+    unschedule()
+    if (logEnable) runIn(1800, logsOff)
+    poll()
+}
+
+// update data for the device
+def refresh() {
+    if (debugLog) {log.info "refresh(): Performing refresh"}
+    unschedule(poll)
+    poll()
+    if (device.currentValue("connectionState") == "connected") {
+    }
+}
+
+// retrieve setup values and initialize polling and logging
+def configure() {
+    if (debugLog) {log.info "configure(): Driver Updated"}
+    unschedule()
+    if (pollRate > 0) runIn(pollRate,poll)     
+    retrieveStateData()    
+    if (debugLog) runIn(1800, logsOff) 
+}
+
+////////////////////
+// Helper methods //
+////////////////////
+
+// turn off logging for the device
+def logsOff() {
+    log.info "debug logging disabled..."
+    device.updateSetting("debugLog", [value: "false", type: "bool"])
+}
+
+// retrieve device status
+def poll() {
+    if (debugLog) {log.info "poll(): Poll Initated"}
+	getDeviceState()
+    if (pollRate > 0) runIn(pollRate,poll)
+}	
+
+//////////////////////
+// Driver Commands // 
+/////////////////////
+
 def on() {
-         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "on(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 1 ,"devices.capabilities.on_off")
-            }
+        cloudOn()
 }
 
 def off() {
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "off(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-	    sendCommand("powerSwitch", 0 ,"devices.capabilities.on_off")
-            }
-} 
-
-def nightLighton_off(evt) {
-    log.debug "nightLighton_off(): Processing Night Light command. ${evt}"
-        if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "nightLighton_off(): CloudAPI already in retry state. Aborting call." 
-         } else {
-        sendEvent(name: "cloudAPI", value: "Pending")
-            if (evt == "On") sendCommand("nightlightToggle", 1 ,"devices.capabilities.toggle")
-            if (evt == "Off") sendCommand("nightlightToggle", 0 ,"devices.capabilities.toggle")
-            }
+        cloudOff()
 }
 
-def gear(gear){
-    sendEvent(name: "cloudAPI", value: "Pending")
-    sendCommand("gear", gear)
-}
-
-def workingMode(mode, gear){
+def workingMode(mode, gear, speed=0){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "gearMode":
             modenum = 1;
-        
+            switch(gear){
+                case "Low":
+                    gear = 1;
+                break;
+                case "Medium":
+                    gear = 2;
+                break;
+                case "High":
+                    gear = 3;
+                break;
+                    default:
+                    gear = 0;
+                break;
+                }
         break;
         case "Custom":
             modenum = 2;
+            gear = speed;
         break;
         case "Auto":
             modenum = 3;
@@ -110,89 +172,4 @@ def workingMode(mode, gear){
     }
     values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}     
-
-def updated() {
-if (logEnable) runIn(1800, logsOff)
-    retrieveStateData()
-    state.sceneMax = state.nightlightScene.size()
-    state.sceneValue = 0
-}
-
-def configure() {
-    if (debugLog) {log.warn "configure(): Driver Updated"}
-    unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)     
-    retrieveStateData()
-    state.sceneMax = state.nightlightScene.size()
-    state.sceneValue = 0    
-    if (debugLog) runIn(1800, logsOff) 
-}
-
-def installed(){
-    if (pollRate > 0) runIn(pollRate,poll)
-    retrieveStateData()
-    state.sceneMax = state.nightlightScene.size()
-    state.sceneValue = 0 
-    getDeviceState()    
-}
-
-def initialize() {
-    if (device.currentValue("cloudAPI") == "Retry") {
-        if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
-        sendEvent(name: "cloudAPI", value: "Initialized")
-    }
-        unschedule(poll)
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-}
-
-def logsOff() {
-    log.warn "debug logging disabled..."
-    device.updateSetting("logEnable", [value: "false", type: "bool"])
-}
-
-def poll() {
-    if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
-}
-
-def refresh() {
-    if (debugLog) {log.warn "refresh(): Performing refresh"}
-    unschedule(poll)
-    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceState()
-    if (debugLog) runIn(1800, logsOff)
-}
-def  setEffect(effectNo) {
-                log.debug ("setEffect(): Setting effect via cloud api to scene number  ${effectNo}")
-                sendCommand("nightlightScene", effectNo,"devices.capabilities.mode")
-                   
-}
-
-def setNextEffect() {
-        if (debugLog) {log.debug ("setNextEffect(): current Name ${state.nightlightScene.get(state.sceneValue).name} value ${state.nightlightScene.get(state.sceneValue).value}")}
-            if (state.sceneValue == 0) {
-            if (debugLog) {log.debug ("setNextEffect(): Current scene value is 0 setting to first scene in list")}
-            setEffect(state.nightlightScene.get(state.sceneValue).value)
-            state.sceneValue = state.sceneValue + 1
-        } else {
-            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
-            setEffect(state.nightlightScene.get(state.sceneValue).value)
-            state.sceneValue = state.sceneValue + 1
-        }  
 } 
-      
-def setPreviousEffect() {
-        if (debugLog) {log.debug ("setPreviousEffect(): current Name ${state.nightlightScene.get(state.sceneValue).name} value ${state.nightlightScene.get(state.sceneValue).value}")}
-            if (state.sceneValue == 0) {
-            if (debugLog) {log.debug ("setPreviousEffect(): Current scene value is 0 setting to first scene in list")}
-            setEffect(state.nightlightScene.get(state.sceneValue).value)
-            state.sceneValue = state.sceneMax 
-        } else {
-            if (debugLog) {log.debug ("setPreviousEffect(): Increment to next scene")}
-            setEffect(state.nightlightScene.get(state.sceneValue).value)
-            state.sceneValue = state.sceneValue - 1
-        }          
-}
-
