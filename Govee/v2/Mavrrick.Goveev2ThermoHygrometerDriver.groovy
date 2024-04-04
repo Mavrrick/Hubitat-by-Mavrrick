@@ -56,7 +56,12 @@ def installed(){
 def initialize() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
-    poll()
+    if (pollRate > 0) {
+        pollRateInt = pollRate.toInteger()
+        randomOffset(pollRateInt)
+        runIn(offset,poll)
+    }
+//    poll()
 }
 
 // update data for the device
@@ -89,6 +94,7 @@ def logsOff() {
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-	getDeviceTempHumid()
+    getDeviceState()    
+//	getDeviceTempHumid()
     if (pollRate > 0) runIn(pollRate,poll)
 }	

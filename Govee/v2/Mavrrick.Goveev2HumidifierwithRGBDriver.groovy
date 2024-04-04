@@ -96,7 +96,12 @@ def initialize() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
-    poll()
+    if (pollRate > 0) {
+        pollRateInt = pollRate.toInteger()
+        randomOffset(pollRateInt)
+        runIn(offset,poll)
+    }
+//    poll()
     disconnect()
     pauseExecution(1000)
     mqttConnectionAttempt()

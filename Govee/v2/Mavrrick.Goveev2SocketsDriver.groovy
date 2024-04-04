@@ -82,7 +82,12 @@ def initialize(){
         sendEvent(name: "cloudAPI", value: "Initialized")
     }
         unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
+    if (pollRate > 0) {
+        pollRateInt = pollRate.toInteger()
+        randomOffset(pollRateInt)
+        runIn(offset,poll)
+    }
+//        if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     if (debugLog) runIn(1800, logsOff)
 }
