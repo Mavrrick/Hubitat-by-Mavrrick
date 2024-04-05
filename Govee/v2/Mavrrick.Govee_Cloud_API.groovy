@@ -336,9 +336,9 @@ try {
                                }
                             break;
                             case "devices.capabilities.property":
-                                if (instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value), unit: "C");
-                                if (instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value, unit: "F");
-                                if (instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value, unit: "%");
+                                if (instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value.toDouble().round(2)), unit: "C");
+                                if (instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
+                                if (instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value.currentHumidity, unit: "%");
                             break;  
                             case "devices.capabilities.work_mode":
                                 if (instance == "workMode") {
@@ -391,68 +391,6 @@ try {
 	}
 }
 
-def getDeviceTempHumid(){
-    randomUUID()
-    if (debugLog) { log.debug "getDeviceState(): ${requestID}"}
-    bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
-        def params = [
-			uri   : "https://openapi.api.govee.com",
-			path  : '/router/api/v1/device/state',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-            body: bodyParm
-        ]
-    
-
-
-try {
-
-			httpPost(params) { resp ->
-
-                if (debugLog) { log.debug "getDeviceState():"+resp.data.payload.capabilities}
-                resp.data.payload.capabilities.each {
-                    type = it.type
-                    instance = it.instance
-//                    state = it.state
-                    if (debugLog) { log.debug "getDeviceState(): ${type} ${instance} ${it.state.value}" }
-                        switch(type) {
-                            case "devices.capabilities.property":
-                            if (instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: ((it.state.value.toInteger()/100)).toDouble().round(1), unit: "C"); 
-                            if (instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: (((it.state.value.toInteger()/100)*(9/5))+32).toDouble().round(1), unit: "F");
-                            if (instance == "sensorHumidity") sendEvent(name: "humidity", value: (it.state.value.currentHumidity.toInteger()/100).toDouble().round(1), unit: "%");
-                            break;  
-                        default: 
-                        if (debugLog) {log.debug ("getDeviceState(): Unknown command type}")}; 
-                         break;         
-                }
-                }
-
-                resp.headers.each {
-                    if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
-                    name = it.name
-                    value = it.value
-                    if (name == "X-RateLimit-Remaining") {
-                        state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemaining", value)
-                    }
-                    if (name == "API-RateLimit-Remaining") {
-                        state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainig", value)
-                    }
-                }								
-				
-                if (device.currentValue("cloudAPI") == "Retry") {
-                    if (debugLog) {log.error "getDeviceState(): Cloud API in retry state. Reseting "}
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    }				
-				return resp.data
-			}
-			
-	} catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-		return 'unknown'
-	}
-}
 
 def retrieveScenes2(){
     randomUUID()
@@ -470,16 +408,13 @@ try {
 			httpPost(params) { resp ->
 
                 if (debugLog) { log.debug "retrieveScenes2():"+resp.data.payload.capabilities}
-//                state.scenes = resp.data.payload.capabilities.parameters.options.get(0)
                 state.remove("sceneOptions")
                 state.scenes = [:]
                 resp.data.payload.capabilities.parameters.options.get(0).each {
-//                    String sceneName = '"'+it.name+'"'
-//                    String sceneNum = '"'+it.value.id+'"'
- //                   sceneOptions = []
- //                   sceneOptions.add(sceneName+'='+sceneNum)
                     state.scenes.put(it.value.id,it.name)  
-                } 
+                }
+                state.sceneMax = state.scenes.size()
+                state.sceneValue = 0 
                 if (debugLog) { log.debug "retrieveScenes2(): dynamic scenes loaded"}
                 resp.headers.each {
                     if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
@@ -510,7 +445,6 @@ try {
 }
 
 def retrieveDIYScenes(){
-//    state.scenes = [] as List
     randomUUID()
     if (debugLog) { log.debug "retrieveDIYScenes(): ${requestID}"}
      bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
@@ -629,4 +563,18 @@ def randomUUID(){
     requestID = UUID.randomUUID().toString()
     if (debugLog) {log.debug "randomUUID(): random uuid is ${requestID}"}
     return requestID
+}
+
+
+///////////////////////////////////////////
+// Helper Methods /////////////////////////
+///////////////////////////////////////////
+
+def randomOffset(int pollRateInt){
+    if (debugLog) {log.debug "randomOffset(): Entered random offset Calc with ${pollRateInt}"} 
+    Random random = new Random()
+    offset = random.nextInt(pollRateInt) // see explanation below
+//    int number = random.nextInt(pollRateInt) + start; // see explanation below
+    if (debugLog) {log.debug "randomOffset(): random offset is ${offset}"}    
+    return offset
 }

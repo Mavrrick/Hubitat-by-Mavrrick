@@ -144,8 +144,6 @@ def configure() {
         }
     }    
     if (debugLog) runIn(1800, logsOff) 
-    state.sceneMax = state.scenes.size()
-    state.sceneValue = 0
 }
 
 def initialize(){
@@ -158,7 +156,12 @@ def initialize(){
         sendEvent(name: "effectNum", value: 0) }
     if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
     unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)
+    if (pollRate > 0) {
+        pollRateInt = pollRate.toInteger()
+        randomOffset(pollRateInt)
+        runIn(offset,poll)
+    }
+//    if (pollRate > 0) runIn(pollRate,poll)
     getDeviceState()
     if (debugLog) runIn(1800, logsOff)
     
@@ -175,9 +178,7 @@ def installed(){
     if (pollRate > 0) runIn(pollRate,poll)
     getDeviceState()
     retrieveScenes2()
-    retrieveStateData()
-    state.sceneMax = state.scenes.size()
-    state.sceneValue = 0    
+    retrieveStateData()  
 }
 
 def logsOff() {
