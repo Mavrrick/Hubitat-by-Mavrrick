@@ -81,14 +81,7 @@ def initialize() {
     }
     unschedule()
     if (debugLog) runIn(1800, logsOff)
-    pollRateInt = pollRate.toInteger()
-    randomOffset(pollRateInt)
-    if (pollRate > 0) {
-        pollRateInt = pollRate.toInteger()
-        randomOffset(pollRateInt)
-        runIn(offset,poll)
-    }
-//    poll()
+    poll()
 }
 
 Refresh // update data for the device

@@ -108,14 +108,12 @@ def disconnected() {
 def parse(String event) {
     def jsonSlurper = new JsonSlurper()     
     if (debugLog) log.debug "In parse, received a message"
-    def message = interfaces.mqtt.parseMessage(event)
-    def messageJson = interfaces.mqtt.parseMessage(event.json)
+    def message = interfaces.mqtt.parseMessage(event)    
     def payloadJson = jsonSlurper.parseText(message.payload)
 
     if ('Govee_'+payloadJson.device == device.getDeviceNetworkId()) {
     
         if (debugLog) log.debug "In parse, received message: ${message}"
-        if (debugLog) log.debug "In parse, messageJson is ${messageJson}"
         if (debugLog) log.debug "In parse, payloadJson is ${payloadJson}"
         if (debugLog) log.debug "In parse, deviceid is ${payloadJson.device} capability is ${payloadJson.capabilities} "
         if (debugLog) log.debug "In parse, instance is ${payloadJson.capabilities.get(0).instance}" 

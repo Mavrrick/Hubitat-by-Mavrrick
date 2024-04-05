@@ -19,7 +19,6 @@
 #include Mavrrick.Govee_Cloud_MQTT
 
 import groovy.json.JsonSlurper 
-import java.util.Random 
 
 metadata {
 	definition(name: "Govee v2 Humidifier Driver", namespace: "Mavrrick", author: "Mavrrick") {
@@ -90,12 +89,7 @@ def initialize() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
-    if (pollRate > 0) {
-        pollRateInt = pollRate.toInteger()
-        randomOffset(pollRateInt)
-        runIn(offset,poll)
-    }
-//    poll()
+    poll()
     disconnect()
     pauseExecution(1000)
     mqttConnectionAttempt()
