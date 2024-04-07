@@ -3,6 +3,15 @@
   "author": "Mavrrick",
   "minimumHEVersion": "2.3.6",
   "dateReleased": "2024-04-06",
+   "bundles": [
+		{
+		"id": "2fe7ab0d-f614-42d8-b682-4dc22907a937",
+		"name": "Govee_Libraries",
+		"namespace": "Mavrrick",
+		"location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Libraries.zip",
+		"required": true
+		}
+	],  
   "apps": [
     {
       "id": "90a6c7d9-0270-4b24-a58b-1883c0fb6756",
