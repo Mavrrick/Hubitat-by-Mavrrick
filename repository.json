@@ -23,13 +23,20 @@
       "category": "Convenience",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/packageManifest2.json",
       "description": "Govee integration using Govee Development Platform",
-	  "tags": [
+      "tags": [
         "Misc. Devices",
         "Cloud",
         "Lights & Switches",
         "Appliances",
         "Integrations"
       ]
+    },
+    {
+      "id": "236c8177-16bf-429f-9037-da37bee26fa1",
+      "name": "Govee Integration v2 - Test DNI",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/packageManifest3.json",
+      "description": "Govee Integration v2 - Test DNI"
     }
   ]
 }
