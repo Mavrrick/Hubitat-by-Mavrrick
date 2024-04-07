@@ -16,7 +16,7 @@
   "apps": [
     {
       "id": "4a1215ac-c7d6-4275-8a5e-4eb7ad764f69",
-      "name": "Govee_Integration_v2",
+      "name": "Govee Integration v2",
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeIntegrationv2.groovy",
       "required": true,
