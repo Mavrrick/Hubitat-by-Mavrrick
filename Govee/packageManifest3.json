@@ -1,0 +1,36 @@
+{
+  "packageName": "Govee Integration v2 - Test DNI",
+  "author": "Mavrrick",
+  "minimumHEVersion": "2.3.6",
+  "dateReleased": "2024-04-06",
+  "apps": [
+    {
+      "id": "d4a193d1-0f6c-42f9-b82a-fb20f6301142",
+      "name": "",
+      "namespace": "",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeIntegrationv2.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false,
+      "version": "2.0.25"
+    }
+  ],
+  "drivers": [
+    {
+      "id": "2d500b0a-ba30-4128-b968-d9157b2ced81",
+      "name": "Govee Manual LAN API Device",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
+      "required": true,
+      "version": "2.0.25"
+    },
+    {
+      "id": "f150322d-afc6-4c11-ac5f-38969ff4c0a2",
+      "name": "Govee v2 Air Purifier Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2AirPurifierDriver.groovy",
+      "required": true,
+      "version": "2.0.25"
+    }
+  ]
+}
