@@ -9,8 +9,7 @@
 	  "name": "Govee_Libraries",
 	  "namespace": "Mavrrick",
 	  "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Libraries.zip",
-	  "required": true,
-	  "version": "2.0.25"	
+	  "required": true	
 	}
   ],  
   "apps": [
