@@ -8,7 +8,7 @@
 	  "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
 	  "name": "Govee_Libraries.zip",
 	  "namespace": "Mavrrick",
-	  "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Libraries.zip.zip",
+	  "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Libraries.zip",
 	  "required": true
 	}
   ],  
