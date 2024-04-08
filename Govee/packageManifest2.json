@@ -1,17 +1,224 @@
 {
-  "packageName": "Govee Integration v2",
+  "packageName": "Govee Integration v2 - Test DNI",
   "author": "Mavrrick",
   "version": "2.0.24",
   "minimumHEVersion": "2.3.6",
   "dateReleased": "2023-12-09",
-  "releaseNotes": "2.0.24 Updated process to obtain Temp sensor data per change in Govee API\nAdded method to create random offset for polling\n2.0.23 Numerous improvements based on suggestions by Kurt Sanders\nReverted change to standardize the workingMode command\nResolved code isue with debug logging not turning off on some devices\n2.0.22 Moved MQTT fnctions into their corresponding drivers\nRemoved Govee MQTT Listener driver\nExtensive changes to standardize code\n2.0.21 Create new drivers for Govee Presence sensor\nCreated new Govee MQTT Listener driver\nUpdate Manual LAN API Driver with Descriptive logging\n2.0.20 Fixed bug with debug logging\nFixed bug with Light device driver initialization\n2.0.19 Added Scene data for H6052\n2.0.18 Further refinement for scene control changes released in previous to builds\n Enabled dreamview toggle control for sync devices\n2.0.17 Fixed bug introduced in 2.0.16 for setNextEffect and SetPreviousEffect\n2.0.16 Change how Scenes and DiyScenes were displayed under the state variables\nUpdate process to display Scene name and number\nColorMode attribute willdisplay the current mode of the device\n2.0.15 Fixed validation of working mode comand\n2.0.14 Enhancment for Segement Color RGB command\n2.0.13 Added Driver for Gove Smart Fans\nAdded driver for the Gove Ice Maker\n2.0.12 Updated order of items in Scene update page\nUpdated Humidifier driver with RGB\n2.0.11 Added menu option to update a LAN API DIY Scene\n2.0.10 Fixed bug related to Device add procedure\nUpdated to support new API call for DIY scenes added by Govee\nUpdated routine for device state updates to skip blank or empty updates returned by the API\n2.0.9 fix related to new data from Govee API\n2.0.8 Fixed working mode command in Humidifier with RGB Driver\n2.0.7 Fixed setNextEffect and setPreviousEffect commands\n2.0.6 Fixed data extract issue from Govee\n Added support for Govee Temp/Humidity sensors\nFixed issues that may prevent DIY's from showing up in LAN API Mode\nEnhanced drivers to recognize temp scale of hub and show temps in correct scale\n2.0.5 Fixed bug with Set Temp on Kettle and Heater devices\n2.0.4 Added two drivers to help with devices that did not match capabilities\nUpdate Aroma difuser driver\nInitial release of Govee Integration with new API",
+  "releaseNotes": "2.0.24 Updated process to obtain Temp sensor data per change in Govee API\nAdded method to create random offset for polling\n2.0.23 Numerous improvements based on suggestions by Kurt Sanders\nReverted change to standardize the workingMode command\nResolved code isue with debug logging not turning off on some devices\n2.0.22 Moved MQTT fnctions into their corresponding drivers\nRemoved Govee MQTT Listener driver\nExtensive changes to standardize code\n2.0.21 Create new drivers for Govee Presence sensor\nCreated new Govee MQTT Listener driver\nUpdate Manual LAN API Driver with Descriptive logging\n2.0.20 Fixed bug with debug logging\nFixed bug with Light device driver initialization\n2.0.19 Added Scene data for H6052\n2.0.18 Further refinement for scene control changes released in previous to builds\n Enabled dreamview toggle control for sync devices\n2.0.17 Fixed bug introduced in 2.0.16 for setNextEffect and SetPreviousEffect\n2.0.16 Change how Scenes and DiyScenes were displayed under the state variables\nUpdate process to display Scene name and number\nColorMode attribute willdisplay the current mode of the device\n2.0.15 Fixed validation of working mode comand\n2.0.14 Enhancment for Segement Color RGB command\n2.0.13 Added Driver for Gove Smart Fans\nAdded driver for the Gove Ice Maker\n2.0.12 Updated order of items in Scene update page\nUpdated Humidifier driver with RGB\n2.0.11 Added menu option to update a LAN API DIY Scene\n2.0.10 Fixed bug related to Device add procedure\nUpdated to support new API call for DIY scenes added by Govee\nUpdated routine for device state updates to skip blank or empty updates returned by the API\n2.0.9 fix related to new data from Govee API\n2.0.8 Fixed working mode command in Humidifier with RGB Driver\n2.0.7 Fixed setNextEffect and setPreviousEffect commands\n2.0.6 Fixed data extract issue from Govee\n Added support for Govee Temp/Humidity sensors\nFixed issues that may prevent DIY's from showing up in LAN API Mode\nEnhanced drivers to recognize temp scale of hub and show temps in correct scale\n2.0.5 Fixed bug with Set Temp on Kettle and Heater devices\n2.0.4 Added two drivers to help with devices that did not match capabilities\nUpdate Aroma difuser driver\nInitial release of Govee Integration with new API",  
    "bundles": [
-		{
-		"id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
-		"name": "Govee_Integration_v2",
-		"namespace": "Mavrrick",
-		"location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
-		"required": true
-		}
-	]
+	{
+	  "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
+	  "name": "Govee_Integration_v2.zip",
+	  "namespace": "Mavrrick",
+	  "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
+	  "required": true,
+	  "version": "2.0.24"	
+	}
+  ],  
+  "apps": [
+    {
+      "id": "4a1215ac-c7d6-4275-8a5e-4eb7ad764f69",
+      "name": "Govee Integration v2",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeIntegrationv2.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false,
+      "version": "2.0.24"
+    }
+  ],
+  "drivers": [
+    {
+      "id": "58b52301-4351-4bf2-afdb-8397089de0d8",
+      "name": "Govee Manual LAN API Device",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "f18436f0-07fb-4325-abf7-7a44b8c9de12",
+      "name": "Govee v2 Air Purifier Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2AirPurifierDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "3eba1cb0-6e23-4446-af2e-f0503d3e9c86",
+      "name": "Govee v2 Air Purifier with RGB Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2AirPurifierwithRGBDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "78500f3c-9f4f-4c66-81b7-58b91486706e",
+      "name": "Govee v2 Aroma Diffuser Driver with Lights",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2AromaDiffuserDriverwithLights.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "2950090f-d700-46fc-8c55-59d4a8629f21",
+      "name": "Govee v2 Aroma Diffuser  Driver with Lights and WhitenNoise",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2AromaDiffuserDriverwithLightsandWhitenNoise.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "8eeef823-5b51-4017-8052-e581e9bee14a",
+      "name": "Govee v2 Color Lights 2 Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLights2Driver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "7dfdfe3b-4f47-4bdf-a1ca-8f28e014d9d0",
+      "name": "Govee v2 Color Lights 3 Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLights3Driver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "a77b9238-c7dd-4449-8163-1dd87721dc8b",
+      "name": "Govee v2 Color Lights 4 Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLights4Driver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "9cd9d2ce-587c-4735-ae4f-7efca97e52be",
+      "name": "Govee v2 Color Lights Dreamview Sync",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLightsDreamviewSync.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "efaf7c44-052b-4fb9-a0d9-a1989646c8e4",
+      "name": "Govee v2 Color Lights Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLightsDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "94c74cc7-19a2-42b9-aebf-16d8c83fc04d",
+      "name": "Govee v2 Fan Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2FanDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "d5c0b8b9-22f2-4f8e-9b4c-fb8cff0029be",
+      "name": "Govee v2 Galaxy Projector",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2GalaxyProjector.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "2d93d701-0a93-46bc-aa70-ffbc6370c66f",
+      "name": "Govee v2 Heating Appliance Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2HeatingApplianceDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "7a1cddae-e98b-46eb-ae59-9f255dc4d46f",
+      "name": "Govee v2 Heating Appliance with RGB Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2HeatingAppliancewithRGBDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "26a68cdd-041e-4418-8f18-8467dc9f36f0",
+      "name": "Govee v2 Humidifier Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2HumidifierDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "8d43637b-d518-4cd8-b8d5-7a1847c6dae8",
+      "name": "Govee v2 Humidifier with RGB Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2HumidifierwithRGBDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "df243cc0-09b1-4354-b42d-d246eafd4f59",
+      "name": "Govee v2 Ice Maker",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2IceMaker.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "eb413449-f27d-428d-b8c8-a493f2e20bd6",
+      "name": "Govee v2 Kettle Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2KettleDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "3698fb85-bf10-4c31-9999-a43c1eeb1f69",
+      "name": "Govee v2 Presence Sensor",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2PresenceSensor.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "1ff1d7d2-9f9b-4651-ba9c-9de9088760b9",
+      "name": "Govee v2 Research Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ResearchDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "d0452601-8131-43af-9ea2-ce2a620b05e3",
+      "name": "Govee v2 Sockets Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2SocketsDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },	
+    {
+      "id": "0ac2c376-535d-4208-b266-d42915a235ea",
+      "name": "Govee v2 Thermo/Hygrometer Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ThermoHygrometerDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "58de954b-bf1b-4a33-838c-4642fe2676d7",
+      "name": "Govee v2 White Light Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2WhiteLightDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    },
+    {
+      "id": "a07c6c35-bcc2-4065-b856-79e012fb2dc8",
+      "name": "Govee v2 White Lights with CT Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2WhiteLightswithCTDriver.groovy",
+      "required": true,
+      "version": "2.0.24"
+    }
+  ]
 }
