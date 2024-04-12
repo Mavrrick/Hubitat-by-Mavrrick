@@ -29,12 +29,35 @@ definition(
 * Initial release v1.0.0
 * 2.0.24 Add change tracking to individual integration item
 * 2.0.25 Updated device add routine to check for driver on hub and alert if driver is not present.
+* 2.0.26 Added use of @field static variables to optimize various code elements.
+*        Modified Device add routine to optimize size of code and remove heavy processes.
+*        Broke out device add to own method to reduce redundant code
+*        Updated Manual device add routine to use new device add method.
+*        Cleaned up various code locations to remove variable setting that would conflict with new @field static variables
 */
 
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 
 #include Mavrrick.Govee_Lan_Scenes
+
+@Field static Integer childCount = 0
+@Field static List child = []
+@Field static def options = [:]
+@Field static String deviceID = ""
+@Field static String dniCompare = "" 
+@Field static String deviceModel = ""
+@Field static String deviceName = ""
+@Field static String devType = ""
+@Field static String driver = ""
+@Field static String ctMin = ""
+@Field static String ctMax = ""
+@Field static List commands = []
+@Field static List capType = []
+@Field static List childDNI = []
+@Field static List drivers = []
+
+
 
 preferences
 {
@@ -62,8 +85,9 @@ def mainPage() {
     app.clearSetting("goveeDevName")
     app.clearSetting("goveeModel")
     app.clearSetting("goveeManLanIP")
-    List child = getChildDevices()
-    def childCount = child.size()
+    child = getChildDevices()
+    childDNI = child.deviceNetworkId
+    childCount = child.size()
     dynamicPage(name: 'mainPage', title: 'Govee integration Main menu', uninstall: true, install: true, submitOnChange: true)
     {
         section('<b>API Configuration</b>')
@@ -137,11 +161,10 @@ def mainPage() {
 }
 
 def deviceSelect() {
-    def options = [:]
     if (state.goveeAppAPI != null) {
     logger('deviceSelect() DEVICE INFORMATION', 'debug')
                 state.goveeAppAPI.each {
-                    String deviceName = it.deviceName
+                    deviceName = it.deviceName
                     logger("deviceSelect() $deviceName found", 'debug')
                     options["${deviceName}"] = deviceName
                 } 
@@ -474,8 +497,6 @@ def installed() {
 def updated() {
     log.debug "Updated with settings: ${settings}"
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
-    List child = getChildDevices()
-//    List childDNI = child.deviceNetworkId
     if (settings.APIKey != state.APIKey ) {
         child.each {
             logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
@@ -594,23 +615,12 @@ def diyUpdateManual(devSKU, diyAddNum, diyName, command) {
     logger("diyUpdateManual(): keys are  ${state.diyEffects.keySet()}", 'debug')
     if (state.diyEffects.containsKey(devSKU) == false) {
         logger("diyUpdateManual(): Device ${devSKU} not found.", 'debug')
- //       logger("diyUpdateManual(): New Device. Starting at 1001", 'debug')
-//        diyAddNum = 1001
         diyEntry2 = [:]
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
-//        compare = state.diyEffects."${devSKU}".toString()
-//        matchVal = compare.indexOf(diyName)
-//        if (matchVal > 0) {
-//            logger("diyUpdateManual(): Scene with same name already present", 'debug')
-//            } else {
             logger("diyUpdateManual(): Device ${devSKU} was found. Updating scene", 'debug')
-//            diySize = state.diyEffects."${devSKU}".size()
-//            diyAddNum = (diySize + 1001).toInteger()
-//            logger("diyUpdateManual(): Current DiY size is ${diySize}", 'debug')
             state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
-//        }
     }
 }
 
@@ -647,6 +657,7 @@ private logger(msg, level = 'debug') {
     }
 }
 
+
 /**
  *  goveeDevAdd()
  *
@@ -654,548 +665,238 @@ private logger(msg, level = 'debug') {
  **/
 private goveeDevAdd(goveeAdd) {
     def devices = goveeAdd
-    List childDNI = getChildDevices().deviceNetworkId
-//    	def drivers = []
-    def drivers = getDriverList()
-    logger("goveeDevAdd() drivers detected are ${drivers}", 'info')
+    drivers = getDriverList()
+    logger("goveeDevAdd() drivers detected are ${drivers}", 'debug')
     logger("goveeDevAdd() $devices are selcted to be integrated", 'info')
     logger('goveeDevAdd() DEVICE INFORMATION', 'info')
-//    logger ("goveeDevAdd(): ${state.goveeLightAPI}",'trace')
     state.goveeAppAPI.each {
-        String deviceID = it.device
-        String dniCompare = "Govee_"+it.device
-        String deviceModel = it.sku
-        String deviceName = it.deviceName
-        String devType = it.type
-        List commands = []
-        List capType = []
-        it.capabilities.each {
-            logger ("goveeDevAdd(): ${it}",'trace')
-            commands.add(it.instance)
-            capType.add(it.type)
-            }
-        logger ("goveeDevAdd(): ${deviceID} ${deviceModel} ${deviceName} ${devType} ${commands}",'trace')
+        dniCompare = "Govee_"+it.device
+        deviceName = it.deviceName        
         if (childDNI.contains(dniCompare) == false) {
-            logger("goveeDevAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug')            
-            if (devType == "devices.types.light") {
-                if (commands.contains("colorRgb") && commands.contains("colorTemperatureK") && commands.contains("segmentedBrightness") && commands.contains("segmentedColorRgb") && commands.contains("dreamViewToggle")) {
-                    String driver = "Govee v2 Color Lights Dreamview Sync"
-                    if (drivers.contains(driver)) {
-                    String ctMin = 2000
-                    String ctMax = 9000
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Color Lights Dreamview Sync',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
+            logger("goveeDevAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug')
+            if (devices.contains(deviceName) == true) {
+                deviceID = it.device
+                deviceModel = it.sku
+                devType = it.type
+                commands = []
+                capType = []
+                it.capabilities.each {
+                    logger ("goveeDevAdd(): ${it} instance is ${it.instance}",'trace')
+                    commands.add(it.instance)
+                    capType.add(it.type)
+                    if (it.instance == "colorTemperatureK") {
+                        logger ("goveeDevAdd(): ${it} instance is ${it.instance} Parms is ${it.parameters} range is ${it.parameters.range} min is ${it.parameters.range.min}",'trace')
+                        ctMin = it.parameters.range.min
+                        ctMax = it.parameters.range.max
+                        logger ("goveeDevAdd(): Min is ${ctMin} Max is ${ctMax}",'trace')
                     }
-                    } else {
+                }
+                logger ("goveeDevAdd(): ${deviceID} ${deviceModel} ${deviceName} ${devType} ${commands}",'trace')            
+                if (devType == "devices.types.light") {
+                    if (commands.contains("colorRgb") && commands.contains("colorTemperatureK") && commands.contains("segmentedBrightness") && commands.contains("segmentedColorRgb") && commands.contains("dreamViewToggle")) {
+                        String driver = "Govee v2 Color Lights Dreamview Sync"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else {
                         logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }
-                } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK") && commands.contains("segmentedBrightness") && commands.contains("segmentedColorRgb")) {
-                    String driver = "Govee v2 Color Lights 3 Driver"
-                    if (drivers.contains(driver)) {
-                    String ctMin = 2000
-                    String ctMax = 9000
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Color Lights 3 Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
+                        }
+                    } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK") && commands.contains("segmentedBrightness") && commands.contains("segmentedColorRgb")) {
+                        String driver = "Govee v2 Color Lights 3 Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }    
+                    } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedBrightness")) {
+                        String driver = "Govee v2 Color Lights 2 Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }
+                    } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedColorRgb") && commands.contains("dreamViewToggle")) {
+                        String driver = "Govee v2 Color Lights 4 Dreamview Sync"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }    
+                    } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedColorRgb")) {
+                        String driver = "Govee v2 Color Lights 4 Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }    
+                    } else if (commands.contains("colorRgb") == true && commands.contains("colorTemperatureK")) {
+                        String driver = "Govee v2 Color Lights Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        } 
+                    } else if (commands.contains("colorTemperatureK")) {
+                        String driver = "Govee v2 White Lights with CT Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }     
+                    } else if (deviceModel == "H6091" || deviceModel == "H6092") {
+                        String driver = "Govee v2 Galaxy Projector"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }    
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        String driver = "Govee v2 White Light Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)              
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }                    
                     }    
-                } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedBrightness")) {
-                    String driver = "Govee v2 Color Lights 2 Driver"
-                    if (drivers.contains(driver)) {
-                    String ctMin = 2000
-                    String ctMax = 9000
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Color Lights 2 Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
+                } else if (devType == "devices.types.air_purifier") {
+                    if (commands.contains("colorRgb") == true) {
+                        String driver = "Govee v2 Air Purifier with RGB Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }
+                    } else {
+                        String driver = "Govee v2 Air Purifier Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }
+                    }    
+                } else if (devType == "devices.types.heater") {
+                    if (commands.contains("colorRgb")) {
+                        String driver = "Govee v2 Heating Appliance with RGB Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }    
+                    } else {
+                        String driver = "Govee v2 Heating Appliance Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }
                     }
+                } else if (devType == "devices.types.humidifier") {
+                    if (commands.contains("colorRgb")) {
+                        String driver = "Govee v2 Humidifier with RGB Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }
+                    } else {
+                        String driver = "Govee v2 Humidifier Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }    
+                    }
+                } else if (devType == "devices.types.fan") {
+                    if (commands.contains("colorRgb")) {
+                        String driver = "Govee v2 Fan with RGB Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }
+                    } else {
+                        String driver = "Govee v2 Fan Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        }     
+                    }
+                } else if (devType == "devices.types.socket") {
+                    String driver = "Govee v2 Sockets Driver"
+                    if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
                         logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }    
-                } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedColorRgb")) {
-                    String driver = "Govee v2 Color Lights 4 Driver"
+                    }         
+                } else if (devType == "devices.types.ice_maker") {
+                    String driver = "Govee v2 Ice Maker"
                     if (drivers.contains(driver)) {
-                    String ctMin = 2000
-                    String ctMax = 9000
-                    devices.findAll { it == deviceName } .each {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Color Lights 2 Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
+                        addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
                         logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }    
-                } else if (commands.contains("colorRgb") == true && commands.contains("colorTemperatureK")) {
-                    String driver = "Govee v2 Color Lights Driver"
+                    }     
+                } else if (devType == "devices.types.kettle") {
+                    String driver = "Govee v2 Kettle Driver"
                     if (drivers.contains(driver)) {
-                    String ctMin = 2000
-                    String ctMax = 9000
-                    devices.findAll { it == deviceName } .each {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Color Lights Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
+                        addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
                         logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
                     } 
-                } else if (commands.contains("colorTemperatureK")) {
-                    String driver = "Govee v2 White Lights with CT Driver"
+                } else if (devType == "devices.types.thermometer") {
+                    String driver = "Govee v2 Thermo/Hygrometer Driver"
                     if (drivers.contains(driver)) {
-                    String ctMin = 2000
-                    String ctMax = 9000
-                    devices.findAll { it == deviceName } .each {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 White Lights with CT Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'ctMin': ctMin,
-                                'ctMax': ctMax,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
+                        addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                    } else {
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
                     }
+                } else if (devType == "devices.types.sensor") {
+                    String driver = "Govee v2 Presence Sensor"
+                    if (drivers.contains(driver)) {
+                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                    } else {
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                    }    
+                } else if (devType == "devices.types.aroma_diffuser") {
+                    String driver = "Govee v2 Aroma Diffuser Driver with Lights"
+                    if (drivers.contains(driver)) {
+                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
                         logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
                     }     
-                } else if (deviceModel == "H6091" || deviceModel == "H6092") {
-                    String driver = "Govee v2 Galaxy Projector"
+                } else {
+                    String driver = "Govee v2 Research Driver"
                     if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Galaxy Projector',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
+                        addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }    
-                } else {
-                    String driver = "Govee v2 White Light Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 White Light Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'retrievable': retrievable,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }               
-                } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }                    
-                }    
-            } else if (devType == "devices.types.air_purifier") {
-                if (commands.contains("colorRgb") == true) {
-                    String driver = "Govee v2 Air Purifier with RGB Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Air Purifier with RGB Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }
-                } else {
-                    String driver = "Govee v2 Air Purifier Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Air Purifier Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }
-                }    
-            } else if (devType == "devices.types.heater") {
-                if (commands.contains("colorRgb")) {
-                    String driver = "Govee v2 Heating Appliance with RGB Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Heating Appliance with RGB Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }    
-                } else {
-                    String driver = "Govee v2 Heating Appliance Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Heating Appliance Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }
-                }
-            } else if (devType == "devices.types.humidifier") {
-                if (commands.contains("colorRgb")) {
-                    String driver = "Govee v2 Humidifier with RGB Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Humidifier with RGB Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }
-                } else {
-                    String driver = "Govee v2 Humidifier Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Humidifier Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }    
-                }
-            } else if (devType == "devices.types.fan") {
-                if (commands.contains("colorRgb")) {
-                    String driver = "Govee v2 Fan with RGB Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': driver,
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }
-                } else {
-                    String driver = "Govee v2 Fan Driver"
-                    if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': driver,
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                    } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                    }     
-                }
-            } else if (devType == "devices.types.socket") {
-                String driver = "Govee v2 Sockets Driver"
-                if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Sockets Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                } else {
-                    logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                }         
-            } else if (devType == "devices.types.ice_maker") {
-                String driver = "Govee v2 Ice Maker"
-                if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Sockets Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                } else {
-                    logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                }     
-            } else if (devType == "devices.types.kettle") {
-                String driver = "Govee v2 Kettle Driver"
-                if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Kettle Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                } else {
-                    logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                } 
-            } else if (devType == "devices.types.thermometer") {
-                String driver = "Govee v2 Thermo/Hygrometer Driver"
-                if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Thermo/Hygrometer Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                } else {
-                    logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                }
-            } else if (devType == "devices.types.sensor") {
-                String driver = "Govee v2 Presence Sensor"
-                if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Presence Sensor',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                } else {
-                    logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                }    
-            } else if (devType == "devices.types.aroma_diffuser") {
-                String driver = "Govee v2 Aroma Diffuser Driver with Lights"
-                if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Aroma Diffuser Driver with Lights',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-                } else {
-                    logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
-                }     
-            } else {
-                String driver = "Govee v2 Research Driver"
-                if (drivers.contains(driver)) {
-                    devices.findAll { it == deviceName } .each {
-                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
-                        addChildDevice('Mavrrick', 'Govee v2 Research Driver', "Govee_${deviceID}" , location.hubs[0].id, [
-                            'name': 'Govee v2 Research Driver',
-                            'label': deviceName,
-                            'data': [
-                                'deviceID': deviceID,
-                                'deviceModel': deviceModel,
-                                'apiKey': settings.APIKey,
-                                'commands': commands,
-                                'capTypes': capType
-                                ],
-                            'completedSetup': true,
-                        ])
-                    }
-            } else {
                     logger('goveeDevAdd(): The device does not have a driver and you do not have the '+driver+' loaded. Please load it and forward the device details to the developer', 'info')    
+                    }
                 }
+            } else {
+                logger("goveeDevAdd(): Device is not selected to be added. ${deviceName} not being installed", 'debug')
             }
         } else {
             logger("goveeDevAdd(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
@@ -1204,7 +905,7 @@ private goveeDevAdd(goveeAdd) {
     state?.installDev = goveeDev
     logger('goveeDevAdd() Govee devices integrated', 'info')
 }
-     
+
 
 /**
  *  goveeLightManAdd()
@@ -1213,30 +914,18 @@ private goveeDevAdd(goveeAdd) {
  **/
 private goveeLightManAdd(model, ip, name) {
     def newDNI = "Govee_" + ip
-//    List child = getChildDevices()
-//    List childDNI = child.deviceNetworkId
-    List childDNI = getChildDevices().deviceNetworkId    
     logger("goveeLightManAdd() Adding ${name} Model: ${model} at ${ip} with ${newDNI}", 'info')
     logger('goveeLightManAdd() DEVICE INFORMATION', 'info')
         String deviceIP = ip                            
         String deviceModel = model
         String deviceName = name
+        String driver = "Govee Manual LAN API Device"
         if (childDNI.contains(newDNI) == false) {
             logger("goveeLightManAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
             String ctMin = 2000
             String ctMax = 9000
             logger("goveeLightManAdd():  configuring ${deviceName}", 'info')
-            addChildDevice('Mavrrick', 'Govee Manual LAN API Device', "${newDNI}" , location.hubs[0].id, [
-                'name': 'Govee Manual LAN API Device',
-                'label': deviceName,
-                'data': [
-                    'IP': deviceIP,
-                    'deviceModel': deviceModel,
-                    'ctMin': ctMin,
-                    'ctMax': ctMax
-                        ],
-                'completedSetup': true,
-                ])
+            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, "Lan Only")
         } else { 
         logger("goveeLightManAdd(): Manual add request ignored as device is already added.", 'info')
         }
@@ -1274,7 +963,7 @@ private def appButtonHandler(button) {
         state.remove("lightEffect_Galaxy_Projector")
         lightEffectSetup()
     } else if (button == "pushScenesUpdate") {
-        List child = getChildDevices()
+        child = getChildDevices()
         child.each {
         logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
         it.configure()
@@ -1407,4 +1096,42 @@ def getBaseUrl() {
 	def scheme = sslEnabled ? "https" : "http"
 	def port = sslEnabled ? "8443" : "8080"
 	return "$scheme://127.0.0.1:$port"
+}
+
+/**
+ *  addDeviceHelper()
+ *
+ *  Handler for when adding Light devices in App. .
+ **/
+
+private def addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType) {
+                            addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
+                            'name': driver,
+                            'label': deviceName,
+                            'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                'apiKey': settings.APIKey,
+                                'commands': commands,
+                                'ctMin': ctMin,
+                                'ctMax': ctMax,
+                                'capTypes': capType
+                                ],
+                            'completedSetup': true,
+                        ])
+}
+
+private def addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType) {
+                        addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
+                            'name': driver,
+                            'label': deviceName,
+                            'data': [
+                                'deviceID': deviceID,
+                                'deviceModel': deviceModel,
+                                'apiKey': settings.APIKey,
+                                'commands': commands,
+                                'capTypes': capType
+                                ],
+                            'completedSetup': true,
+                        ])
 }
