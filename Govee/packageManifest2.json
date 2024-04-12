@@ -22,8 +22,8 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.0.25",
-      "releaseNotes": "2.0.25 Added routine to detect loaded drivers\nAdded logic to validate what drivers are loaded at device add time"  	    
+      "version": "2.0.26",
+      "releaseNotes": "2.0.26 Rework of device add process to reduce load on hub\nOther Optimizations"  	    
     }
   ],
   "drivers": [
@@ -91,6 +91,14 @@
       "required": false,
       "version": "2.0.24"
     },
+    {
+      "id": "e63fcfa8-b18d-470b-8727-c2ec1593e05f",
+      "name": "Govee v2 Color Lights 4 Dreamview Sync",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLights4DreamviewSync.groovy",
+      "required": false,
+      "version": "2.0.0"
+    },	  
     {
       "id": "9cd9d2ce-587c-4735-ae4f-7efca97e52be",
       "name": "Govee v2 Color Lights Dreamview Sync",
