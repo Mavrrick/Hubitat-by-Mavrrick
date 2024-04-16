@@ -34,10 +34,12 @@
 
 @Field static List loggerQueueMap = []
 @Field static List postQueueMap = []
+@Field static String uri = ""
+@Field static def header = [:]
 
 metadata {
     /* groovylint-disable-next-line DuplicateStringLiteral */
-    definition(name: "InfluxDB Hubitat Live Logger", namespace: "Mavrrick", author: "Mavrrick") {
+    definition(name: "InfluxDB Hubitat Live Logger2", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
     }
     command "disconnect"
@@ -127,10 +129,10 @@ void parse(String description) {
 
         loggerQueueMap += ["syslog,appname=${name},facility=${type},host=${hubName},hostname=${hubName},severity=${severity} facility_code=1,message=${msg},procid=${id},severity_code=${sevCode},timestamp=${timestmp} ${epoch_milis}"]
     }
-/*    if (loggerQueueMap.size() > maxRec) {
+    if (loggerQueueMap.size().toInteger() > maxRec.toInteger() ) {
         if (logEnable)  { log.debug "parse(): loggerQueueMap size is greater then ${maxRec}. Triggering Write to DB now" }
-        writeQueuedDataToInfluxDb()
-    } */
+        writeQueuedDataToInfluxDb() 
+    } 
 }
 
 /**
@@ -150,10 +152,10 @@ void writeQueuedDataToInfluxDb(){
     
     long timeNow = new Date().time
     def postParams = [
-        uri: state.uri,
+        uri: uri,
         requestContentType: 'application/json',
         contentType: 'application/json',
-        headers: state.header,
+        headers: header,
         ignoreSSLIssues: settings.prefIgnoreSSLIssues,
         timeout: 60,
         body: data
@@ -217,18 +219,20 @@ void uninstalled() {
 
 void initialize() {
     if (logEnable) { log.debug "initialize()" }
-    state.header = [:]
+    state.remove("uri")
+    state.remove("header")
+    state.remove("postCount")
+    header = [:]
     if (useSSL) {
-        newuri = "https://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
+        uri = "https://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
     } else {
-        newuri = "http://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
+        uri = "http://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
     }
     loggerQueueMap = []
-    state.uri = newuri
-//    auth = token
     String token3 = token
-    if (logEnable) { log.debug "initialize() ${token3} ${newuri}" }
-    state.header.put("Authorization", "Token ${token3}")
+//    if (logEnable) { log.debug "initialize() ${token3} ${uri}" }
+    header.put("Authorization", "Token ${token3}")
+    if (logEnable) { log.debug "initialize() Header:${header}  URI: ${uri}" }
     // run 'mymethod' every 30 seconds.
     writeTime = '*/'+dbWriteTime+' * * ? * *' 
     schedule(writeTime, writeQueuedDataToInfluxDb)
