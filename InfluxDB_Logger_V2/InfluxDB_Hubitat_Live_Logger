@@ -127,10 +127,10 @@ void parse(String description) {
 
         loggerQueueMap += ["syslog,appname=${name},facility=${type},host=${hubName},hostname=${hubName},severity=${severity} facility_code=1,message=${msg},procid=${id},severity_code=${sevCode},timestamp=${timestmp} ${epoch_milis}"]
     }
-    if (loggerQueueMap.size() > maxRec) {
+/*    if (loggerQueueMap.size() > maxRec) {
         if (logEnable)  { log.debug "parse(): loggerQueueMap size is greater then ${maxRec}. Triggering Write to DB now" }
         writeQueuedDataToInfluxDb()
-    }
+    } */
 }
 
 /**
