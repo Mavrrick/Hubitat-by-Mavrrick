@@ -39,7 +39,7 @@
 
 metadata {
     /* groovylint-disable-next-line DuplicateStringLiteral */
-    definition(name: "InfluxDB Hubitat Live Logger2", namespace: "Mavrrick", author: "Mavrrick") {
+    definition(name: "InfluxDB Hubitat Live Logger", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
     }
     command "disconnect"
