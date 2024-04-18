@@ -10,7 +10,7 @@
 	  "namespace": "Mavrrick",
 	  "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
 	  "required": true,
-	  "version": "2.0.24"	
+	  "version": "2.0.27"	
 	}
   ],  
   "apps": [
@@ -23,7 +23,7 @@
       "oauth": false,
       "primary": false,
       "version": "2.0.26",
-      "releaseNotes": "2.0.26 Rework of device add process to reduce load on hub\nOther Optimizations"  	    
+      "releaseNotes": "2.0.27 Fix bug with Manual Lan Device Add"  	    
     }
   ],
   "drivers": [
