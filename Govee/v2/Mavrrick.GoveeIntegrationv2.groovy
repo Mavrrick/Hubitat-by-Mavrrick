@@ -34,6 +34,9 @@ definition(
 *        Broke out device add to own method to reduce redundant code
 *        Updated Manual device add routine to use new device add method.
 *        Cleaned up various code locations to remove variable setting that would conflict with new @field static variables
+* 2.0.27 Corrected bug introduced in previous version that broke Manual device add
+*        Removed some @Field Static variables as they were not needed at that scope
+*        Reviewed code for to improve variable declerations
 */
 
 import groovy.json.JsonSlurper
@@ -41,22 +44,8 @@ import groovy.transform.Field
 
 #include Mavrrick.Govee_Lan_Scenes
 
-@Field static Integer childCount = 0
 @Field static List child = []
-@Field static def options = [:]
-@Field static String deviceID = ""
-@Field static String dniCompare = "" 
-@Field static String deviceModel = ""
-@Field static String deviceName = ""
-@Field static String devType = ""
-@Field static String driver = ""
-@Field static String ctMin = ""
-@Field static String ctMax = ""
-@Field static List commands = []
-@Field static List capType = []
 @Field static List childDNI = []
-@Field static List drivers = []
-
 
 
 preferences
@@ -87,7 +76,7 @@ def mainPage() {
     app.clearSetting("goveeManLanIP")
     child = getChildDevices()
     childDNI = child.deviceNetworkId
-    childCount = child.size()
+    def int childCount = child.size()
     dynamicPage(name: 'mainPage', title: 'Govee integration Main menu', uninstall: true, install: true, submitOnChange: true)
     {
         section('<b>API Configuration</b>')
@@ -161,10 +150,11 @@ def mainPage() {
 }
 
 def deviceSelect() {
+    Map options = [:] 
     if (state.goveeAppAPI != null) {
     logger('deviceSelect() DEVICE INFORMATION', 'debug')
                 state.goveeAppAPI.each {
-                    deviceName = it.deviceName
+                    String deviceName = it.deviceName
                     logger("deviceSelect() $deviceName found", 'debug')
                     options["${deviceName}"] = deviceName
                 } 
@@ -535,7 +525,7 @@ def sendnotification (type, value) {
     }
 }
 
-def diyAdd(devSKU, diyName, command) {
+def diyAdd(String devSKU, String diyName, String command) {
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
     command = command.inspect().replaceAll("\'", "\"")
     Map diyEntry = [:]
@@ -546,7 +536,7 @@ def diyAdd(devSKU, diyName, command) {
     if (state.diyEffects.containsKey(devSKU) == false) {
         logger("diyAdd(): Device ${devSKU} not found", 'debug')
         logger("diyAdd(): New Device. Starting at 1001", 'debug')
-        diyAddNum = 1001
+        int diyAddNum = 1001
         Map diyEntry2 = [:]
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
@@ -571,9 +561,9 @@ def diyAdd(devSKU, diyName, command) {
  *  Method to manually add shared Scenes to Hubitat.
  **/
 
-def diyAddManual(devSKU, diyName, command) {
+def diyAddManual(String devSKU, String diyName, String command) {
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
-    diyEntry = [:]
+    Map diyEntry = [:]
     diyEntry.put("name", diyName)
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
@@ -581,8 +571,8 @@ def diyAddManual(devSKU, diyName, command) {
     if (state.diyEffects.containsKey(devSKU) == false) {
         logger("diyAdd(): Device ${devSKU} not found", 'debug')
         logger("diyAdd(): New Device. Starting at 1001", 'debug')
-        diyAddNum = 1001
-        diyEntry2 = [:]
+        int diyAddNum = 1001
+        Map diyEntry2 = [:]
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
@@ -605,17 +595,16 @@ def diyAddManual(devSKU, diyName, command) {
  *
  *  Method to manually add shared Scenes to Hubitat.
  **/
-
-def diyUpdateManual(devSKU, diyAddNum, diyName, command) {
+def diyUpdateManual(String devSKU, int diyAddNum, String diyName, String command) {
     logger("diyUpdateManual(): Attempting add DIY Scene ${devSKU}:${diyAddNum}:${diyName}:${command}", 'trace')
-    diyEntry = [:]
+    Map diyEntry = [:]
     diyEntry.put("name", diyName)
     diyEntry.put("cmd", command)
     logger("diyUpdateManual(): Trying to add ${diyEntry}", 'debug')
     logger("diyUpdateManual(): keys are  ${state.diyEffects.keySet()}", 'debug')
     if (state.diyEffects.containsKey(devSKU) == false) {
         logger("diyUpdateManual(): Device ${devSKU} not found.", 'debug')
-        diyEntry2 = [:]
+        Map diyEntry2 = [:]
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
@@ -665,21 +654,23 @@ private logger(msg, level = 'debug') {
  **/
 private goveeDevAdd(goveeAdd) {
     def devices = goveeAdd
-    drivers = getDriverList()
+    def drivers = getDriverList()
     logger("goveeDevAdd() drivers detected are ${drivers}", 'debug')
     logger("goveeDevAdd() $devices are selcted to be integrated", 'info')
     logger('goveeDevAdd() DEVICE INFORMATION', 'info')
     state.goveeAppAPI.each {
-        dniCompare = "Govee_"+it.device
-        deviceName = it.deviceName        
+        def String dniCompare = "Govee_"+it.device
+        def String deviceName = it.deviceName        
         if (childDNI.contains(dniCompare) == false) {
             logger("goveeDevAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug')
             if (devices.contains(deviceName) == true) {
-                deviceID = it.device
-                deviceModel = it.sku
-                devType = it.type
-                commands = []
-                capType = []
+                def String deviceID = it.device
+                def String deviceModel = it.sku
+                def String devType = it.type
+                def commands = []
+                def capType = []
+                def int ctMin = 0
+                def int ctMax = 0
                 it.capabilities.each {
                     logger ("goveeDevAdd(): ${it} instance is ${it.instance}",'trace')
                     commands.add(it.instance)
@@ -912,20 +903,15 @@ private goveeDevAdd(goveeAdd) {
  *
  *  Wrapper function for all logging.
  **/
-private goveeLightManAdd(model, ip, name) {
+private goveeLightManAdd(String model, String ip, String name) {
     def newDNI = "Govee_" + ip
     logger("goveeLightManAdd() Adding ${name} Model: ${model} at ${ip} with ${newDNI}", 'info')
     logger('goveeLightManAdd() DEVICE INFORMATION', 'info')
-        String deviceIP = ip                            
-        String deviceModel = model
-        String deviceName = name
+    if (childDNI.contains(newDNI) == false) {
         String driver = "Govee Manual LAN API Device"
-        if (childDNI.contains(newDNI) == false) {
-            logger("goveeLightManAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
-            String ctMin = 2000
-            String ctMax = 9000
-            logger("goveeLightManAdd():  configuring ${deviceName}", 'info')
-            addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, "Lan Only")
+        logger("goveeLightManAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
+        logger("goveeLightManAdd():  configuring ${deviceName}", 'info')
+        addManLightDeviceHelper(driver, ip, name, model)
         } else { 
         logger("goveeLightManAdd(): Manual add request ignored as device is already added.", 'info')
         }
@@ -963,7 +949,7 @@ private def appButtonHandler(button) {
         state.remove("lightEffect_Galaxy_Projector")
         lightEffectSetup()
     } else if (button == "pushScenesUpdate") {
-        child = getChildDevices()
+//        child = getChildDevices()
         child.each {
         logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
         it.configure()
@@ -1007,7 +993,7 @@ private def appButtonHandler(button) {
         state?.goveeHomeToken = null
         state?.goveeHomeExpiry = 0
     } else if (button == "deviceListRefresh") {
-        def options = [:]
+//        def options = [:]
         logger('appButtonHandler() DEVICE INFORMATION', 'debug')
         def params = [
             uri   : 'https://openapi.api.govee.com',
@@ -1104,7 +1090,7 @@ def getBaseUrl() {
  *  Handler for when adding Light devices in App. .
  **/
 
-private def addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType) {
+private def addLightDeviceHelper( String driver, String deviceID, String deviceName, String deviceModel, List commands, int ctMin, int ctMax, List capType) {
                             addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
                             'name': driver,
                             'label': deviceName,
@@ -1121,7 +1107,7 @@ private def addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, comm
                         ])
 }
 
-private def addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType) {
+private def addDeviceHelper(String driver, String deviceID, String deviceName, String deviceModel, List commands, List capType) {
                         addChildDevice('Mavrrick', driver, "Govee_${deviceID}" , location.hubs[0].id, [
                             'name': driver,
                             'label': deviceName,
@@ -1135,3 +1121,18 @@ private def addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands,
                             'completedSetup': true,
                         ])
 }
+
+private def addManLightDeviceHelper( String driver, String ip, String deviceName, String deviceModel) {
+    
+            addChildDevice('Mavrrick', driver, "Govee_${ip}" , location.hubs[0].id, [
+                'name': 'Govee Manual LAN API Device',
+                'label': deviceName,
+                'data': [
+                    'IP': ip,
+                    'deviceModel': deviceModel,
+                    'ctMin': 2000,
+                    'ctMax': 9000
+                        ],
+                'completedSetup': true,
+                ])    
+}   
