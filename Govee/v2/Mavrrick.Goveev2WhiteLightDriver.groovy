@@ -1,13 +1,7 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 1.0.19
+// Version 2.1.0
 //
-// 11-5-22  Initial release
-// 11-21-22- Added a pending change condition and validation that the call was successful
-// ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
-// 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
-// 1-30-23  Added check to see if device is in Retry state and abort new commands until cleared.
-// 4-4-23   API Key update  possible
-// 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 
 import hubitat.helper.InterfaceUtils

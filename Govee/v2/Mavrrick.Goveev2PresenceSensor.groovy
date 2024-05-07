@@ -1,7 +1,7 @@
 // Hubitat driver for Govee mmWave Presence Sensir using Cloud API
-// Version 1.0.19
+// Version 2.1.0
 //
-// 2024-03-21 Initial Driver release for Govee Heating Govee Presence devices
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_MQTT
@@ -14,7 +14,7 @@ metadata {
         capability "Refresh"
         capability "MotionSensor"         
         capability "PresenceSensor"
-        attribute "connectionState", "string"
+//         attribute "connectionState", "string"
     }
 
 	preferences {		
@@ -32,9 +32,9 @@ metadata {
 
 def updated() {
 if (logEnable) runIn(1800, logsOff)
-    disconnect()
+/*    disconnect()
 	pauseExecution(1000)
-    mqttConnectionAttempt()
+    mqttConnectionAttempt() */
 }
 
 
@@ -43,9 +43,9 @@ def installed(){
 }
 
 def initialize() {
-    disconnect()
-    pauseExecution(1000)
-    mqttConnectionAttempt()
+/*    disconnect()
+	pauseExecution(1000)
+    mqttConnectionAttempt() */
 }
 
 def logsOff() {

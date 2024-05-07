@@ -1,19 +1,8 @@
 // Hubitat driver for Govee Manual LAN API device setup
-// Version 1.0.20
+// Version 2.1.0
 //
-// 9-12-22  Initial release
-// 9-30-22  Resolve issue with polling, Enhance Debug Logging
-// 10-5-22  Adding Lan Control options to driver. Additional Logging.
-// 10-12-22 Updated text verbiage on preferences
-// 11-3-22  Send Rate Limits to Parent app and adjust to work with limited devices.
-// 11-4-22  Added methods for Lan control to have proper fade control. 
-// 11-5-22  Updated to reflect on state when options other 'On' switch are used
-// 11-22-22 Updated to validate successful api call before changing driver status.
-// 12-19-22 Modifieid polling to properly allow a value of 0 for no polling
-// 1-21-23  Changed position of setlLevl action in setColor command.
-// 1-30-23  Added check to see if device is in Retry state and abort new commands until cleared.
-// 4-4-23   Added ability for parent app to update API Key associated with device
-// 4-7-23   Added reset of Cloud API State to getDeviceStatus and initialize routine
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
+
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils

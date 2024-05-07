@@ -1,7 +1,7 @@
 // Hubitat driver for Govee Ice Maker using Cloud API
-// Version 1.0.1
+// Version 2.1.0
 //
-// 2022-09-12 -	Initial Driver release for Govee Appliance devices
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
@@ -24,7 +24,7 @@ metadata {
         attribute "pollInterval", "number"         
         attribute "cloudAPI", "string"
         attribute "online", "string" 
-        attribute "connectionState", "string"
+//        attribute "connectionState", "string"
         attribute "lackWaterEvent", "string"        
         
         command "workingMode", [[name: "workMode", type: "ENUM", constraints: [ 'Large Ice',      'Medium Ice',       'Small Ice'], description: "Mode of device"]]
@@ -53,18 +53,18 @@ def updated() {
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
     poll()
-    disconnect()
+/*    disconnect()
 	pauseExecution(1000)
-    mqttConnectionAttempt()
+    mqttConnectionAttempt() */
 }
 
 // linital setup when device is installed.
 def installed(){
     retrieveStateData()
     poll()
-    disconnect()
-    pauseExecution(1000)
-    mqttConnectionAttempt()
+/*    disconnect()
+	pauseExecution(1000)
+    mqttConnectionAttempt() */
 }
 
 // initialize devices upon install and reboot.
@@ -82,9 +82,9 @@ def initialize() {
         runIn(offset,poll)
     }
 //    poll()
-    disconnect()
-    pauseExecution(1000)
-    mqttConnectionAttempt()
+/*    disconnect()
+	pauseExecution(1000)
+    mqttConnectionAttempt() */
 }
 
 // update data for the device
@@ -103,9 +103,9 @@ def configure() {
     if (pollRate > 0) runIn(pollRate,poll)     
     retrieveStateData()    
     if (debugLog) runIn(1800, logsOff)
-    disconnect()
-    pauseExecution(1000)
-    mqttConnectionAttempt()
+/*    disconnect()
+	pauseExecution(1000)
+    mqttConnectionAttempt() */
 }
 
 ////////////////////

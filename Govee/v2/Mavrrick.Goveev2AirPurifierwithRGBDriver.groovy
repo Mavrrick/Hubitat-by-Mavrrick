@@ -1,16 +1,7 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.19
+// Version 2.1.0
 //
-// 2022-09-12 -	Initial Driver release for Govee Appliance devices
-// 2022-10-19 - Added Attributes to driver
-// 2022-11-3 - Send Rate Limits to parent.
-// 2022-11-5 - Added update to Switch value to On when Gear or Mode are used
-// 2022-11-20 - Added a pending change condition and validation that the call was successful
-// ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
-// 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
-// 2022-12-19 Added Actuator capbility to more easily integrate with RM
-// 2023-4-4   API Key update is now possible
-// 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
@@ -71,8 +62,8 @@ def updated() {
 
 // linital setup when device is installed.
 def installed(){
-    poll ()
     retrieveStateData()
+    poll ()
 }
 
 // initialize devices upon install and reboot.

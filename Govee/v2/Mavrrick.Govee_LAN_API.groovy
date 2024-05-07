@@ -38,12 +38,15 @@ def lanCT(value, level, transitionTime) {
 }
 
 def lanSetEffect (effectNo) {
-    effectNumber = effectNo.toString()
+    effectNumber = effectNo.toInteger()
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
-    if ((parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}" != null) && (parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".containsKey(effectNumber))) {
-        String sceneInfo =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).name
-        String sceneCmd =  parent.state."${"lightEffect_"+(device.getDataValue("DevType"))}".get(effectNumber).cmd
+    if (descLog) log.info "${scenes.keySet()}"
+    if (descLog) log.info "${scenes.get(effectNumber)}"
+    if (scenes) {
+        String sceneInfo =  scenes.get(effectNumber).name
+        String sceneCmd =  scenes.get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
+        if (descLog) log.info "Scene number is present"
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
@@ -199,9 +202,10 @@ def lanSetPreviousEffect () {
 }
 
 def lanActivateDIY (diyActivate) {
+    if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} from ${diyScenes}")}
         String diyEffectNumber = diyActivate.toString()
-        String sceneInfo = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).name
-        String sceneCmd = parent.state.diyEffects.(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd 
+        String sceneInfo = diyScenes.get(diyEffectNumber).name
+        String sceneCmd = diyScenes.get(diyEffectNumber).cmd
         if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} called ${sceneInfo} with command ${sceneCmd}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: diyEffectNumber)
@@ -217,36 +221,32 @@ def lanActivateDIY (diyActivate) {
 
 def retrieveScenes() {
     state.remove("sceneOptions")
-    state.remove("diySceneOptions")    
+    state.remove("diySceneOptions")  
+    state.remove("diyScene") 
     state.scenes = [] as List
     state.diyEffects = [] as List
-    if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent app")}
-    if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${parent.state.diyEffects.keySet()}")}
-    if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
-        if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
-    } else {
-        parent.state.diyEffects.(device.getDataValue("deviceModel")).each {
-            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
-            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
-            String sceneValue = it.getKey() + "=" + it.value.name
-            state.diyEffects.add(sceneValue)
-            state.diyEffects = state.diyEffects.sort()
-        }
-    }
-    if ( parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
-        if (debugLog) {log.debug ("retrieveScenes(): No Scenes to retrieve for device")}    
-    } else { 
-        parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}".each {
-            if (it.getKey() == "999") {
-                if (debugLog) {log.debug ("retrieveScenes(): Processing max scene value ${it.getKey()} of ${it.value.maxScene}")}
-                device.updateDataValue("maxScene", it.value.maxScene.toString())
-            } else {
-            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
-            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+    if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent device")}
+    scenes = parent."${"lightEffect_"+(device.getDataValue("DevType"))}"()
+    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${scenes}")}
+    scenes.each {
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
             state.scenes.add(sceneValue)
             state.scenes = state.scenes.sort()
-            }
+        }
+    diyScenes = parent.retrieveGoveeDIY(device.getDataValue("deviceModel"))
+    if (diyScenes == null) {
+        if (debugLog) {log.debug ("retrieveScenes(): Device has no DIY Scenes")}
+    } else {
+    if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyScenes}")}
+    if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${diyScenes.keySet()}")}
+    diyScenes.each {
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+        String sceneValue = it.getKey() + "=" + it.value.name
+        state.diyEffects.add(sceneValue)
+        state.diyEffects = state.diyEffects.sort()
         }
     }
 }
@@ -302,8 +302,12 @@ def getDevType() {
             break;        
         case "H6072": 
         case "H6079":
+        case "H607C":
             device.updateDataValue("DevType", "Lyra_Lamp");
             break;
+        case "H6079":
+            device.updateDataValue("DevType", "Lyra_Pro");
+            break;        
         case "H6076":
             device.updateDataValue("DevType", "Basic_Lamp");
             break;

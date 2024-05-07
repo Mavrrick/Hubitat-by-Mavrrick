@@ -110,9 +110,9 @@ def parse(String event) {
     if (debugLog) log.debug "In parse, received a message"
     def message = interfaces.mqtt.parseMessage(event)
 //    def messageJson = interfaces.mqtt.parseMessage(event.json)
-    def payloadJson = jsonSlurper.parseText(message.payload)
+//    def payloadJson = jsonSlurper.parseText(message.payload)
 
-    if ('Govee_'+payloadJson.device == device.getDeviceNetworkId()) {
+//    if ('Govee_'+payloadJson.device == device.getDeviceNetworkId()) {
     
         if (debugLog) log.debug "In parse, received message: ${message}"
 //        if (debugLog) log.debug "In parse, messageJson is ${messageJson}"
@@ -125,24 +125,25 @@ def parse(String event) {
         mqttPost(payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)         
     
     //    parent.mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
-    } else {
+/*    } else {
         if (debugLog) log.debug "Event is not for this device. Ignoring message"
-    }
+    } */
 }
 
 def mqttPost(String instance, String state){
     if (debugLog) { log.debug "mqttPost(): posting MQTT Update"}
-        if (instance == 'lackWaterEvent') {
-            if (debugLog) { log.debug "mqttPost(): lackWaterEvent found"}
-        time = new Date().format("MM/dd/yyyy HH:mm:ss")
-        sendEvent(name: instance, value: time, displayed: true)
+    if (instance == 'lackWaterEvent') {
+        if (descLog) { log.debug "mqttPost(): lackWaterEvent found"}
+            time = new Date().format("MM/dd/yyyy HH:mm:ss")
+            sendEvent(name: instance, value: time, displayed: true)
     } 
     else if (instance == 'bodyAppearedEvent') {
         if (state == "Presence") {
-            if (debugLog) { log.debug "mqttPost(): bodyAppearedEvent found"}
+            if (descLog) { log.info "mqttPost(): bodyAppearedEvent Present found"}
             sendEvent(name: "presence", value: "present", displayed: true)
             sendEvent(name: "motion", value: "active", displayed: true)
         } else if (state == "Absence") {
+            if (descLog) { log.info "mqttPost(): bodyAppearedEvent Not Present found"}
             sendEvent(name: "presence", value: "not present", displayed: true)
             sendEvent(name: "motion", value: "inactive", displayed: true)            
         }

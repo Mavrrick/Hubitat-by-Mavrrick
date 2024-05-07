@@ -1,7 +1,7 @@
 // Hubitat driver for Govee Fan Driver using Cloud API
-// Version 1.0.19
+// Version 2.1.0
 //
-// 2022-11-03 Initial Driver release for Govee Fan Appliance devices
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API

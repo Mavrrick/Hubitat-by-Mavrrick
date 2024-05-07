@@ -1,7 +1,7 @@
 // Hubitat driver for Govee Light, Plug, Switch driver using Cloud API
-// Version 2.0.0
+// Version 2.1.0
 //
-// 2.0.0  Initial release
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
@@ -16,7 +16,8 @@ import groovy.json.JsonBuilder
 #include Mavrrick.Govee_LAN_API
 
 /*** Static Lists and Settings ***/
-// @Field List sceneOptions []
+@Field static Map scenes =  [:]
+@Field static Map diyScenes =  [:]
 
 def commandPort() { "4003" }
 
@@ -28,7 +29,6 @@ metadata {
 		capability "ColorTemperature"
 		capability "Light"
 		capability "SwitchLevel"
-        capability "Configuration"
 		capability "ColorMode"
 		capability "Refresh"
         capability "Initialize"
@@ -90,43 +90,13 @@ def poll() {
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-        if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
         unschedule(poll)
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
-//    if (debugLog) runIn(1800, logsOff)
 }
 
 def updated() {
-    configure() 
-}
-
-def configure() {
-    if (debugLog) {log.warn "configure(): Driver Updated"}
-    if(device.getDataValue("retrievable") =='true'){
-        if (debugLog) {log.warn "configure(): Device is retrievable. Setting up Polling"}
-        unschedule()
-        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
-    }
-    if (lanControl && ip) { 
-        getDevType()
-        if ( parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
-            if (debugLog) {log.warn "configure(): No Scenes present for device type. Initiate setup in parent app"}
-            parent.lightEffectSetup()
-            retrieveScenes()
-        } else {
-        retrieveScenes()
-        }
-    } else if (lanControl == false) { 
-        retrieveScenes2()
-        retrieveStateData()
-        if (state.diyScene.isEmpty()) {
-            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
-            retrieveDIYScenes()
-        }
-    }    
-    if (debugLog) runIn(1800, logsOff) 
+    initialize() 
 }
 
 def initialize(){
@@ -137,31 +107,37 @@ def initialize(){
         }
     if(device.getDataValue("commands").contains("lightScene")) {
         sendEvent(name: "effectNum", value: 0) }
-    if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
     unschedule()
+    if (lanControl && ip) { 
+        getDevType()
+        retrieveScenes()
+    } else if (lanControl == false) { 
+        retrieveScenes2()
+        retrieveStateData()
+        if (state.diyScene.isEmpty()) {
+            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
+            retrieveDIYScenes()
+        }
+    }
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
-//    if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceState()
     if (debugLog) runIn(1800, logsOff)
     
 }
 
 
 def installed(){
-    device.updateSetting("debugLog", [value: "true", type: "bool"])
-    runIn(1800, logsOff)
     if (debugLog) {log.warn "installed(): Driver Installed"}
     if(device.getDataValue("commands").contains("color")) {
         sendEvent(name: "hue", value: 0)
         sendEvent(name: "saturation", value: 100)
-        sendEvent(name: "level", value: 100) }
-    unschedule()
+    }
+    if(device.getDataValue("commands").contains("lightScene")) {
+        sendEvent(name: "effectNum", value: 0) }
     if (pollRate > 0) runIn(pollRate,poll)
-    getDeviceState()
     retrieveScenes2()
     retrieveStateData()  
 }

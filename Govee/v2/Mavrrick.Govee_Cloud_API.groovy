@@ -49,7 +49,7 @@ def cloudCT(value, level, transitionTime){
 private def sendCommand(String command, payload2, type) {
      randomUUID()
      if (debugLog) { log.debug "sendCommand(): ${requestID}"}
-     bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
+     String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
      def params = [
             uri   : "https://openapi.api.govee.com",
             path  : '/router/api/v1/device/control',
@@ -192,7 +192,7 @@ try {
 					sendEvent(name: "saturation", value: sat)
                     if (descLog) { log.info "${device.label} Color was set to ${payload2}"}
                     }
-                resp.headers.each {
+  /*              resp.headers.each {
                     if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
                     name = it.name
                     value=it.value
@@ -204,7 +204,7 @@ try {
                         state.MinRateLimitRemainig = value
                         parent.apiRateLimits("MinRateLimitRemainig", value)
                     }
-            }
+            }   */
                 return resp.data
 		}
 	} catch (groovyx.net.http.HttpResponseException e) {
@@ -229,8 +229,8 @@ try {
 
 def getDeviceState(){
     randomUUID()
-    if (debugLog) { log.debug "getDeviceState(): ${requestID}"}
-    bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
+//    if (debugLog) { log.debug "getDeviceState(): ${requestID}"}
+    String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
         def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/state',
@@ -246,13 +246,13 @@ try {
 
                 if (debugLog) { log.debug "getDeviceState():"+resp.data.payload.capabilities}
                 resp.data.payload.capabilities.each {
-                    type = it.type
-                    instance = it.instance
+//                    type = it.type
+//                    instance = it.instance
                     if (it.state.value || it.state.value == 0) {
-                    if (debugLog) { log.debug "getDeviceState(): ${type} ${instance} ${it.state.value}" }
-                        switch(type) {
+                    if (debugLog) { log.debug "getDeviceState(): ${it.type} ${it.instance} ${it.state.value}" }
+                        switch(it.type) {
                             case "devices.capabilities.online":
-                                if (instance == "online") sendEvent(name: "online", value: it.state.value);
+                                if (it.instance == "online") sendEvent(name: "online", value: it.state.value);
                             break;
                             case "devices.capabilities.on_off":
                             if (instance == "powerSwitch") {
@@ -261,10 +261,10 @@ try {
                                 }
                             break;
                             case "devices.capabilities.range":
-                                if (instance == "brightness") sendEvent(name: "level", value: it.state.value);
+                                if (it.instance == "brightness") sendEvent(name: "level", value: it.state.value);
                             break;
                             case "devices.capabilities.color_setting":
-                                if (instance == "colorRgb"){
+                                if (it.instance == "colorRgb"){
                                     if (device.currentValue("colorRGBNum") != it.state.value) {
                                         if (it.state.value >= 1) {
                                             int r = (it.state.value >> 16) & 0xFF;
@@ -284,7 +284,7 @@ try {
                                         if (debugLog) {log.debug ("getDeviceState(): ColorRGBNum of ${it.state.value} did not change ignoring") }  
                                     }
                                 }
-                                if (instance == "colorTemperatureK") {
+                                if (it.instance == "colorTemperatureK") {
                                     if (device.currentValue("colorTemperature") != it.state.value) {
                                         if (it.state.value >= 1) {
                                             sendEvent(name: "colorTemperature", value: it.state.value);
@@ -299,31 +299,31 @@ try {
                                 }
                             break;
                             case "devices.capabilities.dynamic_scene":
-                                if (instance == "lightScene") sendEvent(name: "effectName", value: it.state.value);
+                                if (it.instance == "lightScene") sendEvent(name: "effectName", value: it.state.value);
                             break;
                             case "devices.capabilities.music_setting":
-                                if (instance == "musicMode") sendEvent(name: "effectName", value: it.state.value);
+                                if (it.instance == "musicMode") sendEvent(name: "effectName", value: it.state.value);
                             break;
                             case "devices.capabilities.toggle":
                                 if (it.state.value == 0) toggle = "off";
                                 if (it.state.value == 1) toggle = "on";
-                                if (instance == "gradientToggle") sendEvent(name: "gradient", value: toggle);
-                                if (instance == "nightlightToggle") sendEvent(name: "nightLight", value: toggle);
-                                if (instance == "airDeflectorToggle") sendEvent(name: "airDeflector", value: toggle);
-                                if (instance == "oscillationToggle") sendEvent(name: "oscillation", value: toggle);
-                                if (instance == "thermostatToggle") sendEvent(name: "thermostat", value: toggle);
-                                if (instance == "warmMistToggle") sendEvent(name: "warmMistT", value: toggle);
+                                if (it.instance == "gradientToggle") sendEvent(name: "gradient", value: toggle);
+                                if (it.instance == "nightlightToggle") sendEvent(name: "nightLight", value: toggle);
+                                if (it.instance == "airDeflectorToggle") sendEvent(name: "airDeflector", value: toggle);
+                                if (it.instance == "oscillationToggle") sendEvent(name: "oscillation", value: toggle);
+                                if (it.instance == "thermostatToggle") sendEvent(name: "thermostat", value: toggle);
+                                if (it.instance == "warmMistToggle") sendEvent(name: "warmMistT", value: toggle);
                             break; 
                             case "devices.capabilities.segment_color_setting":
-                                if (instance == "segmentedBrightness") sendEvent(name: "segmentedBrightness", value: it.state.value);
-                                if (instance == "segmentedColorRgb") sendEvent(name: "segmentedColorRgb", value: it.state.value);
+                                if (it.instance == "segmentedBrightness") sendEvent(name: "segmentedBrightness", value: it.state.value);
+                                if (it.instance == "segmentedColorRgb") sendEvent(name: "segmentedColorRgb", value: it.state.value);
                             break;
                             case "devices.capabilities.mode":
-                                if (instance == "nightlightScene") sendEvent(name: "effectName", value: it.state.value);
-                                if (instance == "presetScene") sendEvent(name: "presetScene", value: it.state.value);
+                                if (it.instance == "nightlightScene") sendEvent(name: "effectName", value: it.state.value);
+                                if (it.instance == "presetScene") sendEvent(name: "presetScene", value: it.state.value);
                             break;
                             case "devices.capabilities.temperature_setting":
-                               switch (instance) {
+                               switch (it.instance) {
                                    case "targetTemperature":
                                        sendEvent(name: "targetTemp", value: it.state.value.targetTemperature, unit: getTemperatureScale() );
                                        break;
@@ -336,12 +336,12 @@ try {
                                }
                             break;
                             case "devices.capabilities.property":
-                                if (instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value.toDouble().round(2)), unit: "C");
-                                if (instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
-                                if (instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value.currentHumidity, unit: "%");
+                                if (it.instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value.toDouble().round(2)), unit: "C");
+                                if (it.instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
+                                if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value.currentHumidity, unit: "%");
                             break;  
                             case "devices.capabilities.work_mode":
-                                if (instance == "workMode") {
+                                if (it.instance == "workMode") {
                                     sendEvent(name: "mode", value: it.state.value.workMode)
                                     if ( it.state.value.modeValue == null || it.state.value.modeValue == 0 ) {
                                         if (debugLog) {log.debug ("getDeviceState(): workmode value of Null or 0 found}")}
@@ -359,11 +359,11 @@ try {
                          break;         
                     }
                     } else {
-                        if (debugLog) { log.debug "getDeviceState(): Instance: ${instance} value is empty. Skipping" }
+                        if (debugLog) { log.debug "getDeviceState(): Instance: ${it.instance} value is empty. Skipping" }
                     }
                 }
 
-                resp.headers.each {
+/*                resp.headers.each {
                     if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
                     name = it.name
                     value = it.value
@@ -375,7 +375,7 @@ try {
                         state.MinRateLimitRemainig = value
                         parent.apiRateLimits("MinRateLimitRemainig", value)
                     }
-                }								
+                }	*/							
 				
                 if (device.currentValue("cloudAPI") == "Retry") {
                     if (debugLog) {log.error "getDeviceState(): Cloud API in retry state. Reseting "}
@@ -395,7 +395,7 @@ try {
 def retrieveScenes2(){
     randomUUID()
     if (debugLog) { log.debug "getDeviceState(): ${requestID}"}
-     bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
+        String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
 		def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/scenes',
@@ -416,7 +416,7 @@ try {
                 state.sceneMax = state.scenes.size()
                 state.sceneValue = 0 
                 if (debugLog) { log.debug "retrieveScenes2(): dynamic scenes loaded"}
-                resp.headers.each {
+/*                resp.headers.each {
                     if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
                     name = it.name
                     value = it.value
@@ -428,7 +428,7 @@ try {
                         state.MinRateLimitRemainig = value
                         parent.apiRateLimits("MinRateLimitRemainig", value)
                     }
-                }								
+                }	*/							
 				
                 if (device.currentValue("cloudAPI") == "Retry") {
                     if (debugLog) {log.error "retrieveScenes2(): Cloud API in retry state. Reseting "}
@@ -447,7 +447,7 @@ try {
 def retrieveDIYScenes(){
     randomUUID()
     if (debugLog) { log.debug "retrieveDIYScenes(): ${requestID}"}
-     bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
+        String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
 		def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/diy-scenes',
@@ -468,7 +468,7 @@ try {
                 } 
 
                 if (debugLog) { log.debug "retrieveDIYScenes(): dynamic scenes loaded"}
-                resp.headers.each {
+/*                resp.headers.each {
                     if (debugLog) { log.debug "retrieveDIYScenes(): ${it.name}: ${it.value}"}                    
                     name = it.name
                     value = it.value
@@ -480,7 +480,7 @@ try {
                         state.MinRateLimitRemainig = value
                         parent.apiRateLimits("MinRateLimitRemainig", value)
                     }
-                }								
+                }	*/							
 				
                 if (device.currentValue("cloudAPI") == "Retry") {
                     if (debugLog) {log.error "retrieveDIYScenes(): Cloud API in retry state. Reseting "}
@@ -509,11 +509,13 @@ def retrieveStateData(){
 }
 
 def retrieveDynamicScene(type){
+    def device = device.getDataValue("deviceID")
+    def goveeAppAPI = parent.retrieveGoveeAPI(device)
     state."${type}" = [] as List
-    parent.state.goveeAppAPI.each {
-        if (it.device == device.getDataValue("deviceID")) {
+//    parent.goveeAppAPI.each {
+//        if (it.device == device.getDataValue("deviceID")) {
             if (debugLog) { log.debug "retrieveDynamicScene(): found matching device"}
-            it.capabilities.each{
+            goveeAppAPI.capabilities.each{
                 if (debugLog) { log.debug "retrieveDynamicScene(): found ${it.get("instance")}"}
                 if (it.get("instance") == type) {
                     if (debugLog) { log.debug "retrieveDynamicScene(): nightLightScene instance"}
@@ -521,18 +523,21 @@ def retrieveDynamicScene(type){
                     state."${type}" = it.parameters.options
 
                 }
-            }
-        }            
+ //           }
+ //       }            
     }          
 }
 
 def retrieveCmdParms(type){
-    if (debugLog) { log.debug "retrieveCmdParms(): Getting command data for ${type}"}
+    def device = device.getDataValue("deviceID")
+    def goveeAppAPI = parent.retrieveGoveeAPI(device)
+    if (debugLog) { log.debug "retrieveCmdParms(): Getting command data2 for ${type} ${goveeAppAPI} ${device} ${goveeAppAPI.capabilities}"}
     state."${type}" = [] as List
-    parent.state.goveeAppAPI.each {
-        if (it.device == device.getDataValue("deviceID")) {
+//    goveeAppAPI.each {
+//        if (it.device == device.getDataValue("deviceID")) {
             if (debugLog) { log.debug "retrieveCmdParms(): found matching device"}
-            it.capabilities.each{
+//            it.capabilities.each{
+             goveeAppAPI.capabilities.each{
 //                if (debugLog) { log.debug "retrieveCmdParms(): found ${it.get("instance")}"}
                 if (it.get("instance") == type) {
                     if (debugLog) { log.debug "retrieveCmdParms(): found ${it.get("instance")}"}
@@ -540,8 +545,8 @@ def retrieveCmdParms(type){
                     state."${type}" = it.parameters.fields
 
                 }
-            }
-        }            
+ //           }
+ //       }            
     }          
 }
 
@@ -560,7 +565,7 @@ def apiKeyUpdate() {
 }
 
 def randomUUID(){
-    requestID = UUID.randomUUID().toString()
+    String requestID = UUID.randomUUID().toString()
     if (debugLog) {log.debug "randomUUID(): random uuid is ${requestID}"}
     return requestID
 }

@@ -13,20 +13,22 @@ library (
 
 /// All Light efects mapping to commands for all devices.
 private def lightEffectSetup() {
-    state.remove("lightEffects") // remove legacy value if still exists.
+//    state.remove("lightEffects") // remove legacy value if still exists.
     List childTypes = getChildDevices().data.DevType
-    logger("lightEffectSetup() Child Types ${childTypes}", 'debug')
+    log.debug "lightEffectSetup() Child Types ${childTypes}"
     if (childTypes.contains("RGBIC_Strip") && state.lightEffect_RGBIC_Strip == null) {
-            logger("lightEffectSetup() executing lightEffect_RGBIC_Strip()", 'debug')
+        logger("lightEffectSetup() executing lightEffect_RGBIC_Strip()", 'debug')
         lightEffect_RGBIC_Strip()
     }
     if (childTypes.contains("Table_Lamp") && state.lightEffect_Table_Lamp == null) {
+        log.debug "lightEffectSetup() Adding scenes for Table Lamp devices"
         lightEffect_Table_Lamp()
     }
     if (childTypes.contains("Y_Light") && state.lightEffect_Y_Light == null) {
         lightEffect_Y_Light()
     }
     if (childTypes.contains("Hexa_Light") && state.lightEffect_Hexa_Light == null) {
+        log.debug "lightEffectSetup() Adding scenes for Hexa Light devices"
         lightEffect_Hexa_Light()
     }
     if (childTypes.contains("Lyra_Lamp") && state.lightEffect_Lyra_Lamp == null) {
@@ -71,13 +73,16 @@ private def lightEffectSetup() {
     if (childTypes.contains("Galaxy_Projector") && state.lightEffect_Galaxy_Projector == null) {
         lightEffect_Galaxy_Projector()
     }
-    logger("lightEffectSetup() Light Effect Setup Complete", 'debug')
+        if (childTypes.contains("Lyra_Pro") && state.lightEffect_Lyra_Pro == null) {
+        lightEffect_Lyra_Pro()
+    }
+    log.debug "lightEffectSetup() Light Effect Setup Complete"
 }
 
 
 private def lightEffect_Table_Lamp() {
-    atomicState.lightEffect_Table_Lamp = [:]
-    atomicState.lightEffect_Table_Lamp = [
+//    atomicState.lightEffect_Table_Lamp = [:]
+    scenes = [
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
         2:["name":"Romantic", "cmd":['"owABCgcJVWT///8FDO5x/xgZGho\\="','"owEbHB0eHyAhIiMYiwD/AAECA9U\\="','"owIEBQYHCAkKCwwNDg8QERITFLU\\="','"owMVFhck/P8AYGFiY2RlZmdoaZI\\="','"owRqa2xtbm9wcXJzdHV2d3h5et0\\="','"owV7fH1+f4CBgoMk/38AJCUmJ3k\\="','"owYoKSorLC0uLzAxMjM0NTY3OJ0\\="','"owc5Ojs8PT4/QEFCQ0RFRkcY/3s\\="','"owivAEhJSktMTU5PUFFSU1RVVlM\\="','"o/9XWFlaW1xdXl8AAAAAAAAAAAs\\="','"MwUEMgEAAAAAAAAAAAAAAAAAAAE\\="']],
         3:["name":"Sunset", "cmd":['"owABCwcOAGQAAAAJDP8AAAABAj0\\="','"owEDBAUGBwgJCgsM/wgADA0OD1o\\="','"owIQERITFBUWFwv/UQAYGRobHBg\\="','"owMdHh8gISIB/1AAIxj/ZgAkJZI\\="','"owQmJygpKissLS4vMDEyMzQ1NpE\\="','"owU3ODk6Oxj/fwA8PT4/QEFCQwk\\="','"owZERUZHSElKS0xNTk9QUVJTGL0\\="','"owf/ngBUVVZXWFlaW1xdXl9gYcQ\\="','"owhiY2RlZmdoaWprDP/uAGxtbtg\\="','"owlvcHFyc3R1dncM//8AeHl6e8k\\="','"o/98fX5/gIGCgwAAAAAAAAAAAFw\\="','"MwUELQEAAAAAAAAAAAAAAAAAAB4\\="']],
@@ -134,11 +139,12 @@ private def lightEffect_Table_Lamp() {
         143:["name":"Dreamland", "cmd":['"owABBgcJX0AAOrcEFv9snwENEzk\\="','"owEUGBkfICUmJ1BcXV5famxtbvk\\="','"owJ5egn///8MFjI3TVJVb3QPi54\\="','"owMA/wQICTg8REVIT1lbd4GCg60\\="','"owQW//8ABQYODxESGhstLjA2Poo\\="','"o/8/SktTZWZncnMAAAAAAAAAAFQ\\="','"MwUEyQsAAAAAAAAAAAAAAAAAAPA\\="']],  
         999:["maxScene":143]
         ]
+        return scenes
 }
 
-private def lightEffect_Y_Light() {
-    atomicState.lightEffect_Y_Light = [:]
-    atomicState.lightEffect_Y_Light = [
+def lightEffect_Y_Light() {
+//    atomicState.lightEffect_Y_Light = [:]
+    scenes = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFU8DBAEgBQAEABKJAGQ\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUETQsCRwAAAAAAAAAAAAAAADE\\="']],
         2:["name":"Romantic", "cmd":['"owABAgQnFUIBAAEFAAWLAP/kAEQ\\="','"o//n/zuD/2lK/5F2AAAAAAAAADg\\="','"MwUEWgsCRwAAAAAAAAAAAAAAACY\\="']],
         3:["name":"Sunset Glow", "cmd":['"owABAgQmFSQDAgEeBQAFZACX34E\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUETwsCRwAAAAAAAAAAAAAAADM\\="']],
@@ -186,11 +192,13 @@ private def lightEffect_Y_Light() {
         134:["name":"Movie", "cmd":['"owABAgQAAAAPCQB4tABfuABfuG4\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEyRwARwAAAAAAAAAAAAAAAKA\\="']],
         999:["maxScene":134]
         ]
+        return scenes
 }
 
 private def lightEffect_Hexa_Light() {    
-    atomicState.lightEffect_Hexa_Light = [:]
-    atomicState.lightEffect_Hexa_Light = [
+//    atomicState.lightEffect_Hexa_Light = [:]
+//    lightEffect_Hexa_Light = [
+      scenes = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABAgQmFS0CAgFkBQAEABKJAEU\\="','"o/8A/xe0/wD//wAAAAAAAAAAAP8\\="','"MwUE2AkCLQAAAAAAAAAAAAAAAMw\\="']],
         2:["name":"Romantic", "cmd":['"owABAgQmFTIBAgFIBQAFiwD/5H8\\="','"o/8A5/87g/9pSv+RdgAAAAAAADg\\="','"MwUE4gkCLQAAAAAAAAAAAAAAAPY\\="']],
         3:["name":"Sunset Glow", "cmd":['"owABAgQmFQoBAgFkBQAFZACX39c\\="','"o/8AP/9TAP+cAPlMAAAAAAAAABk\\="','"MwUE2gkCLQAAAAAAAAAAAAAAAM4\\="']],
@@ -237,12 +245,13 @@ private def lightEffect_Hexa_Light() {
         134:["name":"Kaleidoscope", "cmd":['"owABAwQmGVQBAgEFAAgKN/8K//Y\\="','"owFb/0xelkz/TP/t/+IM/wyeDB8\\="','"o/8p/wAAAAAAAAAAAAAAAAAAAIo\\="','"MwUE8QkCLQAAAAAAAAAAAAAAAOU\\="']],
         135:["name":"Profound", "cmd":['"owABAgQmGTIBAgEFAAZvLb2mY5I\\="','"o//MspjcOob/AQEBgzjsAAAAAHM\\="','"MwUEVx0CLQAAAAAAAAAAAAAAAFc\\="']],
         999:["maxScene":135]
-        ]    
+        ] 
+    return scenes
 }
 
 private def lightEffect_Lyra_Lamp() {
-    atomicState.lightEffect_Lyra_Lamp = [:]
-    atomicState.lightEffect_Lyra_Lamp = [
+//    atomicState.lightEffect_Lyra_Lamp = [:]
+    scenes = [
         1:["name":"Ocean/Deep Sea", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"owABBwIDIGQAAAUAAf//AAAAAOQ\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaQAAAAQAB//8AAAAAAvg\\="','"owPIMgH/AAAAAAAAAAAAJkAAAMI\\="','"owQBAgP//wDIAAD/AAJkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUENAgAAAAAAAAAAAAAAAAAAA4\\="']],
@@ -312,11 +321,12 @@ private def lightEffect_Lyra_Lamp() {
         156:["name":"Rustling leaves", "cmd":['"owABBAICGgAAAAEAAf//AQAAAL0\\="','"owEA3DIBAP8AAAAAAAAAABoAAqo\\="','"owIZFwIB/ygB1yAUAAAyAf//AKo\\="','"o/8QANkAAAAAAAAAAAAAAAAAAJU\\="','"MwUEPQgAAAAAAAAAAAAAAAAAAAc\\="']],
         999:["maxScene":156]
         ]
+        return scenes
 }
 
 private def lightEffect_Basic_Lamp() {
-    atomicState.lightEffect_Basic_Lamp = [:]
-    atomicState.lightEffect_Basic_Lamp = [
+//    atomicState.lightEffect_Basic_Lamp = [:]
+    scenes = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBgIDGgAAAAEAAf8AAIAUFMA\\="','"owEAgBQBAP8AAACAAACAAB0AANU\\="','"owIAAQIB/wAAgBQUANtkAv//AGE\\="','"owMA/wAAAIAAAIAAHQAAAAECAUA\\="','"owT/AAKAFBQA22QCAP8A//8AAJg\\="','"o/8AgAAAgAAAAAAAAAAAAAAAAFw\\="','"MwUEbAgAAAAAAAAAAAAAAAAAAFY\\="']],
         2:["name":"Romantic", "cmd":['"owABBAICIAAAAAMCAXAPA/cUFA0\\="','"owEDABQD/38A//8A/3MHEQD4AFQ\\="','"owIAgAAaAAAAAQAB/2UAwRQUAGA\\="','"o/+AFAGwB/8AAIAAAIAAAAAAAIE\\="','"MwUEcQgAAAAAAAAAAAAAAAAAAEs\\="']],
         3:["name":"Sunset", "cmd":['"owABBwIDIGAAAAUAAf//AAAAAOA\\="','"owEDADID/38A/38A/38AAAAAABA\\="','"owIAAAEaAAAAAQAB//8AAAAAArg\\="','"owPIMgH/AAAAAAAAAAAAJgAAAII\\="','"owQBAgP//wLIAAD/AABkCgoAAPY\\="','"owUByAoKAP8yAf9/AAAAAAAAACM\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEaQgAAAAAAAAAAAAAAAAAAFM\\="']],
@@ -386,14 +396,15 @@ private def lightEffect_Basic_Lamp() {
         155:["name":"Valentine's Day", "cmd":['"owABBgIDGgAAAAEAAUZGAAAUFL8\\="','"owEAABQB/zlbAACAAACAACYAAAw\\="','"owIABgIB/wADABQUAwAUBf8AALU\\="','"owP/B57/B0b/LlT/HAcAAfkQAfA\\="','"owT5AB0AAgQDAgH/MQMAFBQDAIs\\="','"o/8UArYH/v8AAAAB+RAB+QAAAOo\\="','"MwUEsAkAAAAAAAAAAAAAAAAAAIs\\="']],
         999:["maxScene":155]
     ]
+        return scenes
 }
 
 
 
 
 private def lightEffect_Outdoor_String_Light() {
-    atomicState.lightEffect_Outdoor_String_Light = [:]
-    atomicState.lightEffect_Outdoor_String_Light = [
+//    atomicState.lightEffect_Outdoor_String_Light = [:]
+    scenes = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -472,11 +483,12 @@ private def lightEffect_Outdoor_String_Light() {
         167:["name":"Meteor", "cmd":['"owABCQIFGgAAAAEAAf+5ANIUFCI\\="','"owEAgBQBBiT+AACAAACAABoQAeA\\="','"owIAAQIBvE4A0xQUAP4UAf///5Y\\="','"owMAAIAQAPwAGhMBAAECAbxOADQ\\="','"owTTFBQA/hQBZ4z/AACAEAD8AOc\\="','"owUaFQEAAQIBvE4A0xQUAP4UAWA\\="','"owZnjP8AAIAQAPwAGhIBAAECAdY\\="','"owe8TgDTFBQA/hQBZ4z/AACAEOo\\="','"o/8A/AAAAAAAAAAAAAAAAAAAAKA\\="','"MwUEFwgAAAAAAAAAAAAAAAAAAC0\\="']],
         999:["maxScene":167]
     ]
+        return scenes
 }
 
 private def lightEffect_Outdoor_Pod_Light() {
-    atomicState.lightEffect_Outdoor_Pod_Light = [:]
-    atomicState.lightEffect_Outdoor_Pod_Light = [
+//    atomicState.lightEffect_Outdoor_Pod_Light = [:]
+    scenes = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -534,11 +546,12 @@ private def lightEffect_Outdoor_Pod_Light() {
         145:["name":"Moonlight", "cmd":['"owABBQICIAACBwUCAeweA74AAMs\\\\u003d"','"owEBnRQDqP/i/+kH////AAAAEGI\\\\u003d"','"owIFtAAgoAEAMgABZB4AAAAAANg\\\\u003d"','"owP2FAMAAFAAHqAeNP8AAAAAAHo\\\\u003d"','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\\\u003d"','"MwUE+wcAAAAAAAAAAAAAAAAAAM4\\\\u003d"']],
         999:["maxScene":145]
     ]
+        return scenes
 }
 
 private def lightEffect_Outdoor_Perm_Light() {
-    atomicState.lightEffect_Outdoor_Perm_Light = [:]
-    atomicState.lightEffect_Outdoor_Perm_Light = [
+//    atomicState.lightEffect_Outdoor_Perm_Light = [:]
+    scenes = [
         1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']],
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']],
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -639,11 +652,12 @@ private def lightEffect_Outdoor_Perm_Light() {
         189:["name":"Universe", "cmd":['"owABBQICJgAAAAgCAf/WAckUFGs\\="','"owEDABQFBgD//0YN/38AiwD/AAk\\="','"owIA/xAA9wAAgAAdAAIPCAABf18\\="','"owMAA8wUFAAAFAL/kxf/46sAALU\\="','"o//qAACAAAAAAAAAAAAAAAAAADY\\="','"MwUELAsAAAAAAAAAAAAAAAAAABU\\="']],
         999:["maxScene":189]
     ]
+        return scenes
 }
 
 private def lightEffect_Wall_Light_Bar() {
-    atomicState.lightEffect_Wall_Light_Bar = [:]
-    atomicState.lightEffect_Wall_Light_Bar = [
+//    atomicState.lightEffect_Wall_Light_Bar = [:]
+    scenes = [
         1:["name":"Deep Sea", "cmd":['"owABBwoDIgADDAAAAczMAQAUFIE\\="','"owED8hQCB1b/AAD/AACAAACAABQ\\="','"owIBAgAB/ycAAgQBAgH//wMAFGg\\="','"owMUAfkUBP9Mhv//AAD/AAZG/ig\\="','"owQSAPIAAIAFAQEA/ycAAgQBAh8\\="','"owUB//8DABQUAfkUBP9Mhv//AHk\\="','"o/8A/wAGRv4QAPIAAIAFAQEB/4Q\\="','"MwUEVgkAAAAAAAAAAAAAAAAAAG0\\="']], 
         2:["name":"Romantic", "cmd":['"owABAwoBIgAAAAECAf9/APIUFPg\\="','"owEA5RQC/wAAjwf+AACAAACAANg\\="','"o/8AAgAB/wAAAAAAAAAAAAAAAKA\\="','"MwUEbAkAAAAAAAAAAAAAAAAAAFc\\="']], 
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -724,11 +738,12 @@ private def lightEffect_Wall_Light_Bar() {
         167:["name":"Right side on", "cmd":['"MzMQAAAAAAAAAAAAAAAAAAAAABA\\="']],
         999:["maxScene":167]
     ]
+        return scenes
 }
 
 private def lightEffect_Indoor_Pod_Lights() {
-    atomicState.lightEffect_Indoor_Pod_Lights = [:]
-    atomicState.lightEffect_Indoor_Pod_Lights = [
+//    atomicState.lightEffect_Indoor_Pod_Lights = [:]
+    scenes = [
         1:["name":"Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE9gcAAAAAAAAAAAAAAAAAAMM\\="']], 
         2:["name":"Longing", "cmd":['"owABBwIDI1ABAA8CAf8KAgAAAC0\\="','"owECAAAE/wAA/1oA/3gA5QA2ELo\\="','"owIA+gAAAAAjAAEADwIB/woCAII\\="','"owMAAAIAAAT/AAD/WgD/eADyAIk\\="','"owQcEAD6AAAAABoAAAABAgGWMu0\\="','"owUAAAAAAPoyAf+B/xEAgAAAAH8\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUEDAgAAAAAAAAAAAAAAAAAADY\\="']], 
         3:["name":"Sunset glow", "cmd":['"owABCwIFIyABAAYCAf8AANcUFIE\\="','"owEA8BQE/0EA/4IAxxb+giL+EeE\\="','"owIA8wAAAAEjIgEABgIB/wAA7UQ\\="','"owMUFAD2FARmC/+xF//jADn/uRE\\="','"owQAEQDyAAAABSMkAQAGAgH/AL0\\="','"owUA7hQUAPEUBP9BAP9jAPIU/pM\\="','"owaAEP4RAPIAAAADIyYBAAYCASo\\="','"owf/AADwFBQA8hQE/0EA/5YAwF4\\="','"owgH/mQQ/hEA8gAAAAQjKAEABjM\\="','"owkCAf8AAOkUFADuFAT/QQD/lpY\\="','"o/8A7QAk/7IAEQDyAAAAAAAAADs\\="','"MwUE8AcAAAAAAAAAAAAAAAAAAMU\\="']], 
@@ -783,11 +798,12 @@ private def lightEffect_Indoor_Pod_Lights() {
         143:["name":"Heartbeat", "cmd":['"MwUEQQAAAAAAAAAAAAAAAAAAAHM\\="']],
         999:["maxScene":143]
         ]
+        return scenes
 }
 
 private def lightEffect_XMAS_Light() {
-    atomicState.lightEffect_XMAS_Light = [:]
-    atomicState.lightEffect_XMAS_Light = [
+//    atomicState.lightEffect_XMAS_Light = [:]
+    scenes = [
 		1:["name":"Deep sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUE/ScAAAAAAAAAAAAAAAAAAOg\\="']],
 		2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -902,11 +918,12 @@ private def lightEffect_XMAS_Light() {
 		202:["name":"Awaken", "cmd":['"owABBwIDIyUAAAEAAf+AAbUUFGk\\="','"owED6BQECW7/SJ7///31AAAAAB8\\="','"owIAgBAA/wAjIwAAAQAB/4EBtQQ\\="','"owMUFAPmFAQJbv9Inv///fUAABM\\="','"owQAAACAEgD/ABoAAhEBAAH/ADw\\="','"owUC/xRkAIAUAf///wAAgBEA7T0\\="','"o/8AAAAAAAAAAAAAAAAAAAAAAFw\\="','"MwUESigAAAAAAAAAAAAAAAAAAFA\\="']],
         999:["maxScene":202]
         ]
+        return scenes
 }
 
 private def lightEffect_RGBIC_Strip() {
-    atomicState.lightEffect_RGBIC_Strip = [:]
-    atomicState.lightEffect_RGBIC_Strip = [
+//    atomicState.lightEffect_RGBIC_Strip = [:]
+    scenes = [
         1:["name":"Ocean/Deep Sea", "cmd":['"owABBAICHQAAAAEAAf//AAAAALs\\="','"owEA3DICAGT/AAD/AAAAAAAAACo\\="','"owIaAAIKAQIB/ygB1wAAAAAyAYM\\="','"o/8A/5YAAAAAAAAAAAAAAAAAADU\\="','"MwUEywAAAAAAAAAAAAAAAAAAAPk\\="']],
         2:["name":"Romantic", "cmd":['"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']],
         3:["name":"Sunset", "cmd":['"MwUEAQAAAAAAAAAAAAAAAAAAADM\\="']],
@@ -1061,11 +1078,12 @@ private def lightEffect_RGBIC_Strip() {
         241:["name":"Fascination", "cmd":['"owABCwIFIGADFAAAAf8AAIAUFIc\\="','"owECABQDAP//AAAAAAAAEQD9AFs\\="','"owIAgAEgRgMNAQAB/wAAgBQUAzQ\\="','"owMAFAMAAP8AAAAA/6gRAP4AAPA\\="','"owSAARoAAAABAAH/AACAFBQAgMM\\="','"owUUAYsA/wAAgAAAgAAmAAEAMtI\\="','"owYAAi8AAMMUFP8AANQUFAEAFHU\\="','"owcDiwD/AAAAAP+eFQD+AACAA9o\\="','"owgmAAEAGQACKAAArBQU/wAAulY\\="','"owkUFAGAFAP/AOQAAAAA//8XADA\\="','"o//9AACAAwAAAAAAAAAAAAAAACI\\="','"MwUEqwgAAAAAAAAAAAAAAAAAAJE\\="']],
         999:["maxScene":241]
         ]
+        return scenes
 }
 
 private def lightEffect_Curtain_Light() {
-    atomicState.lightEffect_Curtain_Light = [:]
-    atomicState.lightEffect_Curtain_Light = [
+//     atomicState.lightEffect_Curtain_Light = [:]
+    scenes = [
         1:["name":"Wave", "cmd":['"owABIAxTuG5NZAEEdQAAbACJUOc\\="','"owFORw0KGgoAAAANSUhEUgAAAKY\\="','"owIUAAAAGggCAAAAOOHrKgAAAL0\\="','"owMzSURBVDgRY2AYBaMhMBoCo7U\\="','"owQhMKAhwPj//3+yHcBEtk6gRkU\\="','"owWWSd/J16RzYwM7wfIzxQ5G/M\\="','"owYAOAcGgy8DvRUAAAAASUVORJ0\\="','"oweuQmCCAABkAegDhQAAfACJUAQ\\="','"owhORw0KGgoAAAANSUhEUgAAAK8\\="','"owkUAAAAGggCAAAAOOHrKgAAALY\\="','"owpDSURBVDgRY2AYBaMhMGhDgNw\\="','"owvx////ZDuOiWydQI0sk76Tr/8\\="','"owydIpsp0szI8H6AAowiZ7MwHC4\\="','"ow0aoNBmYbg/YDZfGSCbKYoqAGY\\="','"ow4jdAkOQ3Q6ewAAAABJRU5EriM\\="','"ow9CYIIAAGQB6AOIAAB/AIlQTuI\\="','"oxBHDQoaCgAAAA1JSERSAAAAFO0\\="','"oxEAAAAaCAIAAAA44esqAAAARvw\\="','"oxJJREFUOBFjYBh5gPH///9k+/M\\="','"oxOaiWydQI0sk76Tr50imynSzLE\\="','"oxTI8H6AAowiZ7MwHBqKoc3CcGs\\="','"oxV/aDr7ytB09q2h6GxGBrYByk0\\="','"oxaSACwZCvyncH8MAAAAAElFTgI\\="','"oxdErkJgggAAZAHoA4UAAHwAiQA\\="','"oxhQTkcNChoKAAAADUlIRFIAAO8\\="','"oxkAFAAAABoIAgAAADjh6yoAAKY\\="','"oxoAQ0lEQVQ4EWNgGAWjITBoQ0w\\="','"oxuA8f///2Q7jolsnUCNLJO+k8A\\="','"oxyvnSKbKdLMyPB+gAKMImezMI0\\="','"ox0cGqDQZmG4P2A2XxkgmymKKmo\\="','"ox4AI3QJDkN0OnsAAAAASUVORJ0\\="','"o/+uQmCCAABkAegDAAAAAAAAANw\\="','"MwUEJR3/AAAAAAAAAAAAAAAAAPU\\="']],
         2:["name":"Love Heart", "cmd":['"owABFAxT/6YAQAABPgEANQGJUCM\\="','"owFORw0KGgoAAAANSUhEUgAAAKY\\="','"owIUAAAAGggCAAAAOOHrKgAAAL0\\="','"owP8SURBVDgR7ZM9EoIwEIWDw1s\\="','"owQJLKwpxVM4lBzYkvEUaklt4SE\\="','"owUV9GWevqxryIC2xpm4f9++Jec\\="','"owaEEP5r0QlUqm5DKxvGGT+zbKA\\="','"owdWqZoFyJ26LexxuDHSGx7ZQ18\\="','"owjYqJVSK4Q+SdVlDTTiIBHmkuo\\="','"owkmXVU42Vd5/K8l29yP8Mdqj2c\\="','"owpdiwpyZaA1hk/KSDiSz8ldmNU\\="','"ows1EuxIFhVIFCTYtpxpx/esx5A\\="','"owx2Z1Zo0Ycr3vbPykvFKQsqKX8\\="','"ow3vhgv8plsXpkUKpAqeMK/rTDs\\="','"ow5edzt9GOjHK+EuuXQoKxJuGrk\\="','"ow8bTlnfDsyOb8oMZfVJWlmvTKM\\="','"oxDY6jOSJfMwouJ1+E6TTTNjM/g\\="','"oxGBXZ9UllTZpCF+suLrxAM5TEw\\="','"oxJaNdTb2RsAAAAASUVORK5CYJk\\="','"o/+CAV//Af//AAAAAAAAAAAAAH4\\="','"MwUENx3/AAAAAAAAAAAAAAAAAOc\\="']],
         3:["name":"Sunset", "cmd":['"owABJAxT/wBcAAADEAEABwGJULc\\="','"owFORw0KGgoAAAANSUhEUgAAAKY\\="','"owIUAAAAGggCAAAAOOHrKgAAAL0\\="','"owPOSURBVDgR7ZHBFYJADERn8es\\="','"owTgRS3IAqzAUuxCSqEBLMAqrPU\\="','"owVCb15wlkDIulnUmwdygLzM/G4\\="','"owbZsABLLTfwVzfQ4aD7BO2+aVk\\="','"oweUDLjQ/wOspBxDPoEpS2S+xT0\\="','"owgbKYZKfSK7JvWkTTPA84ynNpY\\="','"owkMimvnGpfvcO/lXa4CkWRVnnc\\="','"owrGuEiyPHUgqU7f3JvlMcl6yJQ\\="','"owuoWmmEa7SjXHznnsDFdHrCo/g\\="','"owyAHl1PsnaNrQsrSdV6VhvcLLw\\="','"ow1wxXqPp52w59BO1JOcLA5m21k\\="','"ow54i2kvhnDm7ygXb2Em6ANcjsk\\="','"ow+Nygu6wjSzs69tPAAAAABJRV4\\="','"oxBORK5CYIIDX2QB//+7AACyAIc\\="','"oxGJUE5HDQoaCgAAAA1JSERSAG8\\="','"oxIAABQAAAAaCAIAAAA44esqAK0\\="','"oxMAAHlJREFUOBFjYBiSgBGXq9w\\="','"oxTvuqLIKO9G4UI42DUDdf4TYIQ\\="','"oxVCVs704R+mfiya4TpVtP5B9Hk\\="','"oxbfuQYyCFM/ivHIVsF1AgWR2Z0\\="','"oxfIanBqRlaEi41TM8SpEG3IbEo\\="','"oxhkg7D4GSgN9zZcKaaHgVLYNYM\\="','"oxlD9MN1AhmYQY0sO8oeDYHREHo\\="','"oxoYDCEAAKblHAz50hduAAAAAI0\\="','"oxtJRU5ErkJgggJX/wL//4YAAJ4\\="','"oxx9AIlQTkcNChoKAAAADUlIRE0\\="','"ox1SAAAAFAAAABoIAgAAADjh69o\\="','"ox4qAAAARElEQVQ4EWP8z0A+YKw\\="','"ox8iXysDwxDVzMLAoEa2t4eon3Y\\="','"oyApcjajAQP5aYwim8nUfAEcvSs\\="','"oyGMDEPM2ZBESaafB1oz2TlqVEA\\="','"oyIjvUMAAKKmBEkH8jvaAAAAAAE\\="','"o/9JRU5ErkJgggAAGgP//wAAAE0\\="','"MwUEJB3/AAAAAAAAAAAAAAAAAPQ\\="']],
@@ -1196,18 +1214,20 @@ private def lightEffect_Curtain_Light() {
         221:["name":"Space Walk", "cmd":['"owABOwxTAgD/KwADdQIAbAKJUNM\\="','"owFORw0KGgoAAAANSUhEUgAAAKY\\="','"owIUAAAAGggCAAAAOOHrKgAAAr8\\="','"owMzSURBVDgR1ZO/ixNBFMffyUc\\="','"owQWsxBhAxYuWBi4wnQ2VyxYLT4\\="','"owVaXLrLoYXFNanUnI2HhRcrk8Q\\="','"owZGYnUeFoqFx0W4cAl4ZFOIaxw\\="','"owdxGKySQkgOhNtGsoKBHfBgB9U\\="','"owhcON/s5MfOJP/APYbdfd/5fkk\\="','"own2vZ2dAbiQsbSw6zAMFV3XdUA\\="','"owpFwfTSvNTv9llEBoOg+8MXA24\\="','"ows0cnjQmneqyqk3DIKw5fQLm+o\\="','"owz7YFTFaDW64d+w9emL4pYqDwo\\="','"ow3/BObV9NZbH035O9cz4GYJH/s\\="','"ow5O3nWbg9yq/a3TTfISjJ9V3JI\\="','"ow/xH90m9JdXevyKaDOns+F6PWg\\="','"oxDQEwrOyVlsrr54jzCljJA4j5E\\="','"oxEmr2AAQpkIC+DaV7Rks5oPiJA\\="','"oxJpYI/siVm9S20HDPI3WeFZHqE\\="','"oxNdg8jGYf+ekeYKQ0MypMqVj1s\\="','"oxRB9UEGIg9invueNoR7++eT4lQ\\="','"oxWOB2AkYfW58PJ0GIThv3PcJ2o\\="','"oxaziFOcUtwLdti8STCvN01ln4A\\="','"oxdJbWMp9JGjMl7pWpkvmAgNjGQ\\="','"oxhmCY4ADUlegolGpv/O/dwTqwM\\="','"oxkd44SvIQBjLMlLbeMEi8BIERs\\="','"oxr32Kt9h9wNGiPgnBj3b4FtZVo\\="','"oxs4f8b0y+NDIlXGlpCndMxYK30\\="','"oxzcjeGcBPjr6YiS1Kw11CUYc6A\\="','"ox3Bp+Od9Hwv4Ggcegrctru+sTs\\="','"ox4+EfhdaltMnB9s4wNdLYlUXLQ\\="','"ox+NNl/FpXuVpKhW3v+A57aDDvE\\="','"oyDuvssBqI/fUhuNv2LKq7BlZSk\\="','"oyFhOQdnPrR3iw8rBiFlKzavbXU\\="','"oyKRpnQeUVXhRr1hXjNR7vb03a4\\="','"oyM3vGY68868koa60zlW4WkLF1A\\="','"oyTr4T+jGd74xQuU9AAAAABJRYw\\="','"oyVORK5CYIIGXWQB//+0AACrAKM\\="','"oyaJUE5HDQoaCgAAAA1JSERSAFg\\="','"oycAABQAAAAaCAIAAAA44esqAJg\\="','"oygAAHJJREFUOBFjYBgs4P85Ess\\="','"oylcwoSsFqITv358svjkGBiAsro\\="','"oyoQhGwlCWz8ppNg0KhS+oQAJOg\\="','"oyvCGPFYBlTBaIRFnnBUA1VAEH0\\="','"oywW3eCkhlUcIUjYBoTaockiw68\\="','"oy2H0KiC68QaN4RDA64fq1KssmM\\="','"oy74EgncFLhOmrgLbg29GADIiP8\\="','"oy8qCtPeNCcAAAAASUVORK5CYDg\\="','"ozCCAChkAv//pAAAmwCJUE5HDb0\\="','"ozEKGgoAAAANSUhEUgAAABQAAIY\\="','"ozIAGggCAAAAOOHrKgAAAGJJRPY\\="','"ozNBVDgRY2AgC/w/B9LGSIZeiEw\\="','"ozROMjRCtSD0I1gkmsYI18loRMU\\="','"ozWiVohyuH6ydOPWhN9cfKEN160\\="','"ozY5yHyE26+jMgRCAB6lBNShSr8\\="','"ozeDEglcJ20TA9waiAvwJU9UN7Y\\="','"ozjSy4Foto5yqRICAAJzG9VjBkI\\="','"ozmdZAAAAABJRU5ErkJgggAVZBo\\="','"o/8B//8AAAAAAAAAAAAAAAAAAF0\\="','"MwUEPx7/AAAAAAAAAAAAAAAAAOw="']],
         999:["maxScene":221]
         ]
+        return scenes
 }
 
 private def lightEffect_Tri_Light() {
-    atomicState.lightEffect_Tri_Light = [:]
-    atomicState.lightEffect_Tri_Light = [
+//    atomicState.lightEffect_Tri_Light = [:]
+    scenes = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
+        return scenes
 }
 
 private def lightEffect_Cylinder_Lamp() {
-    atomicState.lightEffect_Cylinder_Lamp = [:]
-    atomicState.lightEffect_Cylinder_Lamp = [
+//    atomicState.lightEffect_Cylinder_Lamp = [:]
+    scenes = [
         101:["name":"Aurora", "cmd":['"MwUEBAAAAAAAAAAAAAAAAAAAADY\\="']],  
         102:["name":"Enthusiastic", "cmd":['"owABDgwJZP8AAAHcAGQBAgYg/1E\\="','"owEXAAABAgMEBQYHCAkKCwwNDro\\="','"owIPEBESExQVFhcYGRobHB0eH64\\="','"owMg/yQAICEiIyQlJicoKSorLHc\\="','"owQtLi8wMTIzNDU2Nzg5Ojs8PYo\\="','"owU+PyD/BABAQUJDREVGR0hJSjc\\="','"owZLTE1OT1BRUlNUVVZXWFlaW+4\\="','"owdcXV5fCP8AIGBhYmNkZWZnOEs\\="','"owj/AAVoaWprbG1ub3BxcnN0dVA\\="','"owl2d3h5ent8fX5/gIGCg4SFhiw\\="','"owqHiImKi4yNjo+QkZKTlJWWly4\\="','"owu4ubq7vL2+vyD/AA+YmZqbnOQ\\="','"owydnp+goaKjpKWmp6ipqqusrTI\\="','"o/+ur7CxsrO0tba3AAAAAAAAAF0\\="','"MwUEkRwAAAAAAAAAAAAAAAAAAL8\\="']], 
         103:["name":"Warm", "cmd":['"owABEAwJZP9/AAH4AGQBAgVn/1A\\="','"owEwAAABAgMEBQYHCAkKCwwNDp0\\="','"owIQERITFBUWFxgZGhscHR4fIIE\\="','"owMhIiMkJSYnoKGio6SlpqeoqYE\\="','"owSqq6ytrq+wsbKztLW2t7i5uh0\\="','"owW7vL2+v8DBwsPExcbHyMnKyx0\\="','"owbMzc7P0NHS09TV1tfY2drb3Hk\\="','"owfd3t8B/yIADyj/RgAoKSorLBY\\="','"owgtLi8wMTIzNDU2Nzg5Ojs8PYY\\="','"owk+P0BBQkNERUZHSElKS0xNTuQ\\="','"owpPKP9wAFBRUlNUVVZXWFlaW0E\\="','"owtcXV5fYGFiY2RlZmdoaWprbMQ\\="','"owxtbm9wcXJzdHV2dyj/UgB4eUc\\="','"ow16e3x9fn+AgYKDhIWGh4iJiiQ\\="','"ow6LjI2Oj5CRkpOUlZaXmJmamyY\\="','"o/+cnZ6fAAAAAAAAAAAAAAAAAFw\\="','"MwUEkhwAAAAAAAAAAAAAAAAAALw\\="']],  
@@ -1269,18 +1289,20 @@ private def lightEffect_Cylinder_Lamp() {
         159:["name":"Fantasy", "cmd":['"owABBwwJZP8AAAFkAGAEAgMs/+g\\="','"owH/AEJDREVJSktMTU5QUVJVVgo\\="','"owJXWFleX2BneH+AgYaHiImKjfA\\="','"owOOj5GSk5SVlpqbnJ0cAAD/UxY\\="','"owRUWltcXWFiZWZoaW5vcHF2d/M\\="','"owV5en1+goOEhYuMDP9/AGNkakA\\="','"o/9rbG1yc3R1e3wAAAAAAAAAADE\\="','"MwUEwhwAAAAAAAAAAAAAAAAAAOw\\="']],  
         999:["maxScene":159]
         ]
+        return scenes
 }
 
 private def lightEffect_TV_Light_Bar() {
-    atomicState.lightEffect_TV_Light_Bar = [:]
-    atomicState.lightEffect_TV_Light_Bar = [
+//    atomicState.lightEffect_TV_Light_Bar = [:]
+    scenes = [
         1:["name":"None are added. Please export and send to developer", "cmd":['"MwUEIAAAAAAAAAAAAAAAAAAAABI\\="']]
         ]
+        return scenes
 }
 
 private def lightEffect_Outdoor_Flood_Light() {
-    atomicState.lightEffect_Outdoor_Flood_Light = [:]
-    atomicState.lightEffect_Outdoor_Flood_Light = [
+//    atomicState.lightEffect_Outdoor_Flood_Light = [:]
+    scenes = [
         101:["name":"Firefly", "cmd":['"owABBAICHQAAAAEAAfFMA8kKCsw\\="','"owED7RQCB/9eCP53AACAAACAAH0\\="','"owIdAAICAQAB/2YDzAoKAQABAug\\="','"o///5Af/hwcAAIAAAIAFAAAAADo\\="','"MwUEKQoAAAAAAAAAAAAAAAAAABE="']],
         102:["name":"Karst Cave", "cmd":['"owABAwIBJgAAAAEAAf+YA8QKCiQ\\="','"owEB/BQFvQD/AAD//wAAAP8A/ww\\="','"o/9/AAAA+gAAAAAAAAAAAAAAANk\\="','"MwUELgoAAAAAAAAAAAAAAAAAABY="']],
         103:["name":"Glacier", "cmd":['"owABBAICGgAAAAEAAdrTAMYUFHM\\="','"owEAgBQBAP//FADEAACAARoAAHw\\="','"owIAAQAB0H8ByRQUAIAUAQfJ/2I\\="','"o/8EAPIAAIAAAAAAAAAAAAAAACo\\="','"MwUEJAoAAAAAAAAAAAAAAAAAABw="']],
@@ -1316,11 +1338,12 @@ private def lightEffect_Outdoor_Flood_Light() {
         133:["name":"Seasonal", "cmd":['"owABBAICGgABAAQAAf//AAAUFLg\\="','"owEBADIB/71WFgD3AACABSMAAMM\\="','"owIAAQABgWUAgBQUAPgyBAD/APQ\\="','"o/8A////fwD///8DAOUAAIADAEY\\="','"MwUEPwoAAAAAAAAAAAAAAAAAAAc="']],
         999:["maxScene":133]
     ]
+        return scenes
 }
 
 private def lightEffect_Galaxy_Projector() {
-    atomicState.lightEffect_Galaxy_Projector = [:]
-    atomicState.lightEffect_Galaxy_Projector = [
+//    atomicState.lightEffect_Galaxy_Projector = [:]
+    scenes = [
         101:["name":"Dusk", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEGwACAAAAAAAAAAAAAAAAACs\\="']], 
         102:["name":"Stargazing", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEGQARAgAAAAAAAAAAAAAAADg\\="']], 
         103:["name":"Awakening", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAlYLegAAKB4BPCwAAUH/AB8\\="','"o/8FCVnP5P/////67QJ5AAAAAE4\\="','"MwUEsB0bAgAAAAAAAAAAAAAAAIY\\="']], 
@@ -1360,4 +1383,96 @@ private def lightEffect_Galaxy_Projector() {
         137:["name":"Party", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABA1YLegAAZDIBWlMAAUH/AGc\\="','"owFkDwBl/7YA//9r9v+AbP+5Smc\\="','"o/8CCQAAAAAAAAAAAAAAAAAAAFc\\="','"MwUEkB5EAgAAAAAAAAAAAAAAAPo\\="']], 
 		999:["maxScene":137]
     ]
+        return scenes
+}
+
+private def lightEffect_Lyra_Pro() {
+//    atomicState.lightEffect_Lyra_Pro = [:]
+    scenes = [
+	101:["name":"Sunrise", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCJwAAAAQCAVgfAwAUFMg\\="','"owEDzBQEGHn+C17+B0P/Cmb+EHA\\="','"owIA6gAAgAABAQH/KgAAAAQAARo\\="','"owOysgAAFBQDABQFBQXIB5v//+Y\\="','"owSIDP8VB/8ICQAAgAAAgAABATA\\="','"o/8A/wAAAAAAAAAAAAAAAAAAAKM\\="','"MwUEPxUAAAAAAAAAAAAAAAAAABg\\="']], 
+	102:["name":"Sunset", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBwoDJAAAAAECAbGxAgAUFIg\\="','"owEDABQD/38A/ywA/wAAAACAAJo\\="','"owIAgAABAQD/IQAAAAECAbIAAk0\\="','"owMAFBQAGfoCtAAA/38AAACAAPU\\="','"owQAgAABAQD/HgAAAAEAAa6uAMY\\="','"owUAFBQAABQB/5gHAACAAACAANM\\="','"o/8BAQH/AAAAAAAAAAAAAAAAAKI\\="','"MwUEQBUAAAAAAAAAAAAAAAAAAGc\\="']], 
+	103:["name":"Rainbow", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEFgABAAAAAAAAAAAAAAAAACU\\="']], 
+	104:["name":"Aurora", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCJQAAAAICAcxUAQAUFBE\\="','"owED8hQDJv+dAAAAAAAAAACAAIA\\="','"owIAgAAAAgAB/zQAAAAIAgHsGxU\\="','"owMD+QEBA+oBCAf+Ygj+ZgAAALE\\="','"owSLAP+LAP8AAAAAEv8AEv8QALc\\="','"o//0AADyAAACAAH/AAAAAAAAAKY\\="','"MwUEQRUAAgAAAAAAAAAAAAAAAGQ\\="']], 
+	105:["name":"Forest", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoDLQAAAAQCAv9lAc4UFN4\\="','"owH/GgPOFBQD7RQEAP8Awv8SAKQ\\="','"owKWAIf/IQAA/AAAgAABAQD/LcA\\="','"owMAAAAEAgL/ZQHOFBT/GgPOFM0\\="','"owQUA+0UBAD/AML/EgCWAIf/IVI\\="','"owUAAPwAAIAAAQEB/ysAAgoFAgA\\="','"owYB/xQD1gEBAfcKBQT/ALT/ANM\\="','"owdH///j/wD/nwcAAIAAAIAAAJg\\="','"o/8CAAH/AAAAAAAAAAAAAAAAAKA\\="','"MwUEQhUCAAAAAAAAAAAAAAAAAGc\\="']], 
+	106:["name":"Ocean", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABEgoHJFAAAAICAS0NAtEUFDs\\="','"owEDABQDAAD/I2n/NGz+AACAANo\\="','"owIAgAABAQD/JFUAAAICAS0NAI4\\="','"owPRFBQDABQDNGz+I2n/AAD/AIk\\="','"owQAgAAAgAABAQD/KgAAAAQCAXU\\="','"owUtHgMAFBQDABQFNGz+B1//BoM\\="','"owZX/gZo/jRs/xAA6gAAgAABAUE\\="','"owcB/y1VAgYDAAH//wAAFBQB3fg\\="','"owgUBgf/Wf9hB/9CdxgX/4sA/88\\="','"own/AAAQAO8AAIAAAAEA/y1QAqs\\="','"owoIBAAB//8AABQUAd0UBgf/VMY\\="','"owv/agf/QncYF///AACLAP8WAJ0\\="','"owzvAACAAAABAP8qAAICAQAB/+s\\="','"ow3/AAAUFAHyFAWmFv8+/qD/guE\\="','"ow5A/xaRGBf/EgDoAACAAAEBAR4\\="','"ow//KgACAgEAAf//AAAUFAHyFJ4\\="','"oxAF/wsMPv6g/4JAiwD/GBf/EIc\\="','"o/8A6AAAgAABAQH/AAAAAAAAAMo\\="','"MwUEQxUCAgAAAAAAAAAAAAAAAGQ\\="']], 
+	107:["name":"Snowing", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDgoGJAAAAAICAT09AgAUFIc\\="','"owEDAB4D////Boz+ByX/AgD8ABQ\\="','"owIAgAABAQD/JwAAAAECArs9AH4\\="','"owPRFBRzGQPRFB4D7x4C////B8s\\="','"owS5/wIA+QAAgAABAQH/JwACCEk\\="','"owUEAgGXAAHMFBQB7R4E////API\\="','"owYAAAD//////xIA+QIA+QABAUo\\="','"owcA/yoAAQAcAgLNBwPOFBT/M6c\\="','"owgDzhQUA+8eA////wAAAAat/j0\\="','"owkSAPwAAIAAAQEA/yQAAgQEAh8\\="','"owoB/wAD1gEBAQAeA////wAAAGE\\="','"owsA//8CAPkCAPkAAQEB/x5AAAg\\="','"owwAAQIBYgAAzhQUAwAeAf///+I\\="','"o/8CAPwAAIAAAQEA/wAAAAAAAN0\\="','"MwUERBUAAAAAAAAAAAAAAAAAAGM\\="']], 
+	108:["name":"Firefly", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCgoFIgAAAAICARoaAQAUFIU\\="','"owEDABQCBjH+AADIAACAAACAALY\\="','"owIBAgAB/x8AAgMCAgH/AAPRCmQ\\="','"owMKAAAUAf//AAAAgAAAgAABArw\\="','"owQAAf8eAAIFAgIB/wADzBQUAHE\\="','"owUAFAH//wAAAIAAAIAAAQEA/0w\\="','"owYeAAICAQIB/wADzBQUAAAUAZw\\="','"owf//wAAAIAAAIAAAQEB/x4AAkY\\="','"owgBAQIB/wAD1hQUAAAUASX+B0s\\="','"o/8QAPIAAIAAAQEA/wAAAAAAAME\\="','"MwUERRUDAAAAAAAAAAAAAAAAAGE\\="']], 
+	109:["name":"River", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABEwoGLSACCAMCAZwYAdYUFOk\\="','"owEA7x4GB53/B4b/BsP+B/7EDkY\\="','"owL+kQf+xBIA9AAAgAABAQD/M1k\\="','"owMkAAABAgKRAAPYFBSYAAHWFJQ\\="','"owQUAO8eBged/weG/wbD/gf+xFk\\="','"owUO/pEH/sQSAPcAAIAAAQEA/2A\\="','"owYzRgAAAQICmhkB1hQUnhoD2No\\="','"owcUFADvHgYHnf8Hhv8Gw/4H/oo\\="','"owjEDv6RB/7EEgD5AgD3AAEBAC0\\="','"own/M1UAAAECAlkMA84UFMg7AVg\\="','"owrMFBQA7x4GB53/B4b/BsP+B7U\\="','"owv+xA7+kQf+xBIA6gAAgAABAbY\\="','"owwB/zMiAAABAgKRAAPYFBSYAJM\\="','"ow0B1hQUAO8eBged/weG/wbD/q4\\="','"ow4H/sQO/pEH/sQSAPcAAIAAAag\\="','"ow8BAP8zUAAAAQICWA0DzhQUyGA\\="','"oxA7AcwUFADvHgYHnf8Hhv8Gw2w\\="','"oxH+B/7EDv6RB/7EEADqAACAAFc\\="','"o/8BAQH/AAAAAAAAAAAAAAAAAKI\\="','"MwUERhUEAgAAAAAAAAAAAAAAAGc\\="']],
+	110:["name":"Flower Field", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCwoEKwAAAAECAkwcA8wUFBI\\="','"owFMHAHMFBQDABQD/yCf/wc7/1c\\="','"owIhqAAA+QAAgAABAgAB/ysAAoU\\="','"owMFBAIB/wAD0x4UAYAeBf+tB0g\\="','"owT/RQf/AAB4B/7/By4AAIAAADI\\="','"owWAAAACAAH/KwACCggCAX8AA44\\="','"owbOFBQBgB4F/xqZ/1QHRA7/eOw\\="','"owcH/v8HLgAAgAAAgAAAAgAB/3c\\="','"owgrAAIFBAIB/wAB0x4UAYAeBT0\\="','"own/rQf/RQf/AAB4B/7/By4AAOo\\="','"o/+AAACAAAACAAH/AAAAAAAAAKA\\="','"MwUERxUAAAAAAAAAAAAAAAAAAGA\\="']], 
+	111:["name":"Desert", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCgoEJ1AAAAECAmoVA9EUFH0\\="','"owG0MgPRFBQD7x4C/4wH/2MHEvs\\="','"owIA/AAAgAABAQD/JwAAAAECAgQ\\="','"owO7PQPRFBRzGQPRFB4D7x4C/0k\\="','"owSQB/9qBxIA+QAAgAABAQH/JxA\\="','"owVVAAABAgJqFQPWFBTcQwPWFAY\\="','"owYUA+8eAv+MB/9jBxIA/AAAgMA\\="','"owcAAQEA/ypiAgYEAgJqFQHWFK8\\="','"owgU3EMD1hQUA+8eA/+MB/9jB+s\\="','"o///TQcSAPkSAPkAAQEA/wAAABY\\="','"MwUESBX7AQAAAAAAAAAAAAAAAJU\\="']], 
+	112:["name":"Glacier", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBwoDJQAAAAEAAXFxAIAUFAk\\="','"owEDgBQDGIT/ou//Gn7+AACAAP0\\="','"owIAgAABAgAB/x8AAgkFAgH/ADE\\="','"owMDzBQUAIAUAWi8/gAAgAAAgNA\\="','"owQAAAIAAf8fAAAAAQIB/wADALo\\="','"owUUFACAFAExov4SAPkAAIAAADU\\="','"o/8CAAH/AAAAAAAAAAAAAAAAAKA\\="','"MwUESRUAAAAAAAAAAAAAAAAAAG4\\="']], 
+	113:["name":"Wave", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCwoELgAAAAYCAUIMAMkUFAs\\="','"owEDmRQGB0n/B1z/HOf/FJn+B08\\="','"owJp/wZX/hAA+QAAgAAAAgAB/w0\\="','"owMwYAAAAQIC5wADzBQU9gABzuA\\="','"owQUFADtFAUHjv8AAAAn1v8LqIA\\="','"owX/FL7/EAD5EAH8AAEBAP8kZLc\\="','"owYAAAICAf8AAwAUFADyFAMY0HU\\="','"owf+PNP/AAAAEAD8EgD8AAEBAEg\\="','"owgBJGQAAAICAf8vAwAUFACoFIQ\\="','"owkDceP+PNP/AAAAAAD3EAD5AMs\\="','"o/8BAQH/AAAAAAAAAAAAAAAAAKI\\="','"MwUEShUFAgAAAAAAAAAAAAAAAGo\\="']], 
+	114:["name":"Spring Wind", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDLgAAAAYCAcwzA8wUFLg\\="','"owED2xQGB/86B/8Ptv4aB/8PCfE\\="','"owL/LRD/HhIA/AIA/AAAAgAB/24\\="','"owMlAAAAAQIBPg0DABQUA9sUA3g\\="','"owSG/jnQ/26N/08SAPwCAPwAAIo\\="','"owUCAAH/HwACAgECAf8AA9EUFGo\\="','"owYAgBQB/8RlBAD0AACAAAECAB0\\="','"o/8B/wAAAAAAAAAAAAAAAAAAAKI\\="','"MwUESxX+AQAAAAAAAAAAAAAAAJM\\="']], 
+	115:["name":"Cherry blossoms", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoEIgAAAAEAASMjAIAUFAc\\="','"owEDgBQC/4ub/2SFAACAAACAAMY\\="','"owIAAgAB/x8zAAABAgGGAAPMFC4\\="','"owMUAIAUAf9CYwAAgBIA/AAAApM\\="','"owQAAf8fYwIGBAIBhgADzBQUAG8\\="','"owWAFAH/QmQAAIASAPkAAAIAAYI\\="','"owb/IkUAAAECAYYAA8wUFADdFL8\\="','"owcC/19w/26LAACAEgD8AAACAAA\\="','"o/8B/wAAAAAAAAAAAAAAAAAAAKI\\="','"MwUETBX9AQAAAAAAAAAAAAAAAJc\\="']], 
+	116:["name":"Lava", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEDQAAAAAAAAAAAAAAAAAAAD8\\="']], 
+	117:["name":"Ripple", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEDAADAgAAAAAAAAAAAAAAAD8\\="']], 
+	118:["name":"Blue Sky", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAwoBKwAAAAUAAczMAAAUFIU\\="','"owECABQFE03+LLT/KP6pXf/E9Zo\\="','"o//+YwAAgAAAgAABAgAB/wAAADw\\="','"MwUENRUAAAAAAAAAAAAAAAAAABI\\="']], 
+	119:["name":"Sunset glow", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCKgAAAAQAAf//AAAUFIM\\="','"owEDABQF/zcK/zEv/yxz/xqNfyQ\\="','"owIU/wAAgAAAgAABAQD/JwAAAJI\\="','"owMDAAH//wAAFBQDABQE/zeL/w0\\="','"owRCEv9CEv8nZwAAgAAAgAABAec\\="','"o/8B/wAAAAAAAAAAAAAAAAAAAKI\\="','"MwUENhUAAAAAAAAAAAAAAAAAABE\\="']], 
+	120:["name":"Moonlit Night", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoDLVAAAAUCAcwzAgAUFCQ\\="','"owEDABQGWAfIDGL+Fof+l7T///g\\="','"owLBgf/pmgAAgAAAgAABAQD/Lb8\\="','"owNVAAAFAAHMMwAAFBQDABQG/+A\\="','"owTpmP/BgZe0/xaH/gxi/lgHyN0\\="','"owUAAIAAAIAAAQEA/yoAAAAEAnU\\="','"owYB/0wCABQUAwAUBZe0///BgWQ\\="','"owf/6Zr/wYuWtP8AAIAAAIAAAUE\\="','"o/8BAf8AAAAAAAAAAAAAAAAAAKM\\="','"MwUENxUAAAAAAAAAAAAAAAAAABA\\="']], 
+	121:["name":"Dense fog", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCLQAAAAUAAf//AYAUFAQ\\="','"owEDABQGCgBYiwD/jBf/B/+oVPU\\="','"owL/nnz+xgAA9AAA9wABAQD/KlI\\="','"owMAAAAEAgH//wCAFBQD8hQFMfY\\="','"owQI/1kH/7YH/gf/qAf+egAA9Jk\\="','"o/8AAPcAAQEB/wAAAAAAAAAAAFU\\="','"MwUEOBUAAAAAAAAAAAAAAAAAAB8\\="']], 
+	122:["name":"Garden", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCLQAAAAYAAf9/AYAUFIc\\="','"owEDABQGXQf+/x5O/2IO/9gHBww\\="','"owL/ZBBG/gAA9AAA9wABAQD/LUM\\="','"owMAAAAFAAH/fwGAFBQDvBQGXVU\\="','"owQH/v8eTv9iDv/YBwf/ZBBG/nY\\="','"o/8AAOoAAPcAAQEB/wAAAAAAAL8\\="','"MwUEORUAAAAAAAAAAAAAAAAAAB4\\="']], 	
+	123:["name":"Karst Cave", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAwoBLgAAAAUAAczMA8YUFEU\\="','"owEDABQGBgD//0YN/38A/zkciy8\\="','"o/8A/wf+YgAA9wAAgAABAgAB/7I\\="','"MwUEOhUAAAAAAAAAAAAAAAAAAB0\\="']], 
+	124:["name":"Cornfield", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCKgAAAAQAAf//AAAUFIM\\="','"owEDABQF/8gP/4oI/2QH/1IH/zw\\="','"owIyAAAAgAAAgAABAQD/KgAAAEY\\="','"owMEAAH//wAAFBQDABQF/3sH/8s\\="','"owSKCP+AB/97B/9kBwAAgAAAgEI\\="','"o/8AAQEB/wAAAAAAAAAAAAAAAKI\\="','"MwUEOxUAAAAAAAAAAAAAAAAAABw\\="']], 
+	125:["name":"Peach Orchard", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAwoBLgAAAAwAAf9/AcYUFM4\\="','"owEDABQG/ygu/3J0Vv9YQ/4d/x0\\="','"o//0Pf+yLwAAgAAAgAABAgAB/wo\\="','"MwUEPBUAAAAAAAAAAAAAAAAAABs\\="']], 
+	126:["name":"Rustling leaves", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoEJwAAAAIAAdvbAAAUFIE\\="','"owEDABQEN94W/01OGHz/Jm7/AJ4\\="','"owIAgAAAgAABAQD/HlAAAAECARI\\="','"owOWAAAAFBQDABQBAP8AAACAAF8\\="','"owQAgAABAQD/IQAAAAICAVFRA/s\\="','"owWOFBQDABQCLPQOX/4SAACAANg\\="','"owYAgAABAQH/HlUAAAECAVEAAsE\\="','"owcAFBQDABQBBkb+AACAAACAAAw\\="','"o/8BAQD/AAAAAAAAAAAAAAAAAKM\\="','"MwUEPRUAAAAAAAAAAAAAAAAAABo\\="']], 
+	127:["name":"Lake", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoEJwAAAAMCAf90AwAUFAo\\="','"owEDABQEH/4JB0X/CSn/H/4JANM\\="','"owIAgAAAgAABAQD/JwAAAAECAng\\="','"owP/fwPGFBT/fwHJFBQDehQCC8k\\="','"owSB/wtN/xAA8gAAgAABAQH/HuI\\="','"owVQAAABAgF/GgAAFBQAABQBAIQ\\="','"owb/AAAAgAAAgAABAQD/HlUAAO4\\="','"owcBAgF/FgIAFBQAABQBAP8AACc\\="','"o/8AgAAAgAABAQD/AAAAAAAAAKM\\="','"MwUEPhUAAAAAAAAAAAAAAAAAABk\\="']], 
+	128:["name":"Christmas", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoDLQAAAAgAAf//AAAUFIY\\="','"owEC/AUGAAAA/wAAAAAAAAAAAKA\\="','"owL/AAAAAAAAgBAA+QABAQD/LeU\\="','"owMAAAAIAAH//wAAFBQC/AUG/6s\\="','"owQAAAAAAAAAAAD/AAAAAAAAAFg\\="','"owUAAIASAPkAAQEA/y0AAAAFABo\\="','"owYB//8AABQUAvwFBv8AAAAAAKY\\="','"owcAAAAA/wAAAAAAAAAAAIARAMo\\="','"o//5AAEBAf8AAAAAAAAAAAAAAFs\\="','"MwUEThX2AQAAAAAAAAAAAAAAAJ4\\="']], 
+	129:["name":"Halloween", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDJQACCAMAAf8AA+0UFJ8\\="','"owEDgBQD/38Aggj//z4HAACAAIU\\="','"owIAgAAAAgAB/yoAAAABAgL/CwI\\="','"owMD2BQU/wwB2BQUAwAUA/9SB+8\\="','"owT/NwdVBv4AAIAAAIAAAQEA/zo\\="','"owUkAAAAAQIB//8AABQUA/cUA2M\\="','"owb/Ugf/NwdVBv4AAIAAAIAAAWw\\="','"o/8BAf8AAAAAAAAAAAAAAAAAAKM\\="','"MwUETxX1AQAAAAAAAAAAAAAAAJw\\="']], 
+	130:["name":"Easter", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoDLQADCAAAAczMAAAUFIU\\="','"owEC/xQG/38A/wAABjT+//8Ai3U\\="','"owIA/wD/AAAA/AAA+QABAQD/LXY\\="','"owMAAAAGAAH//wAAFBQCABQGizw\\="','"owQA//9/AP8AAP/hBwD/AAct/xQ\\="','"owUQAPkAAIAAAQEBAS0AAAABAOM\\="','"owYB/+UAzBQUAPwKBv//AAD/AH0\\="','"owcA//8AAP+LAP//AAAQAO0AAC0\\="','"o/+AAAEBAQIAAAAAAAAAAAAAAN8\\="','"MwUEUBUAAAAAAAAAAAAAAAAAAHc\\="']], 
+	131:["name":"Valentine's Day", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBwoDJFUAAAICAf9+AAAUFF0\\="','"owEDABQDBnb+sgv//wAAEgD8AG8\\="','"owIAgAABAQD/JFAAAAICAf+AANQ\\="','"owMAFBQDABQDBnb+sgv//wAAEJM\\="','"owQA/AAAgAABAQD/IQAAAAEAAQU\\="','"owX/FgPJFBQDABQCBnb+/xMvEM0\\="','"o/8A+QAAgAABAQH/AAAAAAAAANs\\="','"MwUEURUAAAAAAAAAAAAAAAAAAHY\\="']], 
+	132:["name":"Father's Day", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBwoDJAAAAAEAAczMAQABAYk\\="','"owEDzjIDBhr+B1//AAD/AACAAGQ\\="','"owIAgAABAQD/JwAAAAEAASMjAPk\\="','"owMAAQEDzjIEBjb+Btr+CP64Bv8\\="','"owSS/gAAgAAAgAABAQH/JAACBRY\\="','"owUDAgH/KAPWFBQBADIDAAD/GXI\\="','"o///6h3/ngAAgAAAgAABAQH/AMs\\="','"MwUEUhUAAAAAAAAAAAAAAAAAAHU\\="']], 
+	133:["name":"Mother's Day", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBwoDJwAAAAEAAbKyAQABAYo\\="','"owEDzjIE/x4Z/wdx/wbx/2ReAOU\\="','"owIAgAAAgAABAQD/JAAAAAEAAXo\\="','"owOysgEAAQEDzjID/wcb/wdx/8g\\="','"owQG8QAAgAAAgAABAQH/JAACBY0\\="','"owUDAgH/KAPRIBQBADID/x5X/+4\\="','"o/9LHv9RUgAAgAAAgAABAQH/AAs\\="','"MwUEUxUAAAAAAAAAAAAAAAAAAHQ\\="']], 
+	134:["name":"Birthday", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCwoELQACFA0CAf8aA90BAak\\="','"owEB+RQG/wAA/38AAP8AAAAAAMg\\="','"owL//4sA/wAA7wAAgAABAQD/J2I\\="','"owMAAwMIAgH/GgAAAQEC/xQE8VI\\="','"owQAHf91AP/AAP9LAAAAgAAAgLs\\="','"owUAAQEA/ycAAgUDAgH/GgAAAZ0\\="','"owYBAf8UBPEAHf91AP/AAP9LAKc\\="','"owcAAIAAAIAAAQEB/y0AAgUDAnE\\="','"owgB/xoD3QEBAfkUBv8AAP9/AAQ\\="','"owkA/wAAAAAA//+LAP8AAO8AAM4\\="','"o/+AAAEBAf8AAAAAAAAAAAAAACI\\="','"MwUEVBUAAAAAAAAAAAAAAAAAAHM\\="']], 
+	135:["name":"Fireworks", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUECwAGAgAAAAAAAAAAAAAAAD0\\="']], 
+	136:["name":"Candlelight", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDQoFLQAAAAYAAX9/AAAUFIo\\="','"owECABQGZAAAlgAAyAAA/xkA/5E\\="','"owJOAP9dBwAAgAAAgAABAQD/Hqs\\="','"owMoAgIBAAH/zAHyCgoB5WAB/zI\\="','"owR/AAQA+QAAgAUBAQD/JwAAAHg\\="','"owUEAAE1GAC1FBQCABQE/zEA/xg\\="','"owY0B/9aAP9pAAAAgAAAgAABAaU\\="','"owcA/y0AAAAGAAF/fwAAFBQCAHM\\="','"owgUBmQAAJYAAMgAAMgAAJYAAN0\\="','"owlkAAAAAIAAAIAAAQEB/ycAABc\\="','"owoABAABSR8AtRQUAgAUBP8xAJM\\="','"owv/NAf/WgD/aQAAAIAAAIAAAVY\\="','"o/8BAf8AAAAAAAAAAAAAAAAAAKM\\="','"MwUEVRUAAAAAAAAAAAAAAAAAAHI\\="']], 
+	137:["name":"White Light", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEYwAAAAAAAAAAAAAAAAAAAFE\\="']], 
+	138:["name":"Morning", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoEJAAAAAICAdUkA/8UFI0\\="','"owEDABQDB/P//5gHB/v+AACJAFY\\="','"owIAgAABAQD/HmAAAAECAbgAAxk\\="','"owP/FBQAgBQB/44HAACAEgDyANw\\="','"owQBAQD/HmQAAAECAbgAA/8UFGQ\\="','"owUAgBQB/44HAACAEAD0AAEBACE\\="','"owb/JAAAAAIAAf//AAAUFAMAFGo\\="','"owcDB/P//5gHB/v+AACJAACAAMc\\="','"o/8BAQH/AAAAAAAAAAAAAAAAAKI\\="','"MwUEVhUAAAAAAAAAAAAAAAAAAHE\\="']], 
+	139:["name":"Afternoon", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoDLVAAAAMCAlpHALUUFHQ\\="','"owHLZQO3FBQDxhQE/14N/8AXkHk\\="','"owL/FyD+KRIAlgAAgAABAQD/LWg\\="','"owNVAAADAgJaRwC1FBTLZQO3FFA\\="','"owQUA8YUBP9eDf/AF5D/FyD+KW0\\="','"owUQAJYAAIAAAQEA/y0AAAADAnM\\="','"owYCWkcAtRQUy2UDtxQUA8YUBMA\\="','"owf/Xg3/wBeQ/xcg/ikSAJYAACs\\="','"o/+AAAEBAf8AAAAAAAAAAAAAACI\\="','"MwUEVxUAAAAAAAAAAAAAAAAAAHA\\="']], 
+	140:["name":"Twilight", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCwoFITcAAAECAYMZA5YyMr0\\="','"owED2zIC/6oH/0IAFwDqAACAANg\\="','"owIBAQD/ITAAAAECAYMYA5YyMkM\\="','"owMD2zIC/0IA/6oHFQDqAACAANg\\="','"owQBAQD/KwAAAAQCAf9/AwAUFPc\\="','"owUDABQF/xgH/0EH/5kJ/0AH/8U\\="','"owYZBwAAgAAAgAABAgAB/yEyAFU\\="','"owcAAQIB9woDljIyA9syAv9NB5M\\="','"owj/AAAXAOoAAIAAAQEA/yE1AMI\\="','"owkAAQIB9woDljIyA9syAv9NB50\\="','"o///AAAXAOoAAIAAAQEA/wAAACE\\="','"MwUEWBUAAAAAAAAAAAAAAAAAAH8\\="']], 
+	141:["name":"Reading", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUECgAAAAAAAAAAAAAAAAAAADg\\="']], 
+	142:["name":"Work", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUECQAAAAAAAAAAAAAAAAAAADs\\="']], 
+	143:["name":"Fish tank", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDQoGKwAAAAECAlUnAMwUFDc\\="','"owF0OQLMFBQD2xQDAAD/AP//ABE\\="','"owIA/wAAgAAAgAABAgAB/yRiAOU\\="','"owMAAQICZiIB0RQUmUUD0RQUADs\\="','"owQAFAEW/ykAAIAAAIABAQEA/4w\\="','"owUhYgEADwIB/wACABQUAwAUAgA\\="','"owb/OQf/hQkUAPcAAIABAQEA/4o\\="','"owchYgEACgIB/wcCABQUAwAUAgA\\="','"owj/EhT/EZUWAPQAAIABAQEA/7U\\="','"owkeYgIBAQIB/wAD1hQUAwAUAes\\="','"owr///8EAPcAAIABAQEA/x5iAqU\\="','"owsBAQIB/wAB0RQUAwAUAf///20\\="','"o/8EAPcAAIABAQEA/wAAAAAAANE\\="','"MwUEWRUAAAAAAAAAAAAAAAAAAH4\\="']], 
+	144:["name":"Sports", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDJ1AAAAQCAf8AA4AUFK8\\="','"owECABQE/wAA/4wHBkv+iwD/E+8\\="','"owIA/BIA/wABAQD/J1UAAAQCATo\\="','"owP/AAOAFBQCABQE/wAA/4wHBkM\\="','"owRL/osA/xEA/BAA/wABAQD/J7w\\="','"owUAAAADAAH//wMAKAoA/xQE/5U\\="','"owYAAP+YB4sA/wZo/gEA/AAAgFw\\="','"o/8AAQEB/wAAAAAAAAAAAAAAAKI\\="','"MwUEWhUAAAAAAAAAAAAAAAAAAH0\\="']], 
+	145:["name":"Movie", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBQoCHgAAAAEAAczMAAAUFLE\\="','"owEAABQBB8X/AACAAACAAAEBAIo\\="','"owL/IQAAAAEAAf//AAAUFADlFI4\\="','"owMCBlf+B8X/BAD3AACAAAEBAUI\\="','"o///AAAAAAAAAAAAAAAAAAAAAKM\\="','"MwUEWxUAAAAAAAAAAAAAAAAAAHw\\="']], 
+	146:["name":"Technology", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDAoGIQAAAAIAAZiYAAAUFIA\\="','"owECABQCCP78////EQD5AACAACs\\="','"owIBAQD/HkAAAAECAecAAwAUFOY\\="','"owMAABQBAAD/EAD5EAD5AQEBAEs\\="','"owT/IUYAAAICAf8AAwAUFAAAFNY\\="','"owUCiwD//xP/EAD8EgD8AQEBAMA\\="','"owb/HlAAAAECAecAAwAUFAAAFOY\\="','"owcBByb/AADyEAD3AQEBAf8eVdo\\="','"owgAAAICAf8AAwAUFAAAFAGLAMg\\="','"own/AADyEgD3AQEBAf8hAAAAAp4\\="','"owoAAZiYAAAUFAIAFAII/vz//7Y\\="','"o///AAD0AACAAAEBAf8AAAAAACk\\="','"MwUEXBUAAAAAAAAAAAAAAAAAAHs\\="']], 
+	147:["name":"Candy", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBQoCJAAAAAkAAf//AAAUFIM\\="','"owECABQD/8wh/0RaB/5nAACAAFo\\="','"owIAgAABAQD/JAAAAAMAAf//APg\\="','"owMAFBQCABQD/8wh/0RaB/5nANg\\="','"o/8AgAAAgAABAQH/AAAAAAAAAKI\\="','"MwUEXRUAAAAAAAAAAAAAAAAAAHo\\="']], 
+	148:["name":"Little Train", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDJQAAAAMCAUEOA9MUFBk\\="','"owED7xQDCP4MB/9FXP8VEgD5AEM\\="','"owIAgAAAAgAB/y5SAwUBAgH//6U\\="','"owMCABQUAgAUBv//AAf+bv9IAJI\\="','"owQAAP+LAP//AAAAAIAQAPwBAL4\\="','"owUCAAH/KAACCAQCAf//AgAUFH0\\="','"owYCABQE/xMUJWP+/1Ekshr/ACo\\="','"o/8AgAIA/AAAAgAB/wAAAAAAAN4\\="','"MwUEehX5AQAAAAAAAAAAAAAAAKU\\="']], 
+	149:["name":"Dreamlike", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCLQAAAAYCAf8aAboUFNo\\="','"owEDzBQG/y2X/4oiNP6uIFf/lRQ\\="','"owJD/20m/xAA9wAAgAABAQD/LRw\\="','"owMAAAACAgGHGgG6FBQA+RQGbQE\\="','"owQm/5VD/yBX/zT+rv+KIv8xmrg\\="','"o/8QAO8AAIAAAQEB/wAAAAAAAN0\\="','"MwUEXhUAAAAAAAAAAAAAAAAAAHk\\="']],
+	150:["name":"Sweet", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBQoCKAAAAAQCAf9LA8wUFPs\\="','"owED2xQEiwD//zHj/0dF/z8vEDE\\="','"owIA+QAAgAAAAgEA/yQAAgQCAgY\\="','"owMBfwADzBQUAQAPA/9x8/8HbfQ\\="','"o//UKP4UAPcAAPQAAQEA/wAAALY\\="','"MwUEXxUAAAAAAAAAAAAAAAAAAHg\\="']], 
+	151:["name":"Profound", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCMAAAAAYAAYGBAAAUFJs\\="','"owEDABQHAAAyAACWAADIB4b/AKA\\="','"owIAyAAAlgAAMgAA/AAAgAEBAbA\\="','"owMA/yEAAAABAAH//wAAFBQA6JY\\="','"owQUAgdf/wAAZAAA/AAAgAABAQ4\\="','"o/8B/wAAAAAAAAAAAAAAAAAAAKI\\="','"MwUEYBUAAAAAAAAAAAAAAAAAAEc\\="']], 
+	152:["name":"Romantic", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABAwoBKwAAAAUCAf9/AQAUFAY\\="','"owEDzBQF/xGg/zZF/zYe/xES/2o\\="','"o/8vXxIA+QAAgAAAAgEA/wAAALs\\="','"MwUEYRUAAAAAAAAAAAAAAAAAAEY\\="']], 
+	153:["name":"Mysterious", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCwoFLgAAAAUCAv8ZA+D//4g\\="','"owHHTAHgFBQD/BQEB1n/AAAAjwk\\="','"owIH/gAAAAAA/BEA/AUAAgAB/7A\\="','"owMhUAMDBgABtLQAABQUAoAUAkI\\="','"owT/vion/58QAPcAAIABAQEA/xI\\="','"owUhVQMDBgABtLQAvxQUAgAUAn4\\="','"owYqwv7/L3AQAPIAAIACAQEA/4w\\="','"owchUAMDAwABtLQAABQUAoAUAkM\\="','"owj/vion/58QAPIAAIABAQEB/xo\\="','"owkhVQMDAwABtLQAvxQUAgAUAnc\\="','"o/8qwv7/L3AQAPcAAIACAQEB/3E\\="','"MwUEYhUAAAAAAAAAAAAAAAAAAEU\\="']], 
+	154:["name":"Soothing", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABEAoIHwAAAAEAAS4uAAAUFK8\\="','"owEAgBQBAAD/AACAAACAAAECAMs\\="','"owIB/x5QAQAIAAGYmAAAFBQAABk\\="','"owMUAQD//xMA9AAAgAABAQD/HjM\\="','"owRQAQAFAAHLywAAFBQAABQBAOc\\="','"owX//xMA9AAAgAABAQD/HlABAHE\\="','"owYDAAH//wAAFBQAABQBAP//E6E\\="','"owcA9AAAgAABAQD/HlUBAAgAAWw\\="','"owiZmQAAFBQAABQBAP//EQD0AFs\\="','"owkAgAABAQD/HlUBAAUAAcvLAJs\\="','"owoAFBQAABQBAP//EQD0AACAANk\\="','"owsBAQD/HlUBAAMAAf//AAAUFB8\\="','"owwAABQBAP//EQD0AACAAAEBAN8\\="','"ow3/IQAAAAICAf9FAAAUFAIAFN0\\="','"ow4CAP//AAAAEQDvAACAAAEBAdA\\="','"o///AAAAAAAAAAAAAAAAAAAAAKM\\="','"MwUEYxUAAAAAAAAAAAAAAAAAAEQ\\="']], 
+	155:["name":"Happy", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABEAoHJzAAAAECAv8AAcwKCps\\="','"owH/AAPMCgoD8jICAP//iwD/ETY\\="','"owIA/AEA/AEBAQD/JzcAAAECAk8\\="','"owP/AAHMCgr/AAPMCgoD8jIC/5w\\="','"owT/AP9CCBMA/AIB/AEBAQD/Hh0\\="','"owUjAAABAgH/AAPMCgoC8jIB/4s\\="','"owYAABEA/AIB/AEBAQD/HiUAAHI\\="','"owcBAgH/AAPMCgoC8jIB/wAAE7k\\="','"owgA/AIB/AEBAQD/HgAAAAEAAUg\\="','"owktLQMACgoC8jIB/wAAAwD0AmA\\="','"owoB/AEBAQH/J1UAAAECAv8AASY\\="','"owvMCgr/AAPMCgoA8jIC//8A/2k\\="','"owxCCAMA/AIB/AEBAQH/J1AAAG0\\="','"ow0BAgL/AAHMCgr/AAPMCgoA8l8\\="','"ow4yAgD//4sA/wEA/AEA/AEBAeg\\="','"o/8B/wAAAAAAAAAAAAAAAAAAAKI\\="','"MwUEZBUAAAAAAAAAAAAAAAAAAEM\\="']], 
+	156:["name":"Care", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDKlAAAAICAv8aAswUFPA\\="','"owH/GADMFBQCzBQD/1Mo/1JR/9c\\="','"owIuMBAA9AAAgAABAQD/KlUAAFs\\="','"owMCAgL/GgLMFBT/GADMFBQCzGw\\="','"owQUA/9TKP9SUf8uMBAA9AAAgE0\\="','"owUAAQEA/yoAAAACAgL/GgLMFE4\\="','"owYU/xgAzBQUAswUA/9TKP9SUTs\\="','"o///LjAQAO8AAIAAAQEB/wAAADw\\="','"MwUEZRUAAAAAAAAAAAAAAAAAAEI\\="']], 
+	157:["name":"Warm", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoEHwAAAAEAAYCAAAAUFLs\\="','"owEAABQB/1gAAACAAACAAAACABI\\="','"owIB/x5QAQAUAAH//wAAFBQAAAU\\="','"owMUAf9jABUA+QAAgAABAQD/HqQ\\="','"owRVAQAUAAH//wAAFBQAABQB/ww\\="','"owVjABcA+QAAgAABAQD/HgAAAEo\\="','"owYBAAHZAAPJFBQAABQB/wAAAFw\\="','"o/8AgAAAgAABAQH/AAAAAAAAAKI\\="','"MwUEZhUAAAAAAAAAAAAAAAAAAEE\\="']], 
+	158:["name":"Quiet", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCKgAAAAcAAf//AAAUFIA\\="','"owEDABQFI/5mG/+HCv7CHbD+ISw\\="','"owJ9/wIA9wAAgAABAQD/KgAAAIM\\="','"owMHAAH//wAAFBQD5RQFI/5mG/E\\="','"owT/hwr+wh2w/iF9/sIA6gAAgLA\\="','"o/8AAQEB/wAAAAAAAAAAAAAAAKI\\="','"MwUEZxUAAAAAAAAAAAAAAAAAAEA\\="']], 
+	159:["name":"Tenderness", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoEHlAAAAECAX4NAwABAZg\\="','"owEA5TIB/1YTFQD8EAD8AAEBAMs\\="','"owL/HlUAAAECAX8MAwABAQDlMrA\\="','"owMB/1YTFwD8EgD8AAEBAP8fAP4\\="','"owQAAAEAAX4ZA8wUFAAAFAH/Hfg\\="','"owV8BQD5AACAAAECAAH/HgACBkE\\="','"owYDAgGaKAPMIBQBADIB/1YTBWE\\="','"o/8A+QAAgAABAQH/AAAAAAAAANs\\="','"MwUEaBUAAAAAAAAAAAAAAAAAAE8\\="']], 
+	160:["name":"Meditation", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBwoDJQAAAAMCAbJIA/8UFI8\\="','"owEDADIDPGr/nTX/MjD/AACAABM\\="','"owIAgAAAAgAB/yVVAAABAgHXAHg\\="','"owMD9BQUAoAUA/9/AP84Mv898oc\\="','"owQAAIASAPQAAAIAAf8kVQAAAU0\\="','"owUCAdgAA/QUFAKAFAP/fwD/SCg\\="','"o/8t/0fnAACAEAD0AAEBAP8AALU\\="','"MwUEHiEAAAAAAAAAAAAAAAAAAA0\\="']], 
+	161:["name":"Excited", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDHwAAAAEAAf//AIAUFDw\\="','"owEAgBQBMHj+AACAAACAAQACAII\\="','"owIB/y4AAAAFAAH//wCAFBQCAPc\\="','"owMUBgAA//8AAIsA/wAAAAAAAMY\\="','"owQAAAASAPwAAIACAAIAAf8uABk\\="','"owUAAAUAAf//AIAUFAIAFAYAADI\\="','"owb//wAAiwD/AAAAAAAAAAAAEME\\="','"o/8A/AAAgAIAAgAB/wAAAAAAAN4\\="','"MwUEHyEAAAAAAAAAAAAAAAAAAAw\\="']], 
+	162:["name":"Fascination", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDKgAAAAMCAf//AwABAYo\\="','"owED9zIFiwD/AAD//wbp/38A/4U\\="','"owIAABIA8gAAgAABAQD/KwAAABU\\="','"owMFAgF+AANwAQED9zIFiwD//+M\\="','"owT///8H7/////8TBxAA+QAAgM0\\="','"owUAAAIAAf8qAAAAAwIB//8DAHM\\="','"owYBAQP3MgWLAP8AAP//Bun/f30\\="','"o/8A/wAAEgDlAACAAAEBAf8AACo\\="','"MwUEICEAAAAAAAAAAAAAAAAAADM\\="']], 
+	163:["name":"Breathe", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUECAAAAAAAAAAAAAAAAAAAADo\\="']], 
+	164:["name":"Gradient", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEAwAAAAAAAAAAAAAAAAAAADE\\="']], 
+	165:["name":"Graffiti", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEBwAAAAAAAAAAAAAAAAAAADU\\="']], 
+	166:["name":"Gleam", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEBQAAAAAAAAAAAAAAAAAAADc\\="']], 
+	167:["name":"Dripping", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEBAAAAAAAAAAAAAAAAAAAADY\\="']], 
+	168:["name":"Crossing", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEFQAAAAAAAAAAAAAAAAAAACc\\="']], 
+	169:["name":"Intersection", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDwoHISAAAAECAf8AA9gUFIc\\="','"owEAkRQC/xgZhAj/FgD8AACAAMI\\="','"owIBAQD/ISIAAAECAf8AA9gUFHs\\="','"owMAkRQCB3H/CP9wFAD8AACAAEE\\="','"owQBAQD/ISQAAAECAf8AA9gUFHs\\="','"owUAkRQC/xgZhAj/FgD8AACAAMY\\="','"owYBAQD/ISYAAAECAf8AA9gUFHs\\="','"owcAkRQCB3H/CP9wFAD8AACAAEU\\="','"owgBAQD/ISgAAAECAf8AA9gUFHs\\="','"owkAkRQC/xgZhAj/FgD8AACAAMo\\="','"owoBAQD/IVAAAAECAf8AA9gUFAE\\="','"owsAkRQCB3H/CP9wBgD3EAD5ADk\\="','"owwBAQH/IVUAAAECAf8AA9gUFAM\\="','"ow0AkRQC/xgZhAj/BgD3EgD5AL4\\="','"o/8BAQH/AAAAAAAAAAAAAAAAAKI\\="','"MwUEaRUAAAAAAAAAAAAAAAAAAE4\\="']], 
+	170:["name":"Marbles", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDAoGIgAAAAIAARoaAAAUFIM\\="','"owEA2BQCfBf+/xiAEQD8AQH8AI8\\="','"owIBAgAB/x4AAQACAAH//wAAFFQ\\="','"owMUAAAUAQAA/xEA/AEB/AABAU8\\="','"owQA/x4AAQACAAH//wAAFBQAAEQ\\="','"owUUAQD/ABMA/AEA/AABAQD/Hr8\\="','"owZwAQACAAH//wAAFBQAABQBAMI\\="','"owf//xMA/AEA/AABAQD/HoIBANQ\\="','"owgCAAH//wAAFBQAABQB/xUSEVQ\\="','"owkA/AEB/AABAQD/IQAAAAECAXY\\="','"owr//wAAFBQC9xQCAAD/AP8AAUs\\="','"o/8A9wEB/AEBAQH/AAAAAAAAAKg\\="','"MwUEahUAAAAAAAAAAAAAAAAAAE0\\="']], 
+	171:["name":"Alternate", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoEHwAAAAECAf8AA9gUFJ0\\="','"owEDABQB/zcAFgD/AACAAAACARY\\="','"owIAAR8AAAABAgH/AAPtFBQDAK8\\="','"owMUART/ChQA/wAAgAAAAgEAAj4\\="','"owQfAAAAAQIB/wAD2BQUAwAUAYg\\="','"owWND/4WAP8AAIAAAAIBAAMfAKw\\="','"owYAAAECAf8AA+0UFAMAFAEQYNA\\="','"o//+FAD/AACAAAACAQAEAAAAAM4\\="','"MwUEaxUAAAAAAAAAAAAAAAAAAEw\\="']], 
+	172:["name":"Dancing", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCAoDJ2QAAAICAf8AAwAUFB0\\="','"owED+RQE/4IH/0EHAAD//wgNEJ4\\="','"owIA/BIA/wABAQD/J2AAAAICAQk\\="','"owP/AAMAFBQD+RQE/4IH/0EHAHU\\="','"owQA//8IDRIA/BAA/wABAQD/J3s\\="','"owUAAAABAgH/gQMAFBQA+RQE/88\\="','"owaCB/9BBwAA//8IDRAA/BIA/J4\\="','"o/8AAQEB/wAAAAAAAAAAAAAAAKI\\="','"MwUEbBUAAAAAAAAAAAAAAAAAAEs\\="']], 
+	173:["name":"Split", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABFAoIJzcAAAMCAf/MAvQUFGE\\="','"owEB9BQEAP///zVX//8AAP8AFDE\\="','"owIA+QAAgAEBAQD/JzAAAAMCATE\\="','"owP/zAL0FBQB9BQEAP///0Ba/5o\\="','"owT/AAD/ABYA+QAAgAEBAQD/JxE\\="','"owVQAAACAgH//wL0FBQC8hQE/x4\\="','"owb/AAD/AAat/v8sWBcA/AAAgBA\\="','"owcAAQEA/ydVAAACAgH//wL0FMo\\="','"owgUAvIUBP//AAD/AAay/v8sWGE\\="','"owkVAPwAAIAAAQEA/ydVAAACAk4\\="','"owoB//8C9BQUAvIUBP//AAD/AEE\\="','"owsGsv7/LFgVAPIAAIAAAQEB//A\\="','"owwnUAAAAgIB//8C9BQUAvIUBM8\\="','"ow3//wAA/wAGrf7/LFgXAPIAAGo\\="','"ow6AAAEBAf8nMAAAAwIB/8wC9AE\\="','"ow8UFAH0FAQA////QFr//wAA/1M\\="','"oxAAFgDtAACAAQEBAf8nNwAAAyQ\\="','"oxECAf/MAvQUFAH0FAQA////NVs\\="','"oxJX//8AAP8AFADtAACAAQEBAWA\\="','"o///AAAAAAAAAAAAAAAAAAAAAKM\\="','"MwUEbhUAAAAAAAAAAAAAAAAAAEk\\="']], 
+	174:["name":"Strike", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEBgAAAAAAAAAAAAAAAAAAADQ\\="']], 
+	175:["name":"Fluctuate", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoEJFUAAAECAf80A4AUFJ4\\="','"owEDzhQDMDP//wAA/38AEAD5ABI\\="','"owIAgAABAQD/JFAAAAECAf80A2A\\="','"owOAFBQDzhQDMDP//wAA/38AEms\\="','"owQA+QAAgAABAQD/JFUAAAECAVI\\="','"owX/NAOAFBQDzhQDMDP//wAA/8g\\="','"owZ/ABIA5QAAgAABAQH/JFAAACc\\="','"owcBAgH/NAOAFBQDzhQDMDP//zc\\="','"o/8AAP9/ABAA5QAAgAABAQH/AFc\\="','"MwUEISEAAAAAAAAAAAAAAAAAADI\\="']], 
+	176:["name":"Raindrops in Mountains", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDgoGLQAAAAYCAWY0AwAUFNk\\="','"owEDlhQGFv6sFv6QFv5kOf8VEVc\\="','"owL/Tgz/KwIA+RIA+QABAQD/JQI\\="','"owMAAgQCAAHlJgDOBwQBgBQDxPk\\="','"owT+bbL/yf/SigIA8gIA+QAAAh4\\="','"owUAAf8qAAAABQIBg0IDABQUA7U\\="','"owYAFAXp/kBU/ygo/j0P/2gM/+A\\="','"owcrAgD5EgDyAAEBAf8eQAAAATU\\="','"owgCATIAAwAUFAAAFAEW/qwBAMk\\="','"own8EgD8AAEBAP8eZAAAAQIBRHs\\="','"owoAAwAUFAAAFAGZ/g8TAPwSACo\\="','"owv5AAEBAP8iAAIEAgAB5SYDzoc\\="','"owwUFAGAFAIAvIVkyAsSAPICAEQ\\="','"o//5AAACAAH/AAAAAAAAAAAAAFk\\="','"MwUEbxX6AQAAAAAAAAAAAAAAALM\\="']], 
+	177:["name":"Sprinkle", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCwoEJwAAAAQCAVsTA+AUFCw\\="','"owED9xQEB/9rCP6mBiD+/38AAt8\\="','"owIA+QIA9AABAQH/LVUAAAECAik\\="','"owPMAAPJHgrMAAHEHgoDaBQEB9M\\="','"owT/awj+pgYg/v9/ABAA8gAAgFk\\="','"owUAAQEA/y1QAAABAgLMAAPJHj0\\="','"owYKzAABxB4KA2gUBAf/awj+pgo\\="','"owcGIP7/fwASAPIAAIAAAQEA/2M\\="','"owglAAIFBAIB/wAD1hQUAQAUA7I\\="','"owkH/2sGIP7/fwAAAPIAAIAAABM\\="','"o/8CAAH/AAAAAAAAAAAAAAAAAKA\\="','"MwUEcBUFAAAAAAAAAAAAAAAAAFI\\="']], 
+	178:["name":"Thunderstorm", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABCQoEIgACBwMCAYkAA8wJB8o\\="','"owEBABQCFwf+////AACAAACAAKQ\\="','"owIAAgAB/yIAAgoGAgGJAAPMCT0\\="','"owMHAQAUAihk/v///xIA9AAAgJs\\="','"owQAAAIAAf8oAAAABAABfwAC5e4\\="','"owW8fQP5FAQAAP////9CCP///zg\\="','"owb/EADqAACAAAACAAH/IgAAAP4\\="','"owcCAAEwMAAAFBQDgBQCCST/N9c\\="','"o/8FyAAAgAAAgAAAAgAB/wAAAG0\\="','"MwUEcRX8AQAAAAAAAAAAAAAAAKs\\="']], 
+	179:["name":"Raining", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABFQoIHwAAAAEAAQsLAAAUFKo\\="','"owEAABQB////AAD3AACAAAECADw\\="','"owIB/y0wAgMBAAH/AADRFBQA2LU\\="','"owNkBv///wAAAAAAAAAAAP/Y7vQ\\="','"owSm/P4RAPcQAPQAAQEA/y03AuY\\="','"owUDAQAB/wAC0RQUANhkBv///8w\\="','"owYAAAAAAAAAAAD/2O6m/P4TANs\\="','"owf3EgD0AAEBAP8uJAICAQAB/78\\="','"owgAANgBBAC8JgYAAAAAAAD//+o\\="','"own/AAAA////AAAAEwDiAACAANs\\="','"owoBAgAB/zRiAgQCAAL/AALbFDY\\="','"owsU/wAA2xQUANMmBgAAAAAAAGs\\="','"owwAAAAAAAD///8AAAADANgAAIs\\="','"ow2AAAECAAH/JzACAwEAAf8AADo\\="','"ow7bFBQA02QE////AAAAAAAAADo\\="','"ow8AABEA7RAA6gABAQH/JzcCA0U\\="','"oxABAAH/AADbFBQA02QE////ANs\\="','"oxEAAAAAAAAAABMA7RAA6gABAbY\\="','"oxIB/ygAAgYCAAH/AAPlFBQB06s\\="','"oxMmBAAAAAAAAP///wAAAAMA2LY\\="','"o/8AAIAAAQIAAf8AAAAAAAAAACE\\="','"MwUEchULAgAAAAAAAAAAAAAAAFw\\="']], 
+	180:["name":"Starry Sky", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABDQoGIgAAAAIAATs7AAAUFII\\="','"owED6hQCFV3/FgW8AACAAACAAEU\\="','"owIAAgAB/yQAAgEBAAGkfQDEFHM\\="','"owMUAfcUAx5z/v///wAAAAAAgLk\\="','"owQRAPkAAQEA/yQAAgEBAAGjdUE\\="','"owUAxBQUAfkUAx5z/gAAAP///+E\\="','"owYAAIATAPkAAQEA/yQAAgMBABQ\\="','"owcBuQADzhQUAQAUA////x5z/qs\\="','"owgAAAAAAIABAPQAAQEB/yEAAgM\\="','"owkEAgIBuwADzhANAQAUAh5z/kA\\="','"owr///8AAIADAPwAAQEA/yQAAvA\\="','"owsCAQABeQADzAoKAQAUA/////U\\="','"o/8ec/4AAAAAAIABAPQAAQEB/0Q\\="','"MwUEcxX/AQAAAAAAAAAAAAAAAKo\\="']], 
+	181:["name":"Dreamland", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABBgoCLQAAAAYAAZkOA8YUFNQ\\="','"owED9xQGAAD/AP///4Un/0cH/6Y\\="','"owIGIIsA/wAA+QAAgAABAQD/LVg\\="','"owMAAAADAAHMGQO/FBQD9xQGAC0\\="','"owQA/wD///+FJ/9HB/8GIAAA/5w\\="','"o/8AAPIAAIAAAQEB/wAAAAAAANA\\="','"MwUEdBX4AQAAAAAAAAAAAAAAAKo\\="']], 
+	182:["name":"Milky Way", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"owABEAoGLgAAAAEAATMzAgABAZI\\="','"owEDMwEGAAD/iwD/AAD/AP//AOE\\="','"owIA/4sA/wAAgAAAgAAAAgEA/9Y\\="','"owMtNwAAAQAD/wACyQH//wAAyUQ\\="','"owQHAQAAAAABMgMAAQIAAAD//5I\\="','"owX/FgDyEgD0AAEBAAEtMAAAAUY\\="','"owYAA/8AAskB//8AAMwHAQAAAFk\\="','"owcAAY8DAAECAAAA////FAD0ECU\\="','"owgA9AABAQACLUQAAAEAA/8AAss\\="','"ownJAf//AADJBwEAAAAAASMDAIw\\="','"owoBAgAAAP///xQA6hAA6AABAVM\\="','"owsB/ysAAgQCAAL/AADMAQH/ALc\\="','"owwAxgEBAzMBAwD//wAA//8AAFs\\="','"ow0AAIAAAIAAAAIBAP8kAAIFA3I\\="','"ow4CAf8AA8wUFAMzAQMA//8AAKw\\="','"o////wAAAACAAACAAAEBAP8AAKM\\="','"MwUEdhX3AQAAAAAAAAAAAAAAAKc\\="']], 
+	183:["name":"Night Light", "cmd":['"MwEBAAAAAAAAAAAAAAAAAAAAADM\\="','"MwUEAgAGAAAAAAAAAAAAAAAAADY\\="']],
+    999:["maxScene":183]
+    ]
+        return scenes
 }

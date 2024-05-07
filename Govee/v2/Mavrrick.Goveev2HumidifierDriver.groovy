@@ -1,22 +1,13 @@
 // Hubitat driver for Govee Appliances using Cloud API
-// Version 1.0.19
+// Version 2.1.0
 //
-// 2022-09-12 -	Initial Driver release for Govee Appliance devices
-// 2022-10-19 - Added Attributes to driver
-// 2022-11-3 - Send Rate Limits to parent.
-// 2022-11-5 - Added update to Switch value to On when Gear or Mode are used
-// 2022-11-20 - Added a pending change condition and validation that the call was successful
-// ----------- A retry of the last call will be attempted if rate limit is the cause for it failing
-// 2022-11-21 Moved status of cloud api call to the it's own attribute so it can be monitored easily
-// 2022-12-19 Added Actuator capbility to more easily integrate with RM
-// 2023-4-4   API Key update is now possible
-// 2023-4-7   Update Initialize and getDeviceStatus routine to reset CloudAPI Attribute
+// 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_Life
-#include Mavrrick.Govee_Cloud_MQTT
+// #include Mavrrick.Govee_Cloud_MQTT
 
 import groovy.json.JsonSlurper 
 import java.util.Random 
@@ -36,7 +27,7 @@ metadata {
         attribute "pollInterval", "number"        
         attribute "cloudAPI", "string"
         attribute "online", "string" 
-        attribute "connectionState", "string"        
+//        attribute "connectionState", "string"        
         attribute "lackWaterEvent", "string"
         
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'Manual',      'Custom',       'Auto'], description: "Mode of device"],
@@ -66,19 +57,19 @@ def updated() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
-    poll()
+/*    poll()
     disconnect()
 	pauseExecution(1000)
-    mqttConnectionAttempt()
+    mqttConnectionAttempt() */
 }
 
 // linital setup when device is installed.
 def installed(){
     retrieveStateData()
     poll()
-    disconnect()
+/*    disconnect()
     pauseExecution(1000)
-    mqttConnectionAttempt()
+    mqttConnectionAttempt() */
 }
 
 // initialize devices upon install and reboot.
@@ -96,9 +87,9 @@ def initialize() {
         runIn(offset,poll)
     }
 //    poll()
-    disconnect()
+/*    disconnect()
     pauseExecution(1000)
-    mqttConnectionAttempt()
+    mqttConnectionAttempt() */
 }
 
 // update data for the device
@@ -117,9 +108,9 @@ def configure() {
     if (pollRate > 0) runIn(pollRate,poll)     
     retrieveStateData()    
     if (debugLog) runIn(1800, logsOff)
-    disconnect()
+/*    disconnect()
     pauseExecution(1000)
-    mqttConnectionAttempt()
+    mqttConnectionAttempt() */
 }
 
 ////////////////////
