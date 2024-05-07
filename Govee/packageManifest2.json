@@ -31,7 +31,7 @@
       "id": "b6fc9828-f71d-45d9-9fb1-11adffb5c137",
       "name": "Govee v2 Device Manager",
       "namespace": "Mavrrick",
-      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
       "version": "2.1.0"
     },
