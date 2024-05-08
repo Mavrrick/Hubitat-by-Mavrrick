@@ -40,11 +40,11 @@ def lanCT(value, level, transitionTime) {
 def lanSetEffect (effectNo) {
     effectNumber = effectNo.toInteger()
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
-    if (descLog) log.info "${scenes.keySet()}"
-    if (descLog) log.info "${scenes.get(effectNumber)}"
+    if (descLog) log.info "${scenes.get(device.getDataValue("DevType")).keySet()}"
+    if (descLog) log.info "${scenes.get(device.getDataValue("DevType")).get(effectNumber)}"
     if (scenes) {
-        String sceneInfo =  scenes.get(effectNumber).name
-        String sceneCmd =  scenes.get(effectNumber).cmd
+        String sceneInfo =  scenes.get(device.getDataValue("DevType")).get(effectNumber).name
+        String sceneCmd =  scenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
         if (descLog) log.info "Scene number is present"
         sendEvent(name: "effectName", value: sceneInfo)
@@ -226,29 +226,55 @@ def retrieveScenes() {
     state.scenes = [] as List
     state.diyEffects = [] as List
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent device")}
-    scenes = parent."${"lightEffect_"+(device.getDataValue("DevType"))}"()
-    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${scenes}")}
-    scenes.each {
+    if (scenes.containsKey(device.getDataValue("DevType")) == false ) {   
+        if (debugLog) {log.debug ("retrieveScenes(): Scenes does not contain entries for device")}
+            scenes = scenes + parent."${"lightEffect_"+(device.getDataValue("DevType"))}"()
+    }
+    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${scenes.get(device.getDataValue("DevType"))}")}
+    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${scenes.keySet()}")}
+    scenes.get(device.getDataValue("DevType")).each {
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
             state.scenes.add(sceneValue)
             state.scenes = state.scenes.sort()
-        }
-    diyScenes = parent.retrieveGoveeDIY(device.getDataValue("deviceModel"))
-    if (diyScenes == null) {
-        if (debugLog) {log.debug ("retrieveScenes(): Device has no DIY Scenes")}
-    } else {
-    if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyScenes}")}
-    if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${diyScenes.keySet()}")}
-    diyScenes.each {
-        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
-        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
-        String sceneValue = it.getKey() + "=" + it.value.name
-        state.diyEffects.add(sceneValue)
-        state.diyEffects = state.diyEffects.sort()
-        }
     }
+
+    if (parent.label == "Govee v2 Device Manager") {   
+        diyReturn = parent.retrieveGoveeDIY(device.getDataValue("deviceModel"))
+        diyScenes.put((device.getDataValue("DevType")),diyReturn)
+        if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyReturn}")}
+        if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyScenes}")}
+        if (diyScenes.get(device.getDataValue("DevType")) == null) {
+            if (debugLog) {log.debug ("retrieveScenes(): Device has no DIY Scenes")}
+        } else {
+        if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyScenes}")}
+        if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${diyScenes.keySet()}")}
+        diyScenes.get(device.getDataValue("DevType")).each {
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+            String sceneValue = it.getKey() + "=" + it.value.name
+            state.diyEffects.add(sceneValue)
+            state.diyEffects = state.diyEffects.sort()
+            }
+        }
+    } else {
+        if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
+            if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
+        } else {
+            diyReturn = parent.state.diyEffects.(device.getDataValue("deviceModel"))
+            diyScenes.put((device.getDataValue("DevType")),diyReturn)
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+            if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+            diyScenes.get(device.getDataValue("DevType")).each {
+                if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+                if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+                String sceneValue = it.getKey() + "=" + it.value.name
+                state.diyEffects.add(sceneValue)
+                state.diyEffects = state.diyEffects.sort()
+            }
+        }        
+    }        
 }
 
 def getDevType() {
