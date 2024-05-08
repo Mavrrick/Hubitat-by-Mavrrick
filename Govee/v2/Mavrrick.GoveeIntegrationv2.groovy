@@ -90,12 +90,12 @@ def mainPage() {
         }
         child = getChildDevices() + mqttDevice.getChildDevices()
         childDNI = child.deviceNetworkId
-        def int childCount = child.size()
+//        def int childCount = child.size()
     }
 
 //    child = getChildDevices() + mqttDevice.getChildDevices()
 //    childDNI = child.deviceNetworkId
-//    def int childCount = child.size()
+    def int childCount = child.size()
     dynamicPage(name: 'mainPage', title: 'Govee integration Main menu', uninstall: true, install: true, submitOnChange: true)
     {
         section('<b>API Configuration</b>')
