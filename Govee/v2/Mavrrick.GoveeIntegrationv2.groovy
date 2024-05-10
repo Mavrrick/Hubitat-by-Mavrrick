@@ -1166,3 +1166,13 @@ def retrieveGoveeDIY(deviceModel) {
         return diyScenes
     }    
 }
+
+///////////////////////////////////////////////////////////////////////////
+// Method to return the Govee API Data for specific device from Prent App //
+///////////////////////////////////////////////////////////////////////////
+
+def retrieveGoveeAPI(deviceid) {
+    if (debugLog) "retrieveGoveeAPI(): ${deviceid}"
+    def goveeAppAPI = state.goveeAppAPI.find{it.device==deviceid}
+    return goveeAppAPI
+}
