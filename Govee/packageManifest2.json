@@ -10,7 +10,7 @@
 	  "namespace": "Mavrrick",
 	  "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
 	  "required": true,
-	  "version": "2.1.0"	
+	  "version": "2.1.2"	
 	}
   ],  
   "apps": [
@@ -22,7 +22,7 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.1.1",
+      "version": "2.1.2",
       "releaseNotes": "2.0.27 Fix bug with Manual Lan Device Add"  	    
     }
   ],
