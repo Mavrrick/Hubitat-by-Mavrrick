@@ -47,7 +47,7 @@ def cloudCT(value, level, transitionTime){
 /////////////////////////////////////////////////////
 
 private def sendCommand(String command, payload2, type) {
-     randomUUID()
+     requestID = randomUUID()
      if (debugLog) { log.debug "sendCommand(): ${requestID}"}
      String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
      def params = [
