@@ -22,7 +22,7 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.1.2",
+      "version": "2.1.3",
       "releaseNotes": "2.0.27 Fix bug with Manual Lan Device Add"  	    
     }
   ],
