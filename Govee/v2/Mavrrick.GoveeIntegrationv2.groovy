@@ -502,7 +502,7 @@ def installed() {
     log.debug "Installed with settings: ${settings}"
             addChildDevice('Mavrrick', 'Govee v2 Device Manager', "Govee_v2_Device_Manager" , location.hubs[0].id, [
             'name': 'Govee v2 Device Manager',
-            'label': 'Govee_Device_Manager',
+            'label': 'Govee v2 Device Manager',
              'data': [
                 'apiKey': settings.APIKey
              ],
