@@ -287,6 +287,10 @@ def getDevType() {
         case "H6173":
         case "H6175":
         case "H6176":
+        case "H617A":
+        case "H617C":
+        case "H617E":
+        case "H617F":        
         case "H618A":
         case "H618B":
         case "H618C":
@@ -311,6 +315,7 @@ def getDevType() {
         case "H61C5":
         case "H61E1":
         case "H61E0":
+        case "H6167":
             if (debugLog) {log.debug ("getDevType(): Found   ${device.getDataValue("deviceModel")} setting DevType to RGBIC_STRIP")}; 
             device.updateDataValue("DevType", "RGBIC_Strip");
             break; 
@@ -327,7 +332,6 @@ def getDevType() {
             device.updateDataValue("DevType", "Y_Light");
             break;        
         case "H6072": 
-        case "H6079":
         case "H607C":
             device.updateDataValue("DevType", "Lyra_Lamp");
             break;
