@@ -27,16 +27,7 @@ definition(
 
 /*
 * Initial release v1.0.0
-* 2.0.24 Add change tracking to individual integration item
-* 2.0.25 Updated device add routine to check for driver on hub and alert if driver is not present.
-* 2.0.26 Added use of @field static variables to optimize various code elements.
-*        Modified Device add routine to optimize size of code and remove heavy processes.
-*        Broke out device add to own method to reduce redundant code
-*        Updated Manual device add routine to use new device add method.
-*        Cleaned up various code locations to remove variable setting that would conflict with new @field static variables
-* 2.0.27 Corrected bug introduced in previous version that broke Manual device add
-*        Removed some @Field Static variables as they were not needed at that scope
-*        Reviewed code for to improve variable declerations
+* 2.1.4  Update to fix DIYEffect Bug
 */
 
 import groovy.json.JsonSlurper
@@ -994,7 +985,7 @@ private def appButtonHandler(button) {
 //        child = getChildDevices()
         child.each {
         logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
-        it.configure()
+        it.initialize()
         }
     } else if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
