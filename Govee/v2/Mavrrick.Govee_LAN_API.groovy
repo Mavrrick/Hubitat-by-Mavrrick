@@ -241,16 +241,14 @@ def retrieveScenes() {
     }
 
     if (parent.label == "Govee v2 Device Manager") {   
-        diyReturn = parent.retrieveGoveeDIY(device.getDataValue("deviceModel"))
-        diyScenes.put((device.getDataValue("DevType")),diyReturn)
-        if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyReturn}")}
+        diyScenes = parent.retrieveGoveeDIY(device.getDataValue("deviceModel"))
         if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyScenes}")}
-        if (diyScenes.get(device.getDataValue("DevType")) == null) {
+        if (diyScenes == null) {
             if (debugLog) {log.debug ("retrieveScenes(): Device has no DIY Scenes")}
-        } else {
-        if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyScenes}")}
-        if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${diyScenes.keySet()}")}
-        diyScenes.get(device.getDataValue("DevType")).each {
+        } else {        
+//        if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${diyScenes.keySet()}")}
+//      diyScenes.get(device.getDataValue("deviceModel")).each {
+        diyScenes.each {    
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -262,11 +260,11 @@ def retrieveScenes() {
         if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
             if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
         } else {
-            diyReturn = parent.state.diyEffects.(device.getDataValue("deviceModel"))
-            diyScenes.put((device.getDataValue("DevType")),diyReturn)
+            diyScenes = parent.state.diyEffects.(device.getDataValue("deviceModel"))
+//            diyScenes.put((device.getDataValue("deviceModel")),diyReturn)
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
-            diyScenes.get(device.getDataValue("DevType")).each {
+            diyScenes.each {
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
                 String sceneValue = it.getKey() + "=" + it.value.name

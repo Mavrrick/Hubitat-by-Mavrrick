@@ -40,6 +40,7 @@ metadata {
         command "activateDIY", [
             [name: "diyName", type: "STRING", description: "DIY Number to activate"]
            ]
+        command "sceneLoad"
     }
 
 	preferences {		
@@ -49,6 +50,7 @@ metadata {
             input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
             if (lanControl) {
             input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)
+            input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false)     
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
@@ -75,7 +77,8 @@ def refresh() {
 }
 
 def updated() {
-    initialize() 
+    initialize()
+    sceneLoad()
 }
 
 def initialize(){
@@ -87,17 +90,17 @@ def initialize(){
     if(device.getDataValue("commands").contains("lightScene")) {
         sendEvent(name: "effectNum", value: 0) }
     unschedule()
-    if (lanControl && ip) { 
+/*    if (lanControl && lanScenes) { 
         getDevType()
-        retrieveScenes()
-    } else if (lanControl == false) { 
+        retrieveScenes()   
+    } else if ((lanControl == false) || (lanControl && lanScenes == false)) { 
         retrieveScenes2()
         retrieveStateData()
         if (state.diyScene.isEmpty()) {
             if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
             retrieveDIYScenes()
         }
-    }
+    } */
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
@@ -126,6 +129,24 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
+def sceneLoad() {
+    if (lanControl && lanScenes) { 
+        getDevType()
+        retrieveScenes()   
+    } else if ((lanControl == false) || (lanControl && lanScenes == false)) { 
+        retrieveScenes2()
+        retrieveStateData()
+        if (state.diyScene.isEmpty()) {
+            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
+            retrieveDIYScenes()
+        }
+    }
+}
+
+
+/////////////////////////
+// Commands for Driver //
+/////////////////////////
 
 def on() {
     if (lanControl) {

@@ -13,7 +13,8 @@ metadata {
         capability "Initialize"
 		capability "Refresh" 
         attribute "connectionState", "string"
-        attribute "msgCount", "integer"  
+        attribute "msgCount", "integer" 
+        command "allSceneReload"
     }
 
 	preferences {		
@@ -48,6 +49,8 @@ def initialize() {
     pauseExecution(1000)
     mqttConnectionAttempt()
     sendEvent(name: "msgCount", value: 0)
+    state.childCount = getChildDevices().size()
+//    allSceneReload()
 //    log.warn "Govee API Data is ${parent.state.goveeAppAPI}"
 //    log.warn "Govee API Data is ${goveeAppAPI}"
 }
@@ -305,6 +308,23 @@ def retrieveGoveeDIY(deviceModel) {
         if (debugLog) "retrieveGoveeDIY(): ${diyScenes}"
         return diyScenes
     }    
+}
+
+def allSceneReload(){
+    child = getChildDevices()
+    if (debugLog) {log.debug ("allSceneReload(): ${child}")}
+    child.each {
+        if (debugLog) {log.debug ("allSceneReload(): ${it.data.commands} list command")}
+        if (it.data.commands.contains("lightScene")) {
+            if (debugLog) {log.debug ("allSceneReload(): Light Device ${it} has command lightScene")}
+            it.sceneLoad()
+        }  else if (it.data.commands.contains("nightlightScene")) { 
+            if (debugLog) {log.debug ("allSceneReload(): Light Device ${it} has command nightlightScene")}
+            it.retrieveStateData()
+        } else {
+            if (debugLog) {log.debug ("allSceneReload(): Device ${it} does not have Scene effects")} 
+        }
+    }
 }
 
 
