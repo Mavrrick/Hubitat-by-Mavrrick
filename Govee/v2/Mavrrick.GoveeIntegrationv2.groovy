@@ -985,7 +985,7 @@ private def appButtonHandler(button) {
 //        child = getChildDevices()
         child.each {
         logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
-        it.allSceneReload()
+        it.initialize()
         }
     } else if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
