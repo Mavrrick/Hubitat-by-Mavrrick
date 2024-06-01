@@ -50,7 +50,7 @@ def initialize() {
     mqttConnectionAttempt()
     sendEvent(name: "msgCount", value: 0)
     state.childCount = getChildDevices().size()
-//    allSceneReload()
+    allSceneReload()
 //    log.warn "Govee API Data is ${parent.state.goveeAppAPI}"
 //    log.warn "Govee API Data is ${goveeAppAPI}"
 }
