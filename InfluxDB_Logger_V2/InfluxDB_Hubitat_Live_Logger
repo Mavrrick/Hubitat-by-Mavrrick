@@ -34,8 +34,8 @@
 
 @Field static List loggerQueueMap = []
 @Field static List postQueueMap = []
-@Field static String uri = ""
-@Field static def header = [:]
+@Field static String influxDBuri = ""
+@Field static def influxDBAuth = [:]
 
 metadata {
     /* groovylint-disable-next-line DuplicateStringLiteral */
@@ -131,7 +131,7 @@ void parse(String description) {
     }
     if (loggerQueueMap.size().toInteger() > maxRec.toInteger() ) {
         if (logEnable)  { log.debug "parse(): loggerQueueMap size is greater then ${maxRec}. Triggering Write to DB now" }
-        writeQueuedDataToInfluxDb() 
+//        writeQueuedDataToInfluxDb() 
     } 
 }
 
@@ -143,19 +143,23 @@ void parse(String description) {
  *  NB: Function name handleInfluxResponse must be kept for backward compatibility
  **/
 void writeQueuedDataToInfluxDb(){
+    if ( influxDBuri == null || influxDBAuth == [:]) {
+        retrieveConnectionInfo()
+    }
     if (loggerQueueMap.size() > 0) {
 //        if (logEnable)  { log.debug "writeQueuedDataToInfluxDb(): loggerQueueMap is ${loggerQueueMap}" }
     postQueueMap = loggerQueueMap
 //        if (logEnable)  { log.debug "writeQueuedDataToInfluxDb():postQueueMap is ${postQueueMap}" }
+    if (logEnable)  { log.debug "writeQueuedDataToInfluxDb():uri is ${influxDBuri}. the Headers are ${influxDBAuth}" }    
     int postCount = postQueueMap.size()
     String data = postQueueMap.subList(0, postCount).toArray().join('\n')
     
     long timeNow = new Date().time
     def postParams = [
-        uri: uri,
+        uri: influxDBuri,
         requestContentType: 'application/json',
         contentType: 'application/json',
-        headers: header,
+        headers: influxDBAuth,
         ignoreSSLIssues: settings.prefIgnoreSSLIssues,
         timeout: 60,
         body: data
@@ -190,9 +194,9 @@ void handleInfluxResponse(hubResponse, closure) {
 
     }
     else {
-        if (logEnable) { log.warn "Post of of log data failed - elapsed time ${elapsed} seconds - Status: ${hubResponse.status}, Error: ${hubResponse.errorMessage}, Headers: ${hubResponse.headers}, Data: ${data}" }
+        log.error "Post of of log data failed - elapsed time ${elapsed} seconds - Status: ${hubResponse}, URI: ${influxDBuri}, Headers: ${influxDBAuth}, Data: ${data}" 
         if (loggerQueueMap.size() > maxBacklog){
-            over = loggerQueueMap.size() - maxBacklog
+            int over = loggerQueueMap.size() - maxBacklog
             loggerQueueMap = loggerQueueMap.minus(loggerQueueMap.subList(0, over))
         }
     }
@@ -222,22 +226,32 @@ void initialize() {
     state.remove("uri")
     state.remove("header")
     state.remove("postCount")
-    header = [:]
-    if (useSSL) {
-        uri = "https://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
-    } else {
-        uri = "http://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
-    }
+//    header = [:]
     loggerQueueMap = []
-    String token3 = token
-//    if (logEnable) { log.debug "initialize() ${token3} ${uri}" }
-    header.put("Authorization", "Token ${token3}")
-    if (logEnable) { log.debug "initialize() Header:${header}  URI: ${uri}" }
-    // run 'mymethod' every 30 seconds.
-    writeTime = '*/'+dbWriteTime+' * * ? * *' 
+//    if (useSSL) {
+//        influxDBuri = "https://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
+//    } else {
+//        influxDBuri = "http://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
+//    }
+//    loggerQueueMap = []
+//    String token3 = token
+//    influxDBAuth.put("Authorization", "Token ${token3}")
+//    if (logEnable) { log.debug "initialize() Header:${influxDBAuth}  URI: ${influxDBuri}" }
+    retrieveConnectionInfo()
+    String writeTime = '*/'+dbWriteTime+' * * ? * *' 
     schedule(writeTime, writeQueuedDataToInfluxDb)
-//    schedule('*/dbWriteTime * * ? * *', writeQueuedDataToInfluxDb)
     runIn(5, "connect")
+}
+
+void retrieveConnectionInfo() {
+    if (useSSL) {
+        influxDBuri = "https://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
+    } else {
+        influxDBuri = "http://" + ip + ":" + port + "/api/v2/write?org=" + org + "&bucket=" + bucket
+    }
+    String token3 = token
+        influxDBAuth.put("Authorization", "Token ${token3}")
+    if (logEnable) { log.debug "initialize() Header:${influxDBAuth}  URI: ${influxDBuri}" }
 }
 
 void webSocketStatus(String message) {
