@@ -28,13 +28,16 @@ definition(
 /*
 * Initial release v1.0.0
 * 2.1.4  Update to fix DIYEffect Bug
+* 2.1.5  Bug fixes
+* 2.1.6  Update to add ability to Save/Restore DIY data to a flat file
+* 2.1.7  Many update to integration app to simplify UI and improve experience
 */
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 
-#include Mavrrick.Govee_Lan_Scenes
+// #include Mavrrick.Govee_Lan_Scenes
 
 @Field static List child = []
 @Field static List childDNI = []
@@ -83,11 +86,8 @@ def mainPage() {
         }
         child = getChildDevices() + mqttDevice.getChildDevices()
         childDNI = child.deviceNetworkId
-//        def int childCount = child.size()
     }
 
-//    child = getChildDevices() + mqttDevice.getChildDevices()
-//    childDNI = child.deviceNetworkId
     def int childCount = child.size()
     dynamicPage(name: 'mainPage', title: 'Govee integration Main menu', uninstall: true, install: true, submitOnChange: true)
     {
@@ -102,18 +102,12 @@ def mainPage() {
             input 'APIKey', 'string', title: 'Enter Your API Key', required: false
             
         }
-        if (settings.APIKey != null) {
-        section('<b>Govee Cloud Device Management</b>') {
-            paragraph "Click button below to retrieve Govee Cloud Device data."
-            input "deviceListRefresh2" , "button",  title: "Refresh Device List, DIY, and Snapshots"
-            paragraph "Click button to trigger all installed devices to check for updates."
-            input "pushScenesUpdate" , "button",  title: "Retrieve device updates from cloud"
-            paragraph ""
-            href 'deviceSelect', title: 'Device selection', description: 'Select Govee devices to add to your environment'
-        }
-        }
-        section('<b>Manual Setup of LAN Enabled device</b>') {
-            href 'deviceLanManual', title: 'Manual Setup Lan Device', description: 'Manual Setup for LAN API Enabled Device'
+        section('<b>Govee Device Management</b>') {
+            if (settings.APIKey != null) {
+            paragraph "Use the Standard Device setup option to enable all device features possible. The option for Manual Setup of LAN API Devices should be used as a last restore for devices that can not be setup using the Standard Device setup method."
+            href 'deviceSelect', title: 'Standard Device Setup' //, description: 'Select Govee devices to add to your environment'
+            }
+            href 'deviceLanManual', title: 'Manual Setup for Lan API Only Devices' //, description: 'Use this option to setup devices that only support LAN API'
         }
         section('<b>Current Integrated Device Information</b>') {
             paragraph "There are <mark>${childCount}</mark> devices integrated"
@@ -134,8 +128,8 @@ def mainPage() {
             input 'apiV2threshold', 'number', title: 'Daily Rate Limit threshold to send out notification for Appliances.', required: false , range: '1..100', defaultValue: 3
         }
         } */
-        section('<b>Govee Scene Management</b>') {
-            href 'sceneManagement', title: 'Scene Management', description: 'Click to setup extraction credential, extract scenes, and manage device association.'
+        section('<b>Govee LAN API Scene Management</b>') {
+            href 'sceneManagement', title: 'Lan API Scene Management Menu', description: 'Click to setup extraction credential, extract scenes, and manage device association.'
         }
         section('<b>Logging Options</b>') {
             input(
@@ -163,7 +157,13 @@ def mainPage() {
 
 def deviceSelect() {
     Map options = [:] 
-    if (state.goveeAppAPI != null) {
+    if (state.goveeAppAPI == null) {
+        retrieveGoveeAPIData()
+    }
+    if (1800 < (state.goveeAppAPIdate - now())) {
+       logger('deviceSelect() More then 30 min have passed since last refresh. Retrieving device data from Govee API', 'debug') 
+       retrieveGoveeAPIData() 
+    }
     logger('deviceSelect() DEVICE INFORMATION', 'debug')
                 state.goveeAppAPI.each {
                     String deviceName = it.deviceName
@@ -171,30 +171,29 @@ def deviceSelect() {
                     options["${deviceName}"] = deviceName
                 } 
                 logger(" deviceSelect() $options", 'debug')
-    }
     dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false, nextPage: "mainPage")
     {
         
-        section('Device list refresh') {
-            paragraph "Click button below to refresh device list from Govee API"
-            input "deviceListRefresh" , "button",  title: "Refresh Device List "
-        }
-        
         section('<b>Device Add</b>')
         {
-            paragraph 'Please select the devices you wish to integrate.'
+            paragraph 'Please select the devices you wish to integrate. If the device is not present in the list please click on the Device Refresh button below.'
             input(name: 'goveeDev', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:true,
                 options: options, width: 8, height: 1)
+        }
+        
+        section('<b>Device list refresh</b>') {
+            paragraph "Click the button below to refresh device list from Govee API"
+            input "deviceListRefresh" , "button",  title: "Device Refresh"
         }
     }
 }
 
 def deviceLanManual() {
-    dynamicPage(name: 'deviceLanManual', title: 'Manual Add for LAN API Enabled Devices', uninstall: false, install: false, nextPage: "deviceLanManual2" )
+    dynamicPage(name: 'deviceLanManual', title: 'Manual Setup for LAN API Enabled Devices', uninstall: false, install: false, nextPage: "deviceLanManual2" )
     {
-        section('Please enter the parms for the LAN API enabled device you want to integrate.')
+        section('<b>***Warning***</b> Using the manual Addd option will potentially severaly limit your use of the device. This should be a last resort and only used if the device does not support adding with the normal method using the Cloud API. LAN API control can be enable on traditionally added devices as well.')
         {
-            paragraph 'Please enter the below needed values to create your device '
+            paragraph 'Please enter the needed parameters below to create your device '
             input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
             input(name: 'goveeModel', type: 'string', required:false, title: 'Enter Govee Device Model Number.', description: 'E.g. H####')
             input(name: 'goveeManLanIP', type: 'string', required:false, title: 'Enter Govee Device Ip Address.', description: 'E.g. 192.168.1.2')
@@ -250,8 +249,8 @@ def sceneManagement() {
             href 'sceneExtract', title: 'Extract Scene', description: 'Click here to perform scene extract'
             paragraph "Click button below to refresh scenes to all children device"
             input "pushScenesUpdate" , "button",  title: "Refresh Device Scene Awareness"
-            paragraph "Click button below to reload preload scenes"
-            input "sceneInitialize" , "button",  title: "Reload Preloaded Scene Data"
+//            paragraph "Click button below to reload preload scenes"
+//            input "sceneInitialize" , "button",  title: "Reload Preloaded Scene Data"
             paragraph "Click button below to clear DIY scenes"
             input "sceneDIYInitialize" , "button",  title: "Clear/Initialize DIY Scene Information"
             paragraph "Click button below to save DIY scenes"
@@ -965,7 +964,7 @@ private goveeLightManAdd(String model, String ip, String name) {
  **/
 
 private def appButtonHandler(button) {
-    if (button == "sceneInitialize") {
+/*    if (button == "sceneInitialize") {
         log.debug "appButtonHandler(): Initializing Scene data"
 //        state?.lightEffects = [:]
         state.remove("lightEffect_Lyra_Lamp")
@@ -987,11 +986,11 @@ private def appButtonHandler(button) {
         state.remove("lightEffect_Outdoor_Flood_Light")
         state.remove("lightEffect_Galaxy_Projector")
         lightEffectSetup()
-    } else if (button == "pushScenesUpdate") {
+    } else */ if (button == "pushScenesUpdate") {
 //        child = getChildDevices()
         child.each {
         logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
-        it.initialize()
+        it.allSceneReload()
         }
     } else if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
@@ -1032,25 +1031,7 @@ private def appButtonHandler(button) {
         state?.goveeHomeToken = null
         state?.goveeHomeExpiry = 0
     } else if (button == "deviceListRefresh") {
-//        def options = [:]
-        logger('appButtonHandler() DEVICE INFORMATION', 'debug')
-        def params = [
-            uri   : 'https://openapi.api.govee.com',
-            path  : '/router/api/v1/user/devices',
-            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
-            ]
-
-        try {
-            httpGet(params) { resp ->
-                //List each device assigned to current API key
-                state.goveeAppAPI = resp.data.data
-        }
-    } catch (groovyx.net.http.HttpResponseException e) {
-        logger("appButtonHandler() Error: e.statusCode ${e.statusCode}", 'error')
-        logger("appButtonHandler() ${e}", 'error')
-
-        return 'unknown'
-    }
+        retrieveGoveeAPIData()
     } else if (button == "savDIYScenes") {
         saveFile()
     } else if (button == "resDIYScenes") {
@@ -1178,6 +1159,29 @@ def retrieveGoveeAPI(deviceid) {
     def goveeAppAPI = state.goveeAppAPI.find{it.device==deviceid}
     return goveeAppAPI
 }
+
+def retrieveGoveeAPIData() {
+        logger('appButtonHandler() DEVICE INFORMATION', 'debug')
+        def params = [
+            uri   : 'https://openapi.api.govee.com',
+            path  : '/router/api/v1/user/devices',
+            headers: ['Govee-API-Key': settings.APIKey, 'Content-Type': 'application/json'],
+            ]
+
+        try {
+            httpGet(params) { resp ->
+                //List each device assigned to current API key
+                state.goveeAppAPI = resp.data.data
+                state.goveeAppAPIdate = now()
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+        logger("appButtonHandler() Error: e.statusCode ${e.statusCode}", 'error')
+        logger("appButtonHandler() ${e}", 'error')
+
+        return 'unknown'
+    }
+}
+
 
 void saveFile(List disabledList) {
     log.debug ("saveFile: Backing up ${state.diyEffects} for DIY Scene data")
