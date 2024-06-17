@@ -3,16 +3,16 @@
   "author": "Mavrrick",
   "minimumHEVersion": "2.3.6",
   "dateReleased": "2023-12-09",
-   "bundles": [
-	{
-	  "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
-	  "name": "Govee_Integration_v2.zip",
-	  "namespace": "Mavrrick",
-	  "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
-	  "required": true,
-	  "version": "2.1.5"	
-	}
-  ],  
+  "bundles": [
+    {
+      "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
+      "name": "Govee_Integration_v2.zip",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
+      "required": true,
+      "version": "2.1.5"
+    }
+  ],
   "apps": [
     {
       "id": "4a1215ac-c7d6-4275-8a5e-4eb7ad764f69",
@@ -22,8 +22,8 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.1.6",
-      "releaseNotes": "2.0.27 Fix bug with Manual Lan Device Add"  	    
+      "version": "2.1.7",
+      "releaseNotes": "2.0.27 Fix bug with Manual Lan Device Add"
     }
   ],
   "drivers": [
@@ -42,7 +42,7 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
       "required": false,
       "version": "2.1.0"
-    },	  
+    },
     {
       "id": "f18436f0-07fb-4325-abf7-7a44b8c9de12",
       "name": "Govee v2 Air Purifier Driver",
@@ -106,7 +106,7 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLights4DreamviewSync.groovy",
       "required": false,
       "version": "2.1.1"
-    },	  
+    },
     {
       "id": "9cd9d2ce-587c-4735-ae4f-7efca97e52be",
       "name": "Govee v2 Color Lights Dreamview Sync",
@@ -210,7 +210,7 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2SocketsDriver.groovy",
       "required": false,
       "version": "2.1.0"
-    },	
+    },
     {
       "id": "0ac2c376-535d-4208-b266-d42915a235ea",
       "name": "Govee v2 Thermo/Hygrometer Driver",
@@ -234,6 +234,18 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2WhiteLightswithCTDriver.groovy",
       "required": false,
       "version": "2.1.0"
+    }
+  ],
+  "files": [
+    {
+      "id": "dec16592-ef59-4c18-a7f9-1aa1852712e7",
+      "name": "GoveeLanScenes_Basic_Lamp.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Basic_Lamp.json"
+    },
+    {
+      "id": "ee99bf59-9729-4e72-bb0a-6eaab3ad2c80",
+      "name": "GoveeLanScenes_Hexa_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Hexa_Light.json"
     }
   ]
 }
