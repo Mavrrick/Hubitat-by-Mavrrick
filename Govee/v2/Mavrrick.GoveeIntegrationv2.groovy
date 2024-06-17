@@ -30,6 +30,7 @@ definition(
 * 2.1.4  Update to fix DIYEffect Bug
 */
 
+import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 
@@ -37,6 +38,7 @@ import groovy.transform.Field
 
 @Field static List child = []
 @Field static List childDNI = []
+@Field static final String goveeDIYScenesFile = "GoveeLanDIYScenes.json"
 
 
 preferences
@@ -252,6 +254,10 @@ def sceneManagement() {
             input "sceneInitialize" , "button",  title: "Reload Preloaded Scene Data"
             paragraph "Click button below to clear DIY scenes"
             input "sceneDIYInitialize" , "button",  title: "Clear/Initialize DIY Scene Information"
+            paragraph "Click button below to save DIY scenes"
+            input "savDIYScenes" , "button",  title: "Backup DIY Scene Information to file"
+            paragraph "Click button below to restore DIY scenes"
+            input "resDIYScenes" , "button",  title: "Restore DIY Scene Information from file"
         }
         section('<b>Scene Manual Add</b>')
         {
@@ -1045,7 +1051,12 @@ private def appButtonHandler(button) {
 
         return 'unknown'
     }
+    } else if (button == "savDIYScenes") {
+        saveFile()
+    } else if (button == "resDIYScenes") {
+        loadFile()
     }
+    
 }
 
 def apiRateLimits(type, value) {
@@ -1166,4 +1177,18 @@ def retrieveGoveeAPI(deviceid) {
     if (debugLog) "retrieveGoveeAPI(): ${deviceid}"
     def goveeAppAPI = state.goveeAppAPI.find{it.device==deviceid}
     return goveeAppAPI
+}
+
+void saveFile(List disabledList) {
+    log.debug ("saveFile: Backing up ${state.diyEffects} for DIY Scene data")
+    String listJson = "["+JsonOutput.toJson(state.diyEffects)+"]" as String
+    uploadHubFile("$goveeDIYScenesFile",listJson.getBytes())
+}
+
+void loadFile() {
+    byte[] dBytes = downloadHubFile("$goveeDIYScenesFile")
+    tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+    log.debug ("loadFile: Restored ${tmpEffects.get(0)} from ${goveeDIYScenesFile }")
+    state.diyEffects = tmpEffects.get(0)
+    log.debug ("loadFile: Restored ${state.diyEffects?.size() ?: 0} disabled records")
 }
