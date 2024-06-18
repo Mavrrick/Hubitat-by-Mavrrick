@@ -246,6 +246,81 @@
       "id": "ee99bf59-9729-4e72-bb0a-6eaab3ad2c80",
       "name": "GoveeLanScenes_Hexa_Light.json",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Hexa_Light.json"
+    },
+    {
+      "id": "0bcda323-2bdd-4f72-a2fa-9550fba99605",
+      "name": "GoveeLanScenes_Curtain_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Curtain_Light.json"
+    },
+    {
+      "id": "eaf80865-8352-4f4b-842e-34605c58f0ab",
+      "name": "GoveeLanScenes_Cylinder_Lamp.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Cylinder_Lamp.json"
+    },
+    {
+      "id": "ea53cf62-5d56-481d-aa1c-06077ec178d2",
+      "name": "GoveeLanScenes_Galaxy_Projector.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Galaxy_Projector.json"
+    },
+    {
+      "id": "d07af3bb-ef64-4c14-98c5-40f952498eed",
+      "name": "GoveeLanScenes_Indoor_Pod_Lights.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Indoor_Pod_Lights.json"
+    },
+    {
+      "id": "75321aa2-9755-4dbc-9ff9-57cd24df4c55",
+      "name": "GoveeLanScenes_Lyra_Lamp.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Lyra_Lamp.json"
+    },
+    {
+      "id": "1e9762e2-98e8-456f-bf91-b6c2984af269",
+      "name": "GoveeLanScenes_Lyra_Lamp.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Lyra_Lamp.json"
+    },
+    {
+      "id": "03a4ed15-33e5-47a8-a380-36b28bb3aa3b",
+      "name": "GoveeLanScenes_Lyra_Pro.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Lyra_Pro.json"
+    },
+    {
+      "id": "50bc6168-480f-4eae-8094-2f0b7e46eb21",
+      "name": "GoveeLanScenes_Outdoor_Flood_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Outdoor_Flood_Light.json"
+    },
+    {
+      "id": "0a45714c-ef32-496b-8241-1acbdb00af57",
+      "name": "GoveeLanScenes_Outdoor_Perm_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Outdoor_Perm_Light.json"
+    },
+    {
+      "id": "ea31e876-0382-47a0-898b-76805ab8ff4d",
+      "name": "GoveeLanScenes_Outdoor_Pod_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Outdoor_Pod_Light.json"
+    },
+    {
+      "id": "cb194802-a660-47dc-a4a8-aca6861358d7",
+      "name": "GoveeLanScenes_Outdoor_String_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Outdoor_String_Light.json"
+    },
+    {
+      "id": "174ddb8d-ce0b-4b1e-bf8d-b127c7570fa0",
+      "name": "GoveeLanScenes_RGBIC_Strip.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_RGBIC_Strip.json"
+    },
+    {
+      "id": "caf6464b-a759-4405-8b06-415a1c21a590",
+      "name": "GoveeLanScenes_Table_Lamp.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Table_Lamp.json"
+    },
+    {
+      "id": "087630c6-7503-4e1a-a629-a9aed3a8963e",
+      "name": "GoveeLanScenes_Wall_Light_Bar.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Wall_Light_Bar.json"
+    },
+    {
+      "id": "5a31ccc3-44f9-4434-bef5-f19acc77a2e4",
+      "name": "GoveeLanScenes_XMAS_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_XMAS_Light.json"
     }
   ]
 }
