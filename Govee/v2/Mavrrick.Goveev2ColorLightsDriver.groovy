@@ -17,7 +17,7 @@ import groovy.json.JsonBuilder
 
 /*** Static Lists and Settings ***/
 // @Field static Map scenes =  [:]
-@Field static Map diyScenes =  [:]
+// @Field static Map diyScenes =  [:]
 
 def commandPort() { "4003" }
 
