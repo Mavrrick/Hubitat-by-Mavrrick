@@ -31,7 +31,6 @@ definition(
 * 2.1.5  Bug fixes
 * 2.1.6  Update to add ability to Save/Restore DIY data to a flat file
 * 2.1.7  Many update to integration app to simplify UI and improve experience
-* 2.1.8  Bug fix for timestamp check to auto refresh GoveAPI Data
 */
 
 import groovy.json.JsonOutput
@@ -42,6 +41,7 @@ import groovy.transform.Field
 
 @Field static List child = []
 @Field static List childDNI = []
+@Field static final String goveeDIYScenesFileBackup = "GoveeLanDIYScenes_Backup.json"
 @Field static final String goveeDIYScenesFile = "GoveeLanDIYScenes.json"
 
 
@@ -594,6 +594,7 @@ def diyAdd(devSKU, diyName, command) {
             state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
         }
     }
+    writeDIYFile()
 }
 
 /**
@@ -629,6 +630,7 @@ def diyAddManual(String devSKU, String diyName, String command) {
             state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
         }
     }
+    writeDIYFile()
 }
 
 /**
@@ -652,6 +654,7 @@ def diyUpdateManual(String devSKU, int diyAddNum, String diyName, String command
             logger("diyUpdateManual(): Device ${devSKU} was found. Updating scene", 'debug')
             state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
     }
+    writeDIYFile()
 }
 
 /**
@@ -1191,13 +1194,19 @@ def retrieveGoveeAPIData() {
 void saveFile(List disabledList) {
     log.debug ("saveFile: Backing up ${state.diyEffects} for DIY Scene data")
     String listJson = "["+JsonOutput.toJson(state.diyEffects)+"]" as String
-    uploadHubFile("$goveeDIYScenesFile",listJson.getBytes())
+    uploadHubFile("$goveeDIYScenesFileBackup",listJson.getBytes())
 }
 
 void loadFile() {
-    byte[] dBytes = downloadHubFile("$goveeDIYScenesFile")
+    byte[] dBytes = downloadHubFile("$goveeDIYScenesFileBackup")
     tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
     log.debug ("loadFile: Restored ${tmpEffects.get(0)} from ${goveeDIYScenesFile }")
     state.diyEffects = tmpEffects.get(0)
     log.debug ("loadFile: Restored ${state.diyEffects?.size() ?: 0} disabled records")
+}
+
+void writeDIYFile(List disabledList) {
+    log.debug ("writeDIYFile: Writing DIY Scenes to flat file for Drivers")
+    String listJson = "["+JsonOutput.toJson(state.diyEffects)+"]" as String
+    uploadHubFile("$goveeDIYScenesFile",listJson.getBytes())
 }
