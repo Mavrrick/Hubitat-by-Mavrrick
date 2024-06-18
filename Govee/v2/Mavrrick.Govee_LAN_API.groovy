@@ -38,13 +38,18 @@ def lanCT(value, level, transitionTime) {
 }
 
 def lanSetEffect (effectNo) {
-    effectNumber = effectNo.toInteger()
+//    effectNumber = effectNo.toInteger()
+    effectNumber = effectNo.toString()
+/*    byte[] dBytes = downloadHubFile("GoveeLanScenes_"+getDataValue("DevType")+".json")
+    tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+    lanScenes = tmpEffects.get(0) */
+    lanScenes = loadSceneFile()
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
-    if (descLog) log.info "${scenes.get(device.getDataValue("DevType")).keySet()}"
-    if (descLog) log.info "${scenes.get(device.getDataValue("DevType")).get(effectNumber)}"
-    if (scenes) {
-        String sceneInfo =  scenes.get(device.getDataValue("DevType")).get(effectNumber).name
-        String sceneCmd =  scenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
+    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).keySet()}"
+    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
+    if (lanScenes) {
+        String sceneInfo =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).name
+        String sceneCmd =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
         if (descLog) log.info "Scene number is present"
         sendEvent(name: "effectName", value: sceneInfo)
@@ -165,7 +170,7 @@ def lanSetEffect (effectNo) {
         sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "Plant Growth")
     }
-    }
+    } 
 }
 
 def lanSetNextEffect () {
@@ -202,10 +207,11 @@ def lanSetPreviousEffect () {
 }
 
 def lanActivateDIY (diyActivate) {
+    diyScenes = loadDIYFile()
     if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} from ${diyScenes}")}
         String diyEffectNumber = diyActivate.toString()
-        String sceneInfo = diyScenes.get(diyEffectNumber).name
-        String sceneCmd = diyScenes.get(diyEffectNumber).cmd
+        String sceneInfo = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).name
+        String sceneCmd = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd
         if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} called ${sceneInfo} with command ${sceneCmd}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: diyEffectNumber)
@@ -226,13 +232,14 @@ def retrieveScenes() {
     state.scenes = [] as List
     state.diyEffects = [] as List
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent device")}
-    if (scenes.containsKey(device.getDataValue("DevType")) == false ) {   
+/*    if (scenes.containsKey(device.getDataValue("DevType")) == false ) {   
         if (debugLog) {log.debug ("retrieveScenes(): Scenes does not contain entries for device")}
             scenes = scenes + parent."${"lightEffect_"+(device.getDataValue("DevType"))}"()
-    }
-    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${scenes.get(device.getDataValue("DevType"))}")}
-    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${scenes.keySet()}")}
-    scenes.get(device.getDataValue("DevType")).each {
+    } */
+    lanScenes = loadSceneFile()
+    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.get(device.getDataValue("DevType"))}")}
+    if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.keySet()}")}
+    lanScenes.get(device.getDataValue("DevType")).each {
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -241,14 +248,14 @@ def retrieveScenes() {
     }
 
     if (parent.label == "Govee v2 Device Manager") {   
-        diyScenes = parent.retrieveGoveeDIY(device.getDataValue("deviceModel"))
+        diyScenes = loadDIYFile()
         if (debugLog) {log.debug ("retrieveScenes(): Retrieving DIYScenes from integration app ${diyScenes}")}
         if (diyScenes == null) {
             if (debugLog) {log.debug ("retrieveScenes(): Device has no DIY Scenes")}
         } else {        
 //        if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${diyScenes.keySet()}")}
-//      diyScenes.get(device.getDataValue("deviceModel")).each {
-        diyScenes.each {    
+      diyScenes.get(device.getDataValue("deviceModel")).each {
+//        diyScenes.each {    
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -257,14 +264,16 @@ def retrieveScenes() {
             }
         }
     } else {
-        if (parent.state.diyEffects.containsKey((device.getDataValue("deviceModel"))) == false) {
+        diyScenes = loadDIYFile()
+        if (diyScenes.containsKey((device.getDataValue("deviceModel"))) == false) {
             if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
         } else {
-            diyScenes = parent.state.diyEffects.(device.getDataValue("deviceModel"))
+//            diyScenes = parent.state.diyEffects.(device.getDataValue("deviceModel"))
 //            diyScenes.put((device.getDataValue("deviceModel")),diyReturn)
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
-            diyScenes.each {
+            diyScenes.get(device.getDataValue("deviceModel")).each {
+//            diyScenes.each {
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
                 String sceneValue = it.getKey() + "=" + it.value.name
@@ -501,4 +510,19 @@ def getIPString() {
 def parse(message) {  
   log.error "Got something to parseUDP"
   log.error "UDP Response -> ${message}"    
+}
+
+def loadSceneFile() {
+    byte[] dBytes = downloadHubFile("GoveeLanScenes_"+getDataValue("DevType")+".json")
+    tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+    scenes = tmpEffects.get(0)
+    return scenes
+}
+
+def loadDIYFile() {
+    byte[] dBytes = downloadHubFile("GoveeLanDIYScenes.json")
+    tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+    log.debug ("loadDIYFile: Loaded ${tmpEffects.get(0)} from ${goveeDIYScenesFile}")
+    diyEffects = tmpEffects.get(0)
+    return diyEffects
 }

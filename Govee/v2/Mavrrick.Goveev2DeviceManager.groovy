@@ -6,7 +6,7 @@
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 
-#include Mavrrick.Govee_Lan_Scenes
+// #include Mavrrick.Govee_Lan_Scenes
 
 metadata {
 	definition(name: "Govee v2 Device Manager", namespace: "Mavrrick", author: "Mavrrick") {

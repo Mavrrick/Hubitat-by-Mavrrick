@@ -16,7 +16,7 @@ import groovy.json.JsonBuilder
 #include Mavrrick.Govee_LAN_API
 
 /*** Static Lists and Settings ***/
-@Field static Map scenes =  [:]
+// @Field static Map scenes =  [:]
 @Field static Map diyScenes =  [:]
 
 def commandPort() { "4003" }
