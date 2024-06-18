@@ -1,6 +1,5 @@
-[         
-	{	 
-		 "Indoor_Pod_Lights": {
+[{
+        "Indoor_Pod_Lights": {
             "1": {
                 "name": "Ocean",
                 "cmd": [
