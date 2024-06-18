@@ -31,6 +31,7 @@ definition(
 * 2.1.5  Bug fixes
 * 2.1.6  Update to add ability to Save/Restore DIY data to a flat file
 * 2.1.7  Many update to integration app to simplify UI and improve experience
+* 2.1.8  Bug fix for timestamp check to auto refresh GoveAPI Data
 */
 
 import groovy.json.JsonOutput
@@ -160,7 +161,11 @@ def deviceSelect() {
     if (state.goveeAppAPI == null) {
         retrieveGoveeAPIData()
     }
-    if (1800 < (state.goveeAppAPIdate - now())) {
+    if (state.goveeAppAPIdate == null) {
+        logger('deviceSelect() goveeAppAPIdate is not present. Populating with data to force refresh', 'debug')
+        atomicState.goveeAppAPIdate = now() - 1801
+    }
+    if (1800 < (now() - state.goveeAppAPIdate)) {
        logger('deviceSelect() More then 30 min have passed since last refresh. Retrieving device data from Govee API', 'debug') 
        retrieveGoveeAPIData() 
     }
