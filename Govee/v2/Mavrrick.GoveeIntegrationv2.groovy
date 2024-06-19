@@ -37,8 +37,6 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 
-// #include Mavrrick.Govee_Lan_Scenes
-
 @Field static List child = []
 @Field static List childDNI = []
 @Field static final String goveeDIYScenesFileBackup = "GoveeLanDIYScenes_Backup.json"
@@ -183,7 +181,7 @@ def deviceSelect() {
         {
             paragraph 'Please select the devices you wish to integrate. If the device is not present in the list please click on the Device Refresh button below.'
             input(name: 'goveeDev', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:true,
-                options: options, width: 8, height: 1)
+                options: options.sort() , width: 8, height: 1)
         }
         
         section('<b>Device list refresh</b>') {
@@ -252,8 +250,8 @@ def sceneManagement() {
         }
         section('<b>Govee Scene Extract</b>') {
             href 'sceneExtract', title: 'Extract Scene', description: 'Click here to perform scene extract'
-            paragraph "Click button below to refresh scenes to all children device"
-            input "pushScenesUpdate" , "button",  title: "Refresh Device Scene Awareness"
+//            paragraph "Click button below to refresh scenes to all children device"
+//            input "pushScenesUpdate" , "button",  title: "Refresh Device Scene Awareness"
 //            paragraph "Click button below to reload preload scenes"
 //            input "sceneInitialize" , "button",  title: "Reload Preloaded Scene Data"
             paragraph "Click button below to clear DIY scenes"
@@ -994,13 +992,13 @@ private def appButtonHandler(button) {
         state.remove("lightEffect_Outdoor_Flood_Light")
         state.remove("lightEffect_Galaxy_Projector")
         lightEffectSetup()
-    } else */ if (button == "pushScenesUpdate") {
+    } else  if (button == "pushScenesUpdate") {
 //        child = getChildDevices()
         child.each {
         logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
         it.allSceneReload()
         }
-    } else if (button == "sceneDIYInitialize") {
+    } else */ if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
     } else if (button == "goveeHomeLogin") {
         if (settings.goveeEmail && settings.goveePassword) {
@@ -1071,7 +1069,7 @@ def apiRateLimits(type, value) {
 // MQTT Helper to route events to device // 
 ///////////////////////////////////////////
 
-def mqttEventCreate(deviceID, instance, state){
+/* def mqttEventCreate(deviceID, instance, state){
     log.debug "mqttEventCreate(): ${deviceID} ${instance} ${state}"
     device = getChildDevice('Govee_'+deviceID)
     if (device == null) {
@@ -1080,7 +1078,7 @@ def mqttEventCreate(deviceID, instance, state){
         logger("Posting MQTT vent to device", 'info')
         device.mqttPost(instance, state)
     }
-}
+} */
 
 private String escapeStringForPassword(String str) {
     //logger("$str", "info")
@@ -1147,7 +1145,7 @@ private def addManLightDeviceHelper( String driver, String ip, String deviceName
                 ])    
 }  
 
-def retrieveGoveeDIY(deviceModel) {
+/* def retrieveGoveeDIY(deviceModel) {
     if (state.diyEffects.containsKey(deviceModel) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")} 
     } else {
@@ -1156,7 +1154,7 @@ def retrieveGoveeDIY(deviceModel) {
         if (debugLog) "retrieveGoveeDIY(): ${diyScenes}"
         return diyScenes
     }    
-}
+} */
 
 ///////////////////////////////////////////////////////////////////////////
 // Method to return the Govee API Data for specific device from Prent App //

@@ -156,11 +156,6 @@ def sceneLoad() {
     if (lanScenes == null) {
     if (debugLog) {log.debug "sceneLoad(): lanScenes not set"}
         device.updateSetting('lanScenes', [type: "bool", value: true])
-    }
-    
-    if (lanScenes == null) {
-    if (debugLog) {log.debug "sceneLoad(): lanScenes not set"}
-        device.updateSetting('lanScenes', [type: "bool", value: true])
     }   
     
     if (lanControl && lanScenes) { 
