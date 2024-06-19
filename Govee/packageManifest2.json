@@ -321,6 +321,11 @@
       "id": "5a31ccc3-44f9-4434-bef5-f19acc77a2e4",
       "name": "GoveeLanScenes_XMAS_Light.json",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_XMAS_Light.json"
+    },
+    {
+      "id": "777a2eba-c83d-435b-bb51-9fada6d1c9b9",
+      "name": "GoveeLanScenes_Outdoor_Wall_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Outdoor_Wall_Light.json"
     }
   ]
 }
