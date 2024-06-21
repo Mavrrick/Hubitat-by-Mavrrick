@@ -48,7 +48,7 @@ def cloudCT(value, level, transitionTime){
 
 private def sendCommand(String command, payload2, type) {
      randomUUID()
-     if (debugLog) { log.debug "sendCommand(): ${requestID}"}
+//     if (debugLog) { log.debug "sendCommand(): ${requestID}"}
      String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
      def params = [
             uri   : "https://openapi.api.govee.com",
@@ -114,11 +114,18 @@ try {
                     }
                 else if (code == 200 && command == "diyScene") {
                     sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "colorMode", value: "EFFECTS")
+                    sendEvent(name: "colorMode", value: "DIY_EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
-                    sendEvent(name: "effectName", value: state.diySceneOptions ."${payload2}")
+                    sendEvent(name: "effectName", value: state.diyEffects."${payload2}")
                     if (descLog) { log.info "${device.label} DIY scene was set to ${payload2}"}
-                   }                
+                   }
+                else if (code == 200 && command == "snapshot") {
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "colorMode", value: "Snapshot_EFFECTS")
+                    sendEvent(name: "effectNum", value: payload2)
+                    sendEvent(name: "effectName", value: state.snapshot."${payload2}")
+                    if (descLog) { log.info "${device.label} snapshot scene was set to ${payload2}"}
+                   }
                else if (code == 200 && command == "airDeflectorToggle") {
                    sendEvent(name: "cloudAPI", value: "Success")
                    if (payload2 == 1) {
@@ -504,14 +511,33 @@ def retrieveStateData(){
     if (device.getDataValue("commands").contains("segmentedBrightness")) { retrieveCmdParms("segmentedBrightness") }
     if (device.getDataValue("commands").contains("segmentedColorRgb")) { retrieveCmdParms("segmentedColorRgb") }
     if (device.getDataValue("commands").contains("musicMode")) { retrieveCmdParms("musicMode") }
-    if (device.getDataValue("commands").contains("snapshot")) { retrieveDynamicScene("snapshot") }
+    if (device.getDataValue("commands").contains("snapshot")) { retrieveSnapshot() }
     if (device.getDataValue("commands").contains("presetScene")) { retrieveDynamicScene("presetScene") }    
 }
+
+void retrieveSnapshot() {
+    if (debugLog) { log.debug "retrieveSnapshot(): Retrieving Snapshots for device"}
+    def device = device.getDataValue("deviceID")
+    def goveeAppAPI = parent.retrieveGoveeAPI(device)
+    state.snapshot = [:]
+    goveeAppAPI.capabilities.each{
+        if (debugLog) { log.debug "retrieveSnapshot(): found ${it.get("instance")}"}
+        if (it.get("instance") == "snapshot") {
+            if (debugLog) { log.debug "retrieveSnapshot(): Snapshot instance"}
+            if (debugLog) { log.debug "retrieveSnapshot(): Adding ${it.parameters.options} to state value" }
+            it.parameters.options.each {
+                if (debugLog) { log.debug "retrieveSnapshot(): Adding ${it.name} = ${it.value} to state value" }
+                state.snapshot.put(it.value,it.name)
+            }
+        }
+    }
+}
+
 
 def retrieveDynamicScene(type){
     def device = device.getDataValue("deviceID")
     def goveeAppAPI = parent.retrieveGoveeAPI(device)
-    state."${type}" = [] as List
+    state."${type}" = []
 //    parent.goveeAppAPI.each {
 //        if (it.device == device.getDataValue("deviceID")) {
             if (debugLog) { log.debug "retrieveDynamicScene(): found matching device"}
@@ -582,4 +608,58 @@ def randomOffset(int pollRateInt){
 //    int number = random.nextInt(pollRateInt) + start; // see explanation below
     if (debugLog) {log.debug "randomOffset(): random offset is ${offset}"}    
     return offset
+}
+
+void recState(){
+    state.previousState = [:]
+    if (device.currentValue("switch") == "on") {
+        state.previousState.put("switch",device.currentValue("switch"))
+        if (device.currentValue("colorMode") == "CT") {
+            state.previousState.put("colorMode",device.currentValue("colorMode"))
+            state.previousState.put("colorTemperature",device.currentValue("colorTemperature"))
+            state.previousState.put("level",device.currentValue("level"))
+        } else if (device.currentValue("colorMode") == "RGB") {
+            state.previousState.put("colorMode",device.currentValue("colorMode"))
+            state.previousState.put("level",device.currentValue("level"))
+            state.previousState.put("hue",device.currentValue("hue"))
+            state.previousState.put("saturation",device.currentValue("saturation"))     
+        } else if (device.currentValue("colorMode") == "EFFECTS") {
+            state.previousState.put("colorMode",device.currentValue("colorMode"))
+            state.previousState.put("level",device.currentValue("level"))
+            state.previousState.put("effectNum",device.currentValue("effectNum"))
+        } else if (device.currentValue("colorMode") == "DIY_EFFECTS") {
+            state.previousState.put("colorMode",device.currentValue("colorMode"))
+            state.previousState.put("level",device.currentValue("level"))
+            state.previousState.put("effectNum",device.currentValue("effectNum"))
+        } else if (device.currentValue("colorMode") == "Snapshot_EFFECTS") {
+            state.previousState.put("colorMode",device.currentValue("colorMode"))
+            state.previousState.put("level",device.currentValue("level"))
+            state.previousState.put("effectNum",device.currentValue("effectNum"))
+        }       
+    } else {
+        state.previousState.put("switch",device.currentValue("switch"))
+    }
+}
+
+void loadState(){
+    if (state.previousState.switch == "on" ) {
+        if (state.previousState.colorMode == "CT") {
+            setColorTemperature(state.previousState.colorTemperature,state.previousState.level,transitionTime = null)
+//            setLevel(float v,duration = 0)
+        } else if (state.previousState.colorMode == "RGB") {
+            setLevel(100,duration = 0)
+            setHsb(state.previousState.hue,state.previousState.saturation,100)
+        } else if (state.previousState.colorMode == "EFFECTS") {
+            setLevel(state.previousState.level,duration = 0)
+            setEffect(state.previousState.effectNum)
+        } else if (state.previousState.colorMode == "DIY_EFFECTS") {
+            setLevel(state.previousState.level,duration = 0)
+            activateDIY(state.previousState.effectNum)
+        } else if (state.previousState.colorMode == "Snapshot_EFFECTS") {
+            setLevel(state.previousState.level,duration = 0)
+            snapshot(state.previousState.effectNum)
+        }
+    }   else {
+        off()
+    }
 }

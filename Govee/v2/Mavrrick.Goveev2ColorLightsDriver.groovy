@@ -16,8 +16,8 @@ import groovy.json.JsonBuilder
 #include Mavrrick.Govee_LAN_API
 
 /*** Static Lists and Settings ***/
-@Field static Map scenes =  [:]
-@Field static Map diyScenes =  [:]
+// @Field static Map scenes =  [:]
+// @Field static Map diyScenes =  [:]
 
 def commandPort() { "4003" }
 
@@ -63,6 +63,8 @@ metadata {
             [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
            ]
         command "sceneLoad"
+        command "recState"
+        command "loadState" 
     }
 	preferences {		
 		section("Device Info") {
@@ -72,6 +74,9 @@ metadata {
             if (lanControl) {
             input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)
             input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false) 
+            if (lanScenes) {
+                input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("DevType")+".json")    
+                }
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
@@ -111,17 +116,6 @@ def initialize(){
     if(device.getDataValue("commands").contains("lightScene")) {
         sendEvent(name: "effectNum", value: 0) }
     unschedule()
-/*    if (lanControl && lanScenes) { 
-        getDevType()
-        retrieveScenes()   
-    } else if ((lanControl == false) || (lanControl && lanScenes == false)) { 
-        retrieveScenes2()
-        retrieveStateData()
-        if (state.diyScene.isEmpty()) {
-            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
-            retrieveDIYScenes()
-        }
-    } */
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
@@ -159,7 +153,8 @@ def sceneLoad() {
     
     if (lanControl && lanScenes) { 
         getDevType()
-        retrieveScenes()   
+        retrieveScenes()  
+        retrieveSnapshot()
     } else if ((lanControl == false) || (lanControl && lanScenes == false)) { 
         retrieveScenes2()
         retrieveStateData()

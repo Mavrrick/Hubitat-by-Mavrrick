@@ -31,17 +31,17 @@ definition(
 * 2.1.5  Bug fixes
 * 2.1.6  Update to add ability to Save/Restore DIY data to a flat file
 * 2.1.7  Many update to integration app to simplify UI and improve experience
-* 2.1.8  Bug fix for timestamp check to auto refresh GoveAPI Data
+* 2.1.8  Bug Fix for issue with Device Select Page
+* 2.1.9  Enhancements to Scene management to function from flat files 
 */
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 
-// #include Mavrrick.Govee_Lan_Scenes
-
 @Field static List child = []
 @Field static List childDNI = []
+@Field static final String goveeDIYScenesFileBackup = "GoveeLanDIYScenes_Backup.json"
 @Field static final String goveeDIYScenesFile = "GoveeLanDIYScenes.json"
 
 
@@ -183,7 +183,7 @@ def deviceSelect() {
         {
             paragraph 'Please select the devices you wish to integrate. If the device is not present in the list please click on the Device Refresh button below.'
             input(name: 'goveeDev', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:true,
-                options: options, width: 8, height: 1)
+                options: options.sort() , width: 8, height: 1)
         }
         
         section('<b>Device list refresh</b>') {
@@ -252,8 +252,8 @@ def sceneManagement() {
         }
         section('<b>Govee Scene Extract</b>') {
             href 'sceneExtract', title: 'Extract Scene', description: 'Click here to perform scene extract'
-            paragraph "Click button below to refresh scenes to all children device"
-            input "pushScenesUpdate" , "button",  title: "Refresh Device Scene Awareness"
+//            paragraph "Click button below to refresh scenes to all children device"
+//            input "pushScenesUpdate" , "button",  title: "Refresh Device Scene Awareness"
 //            paragraph "Click button below to reload preload scenes"
 //            input "sceneInitialize" , "button",  title: "Reload Preloaded Scene Data"
             paragraph "Click button below to clear DIY scenes"
@@ -337,7 +337,6 @@ def sceneManualUpdate2() {
 }
 
 def sceneExtract() {
-//    def sceneData = [:]
 
     logger('sceneExtract() DEVICE INFORMATION', 'debug')
     if (state.goveeHomeToken != null) {
@@ -415,7 +414,6 @@ def sceneExtract() {
                                 logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
                             logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
-//                            logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command.inspect().replaceAll("\'", "\"")}", 'debug')
                             diyAdd(devSku, sceneName, command)
                             } else {
                                 logger("sceneExtract(): Found scene that is not extractable. Moving on", 'debug')
@@ -594,6 +592,7 @@ def diyAdd(devSKU, diyName, command) {
             state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
         }
     }
+    writeDIYFile()
 }
 
 /**
@@ -629,6 +628,7 @@ def diyAddManual(String devSKU, String diyName, String command) {
             state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
         }
     }
+    writeDIYFile()
 }
 
 /**
@@ -652,6 +652,7 @@ def diyUpdateManual(String devSKU, int diyAddNum, String diyName, String command
             logger("diyUpdateManual(): Device ${devSKU} was found. Updating scene", 'debug')
             state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
     }
+    writeDIYFile()
 }
 
 /**
@@ -969,35 +970,7 @@ private goveeLightManAdd(String model, String ip, String name) {
  **/
 
 private def appButtonHandler(button) {
-/*    if (button == "sceneInitialize") {
-        log.debug "appButtonHandler(): Initializing Scene data"
-//        state?.lightEffects = [:]
-        state.remove("lightEffect_Lyra_Lamp")
-        state.remove("lightEffect_Table_Lamp")
-        state.remove("lightEffect_Y_Light")
-        state.remove("lightEffect_Hexa_Light")
-        state.remove("lightEffect_Basic_Lamp")
-        state.remove("lightEffect_Outdoor_String_Light")
-        state.remove("lightEffect_Outdoor_Pod_Light")
-        state.remove("lightEffect_Outdoor_Perm_Light")
-        state.remove("lightEffect_Wall_Light_Bar")
-        state.remove("lightEffect_Indoor_Pod_Lights")
-        state.remove("lightEffect_XMAS_Light")  
-        state.remove("lightEffect_RGBIC_Strip")
-        state.remove("lightEffect_Curtain_Light")
-        state.remove("lightEffect_Tri_Light")
-        state.remove("lightEffect_Cylinder_Lamp")
-        state.remove("lightEffect_TV_Light_Bar")
-        state.remove("lightEffect_Outdoor_Flood_Light")
-        state.remove("lightEffect_Galaxy_Projector")
-        lightEffectSetup()
-    } else */ if (button == "pushScenesUpdate") {
-//        child = getChildDevices()
-        child.each {
-        logger('appButtonHandler(): All Devices need to update scene data. Calling child devices to refresh scenes', 'debug')
-        it.allSceneReload()
-        }
-    } else if (button == "sceneDIYInitialize") {
+    if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
     } else if (button == "goveeHomeLogin") {
         if (settings.goveeEmail && settings.goveePassword) {
@@ -1065,19 +1038,9 @@ def apiRateLimits(type, value) {
 
 
 ///////////////////////////////////////////
-// MQTT Helper to route events to device // 
+// Helper methods for certain tasks // 
 ///////////////////////////////////////////
 
-def mqttEventCreate(deviceID, instance, state){
-    log.debug "mqttEventCreate(): ${deviceID} ${instance} ${state}"
-    device = getChildDevice('Govee_'+deviceID)
-    if (device == null) {
-        logger("The MQTT event is for a device that is not setup", 'info')
-    } else {
-        logger("Posting MQTT vent to device", 'info')
-        device.mqttPost(instance, state)
-    }
-}
 
 private String escapeStringForPassword(String str) {
     //logger("$str", "info")
@@ -1144,16 +1107,6 @@ private def addManLightDeviceHelper( String driver, String ip, String deviceName
                 ])    
 }  
 
-def retrieveGoveeDIY(deviceModel) {
-    if (state.diyEffects.containsKey(deviceModel) == false) {
-        if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")} 
-    } else {
-        if (debugLog) "retrieveGoveeDIY(): ${deviceModel}"
-        def diyScenes = state.diyEffects.get(deviceModel)
-        if (debugLog) "retrieveGoveeDIY(): ${diyScenes}"
-        return diyScenes
-    }    
-}
 
 ///////////////////////////////////////////////////////////////////////////
 // Method to return the Govee API Data for specific device from Prent App //
@@ -1188,16 +1141,23 @@ def retrieveGoveeAPIData() {
 }
 
 
-void saveFile(List disabledList) {
+void saveFile() {
     log.debug ("saveFile: Backing up ${state.diyEffects} for DIY Scene data")
     String listJson = "["+JsonOutput.toJson(state.diyEffects)+"]" as String
-    uploadHubFile("$goveeDIYScenesFile",listJson.getBytes())
+    uploadHubFile("$goveeDIYScenesFileBackup",listJson.getBytes())
 }
 
 void loadFile() {
-    byte[] dBytes = downloadHubFile("$goveeDIYScenesFile")
+    byte[] dBytes = downloadHubFile("$goveeDIYScenesFileBackup")
     tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
     log.debug ("loadFile: Restored ${tmpEffects.get(0)} from ${goveeDIYScenesFile }")
     state.diyEffects = tmpEffects.get(0)
     log.debug ("loadFile: Restored ${state.diyEffects?.size() ?: 0} disabled records")
+    writeDIYFile()
+}
+
+void writeDIYFile() {
+    log.debug ("writeDIYFile: Writing DIY Scenes to flat file for Drivers")
+    String listJson = "["+JsonOutput.toJson(state.diyEffects)+"]" as String
+    uploadHubFile("$goveeDIYScenesFile",listJson.getBytes())
 }

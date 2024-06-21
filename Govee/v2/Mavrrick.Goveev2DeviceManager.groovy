@@ -6,7 +6,6 @@
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 
-#include Mavrrick.Govee_Lan_Scenes
 
 metadata {
 	definition(name: "Govee v2 Device Manager", namespace: "Mavrrick", author: "Mavrrick") {
@@ -174,17 +173,11 @@ def disconnected() {
 def parse(String event) {
     def jsonSlurper = new JsonSlurper()     
     if (descLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
-//    def message = interfaces.mqtt.parseMessage(event)    
-//    def payloadJson = jsonSlurper.parseText(message.payload)
     def payloadJson = jsonSlurper.parseText(interfaces.mqtt.parseMessage(event).payload)
     int mqttMsgCount = device.currentValue("msgCount").toInteger() + 1
     sendEvent(name: "msgCount", value: mqttMsgCount)
     
         if (debugLog) log.debug "In parse, received message: ${payloadJson} for deviceid is ${payloadJson.device} capability is ${payloadJson.capabilities}"
-//        if (debugLog) log.debug "In parse, payloadJson is ${payloadJson}"
-//        if (debugLog) log.debug "In parse, deviceid is ${payloadJson.device} capability is ${payloadJson.capabilities} "
-//        if (debugLog) log.debug "In parse, instance is ${payloadJson.capabilities.get(0).instance}" 
-//        if (debugLog) log.debug "In parse, state is ${payloadJson.capabilities.get(0).state.get(0).name}"
 
         mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
 }
@@ -299,7 +292,7 @@ def retrieveGoveeAPI(deviceid) {
 // Method to return the Govee DIY Scene Data for specific device from Prent App //
 /////////////////////////////////////////////////////////////////////////////////
 
-def retrieveGoveeDIY(deviceModel) {
+/* def retrieveGoveeDIY(deviceModel) {
     if (parent.state.diyEffects.containsKey(deviceModel) == false) {
         if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")} 
     } else {
@@ -308,7 +301,7 @@ def retrieveGoveeDIY(deviceModel) {
         if (debugLog) "retrieveGoveeDIY(): ${diyScenes}"
         return diyScenes
     }    
-}
+} */
 
 def allSceneReload(){
     child = getChildDevices()
