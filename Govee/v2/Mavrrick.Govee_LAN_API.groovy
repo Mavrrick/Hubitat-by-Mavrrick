@@ -44,7 +44,7 @@ def lanSetEffect (effectNo) {
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
     if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).keySet()}"
     if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
-    if (lanScenes) {
+    if (lanScenes.get(device.getDataValue("DevType")).containsKey(effectNumber)) {
         String sceneInfo =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).name
         String sceneCmd =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
