@@ -107,6 +107,7 @@ try {
                     }
                 else if (code == 200 && command == "lightScene") {
                     sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.scenes."${payload2}")
@@ -114,6 +115,7 @@ try {
                     }
                 else if (code == 200 && command == "diyScene") {
                     sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "DIY_EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.diyEffects."${payload2}")
@@ -121,6 +123,7 @@ try {
                    }
                 else if (code == 200 && command == "snapshot") {
                     sendEvent(name: "cloudAPI", value: "Success")
+                    sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "Snapshot_EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.snapshot."${payload2}")
