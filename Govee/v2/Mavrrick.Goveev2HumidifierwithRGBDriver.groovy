@@ -146,7 +146,11 @@ def on() {
 
 def off() {
     cloudOff()
-} 
+}
+
+def setLevel(float v,duration = 0) {
+    cloudSetLevel( v, 0)
+}
 
 def workingMode(mode, gear){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"

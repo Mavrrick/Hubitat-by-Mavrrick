@@ -26,7 +26,7 @@ def lanOff() {
 def lanCT(value, level, transitionTime) {
         int intvalue = value.toInteger()
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) setLevel(level,transitionTime);
+        if (level != null) lanSetLevel(level,transitionTime);
         sendEvent(name: "colorTemperature", value: intvalue)
         sendEvent(name: "switch", value: "on")
         sendEvent(name: "colorMode", value: "CT")
@@ -37,13 +37,96 @@ def lanCT(value, level, transitionTime) {
 	    setCTColorName(intvalue)
 }
 
+def lanSetLevel(float v,duration = 0){
+    int intv = v.toInteger()
+//    if (descLog) log.info "${device.label} Level was set to ${intv}%"
+    if (duration>0){
+        int intduration = duration.toInteger()
+        sendEvent(name: "switch", value: "on")
+        fade(intv,intduration)
+    }
+    else {
+        lanSetLevel2(intv)
+    }
+}
+
+def lanSetLevel2(int v){
+    
+        if (descLog) log.info "${device.label} Level was set to ${v}%"      
+    
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        sendEvent(name: "level", value: v)
+        sendEvent(name: "switch", value: "on")
+}
+
+def fade(int v,float duration){
+    unschedule(fadeUp)
+    unschedule(fadeDown)
+    int curLevel = device.currentValue("level")
+    if (v < curLevel){
+    float fadeRep = (curLevel-v)/fadeInc
+    float fadeInt = (duration*1000)/fadeRep
+    fadeDown(curLevel, v, fadeRep, fadeInt)
+        }
+    else if (v > curLevel){
+    float fadeRep = (v-curLevel)/fadeInc
+    float fadeInt = (duration*1000)/fadeRep
+    fadeUp(curLevel, v, fadeRep, fadeInt)
+        }
+    else {
+        if (debugLog) {log.debug "fade(): Level is not changing"}
+    }
+}
+
+def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
+    if (debugLog) {log.debug "fadeDown(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+    int v = (curLevel-fadeInc).toInteger()
+    log.debug "fadeDown(): v ${v}"
+    if ( v == 0 ) {
+        log.debug "fadeDown(): Next fade is to 0 turning off device. Fade is complete"
+        off()
+    } else if (level==v) {
+            if (debugLog) {log.debug "Final Loop"}
+            sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+            sendEvent(name: "level", value: v)
+    } else {
+            sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+            sendEvent(name: "level", value: v)
+            if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
+            def int delay = fadeRep
+            if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
+            if (debugLog) {log.debug "fadeDown(): executing loop to fadedown() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+            runInMillis(delay, fadeDown, [data:[v ,level, fadeInt,fadeRep]])
+    }
+} 
+
+def fadeUp( int curLevel, int level, fadeInt, fadeRep) {
+    if (debugLog) {log.debug "fadeUp(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+    int v= (curLevel+fadeInc).toInteger()
+    log.debug "fadeUp(): v ${v}"
+    if (level==v)    {
+        if (debugLog) {log.debug "Final Loop"}
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        sendEvent(name: "level", value: v)
+    }
+    else {
+        if (debugLog) {log.debug "fadeUp(): continueing  fading to ${v}"}
+        def int delay= fadeRep
+        if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
+        if (debugLog) {log.debug "fadeUp(): executing loop to fadeup() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        sendEvent(name: "level", value: v)
+        runInMillis(delay, fadeUp, [data:[v ,level, fadeInt,fadeRep]])
+    }
+} 
+
 def lanSetEffect (effectNo) {
 //    effectNumber = effectNo.toInteger()
     effectNumber = effectNo.toString()
     lanScenes = loadSceneFile()
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
     if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).keySet()}"
-    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
+//    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
     if (lanScenes.get(device.getDataValue("DevType")).containsKey(effectNumber)) {
         String sceneInfo =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).name
         String sceneCmd =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
@@ -504,7 +587,11 @@ def sendCommandLan(String cmd) {
 }
 
 def getIPString() {
-   return ip+":"+commandPort()
+    if (ip){
+       return ip+":"+commandPort()
+    } else {
+        return device.getDataValue("IP")+":"+commandPort()
+    }
 }
 
 

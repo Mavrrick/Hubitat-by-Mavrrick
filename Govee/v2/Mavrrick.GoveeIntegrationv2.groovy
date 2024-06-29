@@ -43,13 +43,14 @@ import groovy.transform.Field
 @Field static List childDNI = []
 @Field static final String goveeDIYScenesFileBackup = "GoveeLanDIYScenes_Backup.json"
 @Field static final String goveeDIYScenesFile = "GoveeLanDIYScenes.json"
+@Field static String statusMessage = ""
 
 
 preferences
 {
     page(name: 'mainPage', title: 'Govee Integration')
     page(name: 'deviceSelect', title: 'Select Light, Switch, Plug devices')
-    page(name: 'deviceSelect2', title: 'Select Appliances')
+    page(name: 'deviceSelect2', title: 'Device Install Process')
     page(name: 'deviceLanManual', title: 'Manual LAN Setup')
     page(name: 'deviceLanManual2', title: 'Complete device manual add')
     page(name: 'sceneManagement', title: 'Scene Management')
@@ -68,9 +69,11 @@ preferences
     UI Page: Main menu for the app.
 */
 def mainPage() {
+    atomicState.backgroundActionInProgress = null
     app.clearSetting("goveeDevName")
     app.clearSetting("goveeModel")
     app.clearSetting("goveeManLanIP")
+    statusMessage = ""
     if (state.isInstalled == true) {     
         mqttDevice = getChildDevice('Govee_v2_Device_Manager')
         if (mqttDevice == null) {
@@ -176,7 +179,7 @@ def deviceSelect() {
                     options["${deviceName}"] = deviceName
                 } 
                 logger(" deviceSelect() $options", 'debug')
-    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false, nextPage: "mainPage")
+    dynamicPage(name: 'deviceSelect', title: 'Add Devices page', uninstall: false, install: false, nextPage: "deviceSelect2")
     {
         
         section('<b>Device Add</b>')
@@ -192,6 +195,43 @@ def deviceSelect() {
         }
     }
 }
+
+def deviceSelect2() {
+    logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
+	if (atomicState.backgroundActionInProgress == null) {
+		logger("deviceSelect2: Install chosen devices", 'debug')
+		atomicState.backgroundActionInProgress = true
+         logger("deviceSelect2: Background action in progress status should be true =  ${atomicState.backgroundActionInProgress}", 'debug')
+		runInMillis(1,goveeDevAdd)
+	}
+	if (atomicState.backgroundActionInProgress != false) {
+        logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
+		return dynamicPage(name: "deviceSelect2", title: "", nextPage: "deviceSelect2", install: false, uninstall: false, refreshInterval: 2) {
+			section {
+				paragraph "<b>Processing Setup of devices from Selected Devices</b>"
+				paragraph "Installing new devices from selected list... Please wait..."
+				paragraph getBackgroundStatusMessage()
+				showHideNextButton(false)
+			}
+		}
+	}
+	else if (atomicState.backgroundActionInProgress == false) {
+        logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
+			return dynamicPage(name: "deviceSelect2", title: "", nextPage: "mainPage", install: false, uninstall: false) {
+				section {
+					paragraph "<b>Device install status</b>"
+                    paragraph getBackgroundStatusMessage()
+					paragraph "Device setup completed."
+/*				section {
+					paragraph "<hr>"
+					input "btnMainMenu", "button", title: "Main Menu", width: 3
+				} */
+			}
+        }
+	}
+//    statusMessage = ""
+}
+
 
 def deviceLanManual() {
     dynamicPage(name: 'deviceLanManual', title: 'Manual Setup for LAN API Enabled Devices', uninstall: false, install: false, nextPage: "deviceLanManual2" )
@@ -529,11 +569,11 @@ def updated() {
     if (settings.APIKey != state.APIKey ) {
         child.each {
             logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
-//            it.apiKeyUpdate()
+            it.apiKeyUpdate()
         }
         state?.APIKey = settings.APIKey
     }
-    if (goveeDev) {
+/*    if (goveeDev) {
         def goveeAdd = settings.goveeDev - child.label
         logger("initialize() Found child devices ${child}", 'debug')
         logger("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.", 'info')
@@ -543,7 +583,7 @@ def updated() {
         }
           else {
         logger('initialize() No devices to add', 'info')
-          }
+          } */
 }
 
 def uninstalled() {
@@ -694,12 +734,16 @@ private logger(msg, level = 'debug') {
  *
  *  Wrapper function to create devices.
  **/
-private goveeDevAdd(goveeAdd) {
-    def devices = goveeAdd
+def goveeDevAdd() { //testing
+
+// private goveeDevAdd(goveeAdd) {
+//    def goveeAdd = settings.goveeDev - child.label    // testing
+//    def devices = goveeAdd
+    def devices = settings.goveeDev - child.label
     def drivers = getDriverList()
     mqttDevice = getChildDevice('Govee_v2_Device_Manager')
     logger("goveeDevAdd() drivers detected are ${drivers}", 'debug')
-     logger("goveeDevAdd() Childred DNI  ${childDNI} MQTT device DNI ${mqttChildredDNI}", 'debug')
+    logger("goveeDevAdd() Childred DNI  ${childDNI} MQTT device DNI ${mqttChildredDNI}", 'debug')
     logger("goveeDevAdd() $devices are selcted to be integrated", 'info')
     logger('goveeDevAdd() DEVICE INFORMATION', 'info')
     state.goveeAppAPI.each {
@@ -726,79 +770,98 @@ private goveeDevAdd(goveeAdd) {
                         logger ("goveeDevAdd(): Min is ${ctMin} Max is ${ctMax}",'trace')
                     }
                 }
-                logger ("goveeDevAdd(): ${deviceID} ${deviceModel} ${deviceName} ${devType} ${commands}",'trace')            
+                logger ("goveeDevAdd(): ${deviceID} ${deviceModel} ${deviceName} ${devType} ${commands}",'trace')  
+//                setBackgroundStatusMessage("Processing device ${deviceName}")
                 if (devType == "devices.types.light") {
                     if (commands.contains("colorRgb") && commands.contains("colorTemperatureK") && commands.contains("segmentedBrightness") && commands.contains("segmentedColorRgb") && commands.contains("dreamViewToggle")) {
                         String driver = "Govee v2 Color Lights Dreamview Sync"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
                         } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
                     } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK") && commands.contains("segmentedBrightness") && commands.contains("segmentedColorRgb")) {
                         String driver = "Govee v2 Color Lights 3 Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }    
                     } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedBrightness")) {
                         String driver = "Govee v2 Color Lights 2 Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
                     } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedColorRgb") && commands.contains("dreamViewToggle")) {
                         String driver = "Govee v2 Color Lights 4 Dreamview Sync"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }    
                     } else if (commands.contains("colorRgb") && commands.contains("colorTemperatureK")  && commands.contains("segmentedColorRgb")) {
                         String driver = "Govee v2 Color Lights 4 Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }    
                     } else if (commands.contains("colorRgb") == true && commands.contains("colorTemperatureK")) {
                         String driver = "Govee v2 Color Lights Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         } 
                     } else if (commands.contains("colorTemperatureK")) {
                         String driver = "Govee v2 White Lights with CT Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }     
                     } else if (deviceModel == "H6091" || deviceModel == "H6092") {
                         String driver = "Govee v2 Galaxy Projector"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }    
                     } else {
                         String driver = "Govee v2 White Light Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)              
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }                    
                     }    
                 } else if (devType == "devices.types.air_purifier") {
@@ -806,17 +869,21 @@ private goveeDevAdd(goveeAdd) {
                         String driver = "Govee v2 Air Purifier with RGB Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
                     } else {
                         String driver = "Govee v2 Air Purifier Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
                     }    
                 } else if (devType == "devices.types.heater") {
@@ -824,17 +891,21 @@ private goveeDevAdd(goveeAdd) {
                         String driver = "Govee v2 Heating Appliance with RGB Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }    
                     } else {
                         String driver = "Govee v2 Heating Appliance Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
                     }
                 } else if (devType == "devices.types.humidifier") {
@@ -842,17 +913,21 @@ private goveeDevAdd(goveeAdd) {
                         String driver = "Govee v2 Humidifier with RGB Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
                     } else {
                         String driver = "Govee v2 Humidifier Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }    
                     }
                 } else if (devType == "devices.types.fan") {
@@ -860,72 +935,89 @@ private goveeDevAdd(goveeAdd) {
                         String driver = "Govee v2 Fan with RGB Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
                     } else {
                         String driver = "Govee v2 Fan Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                         } else {
-                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }     
                     }
                 } else if (devType == "devices.types.socket") {
                     String driver = "Govee v2 Sockets Driver"
                     if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
                             mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                     }         
                 } else if (devType == "devices.types.ice_maker") {
                     String driver = "Govee v2 Ice Maker"
                     if (drivers.contains(driver)) {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        setBackgroundStatusMessage("Installing device ${deviceName}")
                         mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                     }     
                 } else if (devType == "devices.types.kettle") {
                     String driver = "Govee v2 Kettle Driver"
                     if (drivers.contains(driver)) {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        setBackgroundStatusMessage("Installing device ${deviceName}")
                         mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                     } 
                 } else if (devType == "devices.types.thermometer") {
                     String driver = "Govee v2 Thermo/Hygrometer Driver"
                     if (drivers.contains(driver)) {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        setBackgroundStatusMessage("Installing device ${deviceName}")
                         mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                     }
                 } else if (devType == "devices.types.sensor") {
                     String driver = "Govee v2 Presence Sensor"
                     if (drivers.contains(driver)) {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        setBackgroundStatusMessage("Installing device ${deviceName}")
                         mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                     }    
                 } else if (devType == "devices.types.aroma_diffuser") {
                     String driver = "Govee v2 Aroma Diffuser Driver with Lights"
                     if (drivers.contains(driver)) {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        setBackgroundStatusMessage("Installing device ${deviceName}")
                         mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
                     } else {
-                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')    
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                     }     
                 } else {
                     String driver = "Govee v2 Research Driver"
                     if (drivers.contains(driver)) {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
                         addDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver ${driver} is not installed. Please correct and try again")
                     } else {
                     logger('goveeDevAdd(): The device does not have a driver and you do not have the '+driver+' loaded. Please load it and forward the device details to the developer', 'info')    
                     }
@@ -934,10 +1026,12 @@ private goveeDevAdd(goveeAdd) {
                 logger("goveeDevAdd(): Device is not selected to be added. ${deviceName} not being installed", 'debug')
             }
         } else {
-            logger("goveeDevAdd(): Device ID matches child DNI. ${deviceName} already installed", 'debug')    
+            logger("goveeDevAdd(): Device ID matches child DNI. ${deviceName} already installed", 'debug')
+            setBackgroundStatusMessage("Device ${deviceName} is already installed. Ignored")
         }                
     }
     state?.installDev = goveeDev
+    atomicState.backgroundActionInProgress = false
     logger('goveeDevAdd() Govee devices integrated', 'info')
 }
 
@@ -1160,4 +1254,21 @@ void writeDIYFile() {
     log.debug ("writeDIYFile: Writing DIY Scenes to flat file for Drivers")
     String listJson = "["+JsonOutput.toJson(state.diyEffects)+"]" as String
     uploadHubFile("$goveeDIYScenesFile",listJson.getBytes())
+}
+
+def setBackgroundStatusMessage(msg, level="info") {
+	if (statusMessage == null)
+		statusMessage = ""
+	if (level == "warn") log.warn msg
+	if (settings?.txtEnable != false && level == "info") log.info msg
+	statusMessage += "${msg}<br>"
+}
+
+def getBackgroundStatusMessage() {
+	return statusMessage
+}
+
+def showHideNextButton(show) {
+	if(show) paragraph "<script>\$('button[name=\"_action_next\"]').show()</script>"
+	else paragraph "<script>\$('button[name=\"_action_next\"]').hide()</script>"
 }

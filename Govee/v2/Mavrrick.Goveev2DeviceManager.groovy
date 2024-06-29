@@ -321,3 +321,14 @@ def allSceneReload(){
 }
 
 
+def apiKeyUpdate() {
+    if (device.getDataValue("apiKey") != parent?.APIKey) {
+        if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
+        device.updateDataValue("apiKey", parent?.APIKey)
+        child = getChildDevices()
+        child.each {
+            if (debugLog) {log.debug ("apiKeyUpdate(): ${it.label} is being updated with new APIKey")}
+            it.apiKeyUpdate()
+        }
+    }
+}

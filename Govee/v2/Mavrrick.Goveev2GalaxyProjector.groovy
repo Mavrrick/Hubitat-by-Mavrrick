@@ -90,17 +90,6 @@ def initialize(){
     if(device.getDataValue("commands").contains("lightScene")) {
         sendEvent(name: "effectNum", value: 0) }
     unschedule()
-/*    if (lanControl && lanScenes) { 
-        getDevType()
-        retrieveScenes()   
-    } else if ((lanControl == false) || (lanControl && lanScenes == false)) { 
-        retrieveScenes2()
-        retrieveStateData()
-        if (state.diyScene.isEmpty()) {
-            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
-            retrieveDIYScenes()
-        }
-    } */
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
@@ -121,7 +110,8 @@ def installed(){
         sendEvent(name: "effectNum", value: 0) }
     if (pollRate > 0) runIn(pollRate,poll)
     retrieveScenes2()
-    retrieveStateData()  
+    retrieveStateData()
+    getDevType()
 }
 
 def logsOff() {
@@ -167,6 +157,14 @@ def off() {
         lanOff() }
     else {
         cloudOff()
+        }
+}
+
+def setLevel(float v,duration = 0) {
+    if (lanControl) {
+        lanSetLevel(v,duration) 
+    } else {
+        cloudSetLevel( v, 0)
         }
 }
 

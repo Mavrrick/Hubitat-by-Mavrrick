@@ -129,6 +129,20 @@ def off() {
         cloudOff()
 }
 
+def setColorTemperature(value,level = null,transitionTime = null) {
+    unschedule(fadeUp)
+    unschedule(fadeDown)
+    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
+    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
+    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
+    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
+    cloudCT(value, level, transitionTime)
+}
+
+def setLevel(float v,duration = 0) {
+    cloudSetLevel( v, 0)
+}
+
 def workingMode(mode, gear, speed=0){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")

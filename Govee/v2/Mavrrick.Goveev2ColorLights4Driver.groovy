@@ -138,7 +138,8 @@ def installed(){
         sendEvent(name: "effectNum", value: 0) }
     if (pollRate > 0) runIn(pollRate,poll)
     retrieveScenes2()
-    retrieveStateData()  
+    retrieveStateData()
+    getDevType()
 }
 
 def logsOff() {
@@ -188,37 +189,28 @@ def off() {
 }
 
 
-def setColorTemperature(value,level = null,transitionTime = null)
-{
+def setColorTemperature(value,level = null,transitionTime = null) {
     unschedule(fadeUp)
     unschedule(fadeDown)
     if (debugLog) { log.debug "setColorTemperature(): ${value}"}
     if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
     if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-	int intvalue = value.toInteger()
     if (lanControl) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) setLevel(level,transitionTime);
-        sendEvent(name: "colorTemperature", value: intvalue)
-        sendEvent(name: "switch", value: "on")
-        sendEvent(name: "colorMode", value: "CT")
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
-	    setCTColorName(intvalue)
+        lanCT(value, level, transitionTime)
         }
     else {
-       if (device.currentValue("cloudAPI") == "Retry") {
-            log.error "setColorTemperature(): CloudAPI already in retry state. Aborting call." 
-         } else {        
-            sendEvent(name: "cloudAPI", value: "Pending")
-            if (level != null) setLevel(level,transitionTime);
-		    sendCommand("colorTemperatureK", intvalue,"devices.capabilities.color_setting")
-       }
+        cloudCT(value, level, transitionTime)
     }
-} 
+}
+
+def setLevel(float v,duration = 0) {
+    if (lanControl) {
+        lanSetLevel(v,duration) 
+    } else {
+        cloudSetLevel( v, 0)
+        }
+}
 
 def  setEffect(effectNo) {
     if (lanControl) {

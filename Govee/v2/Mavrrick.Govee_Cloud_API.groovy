@@ -587,7 +587,13 @@ void setModeDescription(mode=null) {
 }
 
 def apiKeyUpdate() {
-    if (device.getDataValue("apiKey") != parent?.APIKey) {
+    if (parent.label == "Govee v2 Device Manager") {
+        if (device.getDataValue("apiKey") != parent?.getDataValue("apiKey")) {
+            if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
+            device.updateDataValue("apiKey", parent?.getDataValue("apiKey"))
+        }
+    }
+    else if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
     }

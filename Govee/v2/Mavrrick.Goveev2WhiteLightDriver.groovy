@@ -137,4 +137,10 @@ def off() {
         }
 }
 
-
+def setLevel(float v,duration = 0) {
+    if (lanControl) {
+        lanSetLevel(v,duration) 
+    } else {
+        cloudSetLevel( v, 0)
+        }
+}
