@@ -9,7 +9,16 @@
 #include Mavrrick.Govee_Cloud_Level
 #include Mavrrick.Govee_Cloud_Life
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
+import groovy.transform.Field
+
+@Field Map getFanLevel = [
+    "off": 0
+    ,"on": 1
+	,"low": 25
+	,"medium": 50
+	,"high": 100
+]
 
 metadata {
 	definition(name: "Govee v2 H7120", namespace: "Mavrrick", author: "Mavrrick") {
@@ -20,7 +29,9 @@ metadata {
 		capability "Refresh" 
         capability "SwitchLevel"
         capability "LightEffects"
-        capability "Configuration" 
+        capability "Configuration"
+        capability "FanControl"
+        capability "FilterStatus"
         
         attribute "online", "string"
         attribute "mode", "number"
@@ -28,11 +39,12 @@ metadata {
         attribute "modeDescription", "string"
         attribute "pollInterval", "number"         
         attribute "cloudAPI", "string"
-        attribute "filterLifeTime", "string"  
+        attribute "filterLifeTime", "number"  
         
         command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]        
-        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High'], description: "Default speed of Fan using GearMode"]]
+//        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High'], description: "Default speed of Fan using GearMode"]]
         command "sleepMode"
+        command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
     }
 
@@ -148,7 +160,7 @@ def sleepMode() {
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
-def setFanSpeed(gear) {
+/* def setFanSpeed(gear) {
     log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(gear){
@@ -164,4 +176,28 @@ def setFanSpeed(gear) {
     }
     values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
+} */
+
+def setSpeed(fanspeed) {
+    log.debug "setSpeed(): Processing Working Mode command 'setSpeed' to ${fanspeed}"
+    sendEvent(name: "cloudAPI", value: "Pending")
+    switch(fanspeed){
+        case "low":
+            gear = 1;
+        break;
+        case "medium":
+            gear = 2;
+        break;
+        case "high":
+            gear = 3;
+        break;
+    }
+    if (fanspeed == "on") {
+        cloudOn()
+    } else if (fanspeed == "off") {
+        cloudOff()
+    } else {
+        values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
+        sendCommand("workMode", values, "devices.capabilities.work_mode")
+    }
 }

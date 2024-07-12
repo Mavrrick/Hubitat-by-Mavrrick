@@ -8,7 +8,17 @@
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_Life
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
+import groovy.transform.Field
+
+@Field Map getFanLevel = [
+    "off": 0
+    ,"on": 1
+    ,"sleep": 10
+	,"low": 25
+	,"high": 100
+    ,"auto": 150
+]
 
 metadata {
 	definition(name: "Govee v2 H7126", namespace: "Mavrrick", author: "Mavrrick") {
@@ -28,7 +38,8 @@ metadata {
         attribute "airQuality", "number"
         
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
-        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',       'High'], description: "Default speed of Fan using GearMode"]]
+//        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',       'High'], description: "Default speed of Fan using GearMode"]]
+        command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
         command "autoMode"
         command "sleepMode"
     }
@@ -138,7 +149,7 @@ def sleepMode() {
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
-def setFanSpeed(gear) {
+ /*def setFanSpeed(gear) {
     log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear} "
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(gear){
@@ -151,4 +162,35 @@ def setFanSpeed(gear) {
         }
     values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
+} */
+
+def setSpeed(fanspeed) {
+    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear} "
+    sendEvent(name: "cloudAPI", value: "Pending")
+    switch(gear){
+        case "low":
+            gearmode = 1;
+            gear = 2;
+        break;
+        case "high":
+            gearmode = 1;
+            gear = 3;
+        break;
+        case "auto":
+            gearmode = 3;
+            gear = 0;
+        break;
+        case "sleep":
+            gearmode = 1;
+            gear = 1;
+        break;        
+    }
+    if (fanspeed == "on") {
+        cloudOn()
+    } else if (fanspeed == "off") {
+        cloudOff()
+    } else {
+        values = '{"workMode":'+gear+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
+        sendCommand("workMode", values, "devices.capabilities.work_mode")
+    }
 }
