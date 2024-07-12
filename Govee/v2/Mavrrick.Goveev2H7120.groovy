@@ -28,11 +28,11 @@ metadata {
         attribute "modeDescription", "string"
         attribute "pollInterval", "number"         
         attribute "cloudAPI", "string"
-        attribute "filterStatus", "string"  
+        attribute "filterLifeTime", "string"  
         
         command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]        
         command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High'], description: "Default speed of Fan using GearMode"]]
-        command "sleep"
+        command "sleepMode"
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
     }
 
@@ -141,15 +141,15 @@ def setLevel(float v,duration = 0) {
     cloudSetLevel( v, 0)
 }
 
-def sleep() {
-    log.debug "sleep(): Processing Working Mode command 'Auto' "
+def sleepMode() {
+    log.debug "sleep(): Processing Working Mode command 'Sleep' "
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":5,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
 def setFanSpeed(gear) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'Auto' "
+    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(gear){
         case "Low":
@@ -165,44 +165,3 @@ def setFanSpeed(gear) {
     values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
-
-/* def workingMode(mode, gear, speed=0){
-    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
-    sendEvent(name: "cloudAPI", value: "Pending")
-    switch(mode){
-        case "gearMode":
-            modenum = 1;
-            switch(gear){
-                case "Low":
-                    gear = 1;
-                break;
-                case "Medium":
-                    gear = 2;
-                break;
-                case "High":
-                    gear = 3;
-                break;
-                    default:
-                    gear = 0;
-                break;
-                }
-        break;
-        case "Custom":
-            modenum = 2;
-            gear = speed;
-        break;
-        case "Auto":
-            modenum = 3;
-            gear = 0;
-        break;
-        case "Sleep":
-            modenum = 5;
-            gear = 0;
-        break;
-    default:
-    log.debug "not valid value for mode";
-    break;
-    }
-    values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
-} */

@@ -29,8 +29,8 @@ metadata {
         
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',       'High'], description: "Default speed of Fan using GearMode"]]
-        command "auto"
-        command "sleep"
+        command "autoMode"
+        command "sleepMode"
     }
 
 	preferences {		
@@ -124,14 +124,14 @@ def off() {
         cloudOff()
 }
 
-def auto() {
+def autoMode() {
     log.debug "auto(): Processing Working Mode command 'Auto' "
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":3,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
-def sleep() {
+def sleepMode() {
     log.debug "sleep(): Processing Working Mode command 'Sleep' "
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":1,"modeValue":1}'  // This is the string that will need to be modified based on the potential values
@@ -139,7 +139,7 @@ def sleep() {
 }
 
 def setFanSpeed(gear) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' for ${gear} "
+    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear} "
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(gear){
         case "Low":
