@@ -23,12 +23,12 @@ import groovy.transform.Field
 metadata {
 	definition(name: "Govee v2 H7120", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
-        capability "ColorControl"
+//        capability "ColorControl"
 		capability "Actuator"
         capability "Initialize"
 		capability "Refresh" 
-        capability "SwitchLevel"
-        capability "LightEffects"
+//        capability "SwitchLevel"
+//        capability "LightEffects"
         capability "Configuration"
         capability "FanControl"
         capability "FilterStatus"
@@ -41,7 +41,7 @@ metadata {
         attribute "cloudAPI", "string"
         attribute "filterLifeTime", "number"  
         
-        command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]        
+//        command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]        
 //        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High'], description: "Default speed of Fan using GearMode"]]
         command "sleepMode"
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
@@ -68,10 +68,20 @@ def updated() {
     if (debugLog) runIn(1800, logsOff)
     poll()
     retrieveStateData()
+    if (getChildDevices().size() == 0) {
+        if (device.getDataValue("commands").contains("nightlightToggle")) {
+            addLightDeviceHelper()
+        }
+    }
 }
 
 // linital setup when device is installed.
 def installed(){
+    if (getChildDevices().size() == 0) {
+        if (device.getDataValue("commands").contains("nightlightToggle")) {
+            addLightDeviceHelper()
+        }
+    }
     retrieveStateData()
     poll ()
 }
@@ -160,24 +170,6 @@ def sleepMode() {
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
-/* def setFanSpeed(gear) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear}"
-    sendEvent(name: "cloudAPI", value: "Pending")
-    switch(gear){
-        case "Low":
-            gear = 1;
-        break;
-        case "Medium":
-            gear = 2;
-        break;
-        case "High":
-            gear = 3;
-        break;
-    }
-    values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
-} */
-
 def setSpeed(fanspeed) {
     log.debug "setSpeed(): Processing Working Mode command 'setSpeed' to ${fanspeed}"
     sendEvent(name: "cloudAPI", value: "Pending")
@@ -201,3 +193,36 @@ def setSpeed(fanspeed) {
         sendCommand("workMode", values, "devices.capabilities.work_mode")
     }
 }
+
+///////////////////////////////////////////////////
+// Heler routine to create child devices         //
+///////////////////////////////////////////////////
+
+def addLightDeviceHelper() {
+	//Driver Settings
+    driver = "Govee v2 Life Child Light Device"
+    deviceID = device.getDataValue("deviceID")
+    deviceName = device.label+"_Nightlight"
+    deviceModel = device.getDataValue("deviceModel")+"_Nightlight"
+	Map deviceType = [namespace:"Mavrrick", typeName: driver]
+	Map deviceTypeBak = [:]
+	String devModel = deviceModel
+	String dni = "Govee_${deviceID}_Nightlight"
+    APIKey = device.getDataValue("apiKey")
+	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
+//    log.debug "Setup detail '${properties}' driver failed"
+	if (debugLog) "Creating Child Device"
+
+	def childDev
+	try {
+		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+	}
+	catch (e) {
+		log.warn "The '${deviceType}' driver failed"
+		if (deviceTypeBak) {
+			logWarn "Defaulting to '${deviceTypeBak}' instead"
+			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+		}
+	} 
+}
+

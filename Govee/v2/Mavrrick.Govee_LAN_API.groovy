@@ -125,13 +125,13 @@ def lanSetEffect (effectNo) {
     effectNumber = effectNo.toString()
     lanScenes = loadSceneFile()
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
-    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).keySet()}"
+    if (debugLog) log.debug "${lanScenes.get(device.getDataValue("DevType")).keySet()}"
 //    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
     if (lanScenes.get(device.getDataValue("DevType")).containsKey(effectNumber)) {
         String sceneInfo =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).name
         String sceneCmd =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
-        if (descLog) log.info "Scene number is present"
+        if (debugLog) log.debug "Scene number is present"
         sendEvent(name: "colorMode", value: "EFFECTS")
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
@@ -289,6 +289,7 @@ def lanSetPreviousEffect () {
 
 def lanActivateDIY (diyActivate) {
     diyScenes = loadDIYFile()
+    if (descLog) log.info "${device.label} ActivateDIY: ${diyActivate}"
     if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} from ${diyScenes}")}
         String diyEffectNumber = diyActivate.toString()
         String sceneInfo = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).name
@@ -608,9 +609,20 @@ def loadSceneFile() {
 }
 
 def loadDIYFile() {
-    byte[] dBytes = downloadHubFile("GoveeLanDIYScenes.json")
-    tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
-    log.debug ("loadDIYFile: Loaded ${tmpEffects.get(0)} from ${goveeDIYScenesFile}")
-    diyEffects = tmpEffects.get(0)
-    return diyEffects
+    byte[] dBytes
+    try {
+        dBytes = downloadHubFile("GoveeLanDIYScenes.json")
+    }
+    catch (Exception e) {
+        diyEffects = [:]
+        return diyEffects
+    }
+    if (dBytes != null) {
+        tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+        if (debugLog) {log.debug "loadDIYFile: Loaded ${tmpEffects.get(0)} from ${goveeDIYScenesFile}"}
+        diyEffects = tmpEffects.get(0)
+        return diyEffects
+    }
 }
+
+

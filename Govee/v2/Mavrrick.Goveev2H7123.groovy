@@ -14,7 +14,6 @@ import groovy.transform.Field
 @Field Map getFanLevel = [
     "off": 0
     ,"on": 1
-    ,"sleep": 10
 	,"low": 25
 	,"medium": 50
 	,"high": 100
@@ -28,6 +27,7 @@ metadata {
         capability "Initialize"
 		capability "Refresh"
         capability "Configuration"
+        capability "FanControl"
         
         attribute "online", "string"
         attribute "mode", "number"
@@ -169,9 +169,9 @@ def sleepMode() {
 } */
 
 def setSpeed(fanspeed) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear} "
+    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "
     sendEvent(name: "cloudAPI", value: "Pending")
-    switch(gear){
+    switch(fanspeed){
         case "low":
             gearmode = 1;
             gear = 1;
@@ -198,7 +198,7 @@ def setSpeed(fanspeed) {
     } else if (fanspeed == "off") {
         cloudOff()
     } else {
-        values = '{"workMode":'+gear+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
+        values = '{"workMode":'+gearmode+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
         sendCommand("workMode", values, "devices.capabilities.work_mode")
     }
 }

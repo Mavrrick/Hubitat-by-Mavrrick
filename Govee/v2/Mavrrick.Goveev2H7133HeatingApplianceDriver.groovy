@@ -1,55 +1,49 @@
-// Hubitat driver for Govee H7126 Air Purifier
-// Version 2.0.0
+// Hubitat driver for Govee v2 H7133 Appliances using Cloud API
+// Version 2.1.0
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
-
 
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_Life
 
-import groovy.json.JsonSlurper
-import groovy.transform.Field
-
-@Field Map getFanLevel = [
-    "off": 0
-    ,"on": 1
-	,"low": 25
-	,"high": 100
-    ,"auto": 150
-]
+import groovy.json.JsonSlurper 
 
 metadata {
-	definition(name: "Govee v2 H7126", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "Govee v2 H7133 Heating Appliance Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		capability "Actuator"
         capability "Initialize"
-		capability "Refresh"
+		capability "Refresh" 
+        capability "TemperatureMeasurement"
         capability "Configuration"
-        capability "FanControl"
-        
+        capability "ThermostatHeatingSetpoint"
+
         attribute "online", "string"
         attribute "mode", "number"
         attribute "modeValue", "number"
         attribute "modeDescription", "string"
-        attribute "pollInterval", "number"
+        attribute "pollInterval", "number"  
         attribute "cloudAPI", "string"
-        attribute "filterLifeTime", "number"        
-        attribute "airQuality", "number"
-        
+        attribute "online", "string"
+        attribute "airDeflector", "string"
+        attribute "targetTemp", "string"
+
+        command "airDeflectoron_off", [[name: "Air Deflector", type: "ENUM", constraints: ['On',      'Off'] ] ]
+        command "heatingMode", [[name: "mode", type: "ENUM", constraints: [ 'low',      'medium',       'high',      'fan',       'auto'], description: "Mode of device"]]
+        command "targetTemperature", [[type: "NUMBER", description: "Entered your desired temp. Celsius range is 40-100, Fahrenheit range is 104-212", required: true],
+            [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true],
+            [name: "autoStop", type: "ENUM", constraints: [ 'Auto Stop',      'Maintain'],  description: "Stop Mode", defaultValue: "Maintain", required: true]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
-//        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',       'High'], description: "Default speed of Fan using GearMode"]]
-        command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
-        command "autoMode"
-        command "sleepMode"
+
     }
 
 	preferences {		
 		section("Device Info") {
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4) 
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
+        }
 		
 	}
 }
@@ -79,7 +73,9 @@ def initialize() {
         sendEvent(name: "cloudAPI", value: "Initialized")
     }
     unschedule()
-    if (logEnable) runIn(1800, logsOff)
+    if (debugLog) runIn(1800, logsOff)
+    pollRateInt = pollRate.toInteger()
+    randomOffset(pollRateInt)
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
@@ -127,70 +123,57 @@ def poll() {
 // Driver Commands // 
 /////////////////////
 
+
 def on() {
         cloudOn()
 }
 
 def off() {
         cloudOff()
+} 
+
+def targetTemperature(setpoint, unit, autostop) {
+    if (autostop == "Auto Stop") { autoStopVal = 1}
+    if (autostop == "Maintain") { autoStopVal = 0}                                  
+    values = '{"autoStop": '+autoStopVal+',"temperature": '+setpoint+',"unit": "'+unit+'"}'
+    sendCommand("targetTemperature", values, "devices.capabilities.temperature_setting")
 }
 
-def autoMode() {
-    log.debug "auto(): Processing Working Mode command 'Auto' "
-    sendEvent(name: "cloudAPI", value: "Pending")
-    values = '{"workMode":3,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
+def setHeatingSetpoint(temperature) {
+    values = '{"autoStop": 0,"temperature": '+temperature+',"unit": "Celsius"}'
+    sendCommand("targetTemperature", values, "devices.capabilities.temperature_setting")
 }
 
-def sleepMode() {
-    log.debug "sleep(): Processing Working Mode command 'Sleep' "
+def workingMode(mode, gear){
+    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
-    values = '{"workMode":1,"modeValue":1}'  // This is the string that will need to be modified based on the potential values
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
-}
-
- /*def setFanSpeed(gear) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${gear} "
-    sendEvent(name: "cloudAPI", value: "Pending")
-    switch(gear){
-        case "Low":
-            gear = 2;
-        break;
-        case "High":
-            gear = 3;
-        break;
-        }
-    values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
-} */
-
-def setSpeed(fanspeed) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "
-    sendEvent(name: "cloudAPI", value: "Pending")
-    switch(fanspeed){
+    switch(mode){
         case "low":
-            gearmode = 1;
-            gear = 2;
+            modenum = 1;
+            gearnum = 1;
+        break;
+        case "medium":
+            modenum = 1;
+            gearnum = 2;
         break;
         case "high":
-            gearmode = 1;
-            gear = 3;
+             modenum = 1;
+             gearnum = 3;
+        break;
+        case "fan":
+            modenum = 9;
+            gearnum = 0
         break;
         case "auto":
-            gearmode = 3;
-            gear = 0;
+            modenum = 3;
+            gearnum = 0
         break;
-        case "sleep":
-            gearmode = 1;
-            gear = 1;
-        break;        
+    default:
+    log.debug "not valid value for mode";
+    break;
     }
-    if (fanspeed == "on") {
-        cloudOn()
-    } else if (fanspeed == "off") {
-        cloudOff()
-    } else {
-        values = '{"workMode":'+gearmode+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
-        sendCommand("workMode", values, "devices.capabilities.work_mode")
-    }
-}
+
+    values = '{"workMode":'+modenum+',"modeValue":'+gearnum+'}'
+    sendCommand("workMode", values, "devices.capabilities.work_mode")
+} 
+

@@ -183,6 +183,7 @@ try {
                    sendEvent(name: "cloudAPI", value: "Success")
                    def units = payloadJson?.unit.charAt(0)
                    sendEvent(name: "switch", value: "on")
+                   sendEvent(name: "heatingSetpoint", value: payloadJson?.temperature, unit: units)                   
                    sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
                    sendEvent(name: "targetTempUnit", value: units)
                    if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
@@ -349,6 +350,8 @@ try {
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value.toDouble().round(2)), unit: "C");
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
                                 if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value.currentHumidity, unit: "%");
+                                if (it.instance == "airQuality") sendEvent(name: "airQuality", value: it.state.value);
+                                if (it.instance == "filterLifeTime") sendEvent(name: "filterLifeTime", value: it.state.value, unit: "%");                            
                             break;  
                             case "devices.capabilities.work_mode":
                                 if (it.instance == "workMode") {
