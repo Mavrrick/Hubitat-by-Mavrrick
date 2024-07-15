@@ -865,7 +865,17 @@ def goveeDevAdd() { //testing
                         }                    
                     }    
                 } else if (devType == "devices.types.air_purifier") {
-                    if (commands.contains("colorRgb") == true) {
+                    if (deviceModel == "H7120") {
+                        String driver = "Govee v2 H7120"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
+                            mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
+                        }
+                    } else if (commands.contains("colorRgb") == true) {
                         String driver = "Govee v2 Air Purifier with RGB Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
