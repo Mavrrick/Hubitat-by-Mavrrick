@@ -1,4 +1,4 @@
-// Hubitat driver for Govee Fan Driver using Cloud API
+// Hubitat driver for Govee H7106 Fan Driver using Cloud API
 // Version 2.1.0
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
@@ -6,10 +6,24 @@
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
+import groovy.transform.Field
+
+@Field Map getFanLevel = [
+    "off": 0
+    ,"on": 1
+    ,"ultra-low": 12
+	,"low": 25
+    ,"medium-low": 35
+	,"medium": 50
+    ,"medium-high": 75
+	,"high": 100
+    ,"turbo": 100
+    ,"auto": 150
+]
 
 metadata {
-	definition(name: "Govee v2 Fan Driver", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "Govee v2 H7106 Tower Fan", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		capability "Actuator"
         capability "Initialize"
@@ -27,9 +41,13 @@ metadata {
         attribute "oscillation", "string"
 
         command "airDeflectoron_off", [[name: "Oscillation", type: "ENUM", constraints: ['On',      'Off'] ] ]
-        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'FanSpeed',      'Custom',       'Auto',    'Sleep',    'Nature'], description: "Mode of device"],
-                          [name: "gearMode", type: "NUMBER", description: "Only used when mode is FanSpeed"]]
+        command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
+/*        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'FanSpeed',      'Custom',       'Auto',    'Sleep',    'Nature'], description: "Mode of device"],
+                          [name: "gearMode", type: "NUMBER", description: "Only used when mode is FanSpeed"]] */
+        command "natureMode", [[name: "natureMode", type: "NUMBER",  description: "Enter nature mode ", range: 0-8, required: true]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
+        command "autoMode"
+        command "sleepMode", [[name: "sleepMode", type: "NUMBER",  description: "Enter nature mode ", range: 0-8, required: true]]
     }
 
 	preferences {		
@@ -51,22 +69,12 @@ def updated() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
-    if (getChildDevices().size() == 0) {
-        if (device.getDataValue("commands").contains("nightlightToggle")) {
-            runIn(10, addLightDeviceHelper)
-        }
-    }    
     poll()
 }
 
 Installed // linital setup when device is installed.
 def installed(){
     retrieveStateData()
-    if (getChildDevices().size() == 0) {
-        if (device.getDataValue("commands").contains("nightlightToggle")) {
-            runIn(10, addLightDeviceHelper)
-        }
-    }    
     poll()
 }
 
@@ -157,72 +165,70 @@ def airDeflectoron_off(evt) {
         }
 }
 
-def workingMode(mode, gear){
-    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
+def setSpeed(fanspeed) {
+    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "
     sendEvent(name: "cloudAPI", value: "Pending")
-    switch(mode){
-        case "FanSpeed":
-            modenum = 1;
+    switch(fanspeed){
+        case "ultra-low":
+            gearmode = 1;
+            gear = 2;
         break;
-        case "Custom":
-            modenum = 2;
+        case "low":
+            gearmode = 1;
+            gear = 3;
+        break;
+        case "medium-low":
+            gearmode = 1;
+            gear = 4;
+        break;
+        case "medium":
+            gearmode = 1;
+            gear = 5;
+        break;
+        case "medium-high":
+            gearmode = 1;
+            gear = 6;
+        break;
+        case "high":
+            gearmode = 1;
+            gear = 7;
+        break;
+        case "turbo":
+            gearmode = 1;
+            gear = 8;
+        break;
+        case "auto":
+            gearmode = 2;
             gear = 0;
-        break;
-        case "Auto":
-            modenum = 3;
-            gear = 0;
-        break;
-        case "Sleep":
-            modenum = 5;
-            gear = 0;
-        break;
-        case "Nature":
-            modenum = 6;
-            gear = 0;
-        break;
-    default:
-    log.debug "not valid value for mode";
-    break;
+        break;        
     }
-    values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
+    if (fanspeed == "on") {
+        cloudOn()
+    } else if (fanspeed == "off") {
+        cloudOff()
+    } else {
+        values = '{"workMode":'+gearmode+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
+        sendCommand("workMode", values, "devices.capabilities.work_mode")
+    }
+}
+
+def natureMode(gear) {
+    log.debug "natureMode(): Processing Working Mode command 'natureMode' to ${gear} "
+    sendEvent(name: "cloudAPI", value: "Pending")
+    values = '{"workMode":4,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}  
-
-///////////////////////////////////////////////////
-// Heler routine to create child devices         //
-///////////////////////////////////////////////////
-
-def addLightDeviceHelper() {
-	//Driver Settings
-    driver = "Govee v2 Life Child Light Device"
-    deviceID = device.getDataValue("deviceID")
-    deviceName = device.label+"_Nightlight"
-    deviceModel = device.getDataValue("deviceModel")
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
-	String dni = "Govee_${deviceID}_Nightlight"
-    APIKey = device.getDataValue("apiKey")
-	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
-//    log.debug "Setup detail '${properties}' driver failed"
-    if (debugLog) { log.debug "Creating Child Device"}
-
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	} 
 }
 
-def retNightlightScene(){
-    scenes = state.nightlightScene 
-    if (debugLog) { log.debug "retNightlightScene(): Nightlight Scenes are  " + scenes }
-    return scenes
+def autoMode() {
+    log.debug "autoMode(): Processing Working Mode command 'Auto' "
+    sendEvent(name: "cloudAPI", value: "Pending")
+    values = '{"workMode":2,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
+    sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
+def sleepMode(gear) {
+    log.debug "sleep(): Processing Working Mode command 'sleepMode' "
+    sendEvent(name: "cloudAPI", value: "Pending")
+    values = '{"workMode":3,"modeValue":'+gear+'}' // This is the string that will need to be modified based on the potential values
+    sendCommand("workMode", values, "devices.capabilities.work_mode")
+}
