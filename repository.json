@@ -30,6 +30,20 @@
         "Appliances",
         "Integrations"
       ]
+    },
+    {
+      "id": "035a80c2-9cc2-482c-b174-79142ca19768",
+      "name": "Govee Integration v2 Beta",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/packageManifest3.json",
+      "description": "Govee integration Beta Release",
+      "tags": [
+        "Misc. Devices",
+        "Cloud",
+        "Lights & Switches",
+        "Appliances",
+        "Integrations"
+      ]
     }
   ]
 }
