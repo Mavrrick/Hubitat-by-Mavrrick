@@ -887,7 +887,17 @@ def goveeDevAdd() { //testing
                         }
                     }    
                 } else if (devType == "devices.types.heater") {
-                    if (commands.contains("colorRgb")) {
+                    if (deviceModel == "H7133") {
+                        String driver = "Govee v2 H7133 Heating Appliance Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
+                            mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
+                        }    
+                    } else if (commands.contains("colorRgb")) {
                         String driver = "Govee v2 Heating Appliance with RGB Driver"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')

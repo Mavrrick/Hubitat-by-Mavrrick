@@ -16,15 +16,16 @@ metadata {
 		capability "Switch"
         capability "ColorControl"
 		capability "Actuator"
-        capability "Initialize"
-		capability "Refresh" 
+        capability "Initialize" 
         capability "SwitchLevel"
         capability "LightEffects"
-        capability "Configuration" 
+        capability "ColorMode" 
         
         attribute "online", "string"        
         attribute "cloudAPI", "string"
-        attribute "filterStatus", "string"  
+		attribute "colorName", "string"
+        attribute "colorRGBNum", "number"
+        attribute "effectNum", "integer" 
         
     }
 
@@ -50,6 +51,7 @@ def updated() {
 
 // linital setup when device is installed.
 def installed(){
+    retNightlightScenes()
 }
 
 // initialize devices upon install and reboot.
@@ -60,6 +62,7 @@ def initialize() {
     }
     unschedule()
     if (logEnable) runIn(1800, logsOff)
+    retNightlightScenes()
 }
 
 // update data for the device
@@ -85,29 +88,115 @@ def logsOff() {
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
+def postEvent(evt = 50, value = 50){
+    sendEvent(name: evt, value: value)
+}
+
+def retNightlightScenes() {
+    state.remove("scenes")
+    state.remove("nightlightScene") 
+    state.scenes = [:]
+    scenes = parent.retNightlightScene()
+    if (debugLog) {log.info "retNightlightScenes(): ${scenes}"}
+    scenes.each() {
+        if (debugLog) {log.info "retNightlightScenes(): ${it.name}, ${it.value}"}
+        state.scenes.put(it.value,it.name)         
+    }
+}
+
 //////////////////////
 // Driver Commands // 
 /////////////////////
 
 def on() {
-        cloudOn()
+        nightLighton_off("On")
 }
 
 def off() {
-        cloudOff()
-}
-
-def setColorTemperature(value,level = null,transitionTime = null) {
-    unschedule(fadeUp)
-    unschedule(fadeDown)
-    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
-    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
-    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
-    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-    cloudCT(value, level, transitionTime)
+        nightLighton_off("Off")
 }
 
 def setLevel(float v,duration = 0) {
     cloudSetLevel( v, 0)
+}
+
+def nightLighton_off(evt) {
+    log.debug "nightLighton_off(): Processing Night Light command. ${evt}"
+        if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "nightLighton_off(): CloudAPI already in retry state. Aborting call." 
+         } else {
+        sendEvent(name: "cloudAPI", value: "Pending")
+            if (evt == "On") sendCommand("nightlightToggle", 1 ,"devices.capabilities.toggle")
+            if (evt == "Off") sendCommand("nightlightToggle", 0 ,"devices.capabilities.toggle")
+            }
+}
+
+def  setEffect(effectNo) {
+                log.debug ("setEffect(): Setting effect via cloud api to scene number  ${effectNo}")
+                sendCommand("nightlightScene", effectNo,"devices.capabilities.mode")
+                   
+}
+
+/*
+def setNextEffect() {
+        if (debugLog) {log.debug ("setNextEffect(): current Name ${state.nightlightScene.get(state.sceneValue).name} value ${state.nightlightScene.get(state.sceneValue).value}")}
+            if (state.sceneValue == 0) {
+            if (debugLog) {log.debug ("setNextEffect(): Current scene value is 0 setting to first scene in list")}
+            setEffect(state.nightlightScene.get(state.sceneValue).value)
+            state.sceneValue = state.sceneValue + 1
+        } else {
+            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
+            setEffect(state.nightlightScene.get(state.sceneValue).value)
+            state.sceneValue = state.sceneValue + 1
+        }  
+} 
+      
+def setPreviousEffect() {
+        if (debugLog) {log.debug ("setPreviousEffect(): current Name ${state.nightlightScene.get(state.sceneValue).name} value ${state.nightlightScene.get(state.sceneValue).value}")}
+            if (state.sceneValue == 0) {
+            if (debugLog) {log.debug ("setPreviousEffect(): Current scene value is 0 setting to first scene in list")}
+            setEffect(state.nightlightScene.get(state.sceneValue).value)
+            state.sceneValue = state.sceneMax 
+        } else {
+            if (debugLog) {log.debug ("setPreviousEffect(): Increment to next scene")}
+            setEffect(state.nightlightScene.get(state.sceneValue).value)
+            state.sceneValue = state.sceneValue - 1
+        }          
+} 
+*/
+
+def setNextEffect () {
+        keys = []
+        names = []
+        keys.addAll(state.scenes.keySet())
+        names.addAll(state.scenes.values())
+//        if (debugLog) {log.debug ("setNextEffect(): current Name ${names.get(state.sceneValue)} value ${keys.get(state.sceneValue)}")}
+        if (state.sceneValue == state.sceneMax) state.sceneValue = 0  
+        if (state.sceneValue == 0) {
+            if (debugLog) {log.debug ("setNextEffect(): Current scene value is 0 setting to first scene in list")}
+            setEffect(keys.get(state.sceneValue))
+            state.sceneValue = state.sceneValue + 1
+        } else {
+            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
+            setEffect(keys.get(state.sceneValue))
+            state.sceneValue = state.sceneValue + 1
+        }  
+}
+
+def setPreviousEffect () {
+        keys = []
+        names = []
+        keys.addAll(state.scenes.keySet())
+        names.addAll(state.scenes.values())
+//        if (debugLog) {log.debug ("setPreviousEffect(): current Name ${names.get(state.sceneValue)} value ${keys.get(state.sceneValue)}")}       
+            if (state.sceneValue == 0) {
+            if (debugLog) {log.debug ("setPreviousEffect(): Current scene value is 0 setting to first scene in list")}
+            setEffect(keys.get(state.sceneValue))
+            state.sceneValue = state.sceneMax-1 
+        } else {
+            if (debugLog) {log.debug ("setPreviousEffect(): Increment to next scene")}
+            setEffect(keys.get(state.sceneValue))
+            state.sceneValue = state.sceneValue - 1
+        }          
 }
 

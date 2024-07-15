@@ -5,8 +5,8 @@
 
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
-#include Mavrrick.Govee_Cloud_RGB
-#include Mavrrick.Govee_Cloud_Level
+//#include Mavrrick.Govee_Cloud_RGB
+//#include Mavrrick.Govee_Cloud_Level
 #include Mavrrick.Govee_Cloud_Life
 
 import groovy.json.JsonSlurper
@@ -23,12 +23,9 @@ import groovy.transform.Field
 metadata {
 	definition(name: "Govee v2 H7120", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
-//        capability "ColorControl"
 		capability "Actuator"
         capability "Initialize"
 		capability "Refresh" 
-//        capability "SwitchLevel"
-//        capability "LightEffects"
         capability "Configuration"
         capability "FanControl"
         capability "FilterStatus"
@@ -41,8 +38,6 @@ metadata {
         attribute "cloudAPI", "string"
         attribute "filterLifeTime", "number"  
         
-//        command "nightLighton_off", [[name: "Night Light", type: "ENUM", constraints: [ 'On',      'Off'] ] ]        
-//        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High'], description: "Default speed of Fan using GearMode"]]
         command "sleepMode"
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
@@ -149,20 +144,6 @@ def off() {
         cloudOff()
 }
 
-def setColorTemperature(value,level = null,transitionTime = null) {
-    unschedule(fadeUp)
-    unschedule(fadeDown)
-    if (debugLog) { log.debug "setColorTemperature(): ${value}"}
-    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
-    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
-    if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
-    cloudCT(value, level, transitionTime)
-}
-
-def setLevel(float v,duration = 0) {
-    cloudSetLevel( v, 0)
-}
-
 def sleepMode() {
     log.debug "sleep(): Processing Working Mode command 'Sleep' "
     sendEvent(name: "cloudAPI", value: "Pending")
@@ -203,7 +184,7 @@ def addLightDeviceHelper() {
     driver = "Govee v2 Life Child Light Device"
     deviceID = device.getDataValue("deviceID")
     deviceName = device.label+"_Nightlight"
-    deviceModel = device.getDataValue("deviceModel")+"_Nightlight"
+    deviceModel = device.getDataValue("deviceModel")
 	Map deviceType = [namespace:"Mavrrick", typeName: driver]
 	Map deviceTypeBak = [:]
 	String devModel = deviceModel
@@ -211,7 +192,7 @@ def addLightDeviceHelper() {
     APIKey = device.getDataValue("apiKey")
 	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
 //    log.debug "Setup detail '${properties}' driver failed"
-	if (debugLog) "Creating Child Device"
+    if (debugLog) { log.debug "Creating Child Device"}
 
 	def childDev
 	try {
@@ -224,5 +205,11 @@ def addLightDeviceHelper() {
 			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
 		}
 	} 
+}
+
+def retNightlightScene(){
+    scenes = state.nightlightScene 
+    if (debugLog) { log.debug "retNightlightScene(): Nightlight Scenes are  " + scenes }
+    return scenes
 }
 
