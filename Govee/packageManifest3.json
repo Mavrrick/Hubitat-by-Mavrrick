@@ -148,6 +148,14 @@
       "version": "2.1.0"
     },
     {
+      "id": "c91dc70c-9a17-4ebc-b582-171801b620b9",
+      "name": "Govee v2 H7131 Space Heater",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7131SpaceHeater.groovy",
+      "required": false,
+      "version": "2.1.2"
+    },
+    {
       "id": "841458c6-a843-4e8a-9bc1-4330bcb05cd4",
       "name": "Govee v2 H7133 Space Heater Pro",
       "namespace": "Mavrrick",
