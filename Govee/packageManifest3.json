@@ -148,6 +148,14 @@
       "version": "2.1.0"
     },
     {
+      "id": "841458c6-a843-4e8a-9bc1-4330bcb05cd4",
+      "name": "Govee v2 H7133 Space Heater Pro",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7133SpaceHeaterPro.groovy",
+      "required": false,
+      "version": "2.1.2"
+    },
+    {
       "id": "7a1cddae-e98b-46eb-ae59-9f255dc4d46f",
       "name": "Govee v2 Heating Appliance with RGB Driver",
       "namespace": "Mavrrick",
