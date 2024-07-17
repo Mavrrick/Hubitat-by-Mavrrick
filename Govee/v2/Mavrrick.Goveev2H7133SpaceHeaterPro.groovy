@@ -3,6 +3,10 @@
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
+// Supported Devices
+// H7133 Space Heater Pro
+// 
+
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_Life
@@ -29,18 +33,20 @@ metadata {
         attribute "airDeflector", "string"
         attribute "targetTemp", "string"
 
-        command "airDeflectoron_off", [[name: "Air Deflector", type: "ENUM", constraints: ['On',      'Off'] ] ]
+//        command "airDeflectoron_off", [[name: "Air Deflector", type: "ENUM", constraints: ['On',      'Off'] ] ]
         command "heatingMode", [[name: "mode", type: "ENUM", constraints: [ 'low',      'medium',       'high',      'fan',       'auto'], description: "Mode of device"]]
-        command "targetTemperature", [[type: "NUMBER", description: "Entered your desired temp. Celsius range is 40-100, Fahrenheit range is 104-212", required: true],
+/*        command "targetTemperature", [[type: "NUMBER", description: "Entered your desired temp. Celsius range is 40-100, Fahrenheit range is 104-212", required: true],
             [name: "unit", type: "ENUM", constraints: [ 'Celsius',      'Fahrenheit'],  description: "Celsius or Fahrenheit", defaultValue: "Celsius", required: true],
-            [name: "autoStop", type: "ENUM", constraints: [ 'Auto Stop',      'Maintain'],  description: "Stop Mode", defaultValue: "Maintain", required: true]]
+            [name: "autoStop", type: "ENUM", constraints: [ 'Auto Stop',      'Maintain'],  description: "Stop Mode", defaultValue: "Maintain", required: true]] */
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
-
+        command "airDeflectorOn"
+        command "airDeflectorOff"
     }
 
 	preferences {		
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
+            input("tempUnit", "enum", title: "Select value for temp units", options: [ 'Celsius',      'Fahrenheit'], defaultValue: 'Celsius', submitOnChange: true)            
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
         }
@@ -150,11 +156,11 @@ def targetTemperature(setpoint, unit, autostop) {
 }
 
 def setHeatingSetpoint(temperature) {
-    values = '{"autoStop": 0,"temperature": '+temperature+',"unit": "Celsius"}'
+    values = '{"autoStop": 0,"temperature": '+temperature+',"unit": "'+tempUnit+'"}'
     sendCommand("targetTemperature", values, "devices.capabilities.temperature_setting")
 }
 
-def workingMode(mode, gear){
+def heatingMode(mode){
     log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
@@ -187,7 +193,15 @@ def workingMode(mode, gear){
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 } 
 
-def airDeflectoron_off(evt) {
+def airDeflectorOn() {
+    sendCommand("airDeflectorToggle", 1 ,"devices.capabilities.toggle")
+}
+
+def airDeflectorOff() {
+    sendCommand("airDeflectorToggle", 0 ,"devices.capabilities.toggle")
+}
+
+/* def airDeflectoron_off(evt) {
     log.debug "airDeflectoron_off(): Processing Air Deflector command. ${evt}"
         if (device.currentValue("cloudAPI") == "Retry") {
              log.error "airDeflectoron_off(): CloudAPI already in retry state. Aborting call." 
@@ -201,7 +215,7 @@ def airDeflectoron_off(evt) {
                 if (evt == "Off") sendCommand("oscillationToggle", 0 ,"devices.capabilities.toggle")
             }
         }
-}
+} */
 
 ///////////////////////////////////////////////////
 // Heler routine to create child devices         //

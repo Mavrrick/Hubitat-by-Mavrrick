@@ -16,10 +16,12 @@ metadata {
 		capability "Switch"
         capability "ColorControl"
 		capability "Actuator"
+        capability "Light"
         capability "Initialize" 
         capability "SwitchLevel"
         capability "LightEffects"
         capability "ColorMode" 
+        capability "LightEffects"
         
         attribute "online", "string"        
         attribute "cloudAPI", "string"

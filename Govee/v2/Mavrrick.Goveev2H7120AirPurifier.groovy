@@ -167,11 +167,14 @@ def setSpeed(fanspeed) {
     }
     if (fanspeed == "on") {
         cloudOn()
+        sendEvent(name: "speed", value: fanspeed)
     } else if (fanspeed == "off") {
         cloudOff()
+        sendEvent(name: "speed", value: fanspeed)
     } else {
         values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
         sendCommand("workMode", values, "devices.capabilities.work_mode")
+        sendEvent(name: "speed", value: fanspeed)
     }
 }
 
