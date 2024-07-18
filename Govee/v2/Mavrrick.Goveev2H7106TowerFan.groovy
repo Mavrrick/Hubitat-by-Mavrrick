@@ -29,7 +29,8 @@ metadata {
         capability "Initialize"
 		capability "Refresh" 
         capability "TemperatureMeasurement"
-        capability "Configuration"         
+        capability "Configuration"
+        capability "FanControl"
 
         attribute "online", "string"
         attribute "mode", "number"
@@ -75,6 +76,7 @@ def updated() {
 Installed // linital setup when device is installed.
 def installed(){
     retrieveStateData()
+    sendEvent(name: "speed", value: "off")
     poll()
 }
 

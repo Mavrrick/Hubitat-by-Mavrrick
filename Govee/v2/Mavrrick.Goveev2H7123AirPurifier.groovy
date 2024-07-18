@@ -70,6 +70,7 @@ def updated() {
 Installed // linital setup when device is installed.
 def installed(){
     retrieveStateData()
+    sendEvent(name: "speed", value: "off")
     poll()
 }
 

@@ -53,6 +53,12 @@ def updated() {
 
 // linital setup when device is installed.
 def installed(){
+//    hue, saturation, color, colorName, level
+    sendEvent(name: "hue", value: 0)
+    sendEvent(name: "saturation", value: 100)
+//    sendEvent(name: "color", value: "Red")
+    sendEvent(name: "colorName", value: "Red")
+    sendEvent(name: "level", value: 100)
     retNightlightScenes()
 }
 

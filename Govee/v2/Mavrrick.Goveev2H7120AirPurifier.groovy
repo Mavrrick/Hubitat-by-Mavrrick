@@ -77,6 +77,7 @@ def installed(){
             runIn(10, addLightDeviceHelper)
         }
     }
+    sendEvent(name: "speed", value: "off")
     retrieveStateData()
     poll ()
 }
