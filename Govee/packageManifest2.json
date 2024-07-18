@@ -36,7 +36,7 @@
       "version": "2.1.3"
     },
     {
-      "id": "b6fc9828-f71d-45d9-9fb1-11adffb5c137",
+      "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
       "name": "Govee v2 Life Child Light Device",
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2LifeChildLightDevice.groovy",
