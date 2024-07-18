@@ -2,6 +2,13 @@
 // Version 2.1.0
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
+//
+// Fan driver
+// Supported Devices H7106
+//
+// If your device has the same functions this driver will likely work for you.
+// Features 8 Speeds, Nature mode, Oscillation, Auto and Sleep Mode
+//
 
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
@@ -41,7 +48,7 @@ metadata {
         attribute "online", "string"
         attribute "oscillation", "string"
 
-        command "airDeflectoron_off", [[name: "Oscillation", type: "ENUM", constraints: ['On',      'Off'] ] ]
+//        command "airDeflectoron_off", [[name: "Oscillation", type: "ENUM", constraints: ['On',      'Off'] ] ]
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
 /*        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'FanSpeed',      'Custom',       'Auto',    'Sleep',    'Nature'], description: "Mode of device"],
                           [name: "gearMode", type: "NUMBER", description: "Only used when mode is FanSpeed"]] */
@@ -49,6 +56,8 @@ metadata {
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         command "autoMode"
         command "sleepMode", [[name: "sleepMode", type: "NUMBER",  description: "Enter nature mode ", range: 0-8, required: true]]
+        command "oscillationOn"
+        command "oscillationff"
     }
 
 	preferences {		
@@ -151,7 +160,15 @@ def off() {
         }
 }
 
-def airDeflectoron_off(evt) {
+def oscillationOn(){
+    sendCommand("oscillationToggle", 1 ,"devices.capabilities.toggle")
+}
+
+def oscillationOff(){
+    sendCommand("oscillationToggle", 0 ,"devices.capabilities.toggle")
+}
+
+/* def airDeflectoron_off(evt) {
     log.debug "airDeflectoron_off(): Processing Air Deflector command. ${evt}"
         if (device.currentValue("cloudAPI") == "Retry") {
              log.error "airDeflectoron_off(): CloudAPI already in retry state. Aborting call." 
@@ -165,7 +182,7 @@ def airDeflectoron_off(evt) {
                 if (evt == "Off") sendCommand("oscillationToggle", 0 ,"devices.capabilities.toggle")
             }
         }
-}
+} */
 
 def setSpeed(fanspeed) {
     log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "
