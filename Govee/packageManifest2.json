@@ -33,7 +33,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
-      "version": "2.1.3"
+      "version": "2.1.4"
     },
     {
       "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
@@ -41,7 +41,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2LifeChildLightDevice.groovy",
       "required": true,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "58b52301-4351-4bf2-afdb-8397089de0d8",
