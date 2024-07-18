@@ -51,12 +51,22 @@ def updated() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
+    if (getChildDevices().size() == 0) {
+        if (device.getDataValue("commands").contains("nightlightToggle")) {
+        runIn(10, addLightDeviceHelper)
+        }
+    }
     poll()
 }
 
 Installed // linital setup when device is installed.
 def installed(){
     retrieveStateData()
+    if (getChildDevices().size() == 0) {
+        if (device.getDataValue("commands").contains("nightlightToggle")) {
+        runIn(10, addLightDeviceHelper)
+        }
+    }
     poll()
 }
 
@@ -163,3 +173,41 @@ def workingMode(mode, gear, speed=0){
     values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 } 
+
+///////////////////////////////////////////////////
+// Heler routine to create child devices         //
+///////////////////////////////////////////////////
+
+def addLightDeviceHelper() {
+	//Driver Settings
+    driver = "Govee v2 Life Child Light Device"
+    deviceID = device.getDataValue("deviceID")
+    deviceName = device.label+"_Nightlight"
+    deviceModel = device.getDataValue("deviceModel")
+	Map deviceType = [namespace:"Mavrrick", typeName: driver]
+	Map deviceTypeBak = [:]
+	String devModel = deviceModel
+	String dni = "Govee_${deviceID}_Nightlight"
+    APIKey = device.getDataValue("apiKey")
+	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
+//    log.debug "Setup detail '${properties}' driver failed"
+    if (debugLog) { log.debug "Creating Child Device"}
+
+	def childDev
+	try {
+		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+	}
+	catch (e) {
+		log.warn "The '${deviceType}' driver failed"
+		if (deviceTypeBak) {
+			logWarn "Defaulting to '${deviceTypeBak}' instead"
+			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+		}
+	} 
+}
+
+def retNightlightScene(){
+    scenes = state.nightlightScene 
+    if (debugLog) { log.debug "retNightlightScene(): Nightlight Scenes are  " + scenes }
+    return scenes
+}

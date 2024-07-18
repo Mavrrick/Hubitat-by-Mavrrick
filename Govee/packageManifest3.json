@@ -36,6 +36,14 @@
       "version": "2.1.2"
     },
     {
+      "id": "b6fc9828-f71d-45d9-9fb1-11adffb5c137",
+      "name": "Govee v2 Life Child Light Device",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2LifeChildLightDevice.groovy",
+      "required": true,
+      "version": "2.1.2"
+    },
+    {
       "id": "58b52301-4351-4bf2-afdb-8397089de0d8",
       "name": "Govee Manual LAN API Device",
       "namespace": "Mavrrick",
@@ -50,6 +58,38 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2AirPurifierDriver.groovy",
       "required": false,
       "version": "2.1.0"
+    },
+    {
+      "id": "1ec7b9e2-3a61-47ba-9aec-81bce9ef582c",
+      "name": "Govee v2 H7120 Air Purifier",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7120AirPurifier.groovy",
+      "required": false,
+      "version": "2.1.1"
+    },
+    {
+      "id": "03b06646-b332-4fef-a3b7-5f61e6d40253",
+      "name": "Govee v2 H7122 Air Purifier",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7122AirPurifier.groovy",
+      "required": false,
+      "version": "2.1.1"
+    },
+    {
+      "id": "777845e7-13e4-451a-845d-978c67ac6097",
+      "name": "Govee v2 H7123 Air Purifier",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7123AirPurifier.groovy",
+      "required": false,
+      "version": "2.1.1"
+    },
+    {
+      "id": "0f6d06ea-87d5-4863-b030-c8e3b7a0f85e",
+      "name": "Govee v2 H7126 Air Purifier",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7126AirPurifier.groovy",
+      "required": false,
+      "version": "2.1.1"
     },
     {
       "id": "3eba1cb0-6e23-4446-af2e-f0503d3e9c86",
@@ -125,6 +165,14 @@
     },
     {
       "id": "94c74cc7-19a2-42b9-aebf-16d8c83fc04d",
+      "name": "Govee v2 H7106 Tower Fan",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7106TowerFan.groovy",
+      "required": false,
+      "version": "2.1.0"
+    },
+    {
+      "id": "94c74cc7-19a2-42b9-aebf-16d8c83fc04d",
       "name": "Govee v2 Fan Driver",
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2FanDriver.groovy",
@@ -146,6 +194,22 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2HeatingApplianceDriver.groovy",
       "required": false,
       "version": "2.1.0"
+    },
+    {
+      "id": "c91dc70c-9a17-4ebc-b582-171801b620b9",
+      "name": "Govee v2 H7131 Space Heater",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7131SpaceHeater.groovy",
+      "required": false,
+      "version": "2.1.2"
+    },
+    {
+      "id": "841458c6-a843-4e8a-9bc1-4330bcb05cd4",
+      "name": "Govee v2 H7133 Space Heater Pro",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7133SpaceHeaterPro.groovy",
+      "required": false,
+      "version": "2.1.2"
     },
     {
       "id": "7a1cddae-e98b-46eb-ae59-9f255dc4d46f",

@@ -57,12 +57,22 @@ def updated() {
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
+    if (getChildDevices().size() == 0) {
+        if (device.getDataValue("commands").contains("nightlightToggle")) {
+        addLightDeviceHelper()
+        }
+    }
     poll()
 }
 
 Installed // linital setup when device is installed.
 def installed(){
     retrieveStateData()
+    if (getChildDevices().size() == 0) {
+        if (device.getDataValue("commands").contains("nightlightToggle")) {
+        addLightDeviceHelper()
+        }
+    }
     poll()
 }
 
@@ -176,3 +186,58 @@ def workingMode(mode, gear){
     values = '{"workMode":'+modenum+',"modeValue":'+gearnum+'}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 } 
+
+def airDeflectoron_off(evt) {
+    log.debug "airDeflectoron_off(): Processing Air Deflector command. ${evt}"
+        if (device.currentValue("cloudAPI") == "Retry") {
+             log.error "airDeflectoron_off(): CloudAPI already in retry state. Aborting call." 
+         } else {
+        sendEvent(name: "cloudAPI", value: "Pending")
+            if (device.getDataValue("commands").contains("airDeflectorToggle")) {
+                if (evt == "On") sendCommand("airDeflectorToggle", 1 ,"devices.capabilities.toggle")
+                if (evt == "Off") sendCommand("airDeflectorToggle", 0 ,"devices.capabilities.toggle")
+            } else if (device.getDataValue("commands").contains("oscillationToggle")) {
+                if (evt == "On") sendCommand("oscillationToggle", 1 ,"devices.capabilities.toggle")
+                if (evt == "Off") sendCommand("oscillationToggle", 0 ,"devices.capabilities.toggle")
+            }
+        }
+}
+
+///////////////////////////////////////////////////
+// Heler routine to create child devices         //
+///////////////////////////////////////////////////
+
+def addLightDeviceHelper() {
+	//Driver Settings
+    driver = "Govee v2 Life Child Light Device"
+    deviceID = device.getDataValue("deviceID")
+    deviceName = device.label+"_Nightlight"
+    deviceModel = device.getDataValue("deviceModel")
+	Map deviceType = [namespace:"Mavrrick", typeName: driver]
+	Map deviceTypeBak = [:]
+	String devModel = deviceModel
+	String dni = "Govee_${deviceID}_Nightlight"
+    APIKey = device.getDataValue("apiKey")
+	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
+//    log.debug "Setup detail '${properties}' driver failed"
+    if (debugLog) { log.debug "Creating Child Device"}
+
+	def childDev
+	try {
+		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+	}
+	catch (e) {
+		log.warn "The '${deviceType}' driver failed"
+		if (deviceTypeBak) {
+			logWarn "Defaulting to '${deviceTypeBak}' instead"
+			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+		}
+	} 
+}
+
+def retNightlightScene(){
+    scenes = state.nightlightScene 
+    if (debugLog) { log.debug "retNightlightScene(): Nightlight Scenes are  " + scenes }
+    return scenes
+}
+
