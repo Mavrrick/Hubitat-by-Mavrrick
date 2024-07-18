@@ -917,7 +917,7 @@ def goveeDevAdd() { //testing
                         }
                     }    
                 } else if (devType == "devices.types.heater") {                    
-                    if (deviceModel == "H7131") {
+                    if (deviceModel == "H7131" || deviceModel == "H7134") {
                         String driver = "Govee v2 H7131 Space Heater"
                         if (drivers.contains(driver)) {
                             logger("goveeDevAdd()  configuring ${deviceName}", 'info')
