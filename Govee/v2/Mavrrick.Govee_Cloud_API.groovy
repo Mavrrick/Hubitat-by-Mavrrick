@@ -47,7 +47,7 @@ def cloudCT(value, level, transitionTime){
 /////////////////////////////////////////////////////
 
 private def sendCommand(String command, payload2, type) {
-     randomUUID()
+     requestID = randomUUID()
 //     if (debugLog) { log.debug "sendCommand(): ${requestID}"}
      String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
      def params = [
@@ -183,6 +183,7 @@ try {
                    sendEvent(name: "cloudAPI", value: "Success")
                    def units = payloadJson?.unit.charAt(0)
                    sendEvent(name: "switch", value: "on")
+                   sendEvent(name: "heatingSetpoint", value: payloadJson?.temperature, unit: units)                   
                    sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
                    sendEvent(name: "targetTempUnit", value: units)
                    if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
@@ -238,7 +239,7 @@ try {
 }
 
 def getDeviceState(){
-    randomUUID()
+    requestID = randomUUID()
 //    if (debugLog) { log.debug "getDeviceState(): ${requestID}"}
     String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
         def params = [
@@ -259,7 +260,7 @@ try {
 //                    type = it.type
 //                    instance = it.instance
                     if (it.state.value || it.state.value == 0) {
-                    if (debugLog) { log.debug "getDeviceState(): ${it.type} ${it.instance} ${it.state.value}" }
+                    if (debugLog) { log.debug "getDeviceState(): ${it.type} ${it.instance} ${it.state.value}" } 
                         switch(it.type) {
                             case "devices.capabilities.online":
                                 if (it.instance == "online") sendEvent(name: "online", value: it.state.value);
@@ -271,29 +272,62 @@ try {
                                 }
                             break;
                             case "devices.capabilities.range":
-                                if (it.instance == "brightness") sendEvent(name: "level", value: it.state.value);
-                            break;
-                            case "devices.capabilities.color_setting":
-                                if (it.instance == "colorRgb"){
-                                    if (device.currentValue("colorRGBNum") != it.state.value) {
-                                        if (it.state.value >= 1) {
-                                            int r = (it.state.value >> 16) & 0xFF;
-                                            int g = (it.state.value >> 8) & 0xFF;
-                                            int b = it.state.value & 0xFF;
-                                            HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b]);
-					                        hue=HSVlst[0].toInteger();
-					                        sat=HSVlst[1].toInteger();
-					                        sendEvent(name: "hue", value: hue);
-					                        sendEvent(name: "saturation", value: sat);
-					                        sendEvent(name: "colorMode", value: "RGB");
-                                            sendEvent(name: "colorRGBNum", value: it.state.value);
-                                        } else {
-                                            sendEvent(name: "colorRGBNum", value: it.state.value);    
-                                        }
-                                    } else {
-                                        if (debugLog) {log.debug ("getDeviceState(): ColorRGBNum of ${it.state.value} did not change ignoring") }  
+                            if (it.instance == "brightness") {
+                                if (getChildDevices().size() > 0) {
+                                        child = getChildDevices().get(0);
+                                        child.postEvent("level" , it.state.value);
+                                } else {
+                                    sendEvent(name: "level", value: it.state.value);                                         
                                     }
                                 }
+                            break;
+                            case "devices.capabilities.color_setting":                                 
+                                if (it.instance == "colorRgb") {
+                                    if (getChildDevices().size() > 0) {
+                                        child = getChildDevices().get(0)                                    
+                                        if (debugLog) {log.debug ("getDeviceState(): current child device value is ${child.currentValue("colorRGBNum")}") }  
+                                        if (child.currentValue("colorRGBNum") != it.state.value) {
+                                            if (it.state.value >= 1) {
+                                                child = getChildDevices().get(0)
+                                                int r = (it.state.value >> 16) & 0xFF;
+                                                int g = (it.state.value >> 8) & 0xFF;
+                                                int b = it.state.value & 0xFF;
+                                                HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b]);
+					                            hue=HSVlst[0].toInteger();
+					                            sat=HSVlst[1].toInteger();
+                                                if (debugLog) {log.debug ("getDeviceState(): child = ${child} Hue = ${hue} Saturation = ${sat} ColorRGBNum = ${it.state.value})}") }
+					                            child.postEvent("hue" , hue);
+					                            child.postEvent("saturation", sat);
+					                            child.postEvent("colorMode", "RGB");
+                                               child.postEvent("colorRGBNum", it.state.value);
+                                            } else {
+                                                child.postEvent("colorRGBNum", it.state.value);    
+                                            }
+                                        } else {
+                                            if (debugLog) {log.debug ("getDeviceState(): ColorRGBNum of ${it.state.value} did not change ignoring") }  
+                                        } 
+                                    
+                                    } else {
+                                        if (device.currentValue("colorRGBNum") != it.state.value) {
+                                            if (it.state.value >= 1) {
+                                                int r = (it.state.value >> 16) & 0xFF;
+                                                int g = (it.state.value >> 8) & 0xFF;
+                                                int b = it.state.value & 0xFF;
+                                                HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b]);
+					                            hue=HSVlst[0].toInteger();
+					                            sat=HSVlst[1].toInteger();
+					                            sendEvent(name: "hue", value: hue);
+					                            sendEvent(name: "saturation", value: sat);
+					                            sendEvent(name: "colorMode", value: "RGB");
+                                                sendEvent(name: "colorRGBNum", value: it.state.value);
+                                            } else {
+                                                sendEvent(name: "colorRGBNum", value: it.state.value);    
+                                            }
+                                        } else {
+                                            if (debugLog) {log.debug ("getDeviceState(): ColorRGBNum of ${it.state.value} did not change ignoring") }  
+                                        }
+                                    }
+                                } 
                                 if (it.instance == "colorTemperatureK") {
                                     if (device.currentValue("colorTemperature") != it.state.value) {
                                         if (it.state.value >= 1) {
@@ -318,7 +352,17 @@ try {
                                 if (it.state.value == 0) toggle = "off";
                                 if (it.state.value == 1) toggle = "on";
                                 if (it.instance == "gradientToggle") sendEvent(name: "gradient", value: toggle);
-                                if (it.instance == "nightlightToggle") sendEvent(name: "nightLight", value: toggle);
+                                if (it.instance == "nightlightToggle") { 
+                                    if (getChildDevices().size() > 0) {
+                                        child = getChildDevices().get(0);
+                                        if (it.state.value == 0)  value = "off";
+                                        if (it.state.value == 1)  value = "on";  
+                                        child.postEvent("switch" , value);
+                                    } else {
+                                        if (it.state.value == 0)  sendEvent(name: "switch", value: "off");
+                                        if (it.state.value == 1)  sendEvent(name: "switch", value: "on");                                         
+                                        }
+                                    }
                                 if (it.instance == "airDeflectorToggle") sendEvent(name: "airDeflector", value: toggle);
                                 if (it.instance == "oscillationToggle") sendEvent(name: "oscillation", value: toggle);
                                 if (it.instance == "thermostatToggle") sendEvent(name: "thermostat", value: toggle);
@@ -349,6 +393,8 @@ try {
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value.toDouble().round(2)), unit: "C");
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
                                 if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value.currentHumidity, unit: "%");
+                                if (it.instance == "airQuality") sendEvent(name: "airQuality", value: it.state.value);
+                                if (it.instance == "filterLifeTime") sendEvent(name: "filterLifeTime", value: it.state.value, unit: "%");                            
                             break;  
                             case "devices.capabilities.work_mode":
                                 if (it.instance == "workMode") {
@@ -403,7 +449,7 @@ try {
 
 
 def retrieveScenes2(){
-    randomUUID()
+    requestID = randomUUID()
     if (debugLog) { log.debug "getDeviceState(): ${requestID}"}
         String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
 		def params = [
@@ -455,7 +501,7 @@ try {
 }
 
 def retrieveDIYScenes(){
-    randomUUID()
+    requestID = randomUUID()
     if (debugLog) { log.debug "retrieveDIYScenes(): ${requestID}"}
         String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
 		def params = [

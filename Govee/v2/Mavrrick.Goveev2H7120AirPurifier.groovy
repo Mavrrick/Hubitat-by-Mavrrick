@@ -3,37 +3,44 @@
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
-
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
+//#include Mavrrick.Govee_Cloud_RGB
+//#include Mavrrick.Govee_Cloud_Level
 #include Mavrrick.Govee_Cloud_Life
-// #include Mavrrick.Govee_Cloud_MQTT
 
-import groovy.json.JsonSlurper 
-import java.util.Random 
+import groovy.json.JsonSlurper
+import groovy.transform.Field
+
+@Field Map getFanLevel = [
+    "off": 0
+    ,"on": 1
+	,"low": 25
+	,"medium": 50
+	,"high": 100
+]
 
 metadata {
-	definition(name: "Govee v2 Humidifier Driver", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "Govee v2 H7120 Air Purifier", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		capability "Actuator"
         capability "Initialize"
-        capability "Refresh"
-        capability "Configuration"        
+		capability "Refresh" 
+        capability "Configuration"
+        capability "FanControl"
+        capability "FilterStatus"
         
-		attribute "gear", "number"
+        attribute "online", "string"
         attribute "mode", "number"
         attribute "modeValue", "number"
         attribute "modeDescription", "string"
-        attribute "pollInterval", "number"        
+        attribute "pollInterval", "number"         
         attribute "cloudAPI", "string"
-        attribute "online", "string"        
-        attribute "lackWaterEvent", "string"
+        attribute "filterLifeTime", "number"  
         
-        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'Manual',      'Custom',       'Auto'], description: "Mode of device"],
-                          [name: "gearMode", type: "NUMBER", description: "When Mode is Manual sets hudifier speed. When set to Auto sets desired Humidity"]]
-        command "desiredHumidity", [[name: desiredHumidityValue, type: 'NUMBER', description: "Set the desired Humidity the device will try to maintain"]]
+        command "sleepMode"
+        command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
-        
     }
 
 	preferences {		
@@ -52,28 +59,27 @@ metadata {
 
 // reset of device settings when preferences updated.
 def updated() {
-    if (debugLog) {log.info "updated(): device updated "}
     unschedule()
     if (debugLog) runIn(1800, logsOff)
+    poll()
     retrieveStateData()
     if (getChildDevices().size() == 0) {
         if (device.getDataValue("commands").contains("nightlightToggle")) {
-        runIn(10, addLightDeviceHelper)
+            runIn(10, addLightDeviceHelper)
         }
     }
-
 }
 
 // linital setup when device is installed.
 def installed(){
-    retrieveStateData()
     if (getChildDevices().size() == 0) {
         if (device.getDataValue("commands").contains("nightlightToggle")) {
-        runIn(10, addLightDeviceHelper)
+            runIn(10, addLightDeviceHelper)
         }
     }
-    poll()
-
+    sendEvent(name: "speed", value: "off")
+    retrieveStateData()
+    poll ()
 }
 
 // initialize devices upon install and reboot.
@@ -83,19 +89,13 @@ def initialize() {
         sendEvent(name: "cloudAPI", value: "Initialized")
     }
     unschedule()
-    if (debugLog) runIn(1800, logsOff)
-    retrieveStateData()
-    if (getChildDevices().size() == 0) {
-        if (device.getDataValue("commands").contains("nightlightToggle")) {
-        addLightDeviceHelper()
-        }
-    }
+    if (logEnable) runIn(1800, logsOff)
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
-
+//    poll()
 }
 
 // update data for the device
@@ -113,21 +113,20 @@ def configure() {
     unschedule()
     if (pollRate > 0) runIn(pollRate,poll)     
     retrieveStateData()    
-    if (debugLog) runIn(1800, logsOff)
-
+    if (debugLog) runIn(1800, logsOff) 
 }
 
 ////////////////////
 // Helper methods //
 ////////////////////
 
-logsOff  // turn off logging for the device
+// turn off logging for the device
 def logsOff() {
     log.info "debug logging disabled..."
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
-poll // retrieve device status
+// retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
 	getDeviceState()
@@ -146,27 +145,39 @@ def off() {
         cloudOff()
 }
 
-def workingMode(mode, gear=0){
-    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
+def sleepMode() {
+    log.debug "sleep(): Processing Working Mode command 'Sleep' "
     sendEvent(name: "cloudAPI", value: "Pending")
-    switch(mode){
-        case "Manual":
-            modenum = 1;        
-        break;
-        case "Custom":
-            modenum = 2;
-            gear = 0;
-        break;
-        case "Auto":
-            modenum = 3;
-        break;
-    default:
-    log.debug "not valid value for mode";
-    break;
-    }
-    values = '{"workMode":'+modenum+',"modeValue":'+gear+'}'
+    values = '{"workMode":5,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}  
+}
+
+def setSpeed(fanspeed) {
+    log.debug "setSpeed(): Processing Working Mode command 'setSpeed' to ${fanspeed}"
+    sendEvent(name: "cloudAPI", value: "Pending")
+    switch(fanspeed){
+        case "low":
+            gear = 1;
+        break;
+        case "medium":
+            gear = 2;
+        break;
+        case "high":
+            gear = 3;
+        break;
+    }
+    if (fanspeed == "on") {
+        cloudOn()
+        sendEvent(name: "speed", value: fanspeed)
+    } else if (fanspeed == "off") {
+        cloudOff()
+        sendEvent(name: "speed", value: fanspeed)
+    } else {
+        values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
+        sendCommand("workMode", values, "devices.capabilities.work_mode")
+        sendEvent(name: "speed", value: fanspeed)
+    }
+}
 
 ///////////////////////////////////////////////////
 // Heler routine to create child devices         //
