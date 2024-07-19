@@ -266,14 +266,14 @@ try {
                                 if (it.instance == "online") sendEvent(name: "online", value: it.state.value);
                             break;
                             case "devices.capabilities.on_off":
-                            if (instance == "powerSwitch") {
-                                if (it.state.value == 0)  sendEvent(name: "switch", value: "off");
-                                if (it.state.value == 1)  sendEvent(name: "switch", value: "on");
+                                if (it.instance == "powerSwitch") {
+                                    if (it.state.value == 0)  sendEvent(name: "switch", value: "off");
+                                    if (it.state.value == 1)  sendEvent(name: "switch", value: "on");
                                 }
                             break;
                             case "devices.capabilities.range":
-                            if (it.instance == "brightness") {
-                                if (getChildDevices().size() > 0) {
+                                if (it.instance == "brightness") {
+                                    if (getChildDevices().size() > 0) {
                                         child = getChildDevices().get(0);
                                         child.postEvent("level" , it.state.value);
                                 } else {
