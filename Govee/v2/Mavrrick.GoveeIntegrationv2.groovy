@@ -199,13 +199,13 @@ def deviceSelect() {
 def deviceSelect2() {
     logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
 	if (atomicState.backgroundActionInProgress == null) {
-		logger("deviceSelect2: Install chosen devices", 'debug')
+//		logger("deviceSelect2: Install chosen devices", 'debug')
 		atomicState.backgroundActionInProgress = true
          logger("deviceSelect2: Background action in progress status should be true =  ${atomicState.backgroundActionInProgress}", 'debug')
 		runInMillis(1,goveeDevAdd)
 	}
 	if (atomicState.backgroundActionInProgress != false) {
-        logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
+//        logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
 		return dynamicPage(name: "deviceSelect2", title: "", nextPage: "deviceSelect2", install: false, uninstall: false, refreshInterval: 2) {
 			section {
 				paragraph "<b>Processing Setup of devices from Selected Devices</b>"
@@ -216,7 +216,7 @@ def deviceSelect2() {
 		}
 	}
 	else if (atomicState.backgroundActionInProgress == false) {
-        logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
+//        logger("deviceSelect2: Install chosen devices ${atomicState.backgroundActionInProgress}", 'debug')
 			return dynamicPage(name: "deviceSelect2", title: "", nextPage: "mainPage", install: false, uninstall: false) {
 				section {
 					paragraph "<b>Device install status</b>"
@@ -703,28 +703,23 @@ def diyUpdateManual(String devSKU, int diyAddNum, String diyName, String command
 private logger(msg, level = 'debug') {
     switch (level) {
         case 'error':
-            if (state.loggingLevelIDE >= 1) { log.error msg }
-            break
-
+            if (state.loggingLevelIDE >= 1) { log.error msg };
+            break;
         case 'warn':
-            if (state.loggingLevelIDE >= 2)  { log.warn msg }
-            break
-
+            if (state.loggingLevelIDE >= 2)  { log.warn msg };
+            break;
         case 'info':
-            if (state.loggingLevelIDE >= 3) { log.info msg }
-            break
-
+            if (state.loggingLevelIDE >= 3) { log.info msg };
+            break;
         case 'debug':
-            if (state.loggingLevelIDE >= 4) { log.debug msg }
-            break
-
+            if (state.loggingLevelIDE >= 4) { log.debug msg };
+            break;
         case 'trace':
-            if (state.loggingLevelIDE >= 5) { log.trace msg }
-            break
-
+            if (state.loggingLevelIDE >= 5) { log.trace msg };
+            break;
         default:
-            log.debug msg
-            break
+            log.debug msg;
+            break;
     }
 }
 
