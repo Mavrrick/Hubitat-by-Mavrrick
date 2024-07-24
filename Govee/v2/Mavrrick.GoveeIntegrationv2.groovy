@@ -549,6 +549,7 @@ def installed() {
          ])
     state.isInstalled = true
     state.diyEffects = [:]
+    state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
 }
 
 def updated() {
@@ -569,21 +570,10 @@ def updated() {
     if (settings.APIKey != state.APIKey ) {
         child.each {
             logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
-            it.apiKeyUpdate()
+//            it.apiKeyUpdate()
         }
         state?.APIKey = settings.APIKey
     }
-/*    if (goveeDev) {
-        def goveeAdd = settings.goveeDev - child.label
-        logger("initialize() Found child devices ${child}", 'debug')
-        logger("initialize() Govee Light/Switch/Plugs to add ${goveeAdd}.", 'info')
-        if (goveeAdd) {
-            goveeDevAdd(goveeAdd)
-                }
-        }
-          else {
-        logger('initialize() No devices to add', 'info')
-          } */
 }
 
 def uninstalled() {
@@ -734,6 +724,7 @@ def goveeDevAdd() { //testing
 // private goveeDevAdd(goveeAdd) {
 //    def goveeAdd = settings.goveeDev - child.label    // testing
 //    def devices = goveeAdd
+    if (settings.goveeDev != null) {
     def devices = settings.goveeDev - child.label
     def drivers = getDriverList()
     mqttDevice = getChildDevice('Govee_v2_Device_Manager')
@@ -1052,6 +1043,9 @@ def goveeDevAdd() { //testing
             logger("goveeDevAdd(): Device ID matches child DNI. ${deviceName} already installed", 'debug')
             setBackgroundStatusMessage("Device ${deviceName} is already installed. Ignored")
         }                
+    }
+    } else { 
+        setBackgroundStatusMessage("No devices selected. No action")
     }
     state?.installDev = goveeDev
     atomicState.backgroundActionInProgress = false
