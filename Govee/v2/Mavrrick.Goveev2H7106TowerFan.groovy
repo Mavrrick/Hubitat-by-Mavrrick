@@ -57,7 +57,7 @@ metadata {
         command "autoMode"
         command "sleepMode", [[name: "sleepMode", type: "NUMBER",  description: "Enter nature mode ", range: 0-8, required: true]]
         command "oscillationOn"
-        command "oscillationff"
+        command "oscillationOff"
     }
 
 	preferences {		
