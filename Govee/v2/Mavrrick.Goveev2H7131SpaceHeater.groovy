@@ -40,7 +40,7 @@ metadata {
             [name: "autoStop", type: "ENUM", constraints: [ 'Auto Stop',      'Maintain'],  description: "Stop Mode", defaultValue: "Maintain", required: true]] */
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         command "oscillationOn"
-        command "oscillationff"
+        command "oscillationOff"
         
     }
 
