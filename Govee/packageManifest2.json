@@ -161,7 +161,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7106TowerFan.groovy",
       "required": false,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "94c74cc7-19a2-42b9-aebf-16d8c83fc04d",
@@ -193,7 +193,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7131SpaceHeater.groovy",
       "required": false,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "841458c6-a843-4e8a-9bc1-4330bcb05cd4",
