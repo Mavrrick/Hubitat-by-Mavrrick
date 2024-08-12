@@ -1,0 +1,16 @@
+{
+  "packageName": "Air Gradient Universal Driver",
+  "author": "Mavrrick",
+  "version": "1.0",
+  "minimumHEVersion": "2.3.9",
+  "dateReleased": "2024-08-12",
+  "drivers": [
+    {
+      "id": "000c7f86-9c4f-4ad3-8cd8-9a92f506d0a3",
+      "name": "Air Gradient Universal Driver",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/AirGradient/AirGradientUniversalDriver.Groovy",
+      "required": true
+    }
+  ]
+}
