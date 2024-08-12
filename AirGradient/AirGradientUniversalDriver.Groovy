@@ -32,6 +32,9 @@ metadata
         attribute "pmCount", "number"
         attribute "tvoc", "number"
         attribute "nox", "number"
+        
+        command "ledBarTest"
+        command "co2CalibrateRequest"
                           
 	}
 
@@ -256,4 +259,20 @@ def logsOff()
 {
     log.warn "debug logging disabled..."
 	device.updateSetting("enableDebug", [value:"false",type:"bool"])
+}
+
+/*
+    Custom Functions
+*/
+
+def ledBarTest() {
+    command = "ledBarTestRequested"
+//    request = true
+    sendConfig(command, true)
+}
+
+def co2CalibrateRequest() {
+    command = "co2CalibrationRequested"
+//    request = true
+    sendConfig(command, true)
 }
