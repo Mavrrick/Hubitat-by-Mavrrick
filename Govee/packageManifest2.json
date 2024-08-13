@@ -49,7 +49,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
       "required": false,
-      "version": "2.1.3"
+      "version": "2.1.4"
     },
     {
       "id": "f18436f0-07fb-4325-abf7-7a44b8c9de12",
