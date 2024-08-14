@@ -44,6 +44,18 @@
         "Appliances",
         "Integrations"
       ]
+    },
+    {
+      "id": "258bbd07-300b-4a45-a4c9-622f1f06ccb3",
+      "name": "Air Gradient Universal driver",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/AirGradient/packageManifest.json",
+      "description": "Air Gradient Universal driver",
+	    "tags": [
+        "Misc. Devices",
+        "Cloud",
+        "Integrations"
+      ]
     }
   ]
 }
