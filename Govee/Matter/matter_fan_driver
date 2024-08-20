@@ -552,23 +552,24 @@ void setSpeed(fanspeed) {
             value = 0;
         break;
         case "low":
-            value = 1;
+            value = 33;
         break;
         case "medium":
-            value = 2;
+            value = 66;
         break;
         case "on":
-            value = 4;
+            value = 101;
         break;
         case "high":
-            value = 3;
+            value = 100;
         break;
         case "auto":
-            value = 5;
+            value = 102;
         break;
     speedValue = intToHexStr(value)  
+        if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed} value to ${speedValue}"
     List<Map<String, String>> attributeWriteRequests = []
-    attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0000, DataType.UINT8, speedValue ))
+    attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, DataType.UINT8, speedValue ))
     String cmd = matter.writeAttributes(attributeWriteRequests)            
     sendToDevice(cmd)
     }
