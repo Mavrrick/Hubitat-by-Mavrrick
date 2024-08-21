@@ -566,11 +566,9 @@ void setSpeed(fanspeed) {
 /*        case "auto":
             value = 102;
         break; */
-        default: 
-            if (debugLog) {log.debug ("setSpeed(): Unknown value}")}; 
-            value = 999;    
-        break;
+    }
     if (value > 64) {
+        if (logEnable) {log.debug ("setSpeed(): Unknown value}")};
         on()
     } else {
         speedValue = intToHexStr(value)  
@@ -579,7 +577,6 @@ void setSpeed(fanspeed) {
         attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, 0x04, speedValue ))
         String cmd = matter.writeAttributes(attributeWriteRequests)            
         sendToDevice(cmd)
-        }
     }
 }
 
