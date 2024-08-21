@@ -26,9 +26,12 @@
  *                                   TODO: add flashOnce()
  *                                   TODO: add powerOnBehavior
  *                                   TODO: add state.color w/ min/max Mirad values
+ *
+ * This Govee fan Driver is heavily based on kkossev's Matter driver for retrieval of diagnostic and Matter cluster information. 
+ * This instance of the driver is customized to work specifically with the Govee Fan H7105 42" tower Max Fan
  */
 
-static String version() { '1.0.4' }
+static String version() { '1.0.0' }
 static String timeStamp() { '2024/01/23 10:54 PM' }
 
 @Field static final Boolean _DEBUG = false
@@ -43,7 +46,6 @@ static String timeStamp() { '2024/01/23 10:54 PM' }
 
 @Field Map getFanLevel = [
     "off": 0
-//    ,"on": 1
     ,"speed 1": 8
 	,"speed 2": 16
 	,"speed 3": 24
@@ -62,10 +64,9 @@ import groovy.transform.Field
 import hubitat.helper.HexUtils
 
 metadata {
-    definition(name: 'Matter Fan driver', namespace: 'kkossev', author: 'Krassimir Kossev', singleThreaded: true) {
+    definition(name: 'Matter Fan driver', namespace: 'Mavrrick', author: 'Mavrrick', singleThreaded: true) {
         capability 'Actuator'
         capability 'Switch'
-        //capability 'Configuration'
         capability "FanControl"
         capability 'Initialize'
         capability 'Refresh'
@@ -75,34 +76,20 @@ metadata {
         attribute 'healthStatus', 'enum', ['unknown', 'offline', 'online']
         attribute 'rtt', 'number'
         attribute 'Status', 'string'
-        attribute 'silentMode', 'enum', ['off', 'on']   // disable all logging and events while in color animation mode
         command 'getInfo'
-//        command 'toggle'
-        command 'identify'  // can't make it work ... :(
-        //command 'unsubscribe'
-        //command 'subscribe'
+//        command 'identify'  // can't make it work ... :(
         command 'initialize', [[name: 'Invoked automatically during the hub reboot, do not click!']]
         command 'reSubscribe', [[name: 're-subscribe to the Matter controller events']]
         command 'natureMode'
         command 'sleepMode'
         command 'autoMode'
-        command 'smartMode'
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]        
-
-/*        if (_DEBUG) {
-            command 'test', [[name: 'test', type: 'STRING', description: 'test', defaultValue : '']]
-        } */
         
         fingerprint endpointId:"01", inClusters:"0003,0004,0006,001D,0202", outClusters:"", model:"H7075", manufacturer:"Shenzhen Qianyan Technology", controllerType:"MAT"
-    // fingerprints are commented out, because are already included in the stock driver
-    // fingerprint endpointId:'01', inClusters:'0003,0004,0005,0006,0008,001D,001E,0300', outClusters:'', model:'NL67', manufacturer:'Nanoleaf', controllerType:'MAT'                      // Nanoleaf Essentials A19 Bulb
-    // fingerprint endpointId:'01', inClusters:'0003,0004,0005,0006,0008,001D,001E,0300', outClusters:'', model:'NL68', manufacturer:'Nanoleaf', controllerType:'MAT'                      // Nanoleaf Strip 5E8
     }
     preferences {
         input(name:'txtEnable', type:'bool', title:'Enable descriptionText logging', defaultValue:true)
         input(name:'logEnable', type:'bool', title:'Enable debug logging', defaultValue:true)
-//        input(name:'transitionTime', type:'enum', title:"Level transition time (default:${ttOpts.defaultText})", options:ttOpts.options, defaultValue:ttOpts.defaultValue)
-//        input(name:'rgbTransitionTime', type:'enum', title:"RGB transition time (default:${ttOpts.defaultText})", options:ttOpts.options, defaultValue:ttOpts.defaultValue)
         input name: 'advancedOptions', type: 'bool', title: '<b>Advanced Options</b>', description: '<i>These advanced options should be already automatically set in an optimal way for your device...</i>', defaultValue: false
         if (advancedOptions == true || advancedOptions == true) {
             input name: 'spammyReportsFilter', type: 'enum', title: '<b>Spammy Reports Filtering</b>', options: SpammyReportsFilterOpts.options, defaultValue: SpammyReportsFilterOpts.defaultValue, required: true, description: '<i>Filtering spammy reports.</i>'
@@ -198,21 +185,8 @@ void parse(String description) {
             }
             gatherAttributesValuesInfo(descMap, FanClusterAttributes)
             break
-        case '0008' :   // LevelControl
-            if (descMap.attrId == '0000') { //current level
-                sendLevelEvent(descMap.value)
-            }
-            else {
-                logWarn "skipped level, attribute:${descMap.attrId}, value:${descMap.value}"
-            }
-            gatherAttributesValuesInfo(descMap, LevelControlClusterAttributes)
-            break
         case '001D' :  // Descriptor, ep:00
             gatherAttributesValuesInfo(descMap, DescriptorClusterAttributes)
-            break
-        case '002F' :  // PowerSource, ep:02    //  parse: descMap:[endpoint:02, cluster:002F, attrId:000C, value:C8, clusterInt:47, attrInt:12] description:read attr - endpoint: 02, cluster: 002F, attrId: 000C, value: 04C8
-            parseBatteryEvent(descMap)
-            gatherAttributesValuesInfo(descMap, PowerSourceClusterAttributes)
             break
         case '0028' :  // BasicInformation, ep:00
             gatherAttributesValuesInfo(descMap, BasicInformationClusterAttributes)
@@ -220,23 +194,6 @@ void parse(String description) {
         case '0045' :  // BooleanState
             gatherAttributesValuesInfo(descMap, BoleanStateClusterAttributes)
             parseContactEvent(descMap)
-            break
-        case '0300' :   // ColorControl
-            if (descMap.attrId == '0000') { //hue
-                sendHueEvent(descMap.value)
-            } else if (descMap.attrId == '0001') { //saturation
-                sendSaturationEvent(descMap.value)
-            }
-            else if (descMap.attrId == '0007') { //color temperature
-                sendCTEvent(descMap.value)
-            }
-            else if (descMap.attrId == '0008') { //color mode
-                logDebug "parse: skipped color mode:${descMap}"
-            }
-            else {
-                logWarn "parse: skipped color, attribute:${descMap.attrId}, value:${descMap.value}"
-            }
-            gatherAttributesValuesInfo(descMap, ColorControlClusterAttributes)
             break
         default :
                 logWarn "parse: skipped:${descMap}"
@@ -394,154 +351,6 @@ private void sendSwitchEvent(String rawValue, isDigital = false) {
     sendEvent(eventMap)
 }
 
-private void sendLevelEvent(String rawValue) {
-    Integer value = Math.round(hexStrToUnsignedInt(rawValue) / 2.55)
-    if (value == 0 || value == device.currentValue('level')) { return }
-    Map eventMap = [name: 'level', value: value, descriptionText: "level was set to ${value}%", unit: '%']
-    if (state.states['isRefresh'] == true) {
-        eventMap.descriptionText = "level is ${value}% [refresh]"
-        eventMap.isStateChange = true   // force the event to be sent
-    }
-    Object latestEvent = device.latestState('level', skipCache=true)
-    int latestEventTime = latestEvent != null ? latestEvent.getDate().getTime() : now()
-    int timeDiff = (now() - latestEventTime) as int
-
-    if (settings.spammyReportsFilter == null || (settings.spammyReportsFilter as int) == 0 || timeDiff > (settings.spammyReportsFilter as int)) {
-        // send it now!
-        unschedule('sendDelayedLevelEvent')
-        sendDelayedLevelEvent(eventMap)
-    }
-    else {
-        int delayedTime = (settings?.spammyReportsFilter as int) - timeDiff
-        eventMap.delayed = delayedTime
-        eventMap.descriptionText += " [delayed ${eventMap.delayed} ms]"
-        logDebug "this level event (${eventMap.value}%) will be delayed ${delayedTime} ms"
-        runInMillis(delayedTime, 'sendDelayedLevelEvent', [overwrite: true, data: eventMap])
-    }
-}
-
-private void sendDelayedLevelEvent(Map eventMap) {
-    logInfo "${eventMap.descriptionText}"
-    //map.each {log.trace "$it"}
-    sendEvent(eventMap)
-}
-
-/* groovylint-disable-next-line UnusedPrivateMethodParameter */
-private void sendHueEvent(String rawValue, Boolean presetColor = false) {
-    Integer value = hex254ToInt100(rawValue)
-    if (value == device.currentValue('hue')) { return }
-    sendRGBNameEvent(value)
-
-    Map eventMap = [name: 'hue', value: value, descriptionText: "hue was set to ${value}%", unit: '%']
-    if (state.states['isRefresh'] == true) {
-        eventMap.descriptionText += ' [refresh]'
-        eventMap.isStateChange = true   // force the event to be sent
-    }
-    Object latestEvent = device.latestState('hue', skipCache = true)
-    int latestEventTime = latestEvent != null ? latestEvent.getDate().getTime() : now()
-    int timeDiff = (now() - latestEventTime) as int
-
-    if (settings.spammyReportsFilter == null || (settings.spammyReportsFilter as int) == 0 || timeDiff > (settings.spammyReportsFilter as int)) {
-        // send it now!
-        unschedule('sendDelayedHueEvent')
-        sendDelayedHueEvent(eventMap)
-    }
-    else {
-        int delayedTime = (settings?.spammyReportsFilter as int) - timeDiff
-        eventMap.delayed = delayedTime
-        eventMap.descriptionText += " [delayed ${eventMap.delayed} ms]"
-        logDebug "this hue event (${eventMap.value}) will be delayed ${delayedTime} ms"
-        runInMillis(delayedTime, 'sendDelayedHueEvent', [overwrite: true, data: eventMap])
-    }
-
-}
-
-private void sendDelayedHueEvent(Map eventMap) {
-    logInfo "${eventMap.descriptionText}"
-    sendEvent(eventMap)
-}
-
-/* groovylint-disable-next-line UnusedPrivateMethodParameter */
-private void sendSaturationEvent(String rawValue, Boolean presetColor = false) {
-    Integer value = hex254ToInt100(rawValue)
-    if (value == device.currentValue('saturation')) { return }
-    sendRGBNameEvent(null, value)
-
-    Map eventMap = [name: 'saturation', value: value, descriptionText: "saturation was set to ${value}%", unit: '%']
-    if (state.states['isRefresh'] == true) {
-        eventMap.descriptionText += ' [refresh]'
-        eventMap.isStateChange = true   // force the event to be sent
-    }
-    Object latestEvent = device.latestState('saturation', skipCache = true)
-    int latestEventTime = latestEvent != null ? latestEvent.getDate().getTime() : now()
-    int timeDiff = (now() - latestEventTime) as int
-
-    if (settings.spammyReportsFilter == null || (settings.spammyReportsFilter as int) == 0 || timeDiff > (settings.spammyReportsFilter as int)) {
-        // send it now!
-        unschedule('sendDelayedSaturationEvent')
-        sendDelayedSaturationEvent(eventMap)
-    }
-    else {
-        int delayedTime = (settings?.spammyReportsFilter as int) - timeDiff
-        eventMap.delayed = delayedTime
-        eventMap.descriptionText += " [delayed ${eventMap.delayed} ms]"
-        logDebug "this saturation event (${eventMap.value}) will be delayed ${delayedTime} ms"
-        runInMillis(delayedTime, 'sendDelayedSaturationEvent', [overwrite: true, data: eventMap])
-    }
-}
-
-private void sendCTEvent(String rawValue, Boolean presetColor = false) {
-    Integer value = (1000000/(hexStrToUnsignedInt(rawValue))).toInteger()
-    String descriptionText = "${device.displayName} ColorTemp was set to ${value}K"
-    if (txtEnable) log.info descriptionText
-    sendEvent(name:"colorTemperature", value:value, descriptionText:descriptionText, unit: "K")
-
-}
-
-private void sendDelayedSaturationEvent(Map eventMap) {
-    logInfo "${eventMap.descriptionText}"
-    sendEvent(eventMap)
-}
-
-/* groovylint-disable-next-line MethodParameterTypeRequired, NoDef, UnusedPrivateMethodParameter */
-private void sendRGBNameEvent(hue, sat = null) {
-    String genericName
-    if (device.currentValue('saturation') == 0) {
-        genericName = 'White'
-    } else if (hue == null) {
-        return
-    } else {
-        genericName = colorRGBName.find { k , v -> hue < k }.value
-    }
-    if (genericName == device.currentValue('colorName')) { return }
-    Map eventMap = [name: 'colorName', value: genericName, descriptionText: "color is ${genericName}"]
-    if (state.states['isRefresh'] == true) {
-        eventMap.descriptionText += ' [refresh]'
-        eventMap.isStateChange = true   // force the event to be sent
-    }
-    Object latestEvent = device.latestState('colorName', skipCache = true)
-    int latestEventTime = latestEvent != null ? latestEvent.getDate().getTime() : now()
-    int timeDiff = (now() - latestEventTime) as int
-
-    if (settings.spammyReportsFilter == null || (settings.spammyReportsFilter as int) == 0 || timeDiff > (settings.spammyReportsFilter as int)) {
-        // send it now!
-        unschedule('sendDelayedRGBNameEvent')
-        sendDelayedRGBNameEvent(eventMap)
-    }
-    else {
-        int delayedTime = (settings?.spammyReportsFilter as int) - timeDiff
-        eventMap.delayed = delayedTime
-        eventMap.descriptionText += " [delayed ${eventMap.delayed} ms]"
-        logDebug "this colorName event (${eventMap.value}) will be delayed ${delayedTime} ms"
-        runInMillis(delayedTime, 'sendDelayedRGBNameEvent', [overwrite: true, data: eventMap])
-    }
-}
-
-private void sendDelayedRGBNameEvent(Map eventMap) {
-    logInfo "${eventMap.descriptionText}"
-    sendEvent(eventMap)
-}
-
 //capability commands
 void on() {
     logDebug 'switching on()'
@@ -600,9 +409,6 @@ void setSpeed(fanspeed) {
         case "high":
             value = 100;
         break; 
-/*        case "auto":
-            value = 102;
-        break; */
     }
     if (value > 101) {
         if (logEnable) {log.debug ("setSpeed(): Unknown value}")};
@@ -658,36 +464,6 @@ void smartMode() {
     sendToDevice(cmd)
 }
 
-
-void stepUp(){
-    if (logEnable) log.debug "stepUp() Attempting to step up speed of fan "
-    value = intToHexStr(0)
-    List<Map<String, String>> cmdFields = []
-    cmdFields.add(matter.cmdField(0x04, 0x00, value)) 
-    log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
-    cmds = matter.invoke(device.endpointId, 0x0202, 0x00, cmdFields) 
-    
-    sendToDevice(cmds)
-}
-
-void stepDown(){
-    if (logEnable) log.debug "stepDown() Attempting to step down speed of fan "
-    value = intToHexStr(1)
-    List<Map<String, String>> cmdFields = []
-    cmdFields.add(matter.cmdField(0x04, 0x00, value)) 
-    log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
-    cmds = matter.invoke(device.endpointId, 0x0202, 0x00, cmdFields) 
-    
-    sendToDevice(cmds)
-}
-
-void toggle() {
-    logDebug 'toggling...'
-    setDigitalRequest()
-    String cmd = matter.invoke(device.endpointId, 0x0006, 0x0002)
-    sendToDevice(cmd)
-}
-
 void identify() {
     /*
     List<Map<String, String>> attributeWriteRequests = []
@@ -703,85 +479,6 @@ void identify() {
     
 }
 
-void setLevel(Object value) {
-    logDebug "setLevel(${value})"
-    setLevel(value, transitionTime ?: 1)
-}
-
-void setLevel(Object value, Object rate) {
-    logDebug "setLevel(${value}, ${rate})"
-    Integer level = value.toInteger()
-    if (level == 0 && device.currentValue('switch') == 'off') { return }
-    sendToDevice(matter.setLevel(level, rate.toInteger()))
-}
-
-void setHue(Object value) {
-    logDebug "setHue(${value})"
-    List<String> cmds = []
-    Integer transitionTime = (rgbTransitionTime ?: 1).toInteger()
-    if (device.currentValue('switch') == 'on') {
-        cmds.add(matter.setHue(value.toInteger(), transitionTime))
-    } else {
-        cmds.add(matter.on())
-        cmds.add(matter.setHue(value.toInteger(), transitionTime))
-    }
-    sendToDevice(cmds)
-}
-
-void setSaturation(Object value) {
-    logDebug "setSaturation(${value})"
-    List<String> cmds = []
-    Integer transitionTime = (rgbTransitionTime ?: 1).toInteger()
-    if (device.currentValue('switch') == 'on') {
-        cmds.add(matter.setSaturation(value.toInteger(), transitionTime))
-    } else {
-        cmds.add(matter.on())
-        cmds.add(matter.setSaturation(value.toInteger(), transitionTime))
-    }
-    sendToDevice(cmds)
-}
-
-void setHueSat(Object hue, Object sat) {
-    logDebug "setHueSat(${hue}, ${sat})"
-    List<String> cmds = []
-    Integer transitionTime = (rgbTransitionTime ?: 1).toInteger()
-    if (device.currentValue('switch') == 'on') {
-        cmds.add(matter.setHue(hue.toInteger(), transitionTime))
-        cmds.add(matter.setSaturation(sat.toInteger(), transitionTime))
-    } else {
-        cmds.add(matter.on())
-        cmds.add(matter.setHue(hue.toInteger(), transitionTime))
-        cmds.add(matter.setSaturation(sat.toInteger(), transitionTime))
-    }
-    sendToDevice(cmds)
-}
-
-void setColorTemperature(colortemperature, transitionTime=null) {
-    if (logEnable) log.debug "setcolortemp(${colortemperature})"
-    List<String> cmds = []
-    if (device.currentValue("switch") == "on"){
-        cmds.add(matter.setColorTemperature(colortemperature.toInteger(), transitionTime))
-    } else {
-        cmds.add(matter.on())
-        cmds.add(matter.setColorTemperature(colortemperature.toInteger(), transitionTime))
-    }
-    sendToDevice(cmds)
-    
-}
-
-void setColor(Map colorMap) {
-    logDebug "setColor(${colorMap})"
-    if (colorMap.level) {
-        setLevel(colorMap.level)
-    }
-    if (colorMap.hue != null && colorMap.saturation != null) {
-        setHueSat(colorMap.hue, colorMap.saturation)
-    } else if (colorMap.hue != null) {
-        setHue(colorMap.hue)
-    } else if (colorMap.saturation != null) {
-        setSaturation(colorMap.saturation)
-    }
-}
 
 void setRefreshRequest()   { if (state.states == null) { state.states = [:] } ; state.states['isRefresh'] = true ; runInMillis(REFRESH_TIMER, clearRefreshRequest, [overwrite: true]) }                 // 3 seconds
 void clearRefreshRequest() { if (state.states == null) { state.states = [:] } ; state.states['isRefresh'] = false }
@@ -964,41 +661,20 @@ void sendSubscribeCmd() {
 String subscribeCmd() {
     List<Map<String, String>> attributePaths = []
     String cmd = ''
-    if (state.deviceType == 'MATTER_BULB') {
-        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
-        attributePaths.add(matter.attributePath(0x01, 0x0008, 0x00))
-        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x00))
-        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x01))
-        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x07))
-        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x08))
-        //standard 0 reporting interval is way too busy for bulbs
-        cmd = matter.subscribe(5, 0xFFFF, attributePaths)
-    }
-    else if (state.deviceType == 'MATTER_OUTLET') {
-        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
-        cmd = matter.subscribe(0, 300, attributePaths)
-    }
-    else if (state.deviceType == 'MATTER_CONTACT_SENSOR') {
-        attributePaths.add(matter.attributePath(0x01, 0x0045, 0x00))
-        attributePaths.add(matter.attributePath(0x02, 0x002F, 0x0C))
-        attributePaths.add(matter.attributePath(0x02, 0x002F, 0x0B))    // BatteryVoltage is reported every 8 hours
-        attributePaths.add(matter.attributePath(0x02, 0x002F, 0x00))
-        attributePaths.add(matter.attributePath(0x02, 0x002F, 0x0E))
-        cmd = matter.subscribe(0, 0xFFFF, attributePaths)
-    } else if (state.deviceType == 'MATTER_FAN') {
+    
         attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
         attributePaths.add(matter.attributePath(0x01, 0x0202, 0x00))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x01))
+//        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x01))
         attributePaths.add(matter.attributePath(0x01, 0x0202, 0x02))
         attributePaths.add(matter.attributePath(0x01, 0x0202, 0x03))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x04))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x05))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x06))
+//        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x04))
+//        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x05))
+//        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x06))
         attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0A))
         attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0B))
         attributePaths.add(matter.attributePath(0x01, 0x0005, 0x01))
         cmd = matter.subscribe(0, 0xFFFF, attributePaths)
-    }
+
     return cmd
 }
 
@@ -1025,49 +701,20 @@ void refresh() {
 
 String refreshCmd() {
     List<Map<String, String>> attributePaths = []
-    if (state.deviceType == 'MATTER_OUTLET') {
-        if (state.matter != null && state.matter['0x0006'] != null) {
-            String attrListString = state.matter['0x0006'] as String
-            attrListString = attrListString.substring(1, attrListString.length() - 1)                   // remove the [] brackets
-            List<Integer> attrList = attrListString.split(',').collect { HexUtils.hexStringToInt(it) }  // convert the string to a list of integers
-            logDebug "refreshCmd: attrList:${attrList}"
-            attrList.each { attrInt ->
-                attributePaths.add(matter.attributePath(device.endpointId, 0x0006, attrInt))
-            }
-        }
-        else {
-            logWarn "refreshCmd: state.matter['0x0006'] is null"
-        }
-    }
-    else if (state.deviceType == 'MATTER_BULB') {
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0008, 0x0000))
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0000))
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0001))
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0007))
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0008))
-    }
-    else if (state.deviceType == 'MATTER_CONTACT_SENSOR') {
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0045, 0x0000))         // Boolean State Cluster : PresentValue
-        attributePaths.add(matter.attributePath(02, 0x002F, 0x000C))                        // Power Configuration Cluster : BatteryPercentageRemaining
-        attributePaths.add(matter.attributePath(02, 0x002F, 0x000B))                        // Power Configuration Cluster : BatteryVoltage
-        attributePaths.add(matter.attributePath(02, 0x002F, 0x0000))                        // Power Configuration Cluster : Status
-        attributePaths.add(matter.attributePath(02, 0x002F, 0x000E))                        // Power Configuration Cluster : BattChargeLevel
-    }
-    else if (state.deviceType == 'MATTER_FAN') {
+    
         attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))         // on/off
         attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0000))         // FanMode
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0001))         // FanModeSequence
+//        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0001))         // FanModeSequence
         attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0002))         // PercentSetting
         attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0003))         // PercentCurrent
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0004))         // SpeedMax
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0005))         // SpeedSetting
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0006))         // SpeedCurrent
+//        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0004))         // SpeedMax
+//        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0005))         // SpeedSetting
+//        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0006))         // SpeedCurrent
         attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000A))         // WindSetting
-//        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000B))         // AirflowDirectionEnum
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000B))         // AirflowDirectionEnum
         attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0000))         
         attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0001))                        // Power Configuration Cluster : Status
-    }
+    
     String cmd = matter.readAttributes(attributePaths)
     return cmd
 }
