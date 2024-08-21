@@ -83,8 +83,10 @@ metadata {
         //command 'subscribe'
         command 'initialize', [[name: 'Invoked automatically during the hub reboot, do not click!']]
         command 'reSubscribe', [[name: 're-subscribe to the Matter controller events']]
-//        command 'stepUp'
-//        command 'stepDown'
+        command 'natureMode'
+        command 'sleepMode'
+        command 'autoMode'
+        command 'smartMode'
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]        
 
 /*        if (_DEBUG) {
@@ -614,6 +616,48 @@ void setSpeed(fanspeed) {
         sendToDevice(cmd)
     }
 }
+
+
+void natureMode() {
+    value = 1
+    speedValue = intToHexStr(value)  
+    if (logEnable) log.debug "Activating nature mode"
+    List<Map<String, String>> attributeWriteRequests = []
+    attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x000A, 0x04, speedValue ))
+    String cmd = matter.writeAttributes(attributeWriteRequests)            
+    sendToDevice(cmd)
+}
+
+void sleepMode() {
+    value = 0
+    speedValue = intToHexStr(value)  
+    if (logEnable) log.debug "Activateting sleep mode"
+    List<Map<String, String>> attributeWriteRequests = []
+    attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x000A, 0x04, speedValue ))
+    String cmd = matter.writeAttributes(attributeWriteRequests)            
+    sendToDevice(cmd)
+}
+
+void autoMode() {
+    value = 5
+    speedValue = intToHexStr(value)  
+    if (logEnable) log.debug "Activateting auto mode"
+    List<Map<String, String>> attributeWriteRequests = []
+    attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x000, 0x04, speedValue ))
+    String cmd = matter.writeAttributes(attributeWriteRequests)            
+    sendToDevice(cmd)
+}
+
+void smartMode() {
+    value = 6
+    speedValue = intToHexStr(value)  
+    if (logEnable) log.debug "Activateting Smart mode"
+    List<Map<String, String>> attributeWriteRequests = []
+    attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x000, 0x04, speedValue ))
+    String cmd = matter.writeAttributes(attributeWriteRequests)            
+    sendToDevice(cmd)
+}
+
 
 void stepUp(){
     if (logEnable) log.debug "stepUp() Attempting to step up speed of fan "
