@@ -43,11 +43,11 @@ static String timeStamp() { '2024/01/23 10:54 PM' }
 
 @Field Map getFanLevel = [
     "off": 0
-    ,"on": 1
+//    ,"on": 1
     ,"low": 10
-	,"medium": 50
-	,"high": 100
-    ,"auto": 150
+	,"medium": 30
+	,"high": 64
+//    ,"auto": 150
 ]
 
 import groovy.transform.Field
@@ -552,45 +552,53 @@ void setSpeed(fanspeed) {
             value = 0;
         break;
         case "low":
-            value = 33;
+            value = 10;
         break;
         case "medium":
-            value = 66;
+            value = 30;
         break;
         case "on":
             value = 101;
         break;
         case "high":
-            value = 100;
+            value = 64;
         break;
-        case "auto":
+/*        case "auto":
             value = 102;
+        break; */
+        default: 
+            if (debugLog) {log.debug ("setSpeed(): Unknown value}")}; 
+            value = 999;    
         break;
-    speedValue = intToHexStr(value)  
+    if (value > 64) {
+        on()
+    } else {
+        speedValue = intToHexStr(value)  
         if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed} value to ${speedValue}"
-    List<Map<String, String>> attributeWriteRequests = []
-    attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, DataType.UINT8, speedValue ))
-    String cmd = matter.writeAttributes(attributeWriteRequests)            
-    sendToDevice(cmd)
+        List<Map<String, String>> attributeWriteRequests = []
+        attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, 0x04, speedValue ))
+        String cmd = matter.writeAttributes(attributeWriteRequests)            
+        sendToDevice(cmd)
+        }
     }
 }
 
 void stepUp(){
     if (logEnable) log.debug "stepUp() Attempting to step up speed of fan "
     value = intToHexStr(0)
-        List<Map<String, String>> cmdFields = []
-        cmdFields.add(matter.cmdField(0x05, 0x00, value)) 
-        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
-        cmds = matter.invoke(device.endpointId, 0x0202, 0x00, cmdFields) 
+    List<Map<String, String>> cmdFields = []
+    cmdFields.add(matter.cmdField(0x04, 0x00, value)) 
+    log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
+    cmds = matter.invoke(device.endpointId, 0x0202, 0x00, cmdFields) 
     
     sendToDevice(cmds)
 }
 
 void stepDown(){
-    if (logEnable) log.debug "stepUp() Attempting to step down speed of fan "
+    if (logEnable) log.debug "stepDown() Attempting to step down speed of fan "
     value = intToHexStr(1)
     List<Map<String, String>> cmdFields = []
-    cmdFields.add(matter.cmdField(0x05, 0x00, value)) 
+    cmdFields.add(matter.cmdField(0x04, 0x00, value)) 
     log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
     cmds = matter.invoke(device.endpointId, 0x0202, 0x00, cmdFields) 
     
