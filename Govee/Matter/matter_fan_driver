@@ -163,10 +163,10 @@ void parse(String description) {
         case "0202" :
             if (descMap.attrId == "0000") { //fan speed
                 if (logEnable) log.debug "parse(): Fan Event - Fan Speed ${descMap.value}"
-                sendSpeedEvent(descMap.value) 
             } else if (descMap.attrId == "0001") { //fan speed mode
                 if (logEnable) log.debug "parse(): Fan Event - Fan speed mode ${descMap.value}"
             } else if (descMap.attrId == "0002") { //fan speed Percent Setting
+                sendSpeedEvent(descMap.value) 
                 if (logEnable) log.debug "parse(): Fan Event - Fan Speed  Percent ${descMap.value}"
             } else  if (descMap.attrId == "0003") { //fan speed Percent current
                 if (logEnable) log.debug "parse(): Fan Event - Fan Speed Percent Curent ${descMap.value}"
@@ -327,7 +327,50 @@ void parseOnOffCluster(Map descMap) {
 //events
 
 private void sendSpeedEvent(String rawValue) {      
-    String value = rawValue 
+    Integer intValue = hexStrToUnsignedInt(rawValue) 
+    
+    switch(intValue) {
+        case 0 :
+            value = "off";
+        break;
+        case 8:
+            value = "speed 1";
+        break;
+        case 16:
+            value = "speed 2";
+        break;
+        case 24:
+            value = "speed3 (low)";
+        break;
+        case 32:
+            value = "speed 4";
+        break;
+        case 40:
+            value = "speed 5";
+        break;
+        case 48:
+            value = "speed 6 (medium)";
+        break;
+        case 56:
+            value = "speed 7";
+        break;
+        case 64:
+            value = "speed 8";
+        break; 
+        case 72:
+            value = "speed 9";
+        break;
+        case 81:
+            value = "speed 10";
+        break;  
+        case 90:
+            value = "speed 11";
+        break;
+        case 100:
+            value = "speed12 (high)";
+        break; 
+    }
+    
 //    if (device.currentValue("switch") == value) return
     String descriptionText = "${device.displayName} was set to speed ${value}"
     if (txtEnable) log.info descriptionText
