@@ -44,10 +44,18 @@ static String timeStamp() { '2024/01/23 10:54 PM' }
 @Field Map getFanLevel = [
     "off": 0
 //    ,"on": 1
-    ,"low": 10
-	,"medium": 30
-	,"high": 64
-//    ,"auto": 150
+    ,"speed 1": 8
+	,"speed 2": 16
+	,"speed 3": 24
+    ,"speed 4": 32
+	,"speed 5": 40
+	,"speed 6": 48    
+    ,"speed 7": 56
+    ,"speed 8": 64
+	,"speed 9": 72
+	,"speed 10": 81
+    ,"speed 11": 90
+	,"speed 12": 100    
 ]
 
 import groovy.transform.Field
@@ -75,8 +83,8 @@ metadata {
         //command 'subscribe'
         command 'initialize', [[name: 'Invoked automatically during the hub reboot, do not click!']]
         command 'reSubscribe', [[name: 're-subscribe to the Matter controller events']]
-        command 'stepUp'
-        command 'stepDown'
+//        command 'stepUp'
+//        command 'stepDown'
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]        
 
 /*        if (_DEBUG) {
@@ -551,28 +559,55 @@ void setSpeed(fanspeed) {
         case "off":
             value = 0;
         break;
+        case "speed 1":
+            value = 8;
+        break;
+        case "speed 2":
+            value = 16;
+        break;
+        case "speed 3":
         case "low":
-            value = 10;
+            value = 24;
         break;
+        case "speed 4":
+            value = 32;
+        break;
+        case "speed 5":
+            value = 40;
+        break;
+        case "speed 6":
         case "medium":
-            value = 30;
+            value = 48;
         break;
-        case "on":
-            value = 101;
+        case "speed 7":
+            value = 56;
         break;
-        case "high":
+        case "speed 8":
             value = 64;
+        break; 
+        case "speed 9":
+            value = 72;
         break;
+        case "speed 10":
+            value = 81;
+        break;  
+        case "speed 11":
+            value = 90;
+        break;
+        case "speed 12":
+        case "high":
+            value = 100;
+        break; 
 /*        case "auto":
             value = 102;
         break; */
     }
-    if (value > 64) {
+    if (value > 101) {
         if (logEnable) {log.debug ("setSpeed(): Unknown value}")};
         on()
     } else {
         speedValue = intToHexStr(value)  
-        if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed} value to ${speedValue}"
+        if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed}  % ${value} value to ${speedValue}"
         List<Map<String, String>> attributeWriteRequests = []
         attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, 0x04, speedValue ))
         String cmd = matter.writeAttributes(attributeWriteRequests)            
