@@ -1,0 +1,315 @@
+/*
+	Govee Fan driver
+
+	Copyright 2023 Hubitat Inc.  All Rights Reserved
+
+	2023-11-02 2.3.7 maxwell
+		-initial pub
+
+*/
+
+import groovy.transform.Field
+
+@Field static final String   DEVICE_TYPE = 'MATTER_FAN'
+
+@Field Map getFanLevel = [
+    "off": 0
+    ,"speed 1": 8
+	  ,"speed 2": 16
+	  ,"speed 3": 24
+    ,"speed 4": 32
+	  ,"speed 5": 40
+	  ,"speed 6": 48    
+    ,"speed 7": 56
+    ,"speed 8": 64
+	  ,"speed 9": 72
+	  ,"speed 10": 81
+    ,"speed 11": 90
+	  ,"speed 12": 100    
+]
+
+import groovy.transform.Field
+import hubitat.helper.HexUtils
+
+metadata {
+    definition (name: "Govee H7105 Fan(Matter)", namespace: "mavrrick", author: "Mavrrick") {
+        capability "Actuator"
+        capability "Switch"
+        capability "Configuration"
+        capability "FanControl"
+        capability "Initialize"
+        capability "Refresh"
+        
+//        command 'getInfo'
+        command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
+        
+        fingerprint endpointId:"01", inClusters:"0003,0004,0006,001D,0202", outClusters:"", model:"H7075", manufacturer:"Shenzhen Qianyan Technology", controllerType:"MAT"
+
+    }
+    preferences {
+        input(name:"logEnable", type:"bool", title:"Enable debug logging", defaultValue:false)
+        input(name:"txtEnable", type:"bool", title:"Enable descriptionText logging", defaultValue:true)
+    }
+}
+
+//parsers
+void parse(String description) {
+    Map descMap = matter.parseDescriptionAsMap(description)
+    if (logEnable) log.debug "descMap:${descMap}"
+    switch (descMap.cluster) {        
+        case "0006" :
+            if (descMap.attrId == "0000") { //switch
+                sendSwitchEvent(descMap.value)
+            }
+            break
+        case "0000" :
+            if (descMap.attrId == "4000") { //software build
+                updateDataValue("softwareBuild",descMap.value ?: "unknown")
+            }
+            break
+        case "0202" :
+            if (descMap.attrId == "0000") { //fan speed
+                if (logEnable) log.debug "parse(): Fan Event - Fan Speed ${descMap.value}"
+            } else if (descMap.attrId == "0001") { //fan speed mode
+                if (logEnable) log.debug "parse(): Fan Event - Fan speed mode ${descMap.value}"
+            } else if (descMap.attrId == "0002") { //fan speed Percent Setting
+                sendSpeedEvent(descMap.value) 
+                if (logEnable) log.debug "parse(): Fan Event - Fan Speed  Percent ${descMap.value}"
+            } else  if (descMap.attrId == "0003") { //fan speed Percent current
+                if (logEnable) log.debug "parse(): Fan Event - Fan Speed Percent Curent ${descMap.value}"
+            } else if (descMap.attrId == "0004") { //fan speed max (Don't expect to actually ever return in parse
+                if (logEnable) log.debug "parse(): Fan Event - Fan Speed Max speed ${descMap.value}"
+            } else if (descMap.attrId == "0005") { //fan speed setting
+                if (logEnable) log.debug "parse(): Fan Event - Fan Speed setting ${descMap.value}"
+            } else if (descMap.attrId == "0006") { //fan speed setting current
+                if (logEnable) log.debug "parse(): Fan Event - Fan Speed current ${descMap.value}"
+            } else if (descMap.attrId == "000A") { //WindSetting current
+                if (logEnable) log.debug "parse(): Fan Event - Wind Speed setting ${descMap.value}"
+            } else  if (descMap.attrId == "000B") { //Airflow Direction
+                if (logEnable) log.debug "parse(): Fan Event - Airflow Direction setting ${descMap.value}"
+            } else {
+                logWarn "parse: skipped fan, attribute:${descMap.attrId}, value:${descMap.value}"
+            }
+            gatherAttributesValuesInfo(descMap, FanClusterAttributes)
+            break
+        default :
+            if (logEnable) {
+                log.debug "skipped:${descMap}"
+            }
+    }
+}
+
+//events
+private void sendSpeedEvent(String rawValue) {      
+    Integer intValue = hexStrToUnsignedInt(rawValue) 
+    
+    switch(intValue) {
+        case 0 :
+            value = "off";
+        break;
+        case 8:
+            value = "speed 1";
+        break;
+        case 16:
+            value = "speed 2";
+        break;
+        case 24:
+            value = "speed3 (low)";
+        break;
+        case 32:
+            value = "speed 4";
+        break;
+        case 40:
+            value = "speed 5";
+        break;
+        case 48:
+            value = "speed 6 (medium)";
+        break;
+        case 56:
+            value = "speed 7";
+        break;
+        case 64:
+            value = "speed 8";
+        break; 
+        case 72:
+            value = "speed 9";
+        break;
+        case 81:
+            value = "speed 10";
+        break;  
+        case 90:
+            value = "speed 11";
+        break;
+        case 100:
+            value = "speed12 (high)";
+        break; 
+    }
+    
+//    if (device.currentValue("switch") == value) return
+    String descriptionText = "${device.displayName} was set to speed ${value}"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name:"speed", value:value, descriptionText:descriptionText)
+}
+
+private void sendSwitchEvent(String rawValue) {
+    String value = rawValue == "01" ? "on" : "off"
+    if (device.currentValue("switch") == value) return
+    String descriptionText = "${device.displayName} was turned ${value}"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name:"switch", value:value, descriptionText:descriptionText)
+}
+
+//capability commands
+void on() {
+    if (logEnable) log.debug "on()"
+    sendToDevice(matter.on())
+}
+
+void off() {
+    if (logEnable) log.debug "off()"
+    sendToDevice(matter.off())
+}
+
+void setSpeed(fanspeed) {
+    if (logEnable) log.debug "Setting Fan Speed to ${fanspeed}"
+    switch(fanspeed) {
+        case "off":
+            value = 0;
+        break;
+        case "speed 1":
+            value = 8;
+        break;
+        case "speed 2":
+            value = 16;
+        break;
+        case "speed 3":
+        case "low":
+            value = 24;
+        break;
+        case "speed 4":
+            value = 32;
+        break;
+        case "speed 5":
+            value = 40;
+        break;
+        case "speed 6":
+        case "medium":
+            value = 48;
+        break;
+        case "speed 7":
+            value = 56;
+        break;
+        case "speed 8":
+            value = 64;
+        break; 
+        case "speed 9":
+            value = 72;
+        break;
+        case "speed 10":
+            value = 81;
+        break;  
+        case "speed 11":
+            value = 90;
+        break;
+        case "speed 12":
+        case "high":
+            value = 100;
+        break; 
+    }
+    if (value > 101) {
+        if (logEnable) {log.debug ("setSpeed(): Unknown value}")};
+        on()
+    } else {
+        speedValue = intToHexStr(value)  
+        if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed}  % ${value} value to ${speedValue}"
+        List<Map<String, String>> attributeWriteRequests = []
+        attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, 0x04, speedValue ))
+        String cmd = matter.writeAttributes(attributeWriteRequests)            
+        sendToDevice(cmd)
+    }
+}
+
+
+void configure() {
+    log.warn "configure..."
+    sendToDevice(subscribeCmd())
+}
+
+//lifecycle commands
+void updated(){
+    log.info "updated..."
+    log.warn "debug logging is: ${logEnable == true}"
+    log.warn "description logging is: ${txtEnable == true}"
+    if (logEnable) runIn(1800,logsOff)
+}
+
+void initialize() {
+    log.info "initialize..."
+//    initializeVars(fullInit = true)
+    sendToDevice(subscribeCmd())
+}
+
+void refresh() {
+    if (logEnable) log.debug "refresh()"
+    sendToDevice(refreshCmd())
+}
+
+String refreshCmd() {
+    List<Map<String, String>> attributePaths = []
+    
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))         // on/off
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0000))         // FanMode
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0002))         // PercentSetting
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0003))         // PercentCurrent
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000A))         // WindSetting
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000B))         // AirflowDirectionEnum
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0000))         
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0001))                        // Power Configuration Cluster : Status
+    
+    String cmd = matter.readAttributes(attributePaths)
+    return cmd
+}
+
+String subscribeCmd() {
+    List<Map<String, String>> attributePaths = []
+    String cmd = ''
+    
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x02))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x03))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0A))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0B))
+        attributePaths.add(matter.attributePath(0x01, 0x0005, 0x01))
+        cmd = matter.subscribe(0, 0xFFFF, attributePaths)
+
+    return cmd
+}
+
+void logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
+}
+
+Integer hex254ToInt100(String value) {
+    return Math.round(hexStrToUnsignedInt(value) / 2.54)
+}
+
+String int100ToHex254(value) {
+    return intToHexStr(Math.round(value * 2.54))
+}
+
+
+void sendToDevice(List<String> cmds, Integer delay = 300) {
+    sendHubCommand(new hubitat.device.HubMultiAction(commands(cmds, delay), hubitat.device.Protocol.MATTER))
+}
+
+void sendToDevice(String cmd, Integer delay = 300) {
+    sendHubCommand(new hubitat.device.HubAction(cmd, hubitat.device.Protocol.MATTER))
+}
+
+List<String> commands(List<String> cmds, Integer delay = 300) {
+    return delayBetween(cmds.collect { it }, delay)
+}
+    
+    
