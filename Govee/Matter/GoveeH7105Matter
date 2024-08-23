@@ -15,17 +15,17 @@ import groovy.transform.Field
 @Field Map getFanLevel = [
     "off": 0
     ,"speed 1": 8
-	  ,"speed 2": 16
-	  ,"speed 3": 24
+	,"speed 2": 16
+	,"speed 3": 24
     ,"speed 4": 32
-	  ,"speed 5": 40
-	  ,"speed 6": 48    
+	,"speed 5": 40
+	,"speed 6": 48    
     ,"speed 7": 56
     ,"speed 8": 64
-	  ,"speed 9": 72
-	  ,"speed 10": 81
+	,"speed 9": 72
+	,"speed 10": 81
     ,"speed 11": 90
-	  ,"speed 12": 100    
+	,"speed 12": 100    
 ]
 
 import groovy.transform.Field
@@ -47,6 +47,7 @@ metadata {
 
     }
     preferences {
+        input(name:"cycleInterval", type:"number", title:"Number of seconds between cycles", defaultValue:30)
         input(name:"logEnable", type:"bool", title:"Enable debug logging", defaultValue:false)
         input(name:"txtEnable", type:"bool", title:"Enable descriptionText logging", defaultValue:true)
     }
@@ -161,19 +162,23 @@ private void sendSwitchEvent(String rawValue) {
 
 //capability commands
 void on() {
+    unschedule()
     if (logEnable) log.debug "on()"
     sendToDevice(matter.on())
 }
 
 void off() {
+    unschedule()
     if (logEnable) log.debug "off()"
     sendToDevice(matter.off())
 }
 
 void setSpeed(fanspeed) {
+    unschedule()
     if (logEnable) log.debug "Setting Fan Speed to ${fanspeed}"
     switch(fanspeed) {
         case "off":
+        case "speed 0":
             value = 0;
         break;
         case "speed 1":
@@ -229,10 +234,22 @@ void setSpeed(fanspeed) {
     }
 }
 
+void cycleSpeed() {
+    cycleChange()
+}
+
+void cycleChange() {
+    Integer randomSpeed = random(13)
+    String newSpeed = "speed "+randomSpeed
+    setSpeed(newSpeed)
+    runIn(cycleInterval, cycleChange)    
+}
+
 
 void configure() {
     log.warn "configure..."
     sendToDevice(subscribeCmd())
+    unschedule()
 }
 
 //lifecycle commands
