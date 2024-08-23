@@ -239,10 +239,11 @@ void cycleSpeed() {
 }
 
 void cycleChange() {
-    Integer randomSpeed = random(13)
+    Integer randomSpeed = Math.abs(new Random().nextInt() % 12) + 1
     String newSpeed = "speed "+randomSpeed
     setSpeed(newSpeed)
-    runIn(cycleInterval, cycleChange)    
+    runIn(cycleInterval, cycleChange)
+    
 }
 
 
