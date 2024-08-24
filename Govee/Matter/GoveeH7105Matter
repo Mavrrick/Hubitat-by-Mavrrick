@@ -91,7 +91,7 @@ void parse(String description) {
             } else {
                 logWarn "parse: skipped fan, attribute:${descMap.attrId}, value:${descMap.value}"
             }
-            gatherAttributesValuesInfo(descMap, FanClusterAttributes)
+//            gatherAttributesValuesInfo(descMap, FanClusterAttributes)
             break
         default :
             if (logEnable) {
