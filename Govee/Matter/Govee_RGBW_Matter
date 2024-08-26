@@ -25,7 +25,7 @@ import hubitat.helper.HexUtils
 
 
 metadata {
-    definition (name: "Govee RGBW Matter ", namespace: "mavrrick", author: "Mavrrick") {
+    definition (name: "Govee RGBW Matter ", namespace: "Mavrrick", author: "Mavrrick") {
         capability 'Actuator'
         capability 'Switch'
         capability 'SwitchLevel'
