@@ -1,0 +1,1003 @@
+/*
+	Govee RGBW driver
+
+	Copyright 2023 Hubitat Inc.  All Rights Reserved
+
+	2023-11-02 2.3.7 mavrrick
+		-initial pub
+
+*/
+
+import groovy.transform.Field
+
+@Field static final String   DEVICE_TYPE = 'MATTER_BULB'
+
+//transitionTime options
+@Field static Map ttOpts = [
+    defaultValue: '0',
+    defaultText:  'ASAP',
+    options:['0':'ASAP', '1':'1s', '2':'2s', '5':'5s']
+]
+
+import groovy.transform.Field
+import hubitat.helper.HexUtils
+
+
+
+metadata {
+    definition (name: "Govee RGBW Matter ", namespace: "mavrrick", author: "Mavrrick") {
+        capability 'Actuator'
+        capability 'Switch'
+        capability 'SwitchLevel'
+        //capability 'Configuration'
+        capability 'Color Control'
+        capability "ColorTemperature"
+        capability 'Light'
+        capability 'Initialize'
+        capability 'Refresh'
+        
+
+        
+        fingerprint endpointId:"01", inClusters:"0003,0004,0006,001D,0202", outClusters:"", manufacturer:"Shenzhen Qianyan Technology", controllerType:"MAT"
+
+    }
+    preferences {
+        input(name:'transitionTime', type:'enum', title:"Level transition time (default:${ttOpts.defaultText})", options:ttOpts.options, defaultValue:ttOpts.defaultValue)
+        input(name:"logEnable", type:"bool", title:"Enable debug logging", defaultValue:false)
+        input(name:"txtEnable", type:"bool", title:"Enable descriptionText logging", defaultValue:true)
+    }
+}
+
+
+// ~~~~~ start include (11) Mavrrick.Govee_Matter ~~~~~
+library ( // library marker Mavrrick.Govee_Matter, line 1
+ author: "Mavrrick", // library marker Mavrrick.Govee_Matter, line 2
+ category: "Govee", // library marker Mavrrick.Govee_Matter, line 3
+ description: "Govee_Matter", // library marker Mavrrick.Govee_Matter, line 4
+ name: "Govee_Matter", // library marker Mavrrick.Govee_Matter, line 5
+ namespace: "Mavrrick", // library marker Mavrrick.Govee_Matter, line 6
+ documentationLink: "http://www.example.com/" // library marker Mavrrick.Govee_Matter, line 7
+) // library marker Mavrrick.Govee_Matter, line 8
+
+//parsers // library marker Mavrrick.Govee_Matter, line 10
+void parse(String description) { // library marker Mavrrick.Govee_Matter, line 11
+
+    Map descMap // library marker Mavrrick.Govee_Matter, line 13
+    try { // library marker Mavrrick.Govee_Matter, line 14
+        descMap = matter.parseDescriptionAsMap(description) // library marker Mavrrick.Govee_Matter, line 15
+    } catch (e) { // library marker Mavrrick.Govee_Matter, line 16
+        logWarn "parse: exception ${e} <br> Failed to parse description: ${description}" // library marker Mavrrick.Govee_Matter, line 17
+        return // library marker Mavrrick.Govee_Matter, line 18
+    } // library marker Mavrrick.Govee_Matter, line 19
+    logDebug "parse: descMap:${descMap}  description:${description}" // library marker Mavrrick.Govee_Matter, line 20
+    if (descMap == null) { // library marker Mavrrick.Govee_Matter, line 21
+        logWarn "parse: descMap is null description:${description}" // library marker Mavrrick.Govee_Matter, line 22
+        return // library marker Mavrrick.Govee_Matter, line 23
+    } // library marker Mavrrick.Govee_Matter, line 24
+    if (descMap.attrId == 'FFFB') { // parse the AttributeList first! // library marker Mavrrick.Govee_Matter, line 25
+        pareseAttributeList(descMap) // library marker Mavrrick.Govee_Matter, line 26
+        return // library marker Mavrrick.Govee_Matter, line 27
+    } // library marker Mavrrick.Govee_Matter, line 28
+    switch (descMap.cluster) { // library marker Mavrrick.Govee_Matter, line 29
+        case '0000' : // library marker Mavrrick.Govee_Matter, line 30
+            if (descMap.attrId == '4000') { //software build ? // library marker Mavrrick.Govee_Matter, line 31
+                updateDataValue('softwareBuild', descMap.value ?: 'unknown') // library marker Mavrrick.Govee_Matter, line 32
+            } // library marker Mavrrick.Govee_Matter, line 33
+            else { // library marker Mavrrick.Govee_Matter, line 34
+                logWarn "skipped softwareBuild, attribute:${descMap.attrId}, value:${descMap.value}" // library marker Mavrrick.Govee_Matter, line 35
+            } // library marker Mavrrick.Govee_Matter, line 36
+            break // library marker Mavrrick.Govee_Matter, line 37
+        case '0003' :   // Identify // library marker Mavrrick.Govee_Matter, line 38
+//            gatherAttributesValuesInfo(descMap, IdentifyClusterAttributes) // library marker Mavrrick.Govee_Matter, line 39
+            break // library marker Mavrrick.Govee_Matter, line 40
+        case '0004' :   // Groups // library marker Mavrrick.Govee_Matter, line 41
+//            gatherAttributesValuesInfo(descMap, GroupsClusterAttributes) // library marker Mavrrick.Govee_Matter, line 42
+            break // library marker Mavrrick.Govee_Matter, line 43
+        case '0005' :   // Scenes // library marker Mavrrick.Govee_Matter, line 44
+//            gatherAttributesValuesInfo(descMap, ScenesClusterAttributes) // library marker Mavrrick.Govee_Matter, line 45
+        case '0006' :   // On/Off Cluster // library marker Mavrrick.Govee_Matter, line 46
+//            gatherAttributesValuesInfo(descMap, OnOffClusterAttributes) // library marker Mavrrick.Govee_Matter, line 47
+            parseOnOffCluster(descMap) // library marker Mavrrick.Govee_Matter, line 48
+            break // library marker Mavrrick.Govee_Matter, line 49
+        case '0202' :   // Fan Control Cluster // library marker Mavrrick.Govee_Matter, line 50
+            if (descMap.attrId == "0000") { //fan speed // library marker Mavrrick.Govee_Matter, line 51
+                sendSpeedEvent(descMap.value) // library marker Mavrrick.Govee_Matter, line 52
+            } // library marker Mavrrick.Govee_Matter, line 53
+            break // library marker Mavrrick.Govee_Matter, line 54
+        case '0008' :   // LevelControl // library marker Mavrrick.Govee_Matter, line 55
+            if (descMap.attrId == '0000') { //current level // library marker Mavrrick.Govee_Matter, line 56
+                sendLevelEvent(descMap.value) // library marker Mavrrick.Govee_Matter, line 57
+            } // library marker Mavrrick.Govee_Matter, line 58
+            else { // library marker Mavrrick.Govee_Matter, line 59
+                logWarn "skipped level, attribute:${descMap.attrId}, value:${descMap.value}" // library marker Mavrrick.Govee_Matter, line 60
+            } // library marker Mavrrick.Govee_Matter, line 61
+//            gatherAttributesValuesInfo(descMap, LevelControlClusterAttributes) // library marker Mavrrick.Govee_Matter, line 62
+            break // library marker Mavrrick.Govee_Matter, line 63
+        case '001D' :  // Descriptor, ep:00 // library marker Mavrrick.Govee_Matter, line 64
+//            gatherAttributesValuesInfo(descMap, DescriptorClusterAttributes) // library marker Mavrrick.Govee_Matter, line 65
+            break // library marker Mavrrick.Govee_Matter, line 66
+        case '002F' :  // PowerSource, ep:02    //  parse: descMap:[endpoint:02, cluster:002F, attrId:000C, value:C8, clusterInt:47, attrInt:12] description:read attr - endpoint: 02, cluster: 002F, attrId: 000C, value: 04C8 // library marker Mavrrick.Govee_Matter, line 67
+            parseBatteryEvent(descMap) // library marker Mavrrick.Govee_Matter, line 68
+//            gatherAttributesValuesInfo(descMap, PowerSourceClusterAttributes) // library marker Mavrrick.Govee_Matter, line 69
+            break // library marker Mavrrick.Govee_Matter, line 70
+        case '0028' :  // BasicInformation, ep:00 // library marker Mavrrick.Govee_Matter, line 71
+//            gatherAttributesValuesInfo(descMap, BasicInformationClusterAttributes) // library marker Mavrrick.Govee_Matter, line 72
+            break // library marker Mavrrick.Govee_Matter, line 73
+        case '0045' :  // BooleanState // library marker Mavrrick.Govee_Matter, line 74
+//            gatherAttributesValuesInfo(descMap, BoleanStateClusterAttributes) // library marker Mavrrick.Govee_Matter, line 75
+            parseContactEvent(descMap) // library marker Mavrrick.Govee_Matter, line 76
+            break // library marker Mavrrick.Govee_Matter, line 77
+        case '0300' :   // ColorControl // library marker Mavrrick.Govee_Matter, line 78
+            if (descMap.attrId == '0000') { //hue // library marker Mavrrick.Govee_Matter, line 79
+                sendHueEvent(descMap.value) // library marker Mavrrick.Govee_Matter, line 80
+            } else if (descMap.attrId == '0001') { //saturation // library marker Mavrrick.Govee_Matter, line 81
+                sendSaturationEvent(descMap.value) // library marker Mavrrick.Govee_Matter, line 82
+            } // library marker Mavrrick.Govee_Matter, line 83
+            else if (descMap.attrId == '0007') { //color temperature // library marker Mavrrick.Govee_Matter, line 84
+                sendCTEvent(descMap.value) // library marker Mavrrick.Govee_Matter, line 85
+            } // library marker Mavrrick.Govee_Matter, line 86
+            else if (descMap.attrId == '0008') { //color mode // library marker Mavrrick.Govee_Matter, line 87
+                logDebug "parse: skipped color mode:${descMap}" // library marker Mavrrick.Govee_Matter, line 88
+            } // library marker Mavrrick.Govee_Matter, line 89
+            else { // library marker Mavrrick.Govee_Matter, line 90
+                logWarn "parse: skipped color, attribute:${descMap.attrId}, value:${descMap.value}" // library marker Mavrrick.Govee_Matter, line 91
+            } // library marker Mavrrick.Govee_Matter, line 92
+//            gatherAttributesValuesInfo(descMap, ColorControlClusterAttributes) // library marker Mavrrick.Govee_Matter, line 93
+            break // library marker Mavrrick.Govee_Matter, line 94
+        default : // library marker Mavrrick.Govee_Matter, line 95
+                logWarn "parse: skipped:${descMap}" // library marker Mavrrick.Govee_Matter, line 96
+    } // library marker Mavrrick.Govee_Matter, line 97
+} // library marker Mavrrick.Govee_Matter, line 98
+
+void parseOnOffCluster(Map descMap) { // library marker Mavrrick.Govee_Matter, line 100
+    logDebug "parseOnOffCluster: descMap:${descMap}" // library marker Mavrrick.Govee_Matter, line 101
+    if (descMap.cluster != '0006') { // library marker Mavrrick.Govee_Matter, line 102
+        logWarn "parseOnOffCluster: unexpected cluster:${descMap.cluster} (attrId:${descMap.attrId})" // library marker Mavrrick.Govee_Matter, line 103
+        return // library marker Mavrrick.Govee_Matter, line 104
+    } // library marker Mavrrick.Govee_Matter, line 105
+    Integer attrInt = descMap.attrInt as Integer // library marker Mavrrick.Govee_Matter, line 106
+    Integer value // library marker Mavrrick.Govee_Matter, line 107
+    //String descriptionText = '' // library marker Mavrrick.Govee_Matter, line 108
+    //Map eventMap = [:] // library marker Mavrrick.Govee_Matter, line 109
+    String attrName = OnOffClusterAttributes[attrInt] ?: GlobalElementsAttributes[attrInt] ?: UNKNOWN // library marker Mavrrick.Govee_Matter, line 110
+
+    switch (descMap.attrId) { // library marker Mavrrick.Govee_Matter, line 112
+        case '0000' : // Switch // library marker Mavrrick.Govee_Matter, line 113
+            sendSwitchEvent(descMap.value) // library marker Mavrrick.Govee_Matter, line 114
+            break // library marker Mavrrick.Govee_Matter, line 115
+        case '4000' : // GlobalSceneControl // library marker Mavrrick.Govee_Matter, line 116
+            if (logEnable) { logInfo "parse: Switch: GlobalSceneControl = ${descMap.value}" } // library marker Mavrrick.Govee_Matter, line 117
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['GlobalSceneControl'] = descMap.value // library marker Mavrrick.Govee_Matter, line 118
+            break // library marker Mavrrick.Govee_Matter, line 119
+        case '4001' : // OnTime // library marker Mavrrick.Govee_Matter, line 120
+            if (logEnable) { logInfo  "parse: Switch: OnTime = ${descMap.value}" } // library marker Mavrrick.Govee_Matter, line 121
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['OnTime'] = descMap.value // library marker Mavrrick.Govee_Matter, line 122
+            break // library marker Mavrrick.Govee_Matter, line 123
+        case '4002' : // OffWaitTime // library marker Mavrrick.Govee_Matter, line 124
+            if (logEnable) { logInfo  "parse: Switch: OffWaitTime = ${descMap.value}" } // library marker Mavrrick.Govee_Matter, line 125
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['OffWaitTime'] = descMap.value // library marker Mavrrick.Govee_Matter, line 126
+            break // library marker Mavrrick.Govee_Matter, line 127
+        case '4003' : // StartUpOnOff // library marker Mavrrick.Govee_Matter, line 128
+            value = descMap.value as int // library marker Mavrrick.Govee_Matter, line 129
+            String startUpOnOffText = "parse: Switch: StartUpOnOff = ${descMap.value} (${StartUpOnOffEnumOpts[value] ?: UNKNOWN})" // library marker Mavrrick.Govee_Matter, line 130
+            if (logEnable) { logInfo  "${startUpOnOffText}" } // library marker Mavrrick.Govee_Matter, line 131
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['StartUpOnOff'] = descMap.value // library marker Mavrrick.Govee_Matter, line 132
+            break // library marker Mavrrick.Govee_Matter, line 133
+        case ['FFF8', 'FFF9', 'FFFA', 'FFFB', 'FFFC', 'FFFD', '00FE'] : // library marker Mavrrick.Govee_Matter, line 134
+            if (logEnable) { // library marker Mavrrick.Govee_Matter, line 135
+                logInfo "parse: Switch: ${attrName} = ${descMap.value}" // library marker Mavrrick.Govee_Matter, line 136
+            } // library marker Mavrrick.Govee_Matter, line 137
+            break // library marker Mavrrick.Govee_Matter, line 138
+        default : // library marker Mavrrick.Govee_Matter, line 139
+            logWarn "parseOnOffCluster: unexpected attrId:${descMap.attrId} (raw:${descMap.value})" // library marker Mavrrick.Govee_Matter, line 140
+    } // library marker Mavrrick.Govee_Matter, line 141
+} // library marker Mavrrick.Govee_Matter, line 142
+
+/// Event Processing // library marker Mavrrick.Govee_Matter, line 144
+
+private void sendSpeedEvent(String rawValue) {       // library marker Mavrrick.Govee_Matter, line 146
+    Integer intValue = hexStrToUnsignedInt(rawValue)  // library marker Mavrrick.Govee_Matter, line 147
+
+    switch(intValue) { // library marker Mavrrick.Govee_Matter, line 149
+        case 0 : // library marker Mavrrick.Govee_Matter, line 150
+            value = "off"; // library marker Mavrrick.Govee_Matter, line 151
+        break; // library marker Mavrrick.Govee_Matter, line 152
+        case 8: // library marker Mavrrick.Govee_Matter, line 153
+            value = "speed 1"; // library marker Mavrrick.Govee_Matter, line 154
+        break; // library marker Mavrrick.Govee_Matter, line 155
+        case 16: // library marker Mavrrick.Govee_Matter, line 156
+            value = "speed 2"; // library marker Mavrrick.Govee_Matter, line 157
+        break; // library marker Mavrrick.Govee_Matter, line 158
+        case 24: // library marker Mavrrick.Govee_Matter, line 159
+            value = "speed3 (low)"; // library marker Mavrrick.Govee_Matter, line 160
+        break; // library marker Mavrrick.Govee_Matter, line 161
+        case 32: // library marker Mavrrick.Govee_Matter, line 162
+            value = "speed 4"; // library marker Mavrrick.Govee_Matter, line 163
+        break; // library marker Mavrrick.Govee_Matter, line 164
+        case 40: // library marker Mavrrick.Govee_Matter, line 165
+            value = "speed 5"; // library marker Mavrrick.Govee_Matter, line 166
+        break; // library marker Mavrrick.Govee_Matter, line 167
+        case 48: // library marker Mavrrick.Govee_Matter, line 168
+            value = "speed 6 (medium)"; // library marker Mavrrick.Govee_Matter, line 169
+        break; // library marker Mavrrick.Govee_Matter, line 170
+        case 56: // library marker Mavrrick.Govee_Matter, line 171
+            value = "speed 7"; // library marker Mavrrick.Govee_Matter, line 172
+        break; // library marker Mavrrick.Govee_Matter, line 173
+        case 64: // library marker Mavrrick.Govee_Matter, line 174
+            value = "speed 8"; // library marker Mavrrick.Govee_Matter, line 175
+        break;  // library marker Mavrrick.Govee_Matter, line 176
+        case 72: // library marker Mavrrick.Govee_Matter, line 177
+            value = "speed 9"; // library marker Mavrrick.Govee_Matter, line 178
+        break; // library marker Mavrrick.Govee_Matter, line 179
+        case 81: // library marker Mavrrick.Govee_Matter, line 180
+            value = "speed 10"; // library marker Mavrrick.Govee_Matter, line 181
+        break;   // library marker Mavrrick.Govee_Matter, line 182
+        case 90: // library marker Mavrrick.Govee_Matter, line 183
+            value = "speed 11"; // library marker Mavrrick.Govee_Matter, line 184
+        break; // library marker Mavrrick.Govee_Matter, line 185
+        case 100: // library marker Mavrrick.Govee_Matter, line 186
+            value = "speed12 (high)"; // library marker Mavrrick.Govee_Matter, line 187
+        break;  // library marker Mavrrick.Govee_Matter, line 188
+    } // library marker Mavrrick.Govee_Matter, line 189
+
+//    if (device.currentValue("switch") == value) return // library marker Mavrrick.Govee_Matter, line 191
+    String descriptionText = "${device.displayName} was set to speed ${value}" // library marker Mavrrick.Govee_Matter, line 192
+    if (txtEnable) log.info descriptionText // library marker Mavrrick.Govee_Matter, line 193
+    sendEvent(name:"speed", value:value, descriptionText:descriptionText) // library marker Mavrrick.Govee_Matter, line 194
+} // library marker Mavrrick.Govee_Matter, line 195
+
+//events // library marker Mavrrick.Govee_Matter, line 197
+private void sendSwitchEvent(String rawValue) { // library marker Mavrrick.Govee_Matter, line 198
+    String value = rawValue == "01" ? "on" : "off" // library marker Mavrrick.Govee_Matter, line 199
+    if (device.currentValue("switch") == value) return // library marker Mavrrick.Govee_Matter, line 200
+    String descriptionText = "${device.displayName} was turned ${value}" // library marker Mavrrick.Govee_Matter, line 201
+    if (txtEnable) log.info descriptionText // library marker Mavrrick.Govee_Matter, line 202
+    sendEvent(name:"switch", value:value, descriptionText:descriptionText) // library marker Mavrrick.Govee_Matter, line 203
+} // library marker Mavrrick.Govee_Matter, line 204
+
+private void sendLevelEvent(String rawValue) { // library marker Mavrrick.Govee_Matter, line 206
+    Integer value = Math.round(hexStrToUnsignedInt(rawValue) / 2.55) // library marker Mavrrick.Govee_Matter, line 207
+    if (value == 0 || value == device.currentValue("level")) return // library marker Mavrrick.Govee_Matter, line 208
+    String descriptionText = "${device.displayName} level was set to ${value}%" // library marker Mavrrick.Govee_Matter, line 209
+    if (txtEnable) log.info descriptionText // library marker Mavrrick.Govee_Matter, line 210
+    sendEvent(name:"level", value:value, descriptionText:descriptionText, unit: "%") // library marker Mavrrick.Govee_Matter, line 211
+} // library marker Mavrrick.Govee_Matter, line 212
+
+private void sendHueEvent(String rawValue, Boolean presetColor = false) { // library marker Mavrrick.Govee_Matter, line 214
+    Integer value = hex254ToInt100(rawValue) // library marker Mavrrick.Govee_Matter, line 215
+    sendRGBNameEvent(value) // library marker Mavrrick.Govee_Matter, line 216
+    String descriptionText = "${device.displayName} hue was set to ${value}%" // library marker Mavrrick.Govee_Matter, line 217
+    if (txtEnable) log.info descriptionText // library marker Mavrrick.Govee_Matter, line 218
+    sendEvent(name:"hue", value:value, descriptionText:descriptionText, unit: "%") // library marker Mavrrick.Govee_Matter, line 219
+} // library marker Mavrrick.Govee_Matter, line 220
+
+private void sendSaturationEvent(String rawValue, Boolean presetColor = false) { // library marker Mavrrick.Govee_Matter, line 222
+    Integer value = hex254ToInt100(rawValue) // library marker Mavrrick.Govee_Matter, line 223
+    sendRGBNameEvent(null,value) // library marker Mavrrick.Govee_Matter, line 224
+    String descriptionText = "${device.displayName} saturation was set to ${value}%" // library marker Mavrrick.Govee_Matter, line 225
+    if (txtEnable) log.info descriptionText // library marker Mavrrick.Govee_Matter, line 226
+    sendEvent(name:"saturation", value:value, descriptionText:descriptionText, unit: "%") // library marker Mavrrick.Govee_Matter, line 227
+} // library marker Mavrrick.Govee_Matter, line 228
+
+private void sendRGBNameEvent(hue, sat = null){ // library marker Mavrrick.Govee_Matter, line 230
+    String genericName // library marker Mavrrick.Govee_Matter, line 231
+    if (device.currentValue("saturation") == 0) { // library marker Mavrrick.Govee_Matter, line 232
+        genericName = "White" // library marker Mavrrick.Govee_Matter, line 233
+    } else if (hue == null) { // library marker Mavrrick.Govee_Matter, line 234
+        return // library marker Mavrrick.Govee_Matter, line 235
+    } else { // library marker Mavrrick.Govee_Matter, line 236
+        genericName = colorRGBName.find{k , v -> hue < k}.value // library marker Mavrrick.Govee_Matter, line 237
+    } // library marker Mavrrick.Govee_Matter, line 238
+    if (genericName == device.currentValue("colorName")) return // library marker Mavrrick.Govee_Matter, line 239
+    String descriptionText = "${device.displayName} color is ${genericName}" // library marker Mavrrick.Govee_Matter, line 240
+    if (txtEnable) log.info descriptionText // library marker Mavrrick.Govee_Matter, line 241
+    sendEvent(name: "colorName", value: genericName ,descriptionText: descriptionText) // library marker Mavrrick.Govee_Matter, line 242
+} // library marker Mavrrick.Govee_Matter, line 243
+
+private void sendCTEvent(String rawValue, Boolean presetColor = false) { // library marker Mavrrick.Govee_Matter, line 245
+    value = (Math.round(10000/(hexStrToUnsignedInt(rawValue))))*100 // library marker Mavrrick.Govee_Matter, line 246
+    String descriptionText = "${device.displayName} ColorTemp was set to ${value}K" // library marker Mavrrick.Govee_Matter, line 247
+    if (txtEnable) log.info descriptionText // library marker Mavrrick.Govee_Matter, line 248
+    sendEvent(name:"colorTemperature", value:value, descriptionText:descriptionText, unit: "K") // library marker Mavrrick.Govee_Matter, line 249
+
+} // library marker Mavrrick.Govee_Matter, line 251
+
+//  Capability Commands // library marker Mavrrick.Govee_Matter, line 253
+
+//// On/off Switch commands // library marker Mavrrick.Govee_Matter, line 255
+void on() { // library marker Mavrrick.Govee_Matter, line 256
+    logDebug 'switching on()' // library marker Mavrrick.Govee_Matter, line 257
+//    setDigitalRequest()    // 3 seconds // library marker Mavrrick.Govee_Matter, line 258
+    sendToDevice(matter.on()) // library marker Mavrrick.Govee_Matter, line 259
+} // library marker Mavrrick.Govee_Matter, line 260
+
+void off() { // library marker Mavrrick.Govee_Matter, line 262
+    logDebug 'switching off()' // library marker Mavrrick.Govee_Matter, line 263
+//    setDigitalRequest() // library marker Mavrrick.Govee_Matter, line 264
+    sendToDevice(matter.off()) // library marker Mavrrick.Govee_Matter, line 265
+} // library marker Mavrrick.Govee_Matter, line 266
+
+void toggle() { // library marker Mavrrick.Govee_Matter, line 268
+    logDebug 'toggling...' // library marker Mavrrick.Govee_Matter, line 269
+    setDigitalRequest() // library marker Mavrrick.Govee_Matter, line 270
+    String cmd = matter.invoke(device.endpointId, 0x0006, 0x0002) // library marker Mavrrick.Govee_Matter, line 271
+    sendToDevice(cmd) // library marker Mavrrick.Govee_Matter, line 272
+} // library marker Mavrrick.Govee_Matter, line 273
+
+//// Level control commands related to Light Devices // library marker Mavrrick.Govee_Matter, line 275
+void setLevel(Object value, Object rate=0) { //new set level routine to enable immediate change // library marker Mavrrick.Govee_Matter, line 276
+    logDebug "setLevel(${value}, ${rate})" // library marker Mavrrick.Govee_Matter, line 277
+    Integer newLevel = value // library marker Mavrrick.Govee_Matter, line 278
+    Integer transitiontime2 = rate // library marker Mavrrick.Govee_Matter, line 279
+    newLevel2 = int100ToHex254(newLevel) // library marker Mavrrick.Govee_Matter, line 280
+    transition = HexUtils.integerToHexString(transitiontime2,2) // library marker Mavrrick.Govee_Matter, line 281
+
+    String cmds  // library marker Mavrrick.Govee_Matter, line 283
+    if (device.currentValue("switch") == "on"){ // library marker Mavrrick.Govee_Matter, line 284
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 285
+        cmdFields.add(matter.cmdField(0x04, 0x00, newLevel2))  // library marker Mavrrick.Govee_Matter, line 286
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition)) // library marker Mavrrick.Govee_Matter, line 287
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"    // library marker Mavrrick.Govee_Matter, line 288
+        cmds = matter.invoke(device.endpointId, 0x0008, 0x0000, cmdFields)    // library marker Mavrrick.Govee_Matter, line 289
+    } else { // library marker Mavrrick.Govee_Matter, line 290
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 291
+        cmdFields.add(matter.cmdField(0x04, 0x00, newLevel2))  // library marker Mavrrick.Govee_Matter, line 292
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition)) // library marker Mavrrick.Govee_Matter, line 293
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}" // library marker Mavrrick.Govee_Matter, line 294
+        cmds = matter.invoke(device.endpointId, 0x0008, 0x0004, cmdFields)  // library marker Mavrrick.Govee_Matter, line 295
+    } // library marker Mavrrick.Govee_Matter, line 296
+    sendToDevice(cmds) // library marker Mavrrick.Govee_Matter, line 297
+} // library marker Mavrrick.Govee_Matter, line 298
+
+///// Color Control Commands related to Light control devices // library marker Mavrrick.Govee_Matter, line 300
+
+void setHue(Object value) { // library marker Mavrrick.Govee_Matter, line 302
+    logDebug "setHue(${value})" // library marker Mavrrick.Govee_Matter, line 303
+
+    Integer intHue = value // library marker Mavrrick.Govee_Matter, line 305
+    newHue = int100ToHex254(intHue) // library marker Mavrrick.Govee_Matter, line 306
+    direction = intToHexStr(1) // library marker Mavrrick.Govee_Matter, line 307
+    Integer transitionTime2 = (transitionTime ?: 1).toInteger() // library marker Mavrrick.Govee_Matter, line 308
+    transition = HexUtils.integerToHexString(transitionTime2,2) // library marker Mavrrick.Govee_Matter, line 309
+
+        String cmds  // library marker Mavrrick.Govee_Matter, line 311
+    if (device.currentValue("switch") == "on"){ // library marker Mavrrick.Govee_Matter, line 312
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 313
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue))  // library marker Mavrrick.Govee_Matter, line 314
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction))         // library marker Mavrrick.Govee_Matter, line 315
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition)) // library marker Mavrrick.Govee_Matter, line 316
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"    // library marker Mavrrick.Govee_Matter, line 317
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0000, cmdFields)    // library marker Mavrrick.Govee_Matter, line 318
+    } else { // library marker Mavrrick.Govee_Matter, line 319
+        on() // library marker Mavrrick.Govee_Matter, line 320
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 321
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue))  // library marker Mavrrick.Govee_Matter, line 322
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction))  // library marker Mavrrick.Govee_Matter, line 323
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition)) // library marker Mavrrick.Govee_Matter, line 324
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}" // library marker Mavrrick.Govee_Matter, line 325
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0000, cmdFields)  // library marker Mavrrick.Govee_Matter, line 326
+    }  // library marker Mavrrick.Govee_Matter, line 327
+    sendToDevice(cmds) // library marker Mavrrick.Govee_Matter, line 328
+} // library marker Mavrrick.Govee_Matter, line 329
+
+void setSaturation(Object value) { // library marker Mavrrick.Govee_Matter, line 331
+    logDebug "setHue(${value})" // library marker Mavrrick.Govee_Matter, line 332
+
+    Integer intSat = value // library marker Mavrrick.Govee_Matter, line 334
+    newSat = int100ToHex254(intSat) // library marker Mavrrick.Govee_Matter, line 335
+    direction = intToHexStr(1) // library marker Mavrrick.Govee_Matter, line 336
+    Integer transitionTime2 = (transitionTime ?: 1).toInteger() // library marker Mavrrick.Govee_Matter, line 337
+    transition = HexUtils.integerToHexString(transitionTime2,2) // library marker Mavrrick.Govee_Matter, line 338
+
+        String cmds  // library marker Mavrrick.Govee_Matter, line 340
+    if (device.currentValue("switch") == "on"){ // library marker Mavrrick.Govee_Matter, line 341
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 342
+        cmdFields.add(matter.cmdField(0x04, 0x00, newSat))  // library marker Mavrrick.Govee_Matter, line 343
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction))         // library marker Mavrrick.Govee_Matter, line 344
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition)) // library marker Mavrrick.Govee_Matter, line 345
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"    // library marker Mavrrick.Govee_Matter, line 346
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0003, cmdFields)    // library marker Mavrrick.Govee_Matter, line 347
+    } else { // library marker Mavrrick.Govee_Matter, line 348
+        on() // library marker Mavrrick.Govee_Matter, line 349
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 350
+        cmdFields.add(matter.cmdField(0x04, 0x00, newSat))  // library marker Mavrrick.Govee_Matter, line 351
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction))  // library marker Mavrrick.Govee_Matter, line 352
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition)) // library marker Mavrrick.Govee_Matter, line 353
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}" // library marker Mavrrick.Govee_Matter, line 354
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0003, cmdFields)  // library marker Mavrrick.Govee_Matter, line 355
+    }  // library marker Mavrrick.Govee_Matter, line 356
+    sendToDevice(cmds) // library marker Mavrrick.Govee_Matter, line 357
+} // library marker Mavrrick.Govee_Matter, line 358
+
+void setHueSat(Object hue, Object sat) { // library marker Mavrrick.Govee_Matter, line 360
+    logDebug "setHueSat(${hue}, ${sat})" // library marker Mavrrick.Govee_Matter, line 361
+
+    Integer intHue = hue // library marker Mavrrick.Govee_Matter, line 363
+    Integer intSat = sat // library marker Mavrrick.Govee_Matter, line 364
+    newHue = int100ToHex254(intHue) // library marker Mavrrick.Govee_Matter, line 365
+    newSat = int100ToHex254(intSat) // library marker Mavrrick.Govee_Matter, line 366
+
+    Integer transitionTime2 = (transitionTime ?: 1).toInteger() // library marker Mavrrick.Govee_Matter, line 368
+    transition = HexUtils.integerToHexString(transitionTime2,2) // library marker Mavrrick.Govee_Matter, line 369
+
+        String cmds  // library marker Mavrrick.Govee_Matter, line 371
+    if (device.currentValue("switch") == "on"){ // library marker Mavrrick.Govee_Matter, line 372
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 373
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue))  // library marker Mavrrick.Govee_Matter, line 374
+        cmdFields.add(matter.cmdField(0x04, 0x01, newSat))         // library marker Mavrrick.Govee_Matter, line 375
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition)) // library marker Mavrrick.Govee_Matter, line 376
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"    // library marker Mavrrick.Govee_Matter, line 377
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0006, cmdFields)    // library marker Mavrrick.Govee_Matter, line 378
+    } else { // library marker Mavrrick.Govee_Matter, line 379
+        on() // library marker Mavrrick.Govee_Matter, line 380
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 381
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue))  // library marker Mavrrick.Govee_Matter, line 382
+        cmdFields.add(matter.cmdField(0x04, 0x01, newSat))  // library marker Mavrrick.Govee_Matter, line 383
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition)) // library marker Mavrrick.Govee_Matter, line 384
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}" // library marker Mavrrick.Govee_Matter, line 385
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0006, cmdFields)  // library marker Mavrrick.Govee_Matter, line 386
+    }  // library marker Mavrrick.Govee_Matter, line 387
+    sendToDevice(cmds) // library marker Mavrrick.Govee_Matter, line 388
+} // library marker Mavrrick.Govee_Matter, line 389
+
+void setColorTemperature(colortemperature, level=null, transitionTime=0) { // New method with Invoke instead of Hubitat calls // library marker Mavrrick.Govee_Matter, line 391
+    if (colortemperature < 2700)  {colortemperature =  2700} // library marker Mavrrick.Govee_Matter, line 392
+    if (colortemperature > 6500)  {colortemperature =  6500} // library marker Mavrrick.Govee_Matter, line 393
+    Integer mired = Math.round(1000000/colortemperature) // library marker Mavrrick.Govee_Matter, line 394
+    Integer transitiontime2 = transitionTime  // library marker Mavrrick.Govee_Matter, line 395
+    ctValue = zigbee.swapOctets(HexUtils.integerToHexString(mired, 2)) // library marker Mavrrick.Govee_Matter, line 396
+    transition = HexUtils.integerToHexString(transitiontime2,2) // library marker Mavrrick.Govee_Matter, line 397
+
+    if (level != null) { // library marker Mavrrick.Govee_Matter, line 399
+        setLevel(level) // library marker Mavrrick.Govee_Matter, line 400
+    } // library marker Mavrrick.Govee_Matter, line 401
+
+    if (logEnable) log.debug "setcolortemp() ${colortemperature} in hex ${ct3} swapped ${ctValue} Mired value ${mired} transition is ${transition} " // library marker Mavrrick.Govee_Matter, line 403
+    String cmds  // library marker Mavrrick.Govee_Matter, line 404
+    if (device.currentValue("switch") == "on"){ // library marker Mavrrick.Govee_Matter, line 405
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 406
+        cmdFields.add(matter.cmdField(0x05, 0x00, ctValue))  // library marker Mavrrick.Govee_Matter, line 407
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition)) // library marker Mavrrick.Govee_Matter, line 408
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"    // library marker Mavrrick.Govee_Matter, line 409
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x000A, cmdFields)    // library marker Mavrrick.Govee_Matter, line 410
+    } else { // library marker Mavrrick.Govee_Matter, line 411
+        on() // library marker Mavrrick.Govee_Matter, line 412
+        List<Map<String, String>> cmdFields = [] // library marker Mavrrick.Govee_Matter, line 413
+        cmdFields.add(matter.cmdField(0x05, 0x00, ctValue))  // library marker Mavrrick.Govee_Matter, line 414
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition)) // library marker Mavrrick.Govee_Matter, line 415
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"    // library marker Mavrrick.Govee_Matter, line 416
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x000A, cmdFields) // library marker Mavrrick.Govee_Matter, line 417
+    } // library marker Mavrrick.Govee_Matter, line 418
+    sendToDevice(cmds)     // library marker Mavrrick.Govee_Matter, line 419
+}  // library marker Mavrrick.Govee_Matter, line 420
+
+void setColor(Map colorMap) { // library marker Mavrrick.Govee_Matter, line 422
+    logDebug "setColor(${colorMap})" // library marker Mavrrick.Govee_Matter, line 423
+    if (colorMap.level) { // library marker Mavrrick.Govee_Matter, line 424
+        setLevel(colorMap.level) // library marker Mavrrick.Govee_Matter, line 425
+    } // library marker Mavrrick.Govee_Matter, line 426
+    if (colorMap.hue != null && colorMap.saturation != null) { // library marker Mavrrick.Govee_Matter, line 427
+        setHueSat(colorMap.hue, colorMap.saturation) // library marker Mavrrick.Govee_Matter, line 428
+    } else if (colorMap.hue != null) { // library marker Mavrrick.Govee_Matter, line 429
+        setHue(colorMap.hue) // library marker Mavrrick.Govee_Matter, line 430
+    } else if (colorMap.saturation != null) { // library marker Mavrrick.Govee_Matter, line 431
+        setSaturation(colorMap.saturation) // library marker Mavrrick.Govee_Matter, line 432
+    } // library marker Mavrrick.Govee_Matter, line 433
+} // library marker Mavrrick.Govee_Matter, line 434
+
+/// Fam Set speed Commands // library marker Mavrrick.Govee_Matter, line 436
+void setSpeed(fanspeed) { // library marker Mavrrick.Govee_Matter, line 437
+    unschedule() // library marker Mavrrick.Govee_Matter, line 438
+    if (logEnable) log.debug "Setting Fan Speed to ${fanspeed}" // library marker Mavrrick.Govee_Matter, line 439
+    switch(fanspeed) { // library marker Mavrrick.Govee_Matter, line 440
+        case "off": // library marker Mavrrick.Govee_Matter, line 441
+        case "speed 0": // library marker Mavrrick.Govee_Matter, line 442
+            value = 0; // library marker Mavrrick.Govee_Matter, line 443
+        break; // library marker Mavrrick.Govee_Matter, line 444
+        case "speed 1": // library marker Mavrrick.Govee_Matter, line 445
+            value = 8; // library marker Mavrrick.Govee_Matter, line 446
+        break; // library marker Mavrrick.Govee_Matter, line 447
+        case "speed 2": // library marker Mavrrick.Govee_Matter, line 448
+            value = 16; // library marker Mavrrick.Govee_Matter, line 449
+        break; // library marker Mavrrick.Govee_Matter, line 450
+        case "speed 3": // library marker Mavrrick.Govee_Matter, line 451
+        case "low": // library marker Mavrrick.Govee_Matter, line 452
+            value = 24; // library marker Mavrrick.Govee_Matter, line 453
+        break; // library marker Mavrrick.Govee_Matter, line 454
+        case "speed 4": // library marker Mavrrick.Govee_Matter, line 455
+            value = 32; // library marker Mavrrick.Govee_Matter, line 456
+        break; // library marker Mavrrick.Govee_Matter, line 457
+        case "speed 5": // library marker Mavrrick.Govee_Matter, line 458
+            value = 40; // library marker Mavrrick.Govee_Matter, line 459
+        break; // library marker Mavrrick.Govee_Matter, line 460
+        case "speed 6": // library marker Mavrrick.Govee_Matter, line 461
+        case "medium": // library marker Mavrrick.Govee_Matter, line 462
+            value = 48; // library marker Mavrrick.Govee_Matter, line 463
+        break; // library marker Mavrrick.Govee_Matter, line 464
+        case "speed 7": // library marker Mavrrick.Govee_Matter, line 465
+            value = 56; // library marker Mavrrick.Govee_Matter, line 466
+        break; // library marker Mavrrick.Govee_Matter, line 467
+        case "speed 8": // library marker Mavrrick.Govee_Matter, line 468
+            value = 64; // library marker Mavrrick.Govee_Matter, line 469
+        break;  // library marker Mavrrick.Govee_Matter, line 470
+        case "speed 9": // library marker Mavrrick.Govee_Matter, line 471
+            value = 72; // library marker Mavrrick.Govee_Matter, line 472
+        break; // library marker Mavrrick.Govee_Matter, line 473
+        case "speed 10": // library marker Mavrrick.Govee_Matter, line 474
+            value = 81; // library marker Mavrrick.Govee_Matter, line 475
+        break;   // library marker Mavrrick.Govee_Matter, line 476
+        case "speed 11": // library marker Mavrrick.Govee_Matter, line 477
+            value = 90; // library marker Mavrrick.Govee_Matter, line 478
+        break; // library marker Mavrrick.Govee_Matter, line 479
+        case "speed 12": // library marker Mavrrick.Govee_Matter, line 480
+        case "high": // library marker Mavrrick.Govee_Matter, line 481
+            value = 100; // library marker Mavrrick.Govee_Matter, line 482
+        break;  // library marker Mavrrick.Govee_Matter, line 483
+    } // library marker Mavrrick.Govee_Matter, line 484
+    if (value > 101) { // library marker Mavrrick.Govee_Matter, line 485
+        if (logEnable) {log.debug ("setSpeed(): Unknown value}")}; // library marker Mavrrick.Govee_Matter, line 486
+        on() // library marker Mavrrick.Govee_Matter, line 487
+    } else { // library marker Mavrrick.Govee_Matter, line 488
+        speedValue = intToHexStr(value)   // library marker Mavrrick.Govee_Matter, line 489
+        if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed}  % ${value} value to ${speedValue}" // library marker Mavrrick.Govee_Matter, line 490
+        List<Map<String, String>> attributeWriteRequests = [] // library marker Mavrrick.Govee_Matter, line 491
+        attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, 0x04, speedValue )) // library marker Mavrrick.Govee_Matter, line 492
+        String cmd = matter.writeAttributes(attributeWriteRequests)             // library marker Mavrrick.Govee_Matter, line 493
+        sendToDevice(cmd) // library marker Mavrrick.Govee_Matter, line 494
+    } // library marker Mavrrick.Govee_Matter, line 495
+} // library marker Mavrrick.Govee_Matter, line 496
+
+void cycleSpeed() { // library marker Mavrrick.Govee_Matter, line 498
+    cycleChange() // library marker Mavrrick.Govee_Matter, line 499
+} // library marker Mavrrick.Govee_Matter, line 500
+
+void cycleChange() { // library marker Mavrrick.Govee_Matter, line 502
+    Integer randomSpeed = Math.abs(new Random().nextInt() % 12) + 1 // library marker Mavrrick.Govee_Matter, line 503
+    String newSpeed = "speed "+randomSpeed // library marker Mavrrick.Govee_Matter, line 504
+    setSpeed(newSpeed) // library marker Mavrrick.Govee_Matter, line 505
+    runIn(cycleInterval, cycleChange) // library marker Mavrrick.Govee_Matter, line 506
+
+} // library marker Mavrrick.Govee_Matter, line 508
+
+void configure() { // library marker Mavrrick.Govee_Matter, line 510
+    log.warn "configure..." // library marker Mavrrick.Govee_Matter, line 511
+    sendToDevice(subscribeCmd()) // library marker Mavrrick.Govee_Matter, line 512
+    unschedule() // library marker Mavrrick.Govee_Matter, line 513
+} // library marker Mavrrick.Govee_Matter, line 514
+
+//lifecycle commands // library marker Mavrrick.Govee_Matter, line 516
+void updated(){ // library marker Mavrrick.Govee_Matter, line 517
+    log.info "updated..." // library marker Mavrrick.Govee_Matter, line 518
+    log.warn "debug logging is: ${logEnable == true}" // library marker Mavrrick.Govee_Matter, line 519
+    log.warn "description logging is: ${txtEnable == true}" // library marker Mavrrick.Govee_Matter, line 520
+    if (logEnable) runIn(1800,logsOff) // library marker Mavrrick.Govee_Matter, line 521
+} // library marker Mavrrick.Govee_Matter, line 522
+
+void initialize() { // library marker Mavrrick.Govee_Matter, line 524
+    log.info "initialize..." // library marker Mavrrick.Govee_Matter, line 525
+//    initializeVars(fullInit = true) // library marker Mavrrick.Govee_Matter, line 526
+    sendToDevice(subscribeCmd()) // library marker Mavrrick.Govee_Matter, line 527
+} // library marker Mavrrick.Govee_Matter, line 528
+
+void refresh() { // library marker Mavrrick.Govee_Matter, line 530
+    if (logEnable) log.debug "refresh()" // library marker Mavrrick.Govee_Matter, line 531
+    sendToDevice(refreshCmd()) // library marker Mavrrick.Govee_Matter, line 532
+} // library marker Mavrrick.Govee_Matter, line 533
+
+String refreshCmd() { // library marker Mavrrick.Govee_Matter, line 535
+    List<Map<String, String>> attributePaths = [] // library marker Mavrrick.Govee_Matter, line 536
+    if (state.deviceType == 'MATTER_OUTLET') { // library marker Mavrrick.Govee_Matter, line 537
+        if (state.matter != null && state.matter['0x0006'] != null) { // library marker Mavrrick.Govee_Matter, line 538
+            String attrListString = state.matter['0x0006'] as String // library marker Mavrrick.Govee_Matter, line 539
+            attrListString = attrListString.substring(1, attrListString.length() - 1)                   // remove the [] brackets // library marker Mavrrick.Govee_Matter, line 540
+            List<Integer> attrList = attrListString.split(',').collect { HexUtils.hexStringToInt(it) }  // convert the string to a list of integers // library marker Mavrrick.Govee_Matter, line 541
+            logDebug "refreshCmd: attrList:${attrList}" // library marker Mavrrick.Govee_Matter, line 542
+            attrList.each { attrInt -> // library marker Mavrrick.Govee_Matter, line 543
+                attributePaths.add(matter.attributePath(device.endpointId, 0x0006, attrInt)) // library marker Mavrrick.Govee_Matter, line 544
+            } // library marker Mavrrick.Govee_Matter, line 545
+        } // library marker Mavrrick.Govee_Matter, line 546
+        else { // library marker Mavrrick.Govee_Matter, line 547
+            logWarn "refreshCmd: state.matter['0x0006'] is null" // library marker Mavrrick.Govee_Matter, line 548
+        } // library marker Mavrrick.Govee_Matter, line 549
+    } // library marker Mavrrick.Govee_Matter, line 550
+    else if (state.deviceType == 'MATTER_BULB') { // library marker Mavrrick.Govee_Matter, line 551
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000)) // library marker Mavrrick.Govee_Matter, line 552
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0008, 0x0000)) // library marker Mavrrick.Govee_Matter, line 553
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0000)) // library marker Mavrrick.Govee_Matter, line 554
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0001)) // library marker Mavrrick.Govee_Matter, line 555
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0007)) // library marker Mavrrick.Govee_Matter, line 556
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0008)) // library marker Mavrrick.Govee_Matter, line 557
+    } // library marker Mavrrick.Govee_Matter, line 558
+    else if (state.deviceType == 'MATTER_FAN') { // library marker Mavrrick.Govee_Matter, line 559
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))         // on/off // library marker Mavrrick.Govee_Matter, line 560
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0000))         // FanMode // library marker Mavrrick.Govee_Matter, line 561
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0002))         // PercentSetting // library marker Mavrrick.Govee_Matter, line 562
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0003))         // PercentCurrent // library marker Mavrrick.Govee_Matter, line 563
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000A))         // WindSetting // library marker Mavrrick.Govee_Matter, line 564
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000B))         // AirflowDirectionEnum // library marker Mavrrick.Govee_Matter, line 565
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0000))          // library marker Mavrrick.Govee_Matter, line 566
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0001))                        // Power Configuration Cluster : Status // library marker Mavrrick.Govee_Matter, line 567
+    } // library marker Mavrrick.Govee_Matter, line 568
+    String cmd = matter.readAttributes(attributePaths) // library marker Mavrrick.Govee_Matter, line 569
+    return cmd // library marker Mavrrick.Govee_Matter, line 570
+} // library marker Mavrrick.Govee_Matter, line 571
+
+
+String subscribeCmd() { // library marker Mavrrick.Govee_Matter, line 574
+    List<Map<String, String>> attributePaths = [] // library marker Mavrrick.Govee_Matter, line 575
+    String cmd = '' // library marker Mavrrick.Govee_Matter, line 576
+    if (state.deviceType == 'MATTER_BULB') { // library marker Mavrrick.Govee_Matter, line 577
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00)) // library marker Mavrrick.Govee_Matter, line 578
+        attributePaths.add(matter.attributePath(0x01, 0x0008, 0x00)) // library marker Mavrrick.Govee_Matter, line 579
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x00)) // library marker Mavrrick.Govee_Matter, line 580
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x01)) // library marker Mavrrick.Govee_Matter, line 581
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x07)) // library marker Mavrrick.Govee_Matter, line 582
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x08)) // library marker Mavrrick.Govee_Matter, line 583
+        //standard 0 reporting interval is way too busy for bulbs // library marker Mavrrick.Govee_Matter, line 584
+        cmd = matter.subscribe(5, 0xFFFF, attributePaths) // library marker Mavrrick.Govee_Matter, line 585
+    } // library marker Mavrrick.Govee_Matter, line 586
+    else if (state.deviceType == 'MATTER_OUTLET') { // library marker Mavrrick.Govee_Matter, line 587
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00)) // library marker Mavrrick.Govee_Matter, line 588
+        cmd = matter.subscribe(0, 300, attributePaths) // library marker Mavrrick.Govee_Matter, line 589
+    } // library marker Mavrrick.Govee_Matter, line 590
+    else if (state.deviceType == 'MATTER_FAN') { // library marker Mavrrick.Govee_Matter, line 591
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00)) // library marker Mavrrick.Govee_Matter, line 592
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x00)) // library marker Mavrrick.Govee_Matter, line 593
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x02)) // library marker Mavrrick.Govee_Matter, line 594
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x03)) // library marker Mavrrick.Govee_Matter, line 595
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0A)) // library marker Mavrrick.Govee_Matter, line 596
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0B)) // library marker Mavrrick.Govee_Matter, line 597
+        attributePaths.add(matter.attributePath(0x01, 0x0005, 0x01)) // library marker Mavrrick.Govee_Matter, line 598
+        cmd = matter.subscribe(0, 0xFFFF, attributePaths) // library marker Mavrrick.Govee_Matter, line 599
+    }  // library marker Mavrrick.Govee_Matter, line 600
+    return cmd // library marker Mavrrick.Govee_Matter, line 601
+} // library marker Mavrrick.Govee_Matter, line 602
+
+void logsOff(){ // library marker Mavrrick.Govee_Matter, line 604
+    log.warn "debug logging disabled..." // library marker Mavrrick.Govee_Matter, line 605
+    device.updateSetting("logEnable",[value:"false",type:"bool"]) // library marker Mavrrick.Govee_Matter, line 606
+} // library marker Mavrrick.Govee_Matter, line 607
+
+//// Conversion routines  // library marker Mavrrick.Govee_Matter, line 609
+
+Integer hex254ToInt100(String value) { // library marker Mavrrick.Govee_Matter, line 611
+    return Math.round(hexStrToUnsignedInt(value) / 2.54) // library marker Mavrrick.Govee_Matter, line 612
+} // library marker Mavrrick.Govee_Matter, line 613
+
+String int100ToHex254(value) { // library marker Mavrrick.Govee_Matter, line 615
+    return intToHexStr(Math.round(value * 2.54)) // library marker Mavrrick.Govee_Matter, line 616
+} // library marker Mavrrick.Govee_Matter, line 617
+
+Integer getLuxValue(rawValue) { // library marker Mavrrick.Govee_Matter, line 619
+    return Math.max((Math.pow(10, (rawValue / 10000)) - 1).toInteger(), 1) // library marker Mavrrick.Govee_Matter, line 620
+} // library marker Mavrrick.Govee_Matter, line 621
+
+//// Methods to send matter commands to device // library marker Mavrrick.Govee_Matter, line 623
+void sendToDevice(List<String> cmds, Integer delay = 300) { // library marker Mavrrick.Govee_Matter, line 624
+    sendHubCommand(new hubitat.device.HubMultiAction(commands(cmds, delay), hubitat.device.Protocol.MATTER)) // library marker Mavrrick.Govee_Matter, line 625
+} // library marker Mavrrick.Govee_Matter, line 626
+
+void sendToDevice(String cmd, Integer delay = 300) { // library marker Mavrrick.Govee_Matter, line 628
+    sendHubCommand(new hubitat.device.HubAction(cmd, hubitat.device.Protocol.MATTER)) // library marker Mavrrick.Govee_Matter, line 629
+} // library marker Mavrrick.Govee_Matter, line 630
+
+void logDebug(msg) { // library marker Mavrrick.Govee_Matter, line 632
+    if (settings.logEnable) { // library marker Mavrrick.Govee_Matter, line 633
+        log.debug "${device.displayName} " + msg // library marker Mavrrick.Govee_Matter, line 634
+    } // library marker Mavrrick.Govee_Matter, line 635
+} // library marker Mavrrick.Govee_Matter, line 636
+
+void logInfo(msg) { // library marker Mavrrick.Govee_Matter, line 638
+    if (settings.txtEnable) { // library marker Mavrrick.Govee_Matter, line 639
+        log.info "${device.displayName} " + msg // library marker Mavrrick.Govee_Matter, line 640
+    } // library marker Mavrrick.Govee_Matter, line 641
+} // library marker Mavrrick.Govee_Matter, line 642
+
+void logWarn(msg) { // library marker Mavrrick.Govee_Matter, line 644
+    if (settings.logEnable) { // library marker Mavrrick.Govee_Matter, line 645
+        log.warn "${device.displayName} " + msg // library marker Mavrrick.Govee_Matter, line 646
+    } // library marker Mavrrick.Govee_Matter, line 647
+} // library marker Mavrrick.Govee_Matter, line 648
+
+void logTrace(msg) { // library marker Mavrrick.Govee_Matter, line 650
+    if (settings.traceEnable) { // library marker Mavrrick.Govee_Matter, line 651
+        log.trace "${device.displayName} " + msg // library marker Mavrrick.Govee_Matter, line 652
+    } // library marker Mavrrick.Govee_Matter, line 653
+} // library marker Mavrrick.Govee_Matter, line 654
+
+/* // library marker Mavrrick.Govee_Matter, line 656
+Matter cluster names = [$FaultInjection, $UnitTesting, $ElectricalMeasurement, $AccountLogin, $ApplicationBasic, $ApplicationLauncher, $AudioOutput, $ContentLauncher, $KeypadInput, $LowPower, $MediaInput, $MediaPlayback, $TargetNavigator, $Channel, $WakeOnLan, $RadonConcentrationMeasurement, $TotalVolatileOrganicCompoundsConcentrationMeasurement, $Pm10ConcentrationMeasurement, $Pm1ConcentrationMeasurement, $FormaldehydeConcentrationMeasurement, $Pm25ConcentrationMeasurement, $SodiumConcentrationMeasurement, $ChloroformConcentrationMeasurement, $ChlorodibromomethaneConcentrationMeasurement, $BromoformConcentrationMeasurement, $BromodichloromethaneConcentrationMeasurement, $SulfateConcentrationMeasurement, $ManganeseConcentrationMeasurement, $LeadConcentrationMeasurement, $CopperConcentrationMeasurement, $TurbidityConcentrationMeasurement, $TotalColiformBacteriaConcentrationMeasurement, $TotalTrihalomethanesConcentrationMeasurement, $HaloaceticAcidsConcentrationMeasurement, $FluorideConcentrationMeasurement, $FecalColiformEColiConcentrationMeasurement, $ChlorineConcentrationMeasurement, $ChloraminesConcentrationMeasurement, $BromateConcentrationMeasurement, $DissolvedOxygenConcentrationMeasurement, $SulfurDioxideConcentrationMeasurement, $OzoneConcentrationMeasurement, $OxygenConcentrationMeasurement, $NitrogenDioxideConcentrationMeasurement, $NitricOxideConcentrationMeasurement, $HydrogenSulfideConcentrationMeasurement, $HydrogenConcentrationMeasurement, $EthyleneOxideConcentrationMeasurement, $EthyleneConcentrationMeasurement, $CarbonDioxideConcentrationMeasurement, $CarbonMonoxideConcentrationMeasurement, $OccupancySensing, $RelativeHumidityMeasurement, $FlowMeasurement, $PressureMeasurement, $TemperatureMeasurement, $IlluminanceMeasurement, $BallastConfiguration, $ColorControl, $ThermostatUserInterfaceConfiguration, $FanControl, $Thermostat, $PumpConfigurationAndControl, $BarrierControl, $WindowCovering, $DoorLock, $TonerCartridgeMonitoring, $InkCartridgeMonitoring, $FuelTankMonitoring, $WaterTankMonitoring, $OzoneFilterMonitoring, $ZeoliteFilterMonitoring, $IonizingFilterMonitoring, $UvFilterMonitoring, $ElectrostaticFilterMonitoring, $CeramicFilterMonitoring, $ActivatedCarbonFilterMonitoring, $HepaFilterMonitoring, $RvcOperationalState, $OperationalState, $DishwasherAlarm, $SmokeCoAlarm, $AirQuality, $DishwasherMode, $RefrigeratorAlarm, $TemperatureControl, $RvcCleanMode, $RvcRunMode, $LaundryWasherControls, $RefrigeratorAndTemperatureControlledCabinetMode, $LaundryWasherMode, $ModeSelect, $IcdManagement, $BooleanState, $ProxyValid, $ProxyDiscovery, $ProxyConfiguration, $UserLabel, $FixedLabel, $GroupKeyManagement, $OperationalCredentials, $AdministratorCommissioning, $Switch, $BridgedDeviceBasicInformation, $TimeSynchronization, $EthernetNetworkDiagnostics, $WiFiNetworkDiagnostics, $ThreadNetworkDiagnostics, $SoftwareDiagnostics, $GeneralDiagnostics, $DiagnosticLogs, $NetworkCommissioning, $GeneralCommissioning, $PowerSource, $PowerSourceConfiguration, $UnitLocalization, $TimeFormatLocalization, $LocalizationConfiguration, $OtaSoftwareUpdateRequestor, $OtaSoftwareUpdateProvider, $BasicInformation, $Actions, $AccessControl, $Binding, $Descriptor, $PulseWidthModulation, $BinaryInputBasic, $LevelControl, $OnOffSwitchConfiguration, $OnOff, $Scenes, $Groups, $Identify] // library marker Mavrrick.Govee_Matter, line 657
+*/ // library marker Mavrrick.Govee_Matter, line 658
+
+// https://github.com/project-chip/connectedhomeip/tree/master/src/app/clusters // library marker Mavrrick.Govee_Matter, line 660
+@Field static final Map<Integer, String> MatterClusters = [ // library marker Mavrrick.Govee_Matter, line 661
+    0x001D  : 'Descriptor',                 // The Descriptor cluster is meant to replace the support from the Zigbee Device Object (ZDO) for describing a node, its endpoints and clusters // library marker Mavrrick.Govee_Matter, line 662
+    0x001E  : 'Binding',                    // Meant to replace the support from the Zigbee Device Object (ZDO) for supportiprefriginatng the binding table. // library marker Mavrrick.Govee_Matter, line 663
+    0x001F  : 'AccessControl',              // Exposes a data model view of a Node’s Access Control List (ACL), which codifies the rules used to manage and enforce Access Control for the Node’s endpoints and their associated cluster instances. // library marker Mavrrick.Govee_Matter, line 664
+    0x0025  : 'Actions',                    // Provides a standardized way for a Node (typically a Bridge, but could be any Node) to expose information, commands, events ... // library marker Mavrrick.Govee_Matter, line 665
+    0x0028  : 'BasicInformation',           // Provides attributes and events for determining basic information about Nodes, which supports both Commissioning and operational determination of Node characteristics, such as Vendor ID, Product ID and serial number, which apply to the whole Node. // library marker Mavrrick.Govee_Matter, line 666
+    0x0029  : 'OTASoftwareUpdateProvider', // library marker Mavrrick.Govee_Matter, line 667
+    0x002A  : 'OTASoftwareUpdateRequestor', // library marker Mavrrick.Govee_Matter, line 668
+    0x002B  : 'LocalizationConfiguration',  // Provides attributes for determining and configuring localization information // library marker Mavrrick.Govee_Matter, line 669
+    0x002C  : 'TimeFormatLocalization',     // Provides attributes for determining and configuring time and date formatting information // library marker Mavrrick.Govee_Matter, line 670
+    0x002D  : 'UnitLocalization',           // Provides attributes for determining and configuring the units // library marker Mavrrick.Govee_Matter, line 671
+    0x002E  : 'PowerSourceConfiguration',   // Used to describe the configuration and capabilities of a Device’s power system // library marker Mavrrick.Govee_Matter, line 672
+    0x002F  : 'PowerSource',                // Used to describe the configuration and capabilities of a physical power source that provides power to the Node // library marker Mavrrick.Govee_Matter, line 673
+    0x0030  : 'GeneralCommissioning',       // Used to manage basic commissioning lifecycle // library marker Mavrrick.Govee_Matter, line 674
+    0x0031  : 'NetworkCommissioning',       // Associates a Node with or manage a Node’s one or more network interfaces // library marker Mavrrick.Govee_Matter, line 675
+    0x0032  : 'DiagnosticLogs',             // Provides commands for retrieving unstructured diagnostic logs from a Node that may be used to aid in diagnostics. // library marker Mavrrick.Govee_Matter, line 676
+    0x0033  : 'GeneralDiagnostics',         // Provides a means to acquire standardized diagnostics metrics // library marker Mavrrick.Govee_Matter, line 677
+    0x0034  : 'SoftwareDiagnostics',        // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential problems // library marker Mavrrick.Govee_Matter, line 678
+    0x0035  : 'ThreadNetworkDiagnostics',   // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential problems // library marker Mavrrick.Govee_Matter, line 679
+    0x0036  : 'WiFiNetworkDiagnostics',     // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential // library marker Mavrrick.Govee_Matter, line 680
+    0x0037  : 'EthernetNetworkDiagnostics', // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential // library marker Mavrrick.Govee_Matter, line 681
+    0x0038  : 'TimeSync',                   // Provides Attributes for reading a Node’s current time // library marker Mavrrick.Govee_Matter, line 682
+    0x0039  : 'BridgedDeviceBasicInformation',  // Serves two purposes towards a Node communicating with a Bridge // library marker Mavrrick.Govee_Matter, line 683
+    0x003C  : 'AdministratorCommissioning', // Used to trigger a Node to allow a new Administrator to commission it. It defines Attributes, Commands and Responses needed for this purpose. // library marker Mavrrick.Govee_Matter, line 684
+    0x003E  : 'OperationalCredentials',     // Used to add or remove Node Operational credentials on a Commissionee or Node, as well as manage the associated Fabrics. // library marker Mavrrick.Govee_Matter, line 685
+    0x003F  : 'GroupKeyManagement',         // Manages group keys for the node // library marker Mavrrick.Govee_Matter, line 686
+    0x0040  : 'FixedLabel',                 // Provides a feature for the device to tag an endpoint with zero or more read only labels // library marker Mavrrick.Govee_Matter, line 687
+    0x0041  : 'UserLabel',                  // Provides a feature to tag an endpoint with zero or more labels. // library marker Mavrrick.Govee_Matter, line 688
+    0x0042  : 'ProxyConfiguration',         // Provides a means for a proxy-capable device to be told the set of Nodes it SHALL proxy // library marker Mavrrick.Govee_Matter, line 689
+    0x0043  : 'ProxyDiscovery',             // Contains commands needed to do proxy discovery // library marker Mavrrick.Govee_Matter, line 690
+    0x0044  : 'ValidProxies',               // Provides a means for a device to be told of the valid set of possible proxies that can proxy subscriptions on its behalf // library marker Mavrrick.Govee_Matter, line 691
+
+    0x0003  : 'Identify',                   // Supports an endpoint identification state (e.g., flashing a light), that indicates to an observer (e.g., an installer) which of several nodes and/or endpoints it is. // library marker Mavrrick.Govee_Matter, line 693
+    0x0004  : 'Groups',                     // Manages, per endpoint, the content of the node-wide Group Table that is part of the underlying interaction layer. // library marker Mavrrick.Govee_Matter, line 694
+    0x0005  : 'Scenes',                     // Provides attributes and commands for setting up and recalling scenes. // library marker Mavrrick.Govee_Matter, line 695
+    0x0006  : 'OnOff',                      // Attributes and commands for turning devices on and off. // library marker Mavrrick.Govee_Matter, line 696
+    0x0008  : 'LevelControl',               // Provides an interface for controlling a characteristic of a device that can be set to a level, for example the brightness of a light, the degree of closure of a door, or the power output of a heater. // library marker Mavrrick.Govee_Matter, line 697
+    0x001C  : 'LevelControlDerived',        // Derived cluster specifications are defined elsewhere. // library marker Mavrrick.Govee_Matter, line 698
+    0x003B  : 'Switch',                     // Exposes interactions with a switch device, for the purpose of using those interactions by other devices // library marker Mavrrick.Govee_Matter, line 699
+    0x0045  : 'BooleanState',               // Provides an interface to a boolean state. // library marker Mavrrick.Govee_Matter, line 700
+    0x0050  : 'ModeSelect',                 // Provides an interface for controlling a characteristic of a device that can be set to one of several predefined values. // library marker Mavrrick.Govee_Matter, line 701
+    0x0051  : 'LaundryWasherMode',          // Commands and attributes for controlling a laundry washer // library marker Mavrrick.Govee_Matter, line 702
+    0x0052  : 'RefrigeratorAndTemperatureControlledCabinetMode',          // Commands and attributes for controlling a refrigerator or a temperature controlled cabinet // library marker Mavrrick.Govee_Matter, line 703
+    0x0053  : 'LaundryWasherControls',      // Commands and attributes for the control of options on a device that does laundry washing // library marker Mavrrick.Govee_Matter, line 704
+    0x0054  : 'RVCRunMode',                 // Commands and attributes for controlling the running mode of an RVC device. // library marker Mavrrick.Govee_Matter, line 705
+    0x0055  : 'RVCCleanMode',               // Commands and attributes for controlling the cleaning mode of an RVC device. // library marker Mavrrick.Govee_Matter, line 706
+    0x0056  : 'TemperatureControl',         // Commands and attributes for control of a temperature set point // library marker Mavrrick.Govee_Matter, line 707
+    0x0057  : 'RefrigeratorAlarm',          // Alarm definitions for Refrigerator devices // library marker Mavrrick.Govee_Matter, line 708
+    0x0059  : 'DishwasherMode',             // Commands and attributes for controlling a dishwasher // library marker Mavrrick.Govee_Matter, line 709
+    0x005B  : 'AirQuality',                 // Provides an interface to air quality classification using distinct levels with human-readable labels. // library marker Mavrrick.Govee_Matter, line 710
+    0x005C  : 'SmokeCOAlarm',               // Provides an interface for observing and managing the state of smoke and CO alarms // library marker Mavrrick.Govee_Matter, line 711
+    0x005D  : 'DishwasherAlarm',            // Alarm definitions for Dishwasher devices // library marker Mavrrick.Govee_Matter, line 712
+    0x0060  : 'OperationalState',           // Supports remotely monitoring and, where supported, changing the operational state of any device where a state machine is a part of the operation. // library marker Mavrrick.Govee_Matter, line 713
+    0x0061  : 'RVCOperationalState',        // Commands and attributes for monitoring and controlling the operational state of an RVC device. // library marker Mavrrick.Govee_Matter, line 714
+    0x0071  : 'HEPAFilterMonitoring',       // HEPA Filter // library marker Mavrrick.Govee_Matter, line 715
+    0x0072  : 'ActivatedCarbonFilterMonitoring', // Activated Carbon Filter // library marker Mavrrick.Govee_Matter, line 716
+    0x0101  : 'DoorLock',                   // An interface to a generic way to secure a door // library marker Mavrrick.Govee_Matter, line 717
+    0x0102  : 'WindowCovering',             // Commands and attributes for controlling a window covering // library marker Mavrrick.Govee_Matter, line 718
+    0x0200  : 'PumpConfigurationAndControl',// An interface for configuring and controlling pumps. // library marker Mavrrick.Govee_Matter, line 719
+    0x0201  : 'Thermostat',                 // An interface for configuring and controlling the functionalty of a thermostat // library marker Mavrrick.Govee_Matter, line 720
+    0x0202  : 'FanControl',                 // An interface for controlling a fan in a heating / cooling system // library marker Mavrrick.Govee_Matter, line 721
+    0x0204  : 'ThermostatUserInterfaceConfiguration',                 // An interface for configuring the user interface of a thermostat (which MAY be remote from the thermostat) // library marker Mavrrick.Govee_Matter, line 722
+    0x0300  : 'ColorControl',               // Attributes and commands for controlling the color of a color capable light. // library marker Mavrrick.Govee_Matter, line 723
+    0x0301  : 'BallastConfiguration',       // Attributes and commands for configuring a lighting ballast // library marker Mavrrick.Govee_Matter, line 724
+    0x0400  : 'IlluminanceMeasurement',     // Attributes and commands for configuring the measurement of illuminance, and reporting illuminance measurements // library marker Mavrrick.Govee_Matter, line 725
+    0x0402  : 'TemperatureMeasurement',     // Attributes and commands for configuring the measurement of temperature, and reporting temperature measurements // library marker Mavrrick.Govee_Matter, line 726
+    0x0403  : 'PressureMeasurement',        // Attributes and commands for configuring the measurement of pressure, and reporting pressure measurements // library marker Mavrrick.Govee_Matter, line 727
+    0x0404  : 'FlowMeasurement',            // Attributes and commands for configuring the measurement of flow, and reporting flow rates // library marker Mavrrick.Govee_Matter, line 728
+    0x0405  : 'RelativeHumidityMeasurement',// Supports configuring the measurement of relative humidity, and reporting relative humidity measurements of water in the air // library marker Mavrrick.Govee_Matter, line 729
+    0x0406  : 'OccupancySensing',           // Occupancy sensing functionality, including configuration and provision of notifications of occupancy status // library marker Mavrrick.Govee_Matter, line 730
+    0x0407  : 'LeafWetnessMeasurement',     // Percentage of water in the leaves of plants // library marker Mavrrick.Govee_Matter, line 731
+    0x0408  : 'SoilMoistureMeasurement',    // Percentage of water in the soil // library marker Mavrrick.Govee_Matter, line 732
+    0x040C  : 'CarbonMonoxideConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 733
+    0x040D  : 'CarbonDioxideConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 734
+    0x0413  : 'NitrogenDioxideConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 735
+    0x0415  : 'OzoneConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 736
+    0x042A  : 'PM2.5ConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 737
+    0x042B  : 'FormaldehydeConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 738
+    0x042C  : 'PM1ConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 739
+    0x042D  : 'PM10ConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 740
+    0x042E  : 'TotalVolatileOrganicCompoundsConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 741
+    0x042F  : 'RadonConcentrationMeasurement', // library marker Mavrrick.Govee_Matter, line 742
+    0x0503  : 'WakeOnLAN',                  // interface for managing low power mode on a device that supports the Wake On LAN or Wake On Wireless LAN (WLAN) protocol // library marker Mavrrick.Govee_Matter, line 743
+    0x0504  : 'Channel',                    // interface for controlling the current Channel on an endpoint. // library marker Mavrrick.Govee_Matter, line 744
+    0x0505  : 'TargetNavigator',            // n interface for UX navigation within a set of targets on a Video Player device or Content App endpoint. // library marker Mavrrick.Govee_Matter, line 745
+    0x0506  : 'MediaPlayback',              // interface for controlling Media Playback (PLAY, PAUSE, etc) on a Video Player device // library marker Mavrrick.Govee_Matter, line 746
+    0x0507  : 'MediaInput',                 // interface for controlling the Input Selector on a Video Player device. // library marker Mavrrick.Govee_Matter, line 747
+    0x0508  : 'LowPower',                   // interface for managing low power mode on a device. // library marker Mavrrick.Govee_Matter, line 748
+    0x0509  : 'KeypadInput',                // interface for controlling a Video Player or a Content App using action commands such as UP, DOWN, and SELECT. // library marker Mavrrick.Govee_Matter, line 749
+    0x050A  : 'ContentLauncher',            // interface for launching content on a Video Player device or a Content App. // library marker Mavrrick.Govee_Matter, line 750
+    0x050B  : 'AudioOutput',                // interface for controlling the Output on a Video Player device. // library marker Mavrrick.Govee_Matter, line 751
+    0x050E  : 'AccountLogin',               // interface for facilitating user account login on an application or a node. // library marker Mavrrick.Govee_Matter, line 752
+    0x050C  : 'ApplicationLauncher',        // interface for launching content on a Video Player device. // library marker Mavrrick.Govee_Matter, line 753
+    0x050D  : 'ApplicationBasic'            // information about a Content App running on a Video Player device which is represented as an endpoint // library marker Mavrrick.Govee_Matter, line 754
+] // library marker Mavrrick.Govee_Matter, line 755
+
+// 7.13. Global Elements // library marker Mavrrick.Govee_Matter, line 757
+@Field static final Map<Integer, String> GlobalElementsAttributes = [ // library marker Mavrrick.Govee_Matter, line 758
+    0x00FE  : 'FabricIndex', // library marker Mavrrick.Govee_Matter, line 759
+    0xFFF8  : 'GeneratedCommandList', // library marker Mavrrick.Govee_Matter, line 760
+    0xFFF9  : 'AcceptedCommandList', // library marker Mavrrick.Govee_Matter, line 761
+    0xFFFA  : 'EventList', // library marker Mavrrick.Govee_Matter, line 762
+    0xFFFB  : 'AttributeList', // library marker Mavrrick.Govee_Matter, line 763
+    0xFFFC  : 'FeatureMap', // library marker Mavrrick.Govee_Matter, line 764
+    0xFFFD  : 'ClusterRevision' // library marker Mavrrick.Govee_Matter, line 765
+] // library marker Mavrrick.Govee_Matter, line 766
+
+// 9.5. Descriptor Cluser 0x001D // library marker Mavrrick.Govee_Matter, line 768
+@Field static final Map<Integer, String> DescriptorClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 769
+    0x0000  : 'DeviceTypeList', // library marker Mavrrick.Govee_Matter, line 770
+    0x0001  : 'ServerList', // library marker Mavrrick.Govee_Matter, line 771
+    0x0002  : 'ClientList', // library marker Mavrrick.Govee_Matter, line 772
+    0x0003  : 'PartsList' // library marker Mavrrick.Govee_Matter, line 773
+] // library marker Mavrrick.Govee_Matter, line 774
+
+// 11.1.6.3. Attributes of the Basic Information Cluster 0x0028 ep=0 // library marker Mavrrick.Govee_Matter, line 776
+@Field static final Map<Integer, String> BasicInformationClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 777
+    0x0000  : 'DataModelRevision', // library marker Mavrrick.Govee_Matter, line 778
+    0x0001  : 'VendorName', // library marker Mavrrick.Govee_Matter, line 779
+    0x0002  : 'VendorID', // library marker Mavrrick.Govee_Matter, line 780
+    0x0003  : 'ProductName', // library marker Mavrrick.Govee_Matter, line 781
+    0x0004  : 'ProductID', // library marker Mavrrick.Govee_Matter, line 782
+    0x0005  : 'NodeLabel', // library marker Mavrrick.Govee_Matter, line 783
+    0x0006  : 'Location', // library marker Mavrrick.Govee_Matter, line 784
+    0x0007  : 'HardwareVersion', // library marker Mavrrick.Govee_Matter, line 785
+    0x0008  : 'HardwareVersionString', // library marker Mavrrick.Govee_Matter, line 786
+    0x0009  : 'SoftwareVersion', // library marker Mavrrick.Govee_Matter, line 787
+    0x000A  : 'SoftwareVersionString', // library marker Mavrrick.Govee_Matter, line 788
+    0x000B  : 'ManufacturingDate', // library marker Mavrrick.Govee_Matter, line 789
+    0x000C  : 'PartNumber', // library marker Mavrrick.Govee_Matter, line 790
+    0x000D  : 'ProductURL', // library marker Mavrrick.Govee_Matter, line 791
+    0x000E  : 'ProductLabel', // library marker Mavrrick.Govee_Matter, line 792
+    0x000F  : 'SerialNumber', // library marker Mavrrick.Govee_Matter, line 793
+    0x0010  : 'LocalConfigDisabled', // library marker Mavrrick.Govee_Matter, line 794
+    0x0011  : 'Reachable', // library marker Mavrrick.Govee_Matter, line 795
+    0x0012  : 'UniquieID', // library marker Mavrrick.Govee_Matter, line 796
+    0x0013  : 'CapabilityMinima' // library marker Mavrrick.Govee_Matter, line 797
+] // library marker Mavrrick.Govee_Matter, line 798
+
+// Identify Cluster 0x0003 // library marker Mavrrick.Govee_Matter, line 800
+@Field static final Map<Integer, String> IdentifyClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 801
+    0x0000  : 'IdentifyTime', // library marker Mavrrick.Govee_Matter, line 802
+    0x0001  : 'IdentifyType' // library marker Mavrrick.Govee_Matter, line 803
+] // library marker Mavrrick.Govee_Matter, line 804
+
+// Groups Cluster 0x0004 // library marker Mavrrick.Govee_Matter, line 806
+@Field static final Map<Integer, String> GroupsClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 807
+    0x0000  : 'NameSupport' // library marker Mavrrick.Govee_Matter, line 808
+] // library marker Mavrrick.Govee_Matter, line 809
+
+// Scenes Cluster 0x0005 // library marker Mavrrick.Govee_Matter, line 811
+@Field static final Map<Integer, String> ScenesClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 812
+    0x0000  : 'SceneCount', // library marker Mavrrick.Govee_Matter, line 813
+    0x0001  : 'CurrentScene', // library marker Mavrrick.Govee_Matter, line 814
+    0x0002  : 'CurrentGroup', // library marker Mavrrick.Govee_Matter, line 815
+    0x0003  : 'SceneValid', // library marker Mavrrick.Govee_Matter, line 816
+    0x0004  : 'RemainingCapacity' // library marker Mavrrick.Govee_Matter, line 817
+] // library marker Mavrrick.Govee_Matter, line 818
+
+// On/Off Cluser 0x0006 // library marker Mavrrick.Govee_Matter, line 820
+@Field static final Map<Integer, String> OnOffClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 821
+    0x0000  : 'Switch', // library marker Mavrrick.Govee_Matter, line 822
+    0x4000  : 'GlobalSceneControl', // library marker Mavrrick.Govee_Matter, line 823
+    0x4001  : 'OnTime', // library marker Mavrrick.Govee_Matter, line 824
+    0x4002  : 'OffWaitTime', // library marker Mavrrick.Govee_Matter, line 825
+    0x4003  : 'StartUpOnOff' // library marker Mavrrick.Govee_Matter, line 826
+] // library marker Mavrrick.Govee_Matter, line 827
+
+// 1.6. Level Control Cluster 0x0008 // library marker Mavrrick.Govee_Matter, line 829
+@Field static final Map<Integer, String> LevelControlClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 830
+    0x0000  : 'CurrentLevel', // library marker Mavrrick.Govee_Matter, line 831
+    0x0001  : 'RemainingTime', // library marker Mavrrick.Govee_Matter, line 832
+    0x0002  : 'MinLevel', // library marker Mavrrick.Govee_Matter, line 833
+    0x0003  : 'MaxLevel', // library marker Mavrrick.Govee_Matter, line 834
+    0x0004  : 'CurrentFrequency', // library marker Mavrrick.Govee_Matter, line 835
+    0x0005  : 'MinFrequency', // library marker Mavrrick.Govee_Matter, line 836
+    0x0010  : 'OnOffTransitionTime', // library marker Mavrrick.Govee_Matter, line 837
+    0x0011  : 'OnLevel', // library marker Mavrrick.Govee_Matter, line 838
+    0x0012  : 'OnTransitionTime', // library marker Mavrrick.Govee_Matter, line 839
+    0x0013  : 'OffTransitionTime', // library marker Mavrrick.Govee_Matter, line 840
+    0x000F  : 'Options', // library marker Mavrrick.Govee_Matter, line 841
+    0x4000  : 'StartUpCurrentLevel' // library marker Mavrrick.Govee_Matter, line 842
+] // library marker Mavrrick.Govee_Matter, line 843
+/* groovylint-disable-next-line UnusedVariable */ // library marker Mavrrick.Govee_Matter, line 844
+@Field static final Map<Integer, String> LevelControlClusterCommands = [ // library marker Mavrrick.Govee_Matter, line 845
+    0x00    : 'MoveToLevel', // library marker Mavrrick.Govee_Matter, line 846
+    0x01    : 'Move', // library marker Mavrrick.Govee_Matter, line 847
+    0x02    : 'Step', // library marker Mavrrick.Govee_Matter, line 848
+    0x03    : 'Stop', // library marker Mavrrick.Govee_Matter, line 849
+    0x04    : 'MoveToLevelWithOnOff', // library marker Mavrrick.Govee_Matter, line 850
+    0x05    : 'MoveWithOnOff', // library marker Mavrrick.Govee_Matter, line 851
+    0x06    : 'StepWithOnOff', // library marker Mavrrick.Govee_Matter, line 852
+    0x07    : 'StopWithOnOff', // library marker Mavrrick.Govee_Matter, line 853
+    0x08    : 'MoveToClosestFrequency' // library marker Mavrrick.Govee_Matter, line 854
+] // library marker Mavrrick.Govee_Matter, line 855
+
+// 11.7. Power Source Cluster 0x002F    // attrList:[0, 1, 2, 11, 12, 14, 15, 16, 19, 25, 65528, 65529, 65531, 65532, 65533] // library marker Mavrrick.Govee_Matter, line 857
+@Field static final Map<Integer, String> PowerSourceClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 858
+    0x0000  : 'Status', // library marker Mavrrick.Govee_Matter, line 859
+    0x0001  : 'Order', // library marker Mavrrick.Govee_Matter, line 860
+    0x0002  : 'Description', // library marker Mavrrick.Govee_Matter, line 861
+    0x000B  : 'BatVoltage', // library marker Mavrrick.Govee_Matter, line 862
+    0x000C  : 'BatPercentRemaining', // library marker Mavrrick.Govee_Matter, line 863
+    0x000D  : 'BatTimeRemaining', // library marker Mavrrick.Govee_Matter, line 864
+    0x000E  : 'BatChargeLevel', // library marker Mavrrick.Govee_Matter, line 865
+    0x000F  : 'BatReplacementNeeded', // library marker Mavrrick.Govee_Matter, line 866
+    0x0010  : 'BatReplaceability', // library marker Mavrrick.Govee_Matter, line 867
+    0x0013  : 'BatReplacementDescription', // library marker Mavrrick.Govee_Matter, line 868
+    0x0019  : 'BatQuantity' // library marker Mavrrick.Govee_Matter, line 869
+] // library marker Mavrrick.Govee_Matter, line 870
+@Field static final Map<Integer, String> PowerSourceClusterStatus = [ // library marker Mavrrick.Govee_Matter, line 871
+    0x00    : 'Unspecified',    // SHALL indicate the source status is not specified // library marker Mavrrick.Govee_Matter, line 872
+    0x01    : 'Active',         // SHALL indicate the source is available and currently supplying power // library marker Mavrrick.Govee_Matter, line 873
+    0x02    : 'Standby',        // SHALL indicate the source is available, but is not currently supplying power // library marker Mavrrick.Govee_Matter, line 874
+    0x03    : 'Unavailable'     // SHALL indicate the source is not currently available to supply power // library marker Mavrrick.Govee_Matter, line 875
+] // library marker Mavrrick.Govee_Matter, line 876
+@Field static final Map<Integer, String> PowerSourceClusterBatteryChargeLevel = [ // library marker Mavrrick.Govee_Matter, line 877
+    0x00    : 'OK',             // Charge level is nominal // library marker Mavrrick.Govee_Matter, line 878
+    0x01    : 'Warning',        // Charge level is low, intervention may soon be required. // library marker Mavrrick.Govee_Matter, line 879
+    0x02    : 'Critical'        // Charge level is critical, immediate intervention is required. // library marker Mavrrick.Govee_Matter, line 880
+] // library marker Mavrrick.Govee_Matter, line 881
+
+// 1.7 Bolean State Cluster 0x0045 // library marker Mavrrick.Govee_Matter, line 883
+@Field static final Map<Integer, String> BoleanStateClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 884
+    0x0000  : 'StateValue' // library marker Mavrrick.Govee_Matter, line 885
+] // library marker Mavrrick.Govee_Matter, line 886
+
+// 3.2. Color Control Cluster 0x0300 // library marker Mavrrick.Govee_Matter, line 888
+@Field static final Map<Integer, String> ColorControlClusterAttributes = [ // library marker Mavrrick.Govee_Matter, line 889
+    0x0000  : 'CurrentHue', // library marker Mavrrick.Govee_Matter, line 890
+    0x0001  : 'CurrentSaturation', // library marker Mavrrick.Govee_Matter, line 891
+    0x0002  : 'RemainingTime', // library marker Mavrrick.Govee_Matter, line 892
+    0x0003  : 'CurrentX', // library marker Mavrrick.Govee_Matter, line 893
+    0x0004  : 'CurrentY', // library marker Mavrrick.Govee_Matter, line 894
+    0x0005  : 'DriftCompensation', // library marker Mavrrick.Govee_Matter, line 895
+    0x0006  : 'CompensationText', // library marker Mavrrick.Govee_Matter, line 896
+    0x0007  : 'ColorTemperature', // library marker Mavrrick.Govee_Matter, line 897
+    0x0008  : 'ColorMode', // library marker Mavrrick.Govee_Matter, line 898
+    0x000F  : 'Options', // library marker Mavrrick.Govee_Matter, line 899
+    0x4000  : 'EnhancedCurrentHue', // library marker Mavrrick.Govee_Matter, line 900
+    0x4001  : 'EnhancedColorMode', // library marker Mavrrick.Govee_Matter, line 901
+    0x4002  : 'ColorLoopActive', // library marker Mavrrick.Govee_Matter, line 902
+    0x4003  : 'ColorLoopDirection', // library marker Mavrrick.Govee_Matter, line 903
+    0x4004  : 'ColorLoopTime', // library marker Mavrrick.Govee_Matter, line 904
+    0x4005  : 'ColorLoopStartEnhancedHue', // library marker Mavrrick.Govee_Matter, line 905
+    0x4006  : 'ColorLoopStoredEnhancedHue', // library marker Mavrrick.Govee_Matter, line 906
+    0x400A  : 'ColorCapabilities', // library marker Mavrrick.Govee_Matter, line 907
+    0x400B  : 'ColorTempPhysicalMinMireds', // library marker Mavrrick.Govee_Matter, line 908
+    0x400C  : 'ColorTempPhysicalMaxMireds', // library marker Mavrrick.Govee_Matter, line 909
+    0x400D  : 'CoupleColorTempToLevelMinMireds', // library marker Mavrrick.Govee_Matter, line 910
+    0x4010  : 'StartUpColorTemperatureMireds' // library marker Mavrrick.Govee_Matter, line 911
+] // library marker Mavrrick.Govee_Matter, line 912
+@Field static final Map<Integer, String> ColorControlClusterCommands = [ // library marker Mavrrick.Govee_Matter, line 913
+    0x00    : 'MoveToHue', // library marker Mavrrick.Govee_Matter, line 914
+    0x01    : 'MoveHue', // library marker Mavrrick.Govee_Matter, line 915
+    0x02    : 'StepHue', // library marker Mavrrick.Govee_Matter, line 916
+    0x03    : 'MoveToSaturation', // library marker Mavrrick.Govee_Matter, line 917
+    0x04    : 'MoveSaturation', // library marker Mavrrick.Govee_Matter, line 918
+    0x05    : 'StepSaturation', // library marker Mavrrick.Govee_Matter, line 919
+    0x06    : 'MoveToHueAndSaturation', // library marker Mavrrick.Govee_Matter, line 920
+    0x07    : 'MoveToColor', // library marker Mavrrick.Govee_Matter, line 921
+    0x08    : 'MoveColor', // library marker Mavrrick.Govee_Matter, line 922
+    0x09    : 'StepColor', // library marker Mavrrick.Govee_Matter, line 923
+    0x0A    : 'MoveToColorTemperature', // library marker Mavrrick.Govee_Matter, line 924
+    0x40    : 'EnhancedMoveToHue', // library marker Mavrrick.Govee_Matter, line 925
+    0x41    : 'EnhancedMoveHue', // library marker Mavrrick.Govee_Matter, line 926
+    0x42    : 'EnhancedStepHue', // library marker Mavrrick.Govee_Matter, line 927
+    0x43    : 'EnhancedMoveToHueAndSaturation', // library marker Mavrrick.Govee_Matter, line 928
+    0x44    : 'ColorLoopSet', // library marker Mavrrick.Govee_Matter, line 929
+    0x47    : 'StopMoveStep', // library marker Mavrrick.Govee_Matter, line 930
+    0x4B    : 'MoveColorTemperature', // library marker Mavrrick.Govee_Matter, line 931
+    0x4C    : 'StepColorTemperature' // library marker Mavrrick.Govee_Matter, line 932
+] // library marker Mavrrick.Govee_Matter, line 933
+
+@Field static Map colorRGBName = [ // library marker Mavrrick.Govee_Matter, line 935
+    4: 'Red', // library marker Mavrrick.Govee_Matter, line 936
+    13:'Orange', // library marker Mavrrick.Govee_Matter, line 937
+    21:'Yellow', // library marker Mavrrick.Govee_Matter, line 938
+    29:'Chartreuse', // library marker Mavrrick.Govee_Matter, line 939
+    38:'Green', // library marker Mavrrick.Govee_Matter, line 940
+    46:'Spring', // library marker Mavrrick.Govee_Matter, line 941
+    54:'Cyan', // library marker Mavrrick.Govee_Matter, line 942
+    63:'Azure', // library marker Mavrrick.Govee_Matter, line 943
+    71:'Blue', // library marker Mavrrick.Govee_Matter, line 944
+    79:'Violet', // library marker Mavrrick.Govee_Matter, line 945
+    88:'Magenta', // library marker Mavrrick.Govee_Matter, line 946
+    96:'Rose', // library marker Mavrrick.Govee_Matter, line 947
+    101:'Red' // library marker Mavrrick.Govee_Matter, line 948
+] // library marker Mavrrick.Govee_Matter, line 949
+
+// ~~~~~ end include (11) Mavrrick.Govee_Matter ~~~~~
