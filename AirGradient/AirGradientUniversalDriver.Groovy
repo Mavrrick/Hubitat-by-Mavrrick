@@ -159,7 +159,7 @@ def poll() {
     httpGet(params) { resp ->
         if (debugLog) {log.debug "poll(): Response Data is "+resp.data}
         if (resp.status == 200) {
-            log.debug "Poll(): succesful poll parsing data to apply to device"
+            if (debugLog) {log.debug "Poll(): Successful poll. Parsing data to apply to device"}
             resp.data.each {
                 if (debugLog) {log.debug "poll(): Respone Data Key Name "+it.key}
                 if (debugLog) {log.debug "poll(): Respone Data Value "+it.value}
