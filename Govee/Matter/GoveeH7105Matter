@@ -32,7 +32,7 @@ import groovy.transform.Field
 import hubitat.helper.HexUtils
 
 metadata {
-    definition (name: "Govee H7105 Fan(Matter)", namespace: "mavrrick", author: "Mavrrick") {
+    definition (name: "Govee H7105 Fan(Matter)", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Actuator"
         capability "Switch"
         capability "Configuration"

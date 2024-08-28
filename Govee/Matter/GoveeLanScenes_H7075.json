@@ -1,5 +1,5 @@
 [{
-        "Outdoor_Wall_Light": {
+        "H7075": {
             "122": {
                 "name": "Easter",
                 "cmd": "[\"owABCgIFIDIAAAMCAWcLA8wUFB4=\", \"owED/BQD/wAAAP8A////BAD8AE0=\", \"owIAgAUgNQAAAwIBbwwDzBQUA54=\", \"owP8FAP///8A/wD/Tw8GAPwAAA4=\", \"owSABSNQAAABAgH/DAP3FBQD8qU=\", \"owUUBP8AAP//////AP8OBxIA3Y8=\", \"owYAAPwFHQAAAAECAf8zAfcUFHk=\", \"owcD/xQC////uv4VAACAAACAAeE=\", \"owggVQAAAQIB/wsD9xQUA/IUAzo=\", \"o///AAD//wD///8QAN0AAPwFAGg=\", \"MwUEYykAAAAAAAAAAAAAAAAAAHg=\"]"
@@ -163,3 +163,4 @@
         }
     }
 ]
+

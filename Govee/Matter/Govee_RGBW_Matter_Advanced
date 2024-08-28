@@ -1,0 +1,1516 @@
+/*
+	Govee RGBW driver
+
+	Copyright 2023 Hubitat Inc.  All Rights Reserved
+
+	2023-11-02 2.3.7 mavrrick
+		-initial pub
+
+*/
+
+@Field static final String   DEVICE_TYPE = 'MATTER_BULB'
+
+//transitionTime options
+@Field static Map ttOpts = [
+    defaultValue: '0',
+    defaultText:  'ASAP',
+    options:['0':'ASAP', '1':'1s', '2':'2s', '5':'5s']
+]
+
+import groovy.transform.Field
+import hubitat.helper.HexUtils
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+import groovy.json.JsonBuilder
+
+def commandPort() { "4003" }
+
+metadata {
+    definition (name: "Govee RGBW Matter Advanced", namespace: "Mavrrick", author: "Mavrrick") {
+        capability 'Actuator'
+        capability 'Switch'
+        capability 'SwitchLevel'
+        capability 'Configuration'
+        capability 'Color Control'
+        capability "ColorMode"
+        capability "ColorTemperature"
+        capability 'Light'
+        capability 'Initialize'
+        capability "LightEffects"        
+        capability 'Refresh'
+        
+        attribute "effectNum", "integer" 
+        
+        fingerprint endpointId:"01", inClusters:"0003,0004,0006,001D,0202", outClusters:"", manufacturer:"Shenzhen Qianyan Technology", controllerType:"MAT"
+
+    }
+    preferences {
+        input(name:'transitionTime', type:'enum', title:"Level transition time (default:${ttOpts.defaultText})", options:ttOpts.options, defaultValue:ttOpts.defaultValue)
+        input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
+        if (lanControl) {
+            input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)
+            input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false)    
+            if (lanScenes) {
+                input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("model")+".json")    
+                } 
+        }
+        input(name:"logEnable", type:"bool", title:"Enable debug logging", defaultValue:false)
+        input(name:"txtEnable", type:"bool", title:"Enable descriptionText logging", defaultValue:true)
+    }
+}
+
+void setEffect(effectNo) {
+        lanSetEffect (effectNo)
+}
+
+//parsers
+void parse(String description) {
+
+    Map descMap
+    try {
+        descMap = matter.parseDescriptionAsMap(description)
+    } catch (e) {
+        logWarn "parse: exception ${e} <br> Failed to parse description: ${description}"
+        return
+    }
+    logDebug "parse: descMap:${descMap}  description:${description}"
+    if (descMap == null) {
+        logWarn "parse: descMap is null description:${description}"
+        return
+    }
+    if (descMap.attrId == 'FFFB') { // parse the AttributeList first!
+        pareseAttributeList(descMap)
+        return
+    }
+    switch (descMap.cluster) {
+        case '0000' :
+            if (descMap.attrId == '4000') { //software build ?
+                updateDataValue('softwareBuild', descMap.value ?: 'unknown')
+            }
+            else {
+                logWarn "skipped softwareBuild, attribute:${descMap.attrId}, value:${descMap.value}"
+            }
+            break
+        case '0003' :   // Identify
+//            gatherAttributesValuesInfo(descMap, IdentifyClusterAttributes)
+            break
+        case '0004' :   // Groups
+//            gatherAttributesValuesInfo(descMap, GroupsClusterAttributes)
+            break
+        case '0005' :   // Scenes
+//            gatherAttributesValuesInfo(descMap, ScenesClusterAttributes)
+        case '0006' :   // On/Off Cluster
+//            gatherAttributesValuesInfo(descMap, OnOffClusterAttributes)
+            parseOnOffCluster(descMap)
+            break
+        case '0202' :   // Fan Control Cluster
+            if (descMap.attrId == "0000") { //fan speed
+                sendSpeedEvent(descMap.value)
+            }
+            break
+        case '0008' :   // LevelControl
+            if (descMap.attrId == '0000') { //current level
+                sendLevelEvent(descMap.value)
+            }
+            else {
+                logWarn "skipped level, attribute:${descMap.attrId}, value:${descMap.value}"
+            }
+//            gatherAttributesValuesInfo(descMap, LevelControlClusterAttributes)
+            break
+        case '001D' :  // Descriptor, ep:00
+//            gatherAttributesValuesInfo(descMap, DescriptorClusterAttributes)
+            break
+        case '002F' :  // PowerSource, ep:02    //  parse: descMap:[endpoint:02, cluster:002F, attrId:000C, value:C8, clusterInt:47, attrInt:12] description:read attr - endpoint: 02, cluster: 002F, attrId: 000C, value: 04C8
+            parseBatteryEvent(descMap)
+//            gatherAttributesValuesInfo(descMap, PowerSourceClusterAttributes)
+            break
+        case '0028' :  // BasicInformation, ep:00
+//            gatherAttributesValuesInfo(descMap, BasicInformationClusterAttributes)
+            break
+        case '0045' :  // BooleanState
+//            gatherAttributesValuesInfo(descMap, BoleanStateClusterAttributes)
+            parseContactEvent(descMap)
+            break
+        case '0300' :   // ColorControl
+            if (descMap.attrId == '0000') { //hue                
+                sendHueEvent(descMap.value)
+            } else if (descMap.attrId == '0001') { //saturation
+                sendSaturationEvent(descMap.value)
+            }
+            else if (descMap.attrId == '0007') { //color temperature
+                sendCTEvent(descMap.value)
+            }
+            else if (descMap.attrId == '0008') { //color mode
+                logDebug "parse: skipped color mode:${descMap}"
+            }
+            else {
+                logWarn "parse: skipped color, attribute:${descMap.attrId}, value:${descMap.value}"
+            }
+//            gatherAttributesValuesInfo(descMap, ColorControlClusterAttributes)
+            break
+        default :
+                logWarn "parse: skipped:${descMap}"
+    }
+}
+
+void parseOnOffCluster(Map descMap) {
+    logDebug "parseOnOffCluster: descMap:${descMap}"
+    if (descMap.cluster != '0006') {
+        logWarn "parseOnOffCluster: unexpected cluster:${descMap.cluster} (attrId:${descMap.attrId})"
+        return
+    }
+    Integer attrInt = descMap.attrInt as Integer
+    Integer value
+    //String descriptionText = ''
+    //Map eventMap = [:]
+    String attrName = OnOffClusterAttributes[attrInt] ?: GlobalElementsAttributes[attrInt] ?: UNKNOWN
+
+    switch (descMap.attrId) {
+        case '0000' : // Switch
+            sendSwitchEvent(descMap.value)
+            break
+        case '4000' : // GlobalSceneControl
+            if (logEnable) { logInfo "parse: Switch: GlobalSceneControl = ${descMap.value}" }
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['GlobalSceneControl'] = descMap.value
+            break
+        case '4001' : // OnTime
+            if (logEnable) { logInfo  "parse: Switch: OnTime = ${descMap.value}" }
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['OnTime'] = descMap.value
+            break
+        case '4002' : // OffWaitTime
+            if (logEnable) { logInfo  "parse: Switch: OffWaitTime = ${descMap.value}" }
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['OffWaitTime'] = descMap.value
+            break
+        case '4003' : // StartUpOnOff
+            value = descMap.value as int
+            String startUpOnOffText = "parse: Switch: StartUpOnOff = ${descMap.value} (${StartUpOnOffEnumOpts[value] ?: UNKNOWN})"
+            if (logEnable) { logInfo  "${startUpOnOffText}" }
+            if (state.onOff  == null) { state.onOff =  [:] } ; state.onOff['StartUpOnOff'] = descMap.value
+            break
+        case ['FFF8', 'FFF9', 'FFFA', 'FFFB', 'FFFC', 'FFFD', '00FE'] :
+            if (logEnable) {
+                logInfo "parse: Switch: ${attrName} = ${descMap.value}"
+            }
+            break
+        default :
+            logWarn "parseOnOffCluster: unexpected attrId:${descMap.attrId} (raw:${descMap.value})"
+    }
+}
+
+/// Event Processing
+
+private void sendSpeedEvent(String rawValue) {      
+    Integer intValue = hexStrToUnsignedInt(rawValue) 
+    
+    switch(intValue) {
+        case 0 :
+            value = "off";
+        break;
+        case 8:
+            value = "speed 1";
+        break;
+        case 16:
+            value = "speed 2";
+        break;
+        case 24:
+            value = "speed3 (low)";
+        break;
+        case 32:
+            value = "speed 4";
+        break;
+        case 40:
+            value = "speed 5";
+        break;
+        case 48:
+            value = "speed 6 (medium)";
+        break;
+        case 56:
+            value = "speed 7";
+        break;
+        case 64:
+            value = "speed 8";
+        break; 
+        case 72:
+            value = "speed 9";
+        break;
+        case 81:
+            value = "speed 10";
+        break;  
+        case 90:
+            value = "speed 11";
+        break;
+        case 100:
+            value = "speed12 (high)";
+        break; 
+    }
+    
+//    if (device.currentValue("switch") == value) return
+    String descriptionText = "${device.displayName} was set to speed ${value}"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name:"speed", value:value, descriptionText:descriptionText)
+}
+
+//events
+private void sendSwitchEvent(String rawValue) {
+    String value = rawValue == "01" ? "on" : "off"
+    if (device.currentValue("switch") == value) return
+    String descriptionText = "${device.displayName} was turned ${value}"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name:"switch", value:value, descriptionText:descriptionText)
+}
+
+private void sendLevelEvent(String rawValue) {
+    Integer value = Math.round(hexStrToUnsignedInt(rawValue) / 2.55)
+    if (value == 0 || value == device.currentValue("level")) return
+    String descriptionText = "${device.displayName} level was set to ${value}%"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name:"level", value:value, descriptionText:descriptionText, unit: "%")
+}
+
+private void sendHueEvent(String rawValue, Boolean presetColor = false) {
+    Integer value = hex254ToInt100(rawValue)
+    if (device.currentValue("hue") != value ) {
+    sendRGBNameEvent(value)
+    String descriptionText = "${device.displayName} hue was set to ${value}%"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name: "colorMode", value: "RGB")
+    sendEvent(name:"hue", value:value, descriptionText:descriptionText, unit: "%")
+    }   
+}
+
+private void sendSaturationEvent(String rawValue, Boolean presetColor = false) {
+    Integer value = hex254ToInt100(rawValue)
+    if (device.currentValue("saturation") != value ) {
+    sendRGBNameEvent(null,value)
+    String descriptionText = "${device.displayName} saturation was set to ${value}%"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name: "colorMode", value: "RGB")
+    sendEvent(name:"saturation", value:value, descriptionText:descriptionText, unit: "%")
+    }
+}
+
+private void sendRGBNameEvent(hue, sat = null){
+    String genericName
+    if (device.currentValue("saturation") == 0) {
+        genericName = "White"
+    } else if (hue == null) {
+        return
+    } else {
+        genericName = colorRGBName.find{k , v -> hue < k}.value
+    }
+    if (genericName == device.currentValue("colorName")) return
+    String descriptionText = "${device.displayName} color is ${genericName}"
+    if (txtEnable) log.info descriptionText    
+    sendEvent(name: "colorName", value: genericName ,descriptionText: descriptionText)
+}
+
+private void sendCTEvent(String rawValue, Boolean presetColor = false) { 
+    value = (Math.round(10000/(hexStrToUnsignedInt(rawValue))))*100
+    if (value != device.currentValue("colorTemperature")) {
+       String descriptionText = "${device.displayName} ColorTemp was set to ${value}K" 
+       if (txtEnable) log.info descriptionText
+       sendEvent(name:"colorTemperature", value:value, descriptionText:descriptionText, unit: "K")
+       sendEvent(name: "colorMode", value: "CT") 
+    }
+}
+
+/* private void sendCTEvent(String rawValue, Boolean presetColor = false) {
+    value = (Math.round(10000/(hexStrToUnsignedInt(rawValue))))*100
+    String descriptionText = "${device.displayName} ColorTemp was set to ${value}K"
+    if (txtEnable) log.info descriptionText
+    sendEvent(name:"colorTemperature", value:value, descriptionText:descriptionText, unit: "K")
+
+} */
+
+//  Capability Commands
+
+//// On/off Switch commands
+void on() {
+    logDebug 'switching on()'
+//    setDigitalRequest()    // 3 seconds
+    sendToDevice(matter.on())
+}
+
+void off() {
+    logDebug 'switching off()'
+//    setDigitalRequest()
+    sendToDevice(matter.off())
+}
+
+void toggle() {
+    logDebug 'toggling...'
+    setDigitalRequest()
+    String cmd = matter.invoke(device.endpointId, 0x0006, 0x0002)
+    sendToDevice(cmd)
+}
+
+//// Level control commands related to Light Devices
+void setLevel(Object value, Object rate=0) { //new set level routine to enable immediate change
+    logDebug "setLevel(${value}, ${rate})"
+    Integer newLevel = value
+    Integer transitiontime2 = rate
+    newLevel2 = int100ToHex254(newLevel)
+    transition = HexUtils.integerToHexString(transitiontime2,2)
+    
+    String cmds 
+    if (device.currentValue("switch") == "on"){
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newLevel2)) 
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
+        cmds = matter.invoke(device.endpointId, 0x0008, 0x0000, cmdFields)   
+    } else {
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newLevel2)) 
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"
+        cmds = matter.invoke(device.endpointId, 0x0008, 0x0004, cmdFields) 
+    }
+    sendToDevice(cmds)
+}
+
+///// Color Control Commands related to Light control devices
+
+void setHue(Object value) {
+    logDebug "setHue(${value})"
+    
+    Integer intHue = value
+    newHue = int100ToHex254(intHue)
+    direction = intToHexStr(1)
+    Integer transitionTime2 = (transitionTime ?: 1).toInteger()
+    transition = HexUtils.integerToHexString(transitionTime2,2)
+    
+        String cmds 
+    if (device.currentValue("switch") == "on"){
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue)) 
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction))        
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0000, cmdFields)   
+    } else {
+        on()
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue)) 
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction)) 
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0000, cmdFields) 
+    } 
+    sendToDevice(cmds)
+    sendEvent(name: "colorMode", value: "RGB")
+}
+
+void setSaturation(Object value) {
+    logDebug "setHue(${value})"
+    
+    Integer intSat = value
+    newSat = int100ToHex254(intSat)
+    direction = intToHexStr(1)
+    Integer transitionTime2 = (transitionTime ?: 1).toInteger()
+    transition = HexUtils.integerToHexString(transitionTime2,2)
+    
+        String cmds 
+    if (device.currentValue("switch") == "on"){
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newSat)) 
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction))        
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0003, cmdFields)   
+    } else {
+        on()
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newSat)) 
+        cmdFields.add(matter.cmdField(0x04, 0x01, direction)) 
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0003, cmdFields) 
+    } 
+    sendToDevice(cmds)
+    sendEvent(name: "colorMode", value: "RGB")
+}
+
+void setHueSat(Object hue, Object sat) {
+    logDebug "setHueSat(${hue}, ${sat})"
+    
+    Integer intHue = hue
+    Integer intSat = sat
+    newHue = int100ToHex254(intHue)
+    newSat = int100ToHex254(intSat)
+    
+    Integer transitionTime2 = (transitionTime ?: 1).toInteger()
+    transition = HexUtils.integerToHexString(transitionTime2,2)
+    
+        String cmds 
+    if (device.currentValue("switch") == "on"){
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue)) 
+        cmdFields.add(matter.cmdField(0x04, 0x01, newSat))        
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0006, cmdFields)   
+    } else {
+        on()
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x04, 0x00, newHue)) 
+        cmdFields.add(matter.cmdField(0x04, 0x01, newSat)) 
+        cmdFields.add(matter.cmdField(0x05, 0x02, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x0006, cmdFields) 
+    } 
+    sendToDevice(cmds)
+    sendEvent(name: "colorMode", value: "RGB")
+}
+
+void setColorTemperature(colortemperature, level=null, transitionTime=0) { // New method with Invoke instead of Hubitat calls
+    if (colortemperature < 2700)  {colortemperature =  2700}
+    if (colortemperature > 6500)  {colortemperature =  6500}
+    Integer mired = Math.round(1000000/colortemperature)
+    Integer transitiontime2 = transitionTime 
+    ctValue = zigbee.swapOctets(HexUtils.integerToHexString(mired, 2))
+    transition = HexUtils.integerToHexString(transitiontime2,2)
+
+    if (level != null) {
+        setLevel(level)
+    }
+    
+    if (logEnable) log.debug "setcolortemp() ${colortemperature} in hex ${ct3} swapped ${ctValue} Mired value ${mired} transition is ${transition} "
+    String cmds 
+    if (device.currentValue("switch") == "on"){
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x05, 0x00, ctValue)) 
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x000A, cmdFields)   
+    } else {
+        on()
+        List<Map<String, String>> cmdFields = []
+        cmdFields.add(matter.cmdField(0x05, 0x00, ctValue)) 
+        cmdFields.add(matter.cmdField(0x05, 0x01, transition))
+        log.debug "Endpoint: ${device.endpointId} commands: ${cmdFields}"   
+        cmds = matter.invoke(device.endpointId, 0x0300, 0x000A, cmdFields)
+    }
+    sendToDevice(cmds)
+    sendEvent(name: "colorMode", value: "CT")
+} 
+
+void setColor(Map colorMap) {
+    logDebug "setColor(${colorMap})"
+    if (colorMap.level) {
+        setLevel(colorMap.level)
+    }
+    if (colorMap.hue != null && colorMap.saturation != null) {
+        setHueSat(colorMap.hue, colorMap.saturation)
+    } else if (colorMap.hue != null) {
+        setHue(colorMap.hue)
+    } else if (colorMap.saturation != null) {
+        setSaturation(colorMap.saturation)
+    }
+}
+
+/// Fam Set speed Commands
+void setSpeed(fanspeed) {
+    unschedule()
+    if (logEnable) log.debug "Setting Fan Speed to ${fanspeed}"
+    switch(fanspeed) {
+        case "off":
+        case "speed 0":
+            value = 0;
+        break;
+        case "speed 1":
+            value = 8;
+        break;
+        case "speed 2":
+            value = 16;
+        break;
+        case "speed 3":
+        case "low":
+            value = 24;
+        break;
+        case "speed 4":
+            value = 32;
+        break;
+        case "speed 5":
+            value = 40;
+        break;
+        case "speed 6":
+        case "medium":
+            value = 48;
+        break;
+        case "speed 7":
+            value = 56;
+        break;
+        case "speed 8":
+            value = 64;
+        break; 
+        case "speed 9":
+            value = 72;
+        break;
+        case "speed 10":
+            value = 81;
+        break;  
+        case "speed 11":
+            value = 90;
+        break;
+        case "speed 12":
+        case "high":
+            value = 100;
+        break; 
+    }
+    if (value > 101) {
+        if (logEnable) {log.debug ("setSpeed(): Unknown value}")};
+        on()
+    } else {
+        speedValue = intToHexStr(value)  
+        if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed}  % ${value} value to ${speedValue}"
+        List<Map<String, String>> attributeWriteRequests = []
+        attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, 0x04, speedValue ))
+        String cmd = matter.writeAttributes(attributeWriteRequests)            
+        sendToDevice(cmd)
+    }
+}
+
+void cycleSpeed() {
+    cycleChange()
+}
+
+void cycleChange() {
+    Integer randomSpeed = Math.abs(new Random().nextInt() % 12) + 1
+    String newSpeed = "speed "+randomSpeed
+    setSpeed(newSpeed)
+    runIn(cycleInterval, cycleChange)
+    
+}
+
+void configure() {
+    log.warn "configure..."
+    sendToDevice(subscribeCmd())
+    unschedule()
+//    getDevType()
+    retrieveScenes()
+}
+
+//lifecycle commands
+void updated(){
+    log.info "updated..."
+    log.warn "debug logging is: ${logEnable == true}"
+    log.warn "description logging is: ${txtEnable == true}"
+    if (logEnable) runIn(1800,logsOff)
+}
+
+void initialize() {
+    log.info "initialize..."
+//    initializeVars(fullInit = true)
+    sendToDevice(subscribeCmd())
+}
+
+void refresh() {
+    if (logEnable) log.debug "refresh()"
+    sendToDevice(refreshCmd())
+}
+
+String refreshCmd() {
+    List<Map<String, String>> attributePaths = []
+    if (state.deviceType == 'MATTER_OUTLET') {
+        if (state.matter != null && state.matter['0x0006'] != null) {
+            String attrListString = state.matter['0x0006'] as String
+            attrListString = attrListString.substring(1, attrListString.length() - 1)                   // remove the [] brackets
+            List<Integer> attrList = attrListString.split(',').collect { HexUtils.hexStringToInt(it) }  // convert the string to a list of integers
+            logDebug "refreshCmd: attrList:${attrList}"
+            attrList.each { attrInt ->
+                attributePaths.add(matter.attributePath(device.endpointId, 0x0006, attrInt))
+            }
+        }
+        else {
+            logWarn "refreshCmd: state.matter['0x0006'] is null"
+        }
+    }
+    else if (state.deviceType == 'MATTER_BULB') {
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0008, 0x0000))
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0000))
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0001))
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0007))
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0008))
+    }
+    else if (state.deviceType == 'MATTER_FAN') {
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))         // on/off
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0000))         // FanMode
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0002))         // PercentSetting
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0003))         // PercentCurrent
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000A))         // WindSetting
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000B))         // AirflowDirectionEnum
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0000))         
+        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0001))                        // Power Configuration Cluster : Status
+    }
+    String cmd = matter.readAttributes(attributePaths)
+    return cmd
+}
+
+
+String subscribeCmd() {
+    List<Map<String, String>> attributePaths = []
+    String cmd = ''
+    if (state.deviceType == 'MATTER_BULB') {
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0008, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x01))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x07))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x08))
+        //standard 0 reporting interval is way too busy for bulbs
+        cmd = matter.subscribe(5, 0xFFFF, attributePaths)
+    }
+    else if (state.deviceType == 'MATTER_OUTLET') {
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
+        cmd = matter.subscribe(0, 300, attributePaths)
+    }
+    else if (state.deviceType == 'MATTER_FAN') {
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x02))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x03))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0A))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0B))
+        attributePaths.add(matter.attributePath(0x01, 0x0005, 0x01))
+        cmd = matter.subscribe(0, 0xFFFF, attributePaths)
+    } 
+    return cmd
+}
+
+void logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
+}
+
+//// Conversion routines 
+
+Integer hex254ToInt100(String value) {
+    return Math.round(hexStrToUnsignedInt(value) / 2.54)
+}
+
+String int100ToHex254(value) {
+    return intToHexStr(Math.round(value * 2.54))
+}
+
+Integer getLuxValue(rawValue) {
+    return Math.max((Math.pow(10, (rawValue / 10000)) - 1).toInteger(), 1)
+}
+
+//// Methods to send matter commands to device
+void sendToDevice(List<String> cmds, Integer delay = 300) {
+    sendHubCommand(new hubitat.device.HubMultiAction(commands(cmds, delay), hubitat.device.Protocol.MATTER))
+}
+
+void sendToDevice(String cmd, Integer delay = 300) {
+    sendHubCommand(new hubitat.device.HubAction(cmd, hubitat.device.Protocol.MATTER))
+}
+
+void logDebug(msg) {
+    if (settings.logEnable) {
+        log.debug "${device.displayName} " + msg
+    }
+}
+
+void logInfo(msg) {
+    if (settings.txtEnable) {
+        log.info "${device.displayName} " + msg
+    }
+}
+
+void logWarn(msg) {
+    if (settings.logEnable) {
+        log.warn "${device.displayName} " + msg
+    }
+}
+
+void logTrace(msg) {
+    if (settings.traceEnable) {
+        log.trace "${device.displayName} " + msg
+    }
+}
+
+/*
+Matter cluster names = [$FaultInjection, $UnitTesting, $ElectricalMeasurement, $AccountLogin, $ApplicationBasic, $ApplicationLauncher, $AudioOutput, $ContentLauncher, $KeypadInput, $LowPower, $MediaInput, $MediaPlayback, $TargetNavigator, $Channel, $WakeOnLan, $RadonConcentrationMeasurement, $TotalVolatileOrganicCompoundsConcentrationMeasurement, $Pm10ConcentrationMeasurement, $Pm1ConcentrationMeasurement, $FormaldehydeConcentrationMeasurement, $Pm25ConcentrationMeasurement, $SodiumConcentrationMeasurement, $ChloroformConcentrationMeasurement, $ChlorodibromomethaneConcentrationMeasurement, $BromoformConcentrationMeasurement, $BromodichloromethaneConcentrationMeasurement, $SulfateConcentrationMeasurement, $ManganeseConcentrationMeasurement, $LeadConcentrationMeasurement, $CopperConcentrationMeasurement, $TurbidityConcentrationMeasurement, $TotalColiformBacteriaConcentrationMeasurement, $TotalTrihalomethanesConcentrationMeasurement, $HaloaceticAcidsConcentrationMeasurement, $FluorideConcentrationMeasurement, $FecalColiformEColiConcentrationMeasurement, $ChlorineConcentrationMeasurement, $ChloraminesConcentrationMeasurement, $BromateConcentrationMeasurement, $DissolvedOxygenConcentrationMeasurement, $SulfurDioxideConcentrationMeasurement, $OzoneConcentrationMeasurement, $OxygenConcentrationMeasurement, $NitrogenDioxideConcentrationMeasurement, $NitricOxideConcentrationMeasurement, $HydrogenSulfideConcentrationMeasurement, $HydrogenConcentrationMeasurement, $EthyleneOxideConcentrationMeasurement, $EthyleneConcentrationMeasurement, $CarbonDioxideConcentrationMeasurement, $CarbonMonoxideConcentrationMeasurement, $OccupancySensing, $RelativeHumidityMeasurement, $FlowMeasurement, $PressureMeasurement, $TemperatureMeasurement, $IlluminanceMeasurement, $BallastConfiguration, $ColorControl, $ThermostatUserInterfaceConfiguration, $FanControl, $Thermostat, $PumpConfigurationAndControl, $BarrierControl, $WindowCovering, $DoorLock, $TonerCartridgeMonitoring, $InkCartridgeMonitoring, $FuelTankMonitoring, $WaterTankMonitoring, $OzoneFilterMonitoring, $ZeoliteFilterMonitoring, $IonizingFilterMonitoring, $UvFilterMonitoring, $ElectrostaticFilterMonitoring, $CeramicFilterMonitoring, $ActivatedCarbonFilterMonitoring, $HepaFilterMonitoring, $RvcOperationalState, $OperationalState, $DishwasherAlarm, $SmokeCoAlarm, $AirQuality, $DishwasherMode, $RefrigeratorAlarm, $TemperatureControl, $RvcCleanMode, $RvcRunMode, $LaundryWasherControls, $RefrigeratorAndTemperatureControlledCabinetMode, $LaundryWasherMode, $ModeSelect, $IcdManagement, $BooleanState, $ProxyValid, $ProxyDiscovery, $ProxyConfiguration, $UserLabel, $FixedLabel, $GroupKeyManagement, $OperationalCredentials, $AdministratorCommissioning, $Switch, $BridgedDeviceBasicInformation, $TimeSynchronization, $EthernetNetworkDiagnostics, $WiFiNetworkDiagnostics, $ThreadNetworkDiagnostics, $SoftwareDiagnostics, $GeneralDiagnostics, $DiagnosticLogs, $NetworkCommissioning, $GeneralCommissioning, $PowerSource, $PowerSourceConfiguration, $UnitLocalization, $TimeFormatLocalization, $LocalizationConfiguration, $OtaSoftwareUpdateRequestor, $OtaSoftwareUpdateProvider, $BasicInformation, $Actions, $AccessControl, $Binding, $Descriptor, $PulseWidthModulation, $BinaryInputBasic, $LevelControl, $OnOffSwitchConfiguration, $OnOff, $Scenes, $Groups, $Identify]
+*/
+
+// https://github.com/project-chip/connectedhomeip/tree/master/src/app/clusters
+@Field static final Map<Integer, String> MatterClusters = [
+    0x001D  : 'Descriptor',                 // The Descriptor cluster is meant to replace the support from the Zigbee Device Object (ZDO) for describing a node, its endpoints and clusters
+    0x001E  : 'Binding',                    // Meant to replace the support from the Zigbee Device Object (ZDO) for supportiprefriginatng the binding table.
+    0x001F  : 'AccessControl',              // Exposes a data model view of a Node’s Access Control List (ACL), which codifies the rules used to manage and enforce Access Control for the Node’s endpoints and their associated cluster instances.
+    0x0025  : 'Actions',                    // Provides a standardized way for a Node (typically a Bridge, but could be any Node) to expose information, commands, events ...
+    0x0028  : 'BasicInformation',           // Provides attributes and events for determining basic information about Nodes, which supports both Commissioning and operational determination of Node characteristics, such as Vendor ID, Product ID and serial number, which apply to the whole Node.
+    0x0029  : 'OTASoftwareUpdateProvider',
+    0x002A  : 'OTASoftwareUpdateRequestor',
+    0x002B  : 'LocalizationConfiguration',  // Provides attributes for determining and configuring localization information
+    0x002C  : 'TimeFormatLocalization',     // Provides attributes for determining and configuring time and date formatting information
+    0x002D  : 'UnitLocalization',           // Provides attributes for determining and configuring the units
+    0x002E  : 'PowerSourceConfiguration',   // Used to describe the configuration and capabilities of a Device’s power system
+    0x002F  : 'PowerSource',                // Used to describe the configuration and capabilities of a physical power source that provides power to the Node
+    0x0030  : 'GeneralCommissioning',       // Used to manage basic commissioning lifecycle
+    0x0031  : 'NetworkCommissioning',       // Associates a Node with or manage a Node’s one or more network interfaces
+    0x0032  : 'DiagnosticLogs',             // Provides commands for retrieving unstructured diagnostic logs from a Node that may be used to aid in diagnostics.
+    0x0033  : 'GeneralDiagnostics',         // Provides a means to acquire standardized diagnostics metrics
+    0x0034  : 'SoftwareDiagnostics',        // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential problems
+    0x0035  : 'ThreadNetworkDiagnostics',   // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential problems
+    0x0036  : 'WiFiNetworkDiagnostics',     // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential
+    0x0037  : 'EthernetNetworkDiagnostics', // Provides a means to acquire standardized diagnostics metrics that MAY be used by a Node to assist a user or Administrator in diagnosing potential
+    0x0038  : 'TimeSync',                   // Provides Attributes for reading a Node’s current time
+    0x0039  : 'BridgedDeviceBasicInformation',  // Serves two purposes towards a Node communicating with a Bridge
+    0x003C  : 'AdministratorCommissioning', // Used to trigger a Node to allow a new Administrator to commission it. It defines Attributes, Commands and Responses needed for this purpose.
+    0x003E  : 'OperationalCredentials',     // Used to add or remove Node Operational credentials on a Commissionee or Node, as well as manage the associated Fabrics.
+    0x003F  : 'GroupKeyManagement',         // Manages group keys for the node
+    0x0040  : 'FixedLabel',                 // Provides a feature for the device to tag an endpoint with zero or more read only labels
+    0x0041  : 'UserLabel',                  // Provides a feature to tag an endpoint with zero or more labels.
+    0x0042  : 'ProxyConfiguration',         // Provides a means for a proxy-capable device to be told the set of Nodes it SHALL proxy
+    0x0043  : 'ProxyDiscovery',             // Contains commands needed to do proxy discovery
+    0x0044  : 'ValidProxies',               // Provides a means for a device to be told of the valid set of possible proxies that can proxy subscriptions on its behalf
+
+    0x0003  : 'Identify',                   // Supports an endpoint identification state (e.g., flashing a light), that indicates to an observer (e.g., an installer) which of several nodes and/or endpoints it is.
+    0x0004  : 'Groups',                     // Manages, per endpoint, the content of the node-wide Group Table that is part of the underlying interaction layer.
+    0x0005  : 'Scenes',                     // Provides attributes and commands for setting up and recalling scenes.
+    0x0006  : 'OnOff',                      // Attributes and commands for turning devices on and off.
+    0x0008  : 'LevelControl',               // Provides an interface for controlling a characteristic of a device that can be set to a level, for example the brightness of a light, the degree of closure of a door, or the power output of a heater.
+    0x001C  : 'LevelControlDerived',        // Derived cluster specifications are defined elsewhere.
+    0x003B  : 'Switch',                     // Exposes interactions with a switch device, for the purpose of using those interactions by other devices
+    0x0045  : 'BooleanState',               // Provides an interface to a boolean state.
+    0x0050  : 'ModeSelect',                 // Provides an interface for controlling a characteristic of a device that can be set to one of several predefined values.
+    0x0051  : 'LaundryWasherMode',          // Commands and attributes for controlling a laundry washer
+    0x0052  : 'RefrigeratorAndTemperatureControlledCabinetMode',          // Commands and attributes for controlling a refrigerator or a temperature controlled cabinet
+    0x0053  : 'LaundryWasherControls',      // Commands and attributes for the control of options on a device that does laundry washing
+    0x0054  : 'RVCRunMode',                 // Commands and attributes for controlling the running mode of an RVC device.
+    0x0055  : 'RVCCleanMode',               // Commands and attributes for controlling the cleaning mode of an RVC device.
+    0x0056  : 'TemperatureControl',         // Commands and attributes for control of a temperature set point
+    0x0057  : 'RefrigeratorAlarm',          // Alarm definitions for Refrigerator devices
+    0x0059  : 'DishwasherMode',             // Commands and attributes for controlling a dishwasher
+    0x005B  : 'AirQuality',                 // Provides an interface to air quality classification using distinct levels with human-readable labels.
+    0x005C  : 'SmokeCOAlarm',               // Provides an interface for observing and managing the state of smoke and CO alarms
+    0x005D  : 'DishwasherAlarm',            // Alarm definitions for Dishwasher devices
+    0x0060  : 'OperationalState',           // Supports remotely monitoring and, where supported, changing the operational state of any device where a state machine is a part of the operation.
+    0x0061  : 'RVCOperationalState',        // Commands and attributes for monitoring and controlling the operational state of an RVC device.
+    0x0071  : 'HEPAFilterMonitoring',       // HEPA Filter
+    0x0072  : 'ActivatedCarbonFilterMonitoring', // Activated Carbon Filter
+    0x0101  : 'DoorLock',                   // An interface to a generic way to secure a door
+    0x0102  : 'WindowCovering',             // Commands and attributes for controlling a window covering
+    0x0200  : 'PumpConfigurationAndControl',// An interface for configuring and controlling pumps.
+    0x0201  : 'Thermostat',                 // An interface for configuring and controlling the functionalty of a thermostat
+    0x0202  : 'FanControl',                 // An interface for controlling a fan in a heating / cooling system
+    0x0204  : 'ThermostatUserInterfaceConfiguration',                 // An interface for configuring the user interface of a thermostat (which MAY be remote from the thermostat)
+    0x0300  : 'ColorControl',               // Attributes and commands for controlling the color of a color capable light.
+    0x0301  : 'BallastConfiguration',       // Attributes and commands for configuring a lighting ballast
+    0x0400  : 'IlluminanceMeasurement',     // Attributes and commands for configuring the measurement of illuminance, and reporting illuminance measurements
+    0x0402  : 'TemperatureMeasurement',     // Attributes and commands for configuring the measurement of temperature, and reporting temperature measurements
+    0x0403  : 'PressureMeasurement',        // Attributes and commands for configuring the measurement of pressure, and reporting pressure measurements
+    0x0404  : 'FlowMeasurement',            // Attributes and commands for configuring the measurement of flow, and reporting flow rates
+    0x0405  : 'RelativeHumidityMeasurement',// Supports configuring the measurement of relative humidity, and reporting relative humidity measurements of water in the air
+    0x0406  : 'OccupancySensing',           // Occupancy sensing functionality, including configuration and provision of notifications of occupancy status
+    0x0407  : 'LeafWetnessMeasurement',     // Percentage of water in the leaves of plants
+    0x0408  : 'SoilMoistureMeasurement',    // Percentage of water in the soil
+    0x040C  : 'CarbonMonoxideConcentrationMeasurement',
+    0x040D  : 'CarbonDioxideConcentrationMeasurement',
+    0x0413  : 'NitrogenDioxideConcentrationMeasurement',
+    0x0415  : 'OzoneConcentrationMeasurement',
+    0x042A  : 'PM2.5ConcentrationMeasurement',
+    0x042B  : 'FormaldehydeConcentrationMeasurement',
+    0x042C  : 'PM1ConcentrationMeasurement',
+    0x042D  : 'PM10ConcentrationMeasurement',
+    0x042E  : 'TotalVolatileOrganicCompoundsConcentrationMeasurement',
+    0x042F  : 'RadonConcentrationMeasurement',
+    0x0503  : 'WakeOnLAN',                  // interface for managing low power mode on a device that supports the Wake On LAN or Wake On Wireless LAN (WLAN) protocol
+    0x0504  : 'Channel',                    // interface for controlling the current Channel on an endpoint.
+    0x0505  : 'TargetNavigator',            // n interface for UX navigation within a set of targets on a Video Player device or Content App endpoint.
+    0x0506  : 'MediaPlayback',              // interface for controlling Media Playback (PLAY, PAUSE, etc) on a Video Player device
+    0x0507  : 'MediaInput',                 // interface for controlling the Input Selector on a Video Player device.
+    0x0508  : 'LowPower',                   // interface for managing low power mode on a device.
+    0x0509  : 'KeypadInput',                // interface for controlling a Video Player or a Content App using action commands such as UP, DOWN, and SELECT.
+    0x050A  : 'ContentLauncher',            // interface for launching content on a Video Player device or a Content App.
+    0x050B  : 'AudioOutput',                // interface for controlling the Output on a Video Player device.
+    0x050E  : 'AccountLogin',               // interface for facilitating user account login on an application or a node.
+    0x050C  : 'ApplicationLauncher',        // interface for launching content on a Video Player device.
+    0x050D  : 'ApplicationBasic'            // information about a Content App running on a Video Player device which is represented as an endpoint
+]
+
+// 7.13. Global Elements
+@Field static final Map<Integer, String> GlobalElementsAttributes = [
+    0x00FE  : 'FabricIndex',
+    0xFFF8  : 'GeneratedCommandList',
+    0xFFF9  : 'AcceptedCommandList',
+    0xFFFA  : 'EventList',
+    0xFFFB  : 'AttributeList',
+    0xFFFC  : 'FeatureMap',
+    0xFFFD  : 'ClusterRevision'
+]
+
+// 9.5. Descriptor Cluser 0x001D
+@Field static final Map<Integer, String> DescriptorClusterAttributes = [
+    0x0000  : 'DeviceTypeList',
+    0x0001  : 'ServerList',
+    0x0002  : 'ClientList',
+    0x0003  : 'PartsList'
+]
+
+// 11.1.6.3. Attributes of the Basic Information Cluster 0x0028 ep=0
+@Field static final Map<Integer, String> BasicInformationClusterAttributes = [
+    0x0000  : 'DataModelRevision',
+    0x0001  : 'VendorName',
+    0x0002  : 'VendorID',
+    0x0003  : 'ProductName',
+    0x0004  : 'ProductID',
+    0x0005  : 'NodeLabel',
+    0x0006  : 'Location',
+    0x0007  : 'HardwareVersion',
+    0x0008  : 'HardwareVersionString',
+    0x0009  : 'SoftwareVersion',
+    0x000A  : 'SoftwareVersionString',
+    0x000B  : 'ManufacturingDate',
+    0x000C  : 'PartNumber',
+    0x000D  : 'ProductURL',
+    0x000E  : 'ProductLabel',
+    0x000F  : 'SerialNumber',
+    0x0010  : 'LocalConfigDisabled',
+    0x0011  : 'Reachable',
+    0x0012  : 'UniquieID',
+    0x0013  : 'CapabilityMinima'
+]
+
+// Identify Cluster 0x0003
+@Field static final Map<Integer, String> IdentifyClusterAttributes = [
+    0x0000  : 'IdentifyTime',
+    0x0001  : 'IdentifyType'
+]
+
+// Groups Cluster 0x0004
+@Field static final Map<Integer, String> GroupsClusterAttributes = [
+    0x0000  : 'NameSupport'
+]
+
+// Scenes Cluster 0x0005
+@Field static final Map<Integer, String> ScenesClusterAttributes = [
+    0x0000  : 'SceneCount',
+    0x0001  : 'CurrentScene',
+    0x0002  : 'CurrentGroup',
+    0x0003  : 'SceneValid',
+    0x0004  : 'RemainingCapacity'
+]
+
+// On/Off Cluser 0x0006
+@Field static final Map<Integer, String> OnOffClusterAttributes = [
+    0x0000  : 'Switch',
+    0x4000  : 'GlobalSceneControl',
+    0x4001  : 'OnTime',
+    0x4002  : 'OffWaitTime',
+    0x4003  : 'StartUpOnOff'
+]
+
+// 1.6. Level Control Cluster 0x0008
+@Field static final Map<Integer, String> LevelControlClusterAttributes = [
+    0x0000  : 'CurrentLevel',
+    0x0001  : 'RemainingTime',
+    0x0002  : 'MinLevel',
+    0x0003  : 'MaxLevel',
+    0x0004  : 'CurrentFrequency',
+    0x0005  : 'MinFrequency',
+    0x0010  : 'OnOffTransitionTime',
+    0x0011  : 'OnLevel',
+    0x0012  : 'OnTransitionTime',
+    0x0013  : 'OffTransitionTime',
+    0x000F  : 'Options',
+    0x4000  : 'StartUpCurrentLevel'
+]
+/* groovylint-disable-next-line UnusedVariable */
+@Field static final Map<Integer, String> LevelControlClusterCommands = [
+    0x00    : 'MoveToLevel',
+    0x01    : 'Move',
+    0x02    : 'Step',
+    0x03    : 'Stop',
+    0x04    : 'MoveToLevelWithOnOff',
+    0x05    : 'MoveWithOnOff',
+    0x06    : 'StepWithOnOff',
+    0x07    : 'StopWithOnOff',
+    0x08    : 'MoveToClosestFrequency'
+]
+
+// 11.7. Power Source Cluster 0x002F    // attrList:[0, 1, 2, 11, 12, 14, 15, 16, 19, 25, 65528, 65529, 65531, 65532, 65533]
+@Field static final Map<Integer, String> PowerSourceClusterAttributes = [
+    0x0000  : 'Status',
+    0x0001  : 'Order',
+    0x0002  : 'Description',
+    0x000B  : 'BatVoltage',
+    0x000C  : 'BatPercentRemaining',
+    0x000D  : 'BatTimeRemaining',
+    0x000E  : 'BatChargeLevel',
+    0x000F  : 'BatReplacementNeeded',
+    0x0010  : 'BatReplaceability',
+    0x0013  : 'BatReplacementDescription',
+    0x0019  : 'BatQuantity'
+]
+@Field static final Map<Integer, String> PowerSourceClusterStatus = [
+    0x00    : 'Unspecified',    // SHALL indicate the source status is not specified
+    0x01    : 'Active',         // SHALL indicate the source is available and currently supplying power
+    0x02    : 'Standby',        // SHALL indicate the source is available, but is not currently supplying power
+    0x03    : 'Unavailable'     // SHALL indicate the source is not currently available to supply power
+]
+@Field static final Map<Integer, String> PowerSourceClusterBatteryChargeLevel = [
+    0x00    : 'OK',             // Charge level is nominal
+    0x01    : 'Warning',        // Charge level is low, intervention may soon be required.
+    0x02    : 'Critical'        // Charge level is critical, immediate intervention is required.
+]
+
+// 1.7 Bolean State Cluster 0x0045
+@Field static final Map<Integer, String> BoleanStateClusterAttributes = [
+    0x0000  : 'StateValue'
+]
+
+// 3.2. Color Control Cluster 0x0300
+@Field static final Map<Integer, String> ColorControlClusterAttributes = [
+    0x0000  : 'CurrentHue',
+    0x0001  : 'CurrentSaturation',
+    0x0002  : 'RemainingTime',
+    0x0003  : 'CurrentX',
+    0x0004  : 'CurrentY',
+    0x0005  : 'DriftCompensation',
+    0x0006  : 'CompensationText',
+    0x0007  : 'ColorTemperature',
+    0x0008  : 'ColorMode',
+    0x000F  : 'Options',
+    0x4000  : 'EnhancedCurrentHue',
+    0x4001  : 'EnhancedColorMode',
+    0x4002  : 'ColorLoopActive',
+    0x4003  : 'ColorLoopDirection',
+    0x4004  : 'ColorLoopTime',
+    0x4005  : 'ColorLoopStartEnhancedHue',
+    0x4006  : 'ColorLoopStoredEnhancedHue',
+    0x400A  : 'ColorCapabilities',
+    0x400B  : 'ColorTempPhysicalMinMireds',
+    0x400C  : 'ColorTempPhysicalMaxMireds',
+    0x400D  : 'CoupleColorTempToLevelMinMireds',
+    0x4010  : 'StartUpColorTemperatureMireds'
+]
+@Field static final Map<Integer, String> ColorControlClusterCommands = [
+    0x00    : 'MoveToHue',
+    0x01    : 'MoveHue',
+    0x02    : 'StepHue',
+    0x03    : 'MoveToSaturation',
+    0x04    : 'MoveSaturation',
+    0x05    : 'StepSaturation',
+    0x06    : 'MoveToHueAndSaturation',
+    0x07    : 'MoveToColor',
+    0x08    : 'MoveColor',
+    0x09    : 'StepColor',
+    0x0A    : 'MoveToColorTemperature',
+    0x40    : 'EnhancedMoveToHue',
+    0x41    : 'EnhancedMoveHue',
+    0x42    : 'EnhancedStepHue',
+    0x43    : 'EnhancedMoveToHueAndSaturation',
+    0x44    : 'ColorLoopSet',
+    0x47    : 'StopMoveStep',
+    0x4B    : 'MoveColorTemperature',
+    0x4C    : 'StepColorTemperature'
+]
+
+@Field static Map colorRGBName = [
+    4: 'Red',
+    13:'Orange',
+    21:'Yellow',
+    29:'Chartreuse',
+    38:'Green',
+    46:'Spring',
+    54:'Cyan',
+    63:'Azure',
+    71:'Blue',
+    79:'Violet',
+    88:'Magenta',
+    96:'Rose',
+    101:'Red'
+]
+
+// LAN APi Additions for
+
+def lanSetEffect (effectNo) {
+//    effectNumber = effectNo.toInteger()
+    effectNumber = effectNo.toString()
+    lanScenes = loadSceneFile()
+    if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
+    if (logEnable) log.debug "${lanScenes.get(device.getDataValue("model")).keySet()}"
+//    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
+    if (lanScenes.get(device.getDataValue("model")).containsKey(effectNumber)) {
+        String sceneInfo =  lanScenes.get(device.getDataValue("model")).get(effectNumber).name
+        String sceneCmd =  lanScenes.get(device.getDataValue("model")).get(effectNumber).cmd
+        if (logEnable) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
+        if (logEnable) log.debug "Scene number is present"
+        sendEvent(name: "colorMode", value: "EFFECTS")
+        sendEvent(name: "effectName", value: sceneInfo)
+        sendEvent(name: "effectNum", value: effectNumber)
+        sendEvent(name: "switch", value: "on")
+//    if (logEnable) {log.debug ("setEffect(): setEffect to ${effectNo}")}
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
+        if (logEnable) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
+        sendCommandLan(cmd2)
+   } else {
+        sendEvent(name: "effectNum", value: effectNumber)
+        sendEvent(name: "switch", value: "on")
+    // Cozy Light Effect (static Scene to very warm light)
+    if (effectNo == 6) {
+        if (logEnable) {log.debug ("setEffect(): Static Scene Cozy Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
+        sendEvent(name: "colorTemperature", value: 2000)
+	    setCTColorName(2000)
+        sendEvent(name: "effectName", value: "Cozy")
+    }
+    // Sunrise Effect
+    if (effectNo == 9) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",1, "level"))
+        sendEvent(name: "level", value: 1)
+        fade(100,1800)        
+        sendEvent(name: "effectName", value: "Sunrise")
+    }
+    // Sunset Effect
+    if (effectNo == 10) {
+        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
+        sendEvent(name: "level", value: 100)
+        fade(0,1800)
+        sendEvent(name: "effectName", value: "Sunset")
+    }
+    // Warm White Light Effect (static Scene to very warm light)
+    if (effectNo == 11) {
+        if (logEnable) {log.debug ("setEffect(): Static Scene Warm White Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc",3500, "ct"))
+        sendEvent(name: "colorTemperature", value: 3500)
+	    setCTColorName(3500)
+        sendEvent(name: "effectName", value: "Warm White")
+    } 
+    // Daylight Light Effect    
+    if (effectNo == 12) {
+        if (logEnable) {log.debug ("setEffect(): Static Scene Daylight Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc",5600, "ct"))
+        sendEvent(name: "colorTemperature", value: 5600)
+	    setCTColorName(5600)
+        sendEvent(name: "effectName", value: "Daylight")
+    }
+    // Cool White Light Effect    
+    if (effectNo == 13) {
+        if (logEnable) {log.debug ("setEffect(): Static Scene Cool White Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
+        sendEvent(name: "colorTemperature", value: 6500)
+	    setCTColorName(6500)
+        sendEvent(name: "effectName", value: "Cool White")
+    }  
+    // Night Light Effect   
+    if (effectNo == 14) {
+        if (logEnable) {log.debug ("setEffect(): Static Night Light Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
+        sendEvent(name: "colorTemperature", value: 2000)
+	    setCTColorName(2000)
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",5, "level"))
+        sendEvent(name: "level", value: 5)
+        sendEvent(name: "effectName", value: "Night Light")
+    }
+    // Focus Effect   
+    if (effectNo == 15) {
+        if (logEnable) {log.debug ("setEffect(): Focus Effect Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc",4500, "ct"))
+        sendEvent(name: "colorTemperature", value: 4500)
+	    setCTColorName(4500)
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
+        sendEvent(name: "level", value: 100)
+        sendEvent(name: "effectName", value: "Focus")
+    } 
+    // Relax Effect   
+    if (effectNo == 16) {
+        if (logEnable) {log.debug ("setEffect(): Static Relax Effect Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc", [r:255, g:194, b:194], "rgb"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
+        sendEvent(name: "level", value: 100)
+        sendEvent(name: "effectName", value: "Relax")
+    }
+    // True Color Effect   
+    if (effectNo == 17) {
+        if (logEnable) {log.debug ("setEffect(): True Color Effect Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc",3350, "ct"))
+        sendEvent(name: "colorTemperature", value: 3350)
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
+        sendEvent(name: "effectName", value: "True Color")
+    }
+    // TV Time Effect   
+    if (effectNo == 18) {
+        if (logEnable) {log.debug ("setEffect(): Static TV Time Effect Called. Calling CT Command directly")}        
+        sendCommandLan(GoveeCommandBuilder("colorwc", [r:179, g:134, b:254], "rgb"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
+        sendEvent(name: "level", value: 45)
+        sendEvent(name: "effectName", value: "TV Time")
+    }
+    // Plant Growth Effect   
+    if (effectNo == 19) {
+        if (logEnable) {log.debug ("setEffect(): Static Plant Growth Effect Called. Calling CT Command directly")}
+        sendCommandLan(GoveeCommandBuilder("colorwc", [r:247, g:154, b:254], "rgb"))
+        pauseExecution(750)
+        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
+        sendEvent(name: "level", value: 45)
+        sendEvent(name: "effectName", value: "Plant Growth")
+    }
+    } 
+}
+
+def setNextEffect () {
+    if (logEnable) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
+    if (logEnable) {log.debug ("setNextEffect(): current effectNum ${device.currentValue("effectNum")}")}
+    if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == device.getDataValue("maxScene")) {
+        setEffect(1)
+    } 
+    else if (device.currentValue("effectNum") == "21") {
+        if (logEnable) {log.debug ("setNextEffect(): Increment to next scene")}
+        setEffect(101) 
+    } else {
+        if (logEnable) {log.debug ("setNextEffect(): Increment to next scene")}
+        int nextEffect = device.currentValue("effectNum").toInteger()+1
+        setEffect(nextEffect)
+        }  
+}
+
+def setPreviousEffect () {
+        if (logEnable) {log.debug ("setPreviousEffect(): Current Color mode ${device.currentValue("colorMode")}")}
+        if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == "1") {
+            setEffect(device.getDataValue("maxScene"))
+            } else if (device.currentValue("effectNum") == "101") {
+            setEffect(21) 
+            } else {
+                if (logEnable) {log.debug ("setNextEffect(): Increment to next scene}")}
+                int prevEffect = device.currentValue("effectNum").toInteger()-1
+                setEffect(prevEffect)
+        }
+}
+
+def lanActivateDIY (diyActivate) {
+    diyScenes = loadDIYFile()
+    if (descLog) log.info "${device.label} ActivateDIY: ${diyActivate}"
+    if (logEnable) {log.debug ("activateDIY(): Activate effect number ${diyActivate} from ${diyScenes}")}
+        String diyEffectNumber = diyActivate.toString()
+        String sceneInfo = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).name
+        String sceneCmd = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd
+        if (logEnable) {log.debug ("activateDIY(): Activate effect number ${diyActivate} called ${sceneInfo} with command ${sceneCmd}")}
+        sendEvent(name: "effectName", value: sceneInfo)
+        sendEvent(name: "effectNum", value: diyEffectNumber)
+        sendEvent(name: "switch", value: "on")
+        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
+        if (logEnable) {log.debug ("activateDIY(): command to be sent to ${cmd2}")}
+        sendCommandLan(cmd2)
+}
+
+/////////////////////////////////////////////////////
+// Helper methods to retrieve data or send command //
+/////////////////////////////////////////////////////
+
+def retrieveScenes() {
+    state.remove("sceneOptions")
+    state.remove("diySceneOptions")  
+    state.remove("diyEffects") 
+    state.remove("lastTx")
+    state.remove("lastRx")  
+    state.remove("stats")
+    state.remove("health")
+    state.remove("driverVersion")  
+    state.remove("comment")
+    state.remove("matter")
+    state.remove("states")  
+    state.remove("onOff")
+    state.scenes = [] as List
+//    state.diyEffects = [] as List
+    if (logEnable) {log.debug ("retrieveScenes(): Retrieving Scenes from parent device")}
+/*    if (scenes.containsKey(device.getDataValue("DevType")) == false ) {   
+        if (logEnable) {log.debug ("retrieveScenes(): Scenes does not contain entries for device")}
+            scenes = scenes + parent."${"lightEffect_"+(device.getDataValue("DevType"))}"()
+    } */
+    lanScenes = loadSceneFile()
+    if (logEnable) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.get(device.getDataValue("model"))}")}
+    if (logEnable) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.keySet()}")}
+    lanScenes.get(device.getDataValue("model")).each {
+        if (logEnable) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+        if (logEnable) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+            String sceneValue = it.getKey() + "=" + it.value.name
+            state.scenes.add(sceneValue)
+            state.scenes = state.scenes.sort()
+    }
+//        diyScenes = loadDIYFile()
+/*        if (diyScenes.containsKey((device.getDataValue("deviceModel"))) == false) {
+            if (logEnable) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
+        } else {
+//            diyScenes = parent.state.diyEffects.(device.getDataValue("deviceModel"))
+//            diyScenes.put((device.getDataValue("deviceModel")),diyReturn)
+            if (logEnable) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+            if (logEnable) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+            diyScenes.get(device.getDataValue("deviceModel")).each {
+//            diyScenes.each {
+                if (logEnable) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
+                if (logEnable) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
+                String sceneValue = it.getKey() + "=" + it.value.name
+                state.diyEffects.add(sceneValue)
+                state.diyEffects = state.diyEffects.sort()
+            } */
+//        }        
+       
+}
+
+def getDevType() {
+//    String state.DevType = null= 
+    switch(device.getDataValue("deviceModel")) {
+        case "H6117":
+        case "H6163":
+        case "H6168":
+        case "H6172":
+        case "H6173":
+        case "H6175":
+        case "H6176":
+        case "H617A":
+        case "H617C":
+        case "H617E":
+        case "H617F":        
+        case "H618A":
+        case "H618B":
+        case "H618C":
+        case "H618E":
+        case "H618F":
+        case "H619A":
+        case "H619B": 
+        case "H619C": 
+        case "H619D":
+        case "H619E":
+        case "H619Z":
+        case "H61A0":
+        case "H61A1":
+        case "H61A2":
+        case "H61A3":
+        case "H61A5":
+        case "H61A8":
+        case "H61A9":
+        case "H61B2":
+        case "H61C2": 
+        case "H61C3":
+        case "H61C5":
+        case "H61E1":
+        case "H61E0":
+        case "H6167":
+            if (logEnable) {log.debug ("getDevType(): Found   ${device.getDataValue("deviceModel")} setting DevType to RGBIC_STRIP")}; 
+            device.updateDataValue("DevType", "RGBIC_Strip");
+            break; 
+        case "H6066": 
+        case "H606A":
+        case "H6061":
+            if (logEnable) {log.debug ("getDevType(): Found   ${device.getDataValue("deviceModel")} setting DevType to Hexa_Light")};
+            device.updateDataValue("DevType", "Hexa_Light");            
+            break;
+        case "H6067": //Not added yet
+            device.updateDataValue("DevType", "Tri_Light"); 
+            break;
+        case "H6065":
+            device.updateDataValue("DevType", "Y_Light");
+            break;        
+        case "H6072": 
+        case "H607C":
+            device.updateDataValue("DevType", "Lyra_Lamp");
+            break;
+        case "H6079":
+            device.updateDataValue("DevType", "Lyra_Pro");
+            break;        
+        case "H6076":
+            device.updateDataValue("DevType", "Basic_Lamp");
+            break;
+        case "H6078":
+            device.updateDataValue("DevType", "Cylinder_Lamp");
+            break;        
+        case "H6052": 
+        case "H6051":
+            device.updateDataValue("DevType", "Table_Lamp");
+            break;
+        case "H70C1":
+        case "H70C2":
+        case "H70CB":
+            device.updateDataValue("DevType", "XMAS_Light");
+            break;
+        case "H610A": 
+        case "H610B": 
+        case "H6062":
+            device.updateDataValue("DevType", "Wall_Light_Bar");
+            break;
+        case "H6046":
+        case "H6056":
+        case "H6047":
+        case "H70CB":
+            device.updateDataValue("DevType", "TV_Light_Bar"); 
+            break;        
+        case "H6088":
+        case "H6087":
+        case "H608A": 
+        case "H608B":
+        case "H608C":
+            device.updateDataValue("DevType", "Indoor_Pod_Lights");
+            break;        
+        case "H705A":
+        case "H705B":
+        case "H705C":
+        case "H706A":
+        case "H706B":
+        case "H706C":
+            device.updateDataValue("DevType", "Outdoor_Perm_Light");
+            break;
+        case "H7050":
+        case "H7051":
+        case "H7052":
+        case "H7055":
+            device.updateDataValue("DevType", "Outdoor_Pod_Light");
+            break;
+        case "H7060":
+        case "H7061":
+        case "H7062":
+        case "H7065":
+        case "H7066":
+            device.updateDataValue("DevType", "Outdoor_Flood_Light");
+            break;
+        case "H70B1":
+            device.updateDataValue("DevType", "Curtain_Light");
+            break;
+        case "H7075":
+            device.updateDataValue("DevType", "Outdoor_Wall_Light");
+            break;        
+        case "H6091":
+        case "H6092":
+            device.updateDataValue("DevType", "Galaxy_Projector");
+            break;
+        case "H7020":
+        case "H7021":
+        case "H7028":
+        case "H7041":
+        case "H7042":
+            device.updateDataValue("DevType", "Outdoor_String_Light");
+            break;
+        default: 
+            if (logEnable) {log.debug ("getDevType(): Unknown device Type  ${device.getDataValue("deviceModel")}")}; 
+        break; 
+        
+    }       
+}
+
+def GoveeCommandBuilder(String command1, value1, String type) {   
+    if (type=="ct") {
+        if (logEnable) {log.debug "GoveeCommandBuilder(): Color temp action"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            color {
+            r 0
+            g 0
+            b 0
+        }
+            colorTemInKelvin value1}
+    }
+    def  command = cmd1.toString()
+        if (logEnable) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+   else if (type=="rgb") {
+       if (logEnable) {log.debug "GoveeCommandBuilder(): rgb"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            color {
+            r value1.r
+            g value1.g
+            b value1.b
+                
+        }
+            colorTemInKelvin 0}
+    }
+    def  command = cmd1.toString()
+       if (logEnable) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+       else if (type=="status") {
+           if (logEnable) {log.debug "GoveeCommandBuilder():status"}
+        JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            }
+    }
+    def  command = cmd1.toString()
+           if (logEnable) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command    
+    }
+    else { 
+        if (logEnable) {log.debug "GoveeCommandBuilder():other action"}
+    JsonBuilder cmd1 = new JsonBuilder() 
+        cmd1.msg {
+        cmd command1
+        data {
+            value value1}
+        }
+    def  command = cmd1.toString()
+        if (logEnable) {log.debug "GoveeCommandBuilder():json output ${command}"}
+  return command
+}
+}
+
+def sendCommandLan(String cmd) {
+  def addr = getIPString();
+    if (logEnable) {log.debug ("sendCommandLan(): ${cmd}")}
+
+  pkt = new hubitat.device.HubAction(cmd,
+                     hubitat.device.Protocol.LAN,
+                     [type: hubitat.device.HubAction.Type.LAN_TYPE_UDPCLIENT,
+                     ignoreResponse    : false,
+                     callback: parse,
+                     parseWarning: true,
+                     destinationAddress: addr])  
+  try {    
+      if (logEnable) {log.debug("sendCommandLan(): ${pkt} to ip ${addr}")}
+    sendHubCommand(pkt) 
+      
+  }
+  catch (Exception e) {      
+      logDebug e
+  }      
+}
+
+def getIPString() {
+    if (ip){
+       return ip+":"+commandPort()
+    } else {
+        return device.getDataValue("IP")+":"+commandPort()
+    }
+}
+
+def loadSceneFile() {
+    byte[] dBytes = downloadHubFile(lanScenesFile)
+    tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+    scenes = tmpEffects.get(0)
+    return scenes
+}
+
+def loadDIYFile() {
+    byte[] dBytes
+    try {
+        dBytes = downloadHubFile("GoveeLanDIYScenes.json")
+    }
+    catch (Exception e) {
+        diyEffects = [:]
+        return diyEffects
+    }
+    if (dBytes != null) {
+        tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+        if (logEnable) {log.debug "loadDIYFile: Loaded ${tmpEffects.get(0)} from ${goveeDIYScenesFile}"}
+        diyEffects = tmpEffects.get(0)
+        return diyEffects
+    }
+}
