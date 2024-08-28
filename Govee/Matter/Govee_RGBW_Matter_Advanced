@@ -1162,10 +1162,8 @@ def lanSetEffect (effectNo) {
     } 
 }
 
-def lanSetNextEffect () {
+def setNextEffect () {
     if (logEnable) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
-    unschedule(fadeUp)
-    unschedule(fadeDown)
     if (logEnable) {log.debug ("setNextEffect(): current effectNum ${device.currentValue("effectNum")}")}
     if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == device.getDataValue("maxScene")) {
         setEffect(1)
@@ -1180,13 +1178,11 @@ def lanSetNextEffect () {
         }  
 }
 
-def lanSetPreviousEffect () {
+def setPreviousEffect () {
         if (logEnable) {log.debug ("setPreviousEffect(): Current Color mode ${device.currentValue("colorMode")}")}
-        unschedule(fadeUp)
-        unschedule(fadeDown)
         if (device.currentValue("effectNum") == "0" || device.currentValue("effectNum") == "1") {
             setEffect(device.getDataValue("maxScene"))
-            } else if (device.currentValue("effectNum") == 101) {
+            } else if (device.currentValue("effectNum") == "101") {
             setEffect(21) 
             } else {
                 if (logEnable) {log.debug ("setNextEffect(): Increment to next scene}")}
