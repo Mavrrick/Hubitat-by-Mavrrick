@@ -23,7 +23,7 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.1.18"
+      "version": "2.1.19"
     }
   ],
   "drivers": [
@@ -49,7 +49,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
       "required": false,
-      "version": "2.1.4"
+      "version": "2.1.5"
     },
     {
       "id": "f18436f0-07fb-4325-abf7-7a44b8c9de12",
@@ -88,6 +88,14 @@
       "name": "Govee v2 H7126 Air Purifier",
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7126AirPurifier.groovy",
+      "required": false,
+      "version": "2.1.0"
+    },
+    {
+      "id": "ff35a8e6-d5a4-4cee-9456-f27c32459336",
+      "name": "Govee v2 H712C Air Purifier",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H712CAirPurifier.groovy",
       "required": false,
       "version": "2.1.0"
     },
