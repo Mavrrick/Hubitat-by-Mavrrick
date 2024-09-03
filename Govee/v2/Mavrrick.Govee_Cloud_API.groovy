@@ -102,7 +102,10 @@ try {
                     }
                 else if (code == 200 && command == "nightlightScene") {
                     sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "effectName", value: payload2)
+                    sendEvent(name: "switch", value: "on")
+                    sendEvent(name: "colorMode", value: "EFFECTS")
+                    sendEvent(name: "effectNum", value: payload2)
+                    sendEvent(name: "effectName", value: state.scenes."${payload2}")
                     if (descLog) { log.info "${device.label} nightlight scene was set to ${payload2}"}
                     }
                 else if (code == 200 && command == "lightScene") {

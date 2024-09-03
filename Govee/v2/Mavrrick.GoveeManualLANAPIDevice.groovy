@@ -18,19 +18,19 @@ def commandPort() { "4003" }
 metadata {
 	definition(name: "Govee Manual LAN API Device", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
-                capability "Actuator"
+        capability "Actuator"
 		capability "ColorControl"
 		capability "ColorTemperature"
 		capability "Light"
 		capability "SwitchLevel"
 		capability "ColorMode"
-//		capability "Refresh"
-                capability "Initialize"
-                capability "LightEffects"
+		capability "Refresh"
+        capability "Initialize"
+        capability "LightEffects"
 		
 		attribute "colorName", "string"
-        	attribute "cloudAPI", "string"
-        	attribute "effectNum", "integer" 
+        attribute "cloudAPI", "string"
+        attribute "effectNum", "integer" 
         command "activateDIY", [
             [name: "diyName", type: "STRING", description: "DIY Number to activate"]
            ]
