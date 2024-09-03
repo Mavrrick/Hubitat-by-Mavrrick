@@ -251,7 +251,6 @@ def deviceLanManual() {
 def deviceLanManual2() {
     if (settings.goveeModel && settings.goveeManLanIP && settings.goveeDevName) {
         goveeLightManAdd(settings.goveeModel, settings.goveeManLanIP, settings.goveeDevName)
-        lightEffectSetup()
     }
     dynamicPage(name: 'deviceLanManual2', title: 'Results of manual device add', uninstall: false, install: false, nextPage: "mainPage")
     {
