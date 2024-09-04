@@ -38,7 +38,7 @@ metadata {
         
 
         
-        fingerprint endpointId:"01", inClusters:"0003,0004,0006,001D,0202", outClusters:"", manufacturer:"Shenzhen Qianyan Technology", controllerType:"MAT"
+        fingerprint endpointId:"01", inClusters:"0003,0004,0005,0006,0008,001D,0050,0300", outClusters:"", manufacturer:"Shenzhen Qianyan Technology", controllerType:"MAT"
 
     }
     preferences {
