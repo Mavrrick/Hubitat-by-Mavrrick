@@ -92,11 +92,11 @@ try {
                 else if (code == 200 && command == "nightlightToggle") {
                     sendEvent(name: "cloudAPI", value: "Success")
                     if (payload2 == 1) {
-                        sendEvent(name: "nightLight", value: "on")
+                        sendEvent(name: "switch", value: "on")
                         if (descLog) { log.info "${device.label} nightlight was turned on"}
                     }
                     if (payload2 == 0) {
-                        sendEvent(name: "nightLight", value: "off")
+                        sendEvent(name: "switch", value: "off")
                         if (descLog) { log.info "${device.label} nightlight was turned off"}
                     }
                     }
