@@ -213,7 +213,7 @@ def setLevel(float v,duration = 0) {
 }
 
 def  setEffect(effectNo) {
-    if (lanControl) {
+    if (lanControl && lanScenes) {
         lanSetEffect (effectNo)
     } else { 
         cloudSetEffect (effectNo)
@@ -221,15 +221,15 @@ def  setEffect(effectNo) {
 }
 
 def setNextEffect() {
-    if (lanControl) {
-        SetNextEffect ()
+    if (lanControl && lanScenes) {
+        lanSetNextEffect ()
     } else {
         cloudSetNextEffect ()
     }
 } 
       
 def setPreviousEffect() {
-    if (lanControl) {
+    if (lanControl && lanScenes) {
         lanSetPreviousEffect ()
     } else {
         cloudSetPreviousEffect ()         
@@ -238,7 +238,7 @@ def setPreviousEffect() {
 
 
 def activateDIY(diyActivate) {
-    if (lanControl) {
+    if (lanControl && lanScenes) {
         lanActivateDIY (diyActivate)
     } else {
         cloudActivateDIY (diyActivate)
