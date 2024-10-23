@@ -65,7 +65,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7120AirPurifier.groovy",
       "required": false,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "03b06646-b332-4fef-a3b7-5f61e6d40253",
@@ -73,7 +73,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7122AirPurifier.groovy",
       "required": false,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "777845e7-13e4-451a-845d-978c67ac6097",
@@ -81,7 +81,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7123AirPurifier.groovy",
       "required": false,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "0f6d06ea-87d5-4863-b030-c8e3b7a0f85e",
@@ -89,7 +89,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7126AirPurifier.groovy",
       "required": false,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "ff35a8e6-d5a4-4cee-9456-f27c32459336",
@@ -97,7 +97,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H712CAirPurifier.groovy",
       "required": false,
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     {
       "id": "78500f3c-9f4f-4c66-81b7-58b91486706e",
@@ -164,12 +164,20 @@
       "version": "2.1.4"
     },
     {
+      "id": "497811ca-7c8c-4d6e-8241-2e835f4b66df",
+      "name": "Govee v2 H7102 Tower Fan",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7102TowerFan.groovy",
+      "required": false,
+      "version": "2.1.0"
+    },
+    {
       "id": "803d373c-93d2-4ada-a4f3-33d02da4d4fa",
       "name": "Govee v2 H7106 Tower Fan",
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H7106TowerFan.groovy",
       "required": false,
-      "version": "2.1.1"
+      "version": "2.1.2"
     },
     {
       "id": "94c74cc7-19a2-42b9-aebf-16d8c83fc04d",
