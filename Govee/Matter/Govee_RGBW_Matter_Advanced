@@ -331,7 +331,7 @@ void startLevelChange(direction) {
     if (logEnable) log.debug "Sending command to change in ${direction} numvalue: ${value} value ${dirValue} Rate Number ${levelChgStep} hex rate ${rateValue}"
     List<Map<String, String>> cmdFields = []
     cmdFields.add(matter.cmdField(0x04, 0x00, dirValue))
-//    cmdFields.add(matter.cmdField(0x04, 0x01, rateValue))
+    cmdFields.add(matter.cmdField(0x04, 0x01, rateValue))
     cmds = matter.invoke(device.endpointId, 0x0008, 0x0005, cmdFields)            
     sendToDevice(cmds)
 }
