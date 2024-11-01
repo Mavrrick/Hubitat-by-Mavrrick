@@ -33,10 +33,10 @@
     },
     {
       "id": "035a80c2-9cc2-482c-b174-79142ca19768",
-      "name": "Govee Integration v2 Beta",
+      "name": "Govee Matter Drivers",
       "category": "Convenience",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/packageManifest3.json",
-      "description": "Govee integration Beta Release",
+      "description": "Matter Drivers for Govee Devices",
       "tags": [
         "Misc. Devices",
         "Cloud",
