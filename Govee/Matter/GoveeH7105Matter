@@ -249,11 +249,19 @@ void cycleChange() {
 
 void configure() {
     log.warn "configure..."
+    sendToDevice(cleanSubscribeCmd())
+    pauseExecution(3000)
     sendToDevice(subscribeCmd())
     unschedule()
 }
 
 //lifecycle commands
+void installed() {
+    log.info "installed..."
+    sendEvent(name: "supportedFanSpeeds", value: groovy.json.JsonOutput.toJson(getFanLevel.collect {k,v -> k})) 
+    initialize()
+}
+
 void updated(){
     log.info "updated..."
     log.warn "debug logging is: ${logEnable == true}"
@@ -264,6 +272,9 @@ void updated(){
 void initialize() {
     log.info "initialize..."
 //    initializeVars(fullInit = true)
+    sendEvent(name: "supportedFanSpeeds", value: groovy.json.JsonOutput.toJson(getFanLevel.collect {k,v -> k})) 
+    sendToDevice(cleanSubscribeCmd())
+    pauseExecution(3000)
     sendToDevice(subscribeCmd())
 }
 
@@ -302,6 +313,23 @@ String subscribeCmd() {
         cmd = matter.subscribe(0, 0xFFFF, attributePaths)
 
     return cmd
+}
+
+// availabe from HE platform version [2.3.9.186]
+String cleanSubscribeCmd() {
+    List<Map<String, String>> attributePaths = [] 
+    
+   String cmd = ''
+    
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x02))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x03))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0A))
+        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0B))
+        attributePaths.add(matter.attributePath(0x01, 0x0005, 0x01))
+    
+    return matter.cleanSubscribe(0, 0xFFFF, attributePaths)
 }
 
 void logsOff(){
