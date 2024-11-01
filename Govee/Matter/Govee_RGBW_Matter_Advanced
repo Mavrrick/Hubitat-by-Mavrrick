@@ -1,5 +1,5 @@
 /*
-	Govee RGBW driver
+	Govee RGBW driver Advanced
 
 	Copyright 2023 Hubitat Inc.  All Rights Reserved
 
@@ -30,6 +30,7 @@ metadata {
         capability 'Actuator'
         capability 'Switch'
         capability 'SwitchLevel'
+        capability "ChangeLevel"
         capability 'Configuration'
         capability 'Color Control'
         capability "ColorMode"
@@ -46,6 +47,7 @@ metadata {
     }
     preferences {
         input(name:'transitionTime', type:'enum', title:"Level transition time (default:${ttOpts.defaultText})", options:ttOpts.options, defaultValue:ttOpts.defaultValue)
+        input(name:"levelChgStep", type:"number", title:"Steps during level change", defaultValue:10)
         input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
         if (lanControl) {
             input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)
@@ -199,57 +201,6 @@ void parseOnOffCluster(Map descMap) {
 
 /// Event Processing
 
-private void sendSpeedEvent(String rawValue) {      
-    Integer intValue = hexStrToUnsignedInt(rawValue) 
-    
-    switch(intValue) {
-        case 0 :
-            value = "off";
-        break;
-        case 8:
-            value = "speed 1";
-        break;
-        case 16:
-            value = "speed 2";
-        break;
-        case 24:
-            value = "speed3 (low)";
-        break;
-        case 32:
-            value = "speed 4";
-        break;
-        case 40:
-            value = "speed 5";
-        break;
-        case 48:
-            value = "speed 6 (medium)";
-        break;
-        case 56:
-            value = "speed 7";
-        break;
-        case 64:
-            value = "speed 8";
-        break; 
-        case 72:
-            value = "speed 9";
-        break;
-        case 81:
-            value = "speed 10";
-        break;  
-        case 90:
-            value = "speed 11";
-        break;
-        case 100:
-            value = "speed12 (high)";
-        break; 
-    }
-    
-//    if (device.currentValue("switch") == value) return
-    String descriptionText = "${device.displayName} was set to speed ${value}"
-    if (txtEnable) log.info descriptionText
-    sendEvent(name:"speed", value:value, descriptionText:descriptionText)
-}
-
 //events
 private void sendSwitchEvent(String rawValue) {
     String value = rawValue == "01" ? "on" : "off"
@@ -304,23 +255,17 @@ private void sendRGBNameEvent(hue, sat = null){
     sendEvent(name: "colorName", value: genericName ,descriptionText: descriptionText)
 }
 
-private void sendCTEvent(String rawValue, Boolean presetColor = false) { 
-    value = (Math.round(10000/(hexStrToUnsignedInt(rawValue))))*100
-    if (value != device.currentValue("colorTemperature")) {
-       String descriptionText = "${device.displayName} ColorTemp was set to ${value}K" 
-       if (txtEnable) log.info descriptionText
-       sendEvent(name:"colorTemperature", value:value, descriptionText:descriptionText, unit: "K")
-       sendEvent(name: "colorMode", value: "CT") 
+private void sendCTEvent(String rawValue, Boolean presetColor = false) {
+    if (rawValue != "00") {
+        value = (Math.round(10000/(hexStrToUnsignedInt(rawValue))))*100
+        if (value != device.currentValue("colorTemperature")) {
+            String descriptionText = "${device.displayName} ColorTemp was set to ${value}K" 
+            if (txtEnable) log.info descriptionText
+            sendEvent(name:"colorTemperature", value:value, descriptionText:descriptionText, unit: "K")
+            sendEvent(name: "colorMode", value: "CT") 
+        }
     }
 }
-
-/* private void sendCTEvent(String rawValue, Boolean presetColor = false) {
-    value = (Math.round(10000/(hexStrToUnsignedInt(rawValue))))*100
-    String descriptionText = "${device.displayName} ColorTemp was set to ${value}K"
-    if (txtEnable) log.info descriptionText
-    sendEvent(name:"colorTemperature", value:value, descriptionText:descriptionText, unit: "K")
-
-} */
 
 //  Capability Commands
 
@@ -368,6 +313,39 @@ void setLevel(Object value, Object rate=0) { //new set level routine to enable i
     }
     sendToDevice(cmds)
 }
+
+void startLevelChange(direction) {
+    if (logEnable) log.debug "Start level change in ${direction}"  
+        switch(direction) {
+        case "up":
+            if (logEnable) log.debug "Found ${direction} setting value to 0"
+            value = 0;
+        break;
+        case "down":
+            if (logEnable) log.debug "Found ${direction} setting value to 1" 
+            value = 1;
+        break; 
+    }
+    dirValue = intToHexStr(value)
+    rateValue = intToHexStr(levelChgStep)
+    if (logEnable) log.debug "Sending command to change in ${direction} numvalue: ${value} value ${dirValue} Rate Number ${levelChgStep} hex rate ${rateValue}"
+    List<Map<String, String>> cmdFields = []
+    cmdFields.add(matter.cmdField(0x04, 0x00, dirValue))
+//    cmdFields.add(matter.cmdField(0x04, 0x01, rateValue))
+    cmds = matter.invoke(device.endpointId, 0x0008, 0x0005, cmdFields)            
+    sendToDevice(cmds)
+}
+
+void stopLevelChange() {
+    if (logEnable) log.debug "Stoping level change"  
+    dirValue = intToHexStr(value)  
+//    if (logEnable) log.debug "Sending command to change in ${direction} with value ${action}"    
+    List<Map<String, String>> cmdFields = []
+//    cmdFields.add(matter.cmdField(0x04, 0x00, dirValue))
+    cmds = matter.invoke(device.endpointId, 0x0008, 0x0003)            
+    sendToDevice(cmds)
+}
+
 
 ///// Color Control Commands related to Light control devices
 
@@ -509,82 +487,9 @@ void setColor(Map colorMap) {
     }
 }
 
-/// Fam Set speed Commands
-void setSpeed(fanspeed) {
-    unschedule()
-    if (logEnable) log.debug "Setting Fan Speed to ${fanspeed}"
-    switch(fanspeed) {
-        case "off":
-        case "speed 0":
-            value = 0;
-        break;
-        case "speed 1":
-            value = 8;
-        break;
-        case "speed 2":
-            value = 16;
-        break;
-        case "speed 3":
-        case "low":
-            value = 24;
-        break;
-        case "speed 4":
-            value = 32;
-        break;
-        case "speed 5":
-            value = 40;
-        break;
-        case "speed 6":
-        case "medium":
-            value = 48;
-        break;
-        case "speed 7":
-            value = 56;
-        break;
-        case "speed 8":
-            value = 64;
-        break; 
-        case "speed 9":
-            value = 72;
-        break;
-        case "speed 10":
-            value = 81;
-        break;  
-        case "speed 11":
-            value = 90;
-        break;
-        case "speed 12":
-        case "high":
-            value = 100;
-        break; 
-    }
-    if (value > 101) {
-        if (logEnable) {log.debug ("setSpeed(): Unknown value}")};
-        on()
-    } else {
-        speedValue = intToHexStr(value)  
-        if (logEnable) log.debug "Setting Fan Speed percent ${fanspeed}  % ${value} value to ${speedValue}"
-        List<Map<String, String>> attributeWriteRequests = []
-        attributeWriteRequests.add(matter.attributeWriteRequest(device.endpointId, 0x0202, 0x0002, 0x04, speedValue ))
-        String cmd = matter.writeAttributes(attributeWriteRequests)            
-        sendToDevice(cmd)
-    }
-}
-
-void cycleSpeed() {
-    cycleChange()
-}
-
-void cycleChange() {
-    Integer randomSpeed = Math.abs(new Random().nextInt() % 12) + 1
-    String newSpeed = "speed "+randomSpeed
-    setSpeed(newSpeed)
-    runIn(cycleInterval, cycleChange)
-    
-}
-
 void configure() {
     log.warn "configure..."
+    sendToDevice(cleanSubscribeCmd())
     sendToDevice(subscribeCmd())
     unschedule()
 //    getDevType()
@@ -602,6 +507,7 @@ void updated(){
 void initialize() {
     log.info "initialize..."
 //    initializeVars(fullInit = true)
+    sendToDevice(cleanSubscribeCmd())
     sendToDevice(subscribeCmd())
 }
 
@@ -612,38 +518,14 @@ void refresh() {
 
 String refreshCmd() {
     List<Map<String, String>> attributePaths = []
-    if (state.deviceType == 'MATTER_OUTLET') {
-        if (state.matter != null && state.matter['0x0006'] != null) {
-            String attrListString = state.matter['0x0006'] as String
-            attrListString = attrListString.substring(1, attrListString.length() - 1)                   // remove the [] brackets
-            List<Integer> attrList = attrListString.split(',').collect { HexUtils.hexStringToInt(it) }  // convert the string to a list of integers
-            logDebug "refreshCmd: attrList:${attrList}"
-            attrList.each { attrInt ->
-                attributePaths.add(matter.attributePath(device.endpointId, 0x0006, attrInt))
-            }
-        }
-        else {
-            logWarn "refreshCmd: state.matter['0x0006'] is null"
-        }
-    }
-    else if (state.deviceType == 'MATTER_BULB') {
+
         attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))
         attributePaths.add(matter.attributePath(device.endpointId, 0x0008, 0x0000))
         attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0000))
         attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0001))
         attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0007))
         attributePaths.add(matter.attributePath(device.endpointId, 0x0300, 0x0008))
-    }
-    else if (state.deviceType == 'MATTER_FAN') {
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0006, 0x0000))         // on/off
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0000))         // FanMode
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0002))         // PercentSetting
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x0003))         // PercentCurrent
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000A))         // WindSetting
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0202, 0x000B))         // AirflowDirectionEnum
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0000))         
-        attributePaths.add(matter.attributePath(device.endpointId, 0x0003, 0x0001))                        // Power Configuration Cluster : Status
-    }
+
     String cmd = matter.readAttributes(attributePaths)
     return cmd
 }
@@ -652,7 +534,7 @@ String refreshCmd() {
 String subscribeCmd() {
     List<Map<String, String>> attributePaths = []
     String cmd = ''
-    if (state.deviceType == 'MATTER_BULB') {
+
         attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
         attributePaths.add(matter.attributePath(0x01, 0x0008, 0x00))
         attributePaths.add(matter.attributePath(0x01, 0x0300, 0x00))
@@ -661,22 +543,23 @@ String subscribeCmd() {
         attributePaths.add(matter.attributePath(0x01, 0x0300, 0x08))
         //standard 0 reporting interval is way too busy for bulbs
         cmd = matter.subscribe(5, 0xFFFF, attributePaths)
-    }
-    else if (state.deviceType == 'MATTER_OUTLET') {
-        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
-        cmd = matter.subscribe(0, 300, attributePaths)
-    }
-    else if (state.deviceType == 'MATTER_FAN') {
-        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x00))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x02))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x03))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0A))
-        attributePaths.add(matter.attributePath(0x01, 0x0202, 0x0B))
-        attributePaths.add(matter.attributePath(0x01, 0x0005, 0x01))
-        cmd = matter.subscribe(0, 0xFFFF, attributePaths)
-    } 
+ 
     return cmd
+}
+
+String cleanSubscribeCmd() {
+    List<Map<String, String>> attributePaths = [] 
+    
+   String cmd = ''
+    
+        attributePaths.add(matter.attributePath(0x01, 0x0006, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0008, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x00))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x01))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x07))
+        attributePaths.add(matter.attributePath(0x01, 0x0300, 0x08))
+    
+    return matter.cleanSubscribe(0, 0xFFFF, attributePaths)
 }
 
 void logsOff(){
