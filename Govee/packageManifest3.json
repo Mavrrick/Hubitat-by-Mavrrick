@@ -5,7 +5,7 @@
   "dateReleased": "2023-12-09",
   "drivers": [
     {
-      "id": "b6fc9828-f71d-45d9-9fb1-11adffb5c137",
+      "id": "fdaef918-6134-4be3-b957-de0bf60345e1",
       "name": "Govee RGBW driver Advanced",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/Matter/Govee_RGBW_Matter_Advanced",
