@@ -569,8 +569,8 @@ def updated() {
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
     if (settings.APIKey != state.APIKey ) {
         child.each {
-            logger('initialize() API key has been updated. Calling child devices to udpate', 'debug')
-//            it.apiKeyUpdate()
+            logger("updated() API key has been updated. Calling child devices: ${it} to udpate", 'debug')
+            it.apiKeyUpdate()
         }
         state?.APIKey = settings.APIKey
     }
