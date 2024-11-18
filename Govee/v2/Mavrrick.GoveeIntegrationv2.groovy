@@ -891,6 +891,16 @@ def goveeDevAdd() { //testing
                             logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
                             setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }
+                    }else if (deviceModel == "H712C") {
+                        String driver = "Govee v2 H712C Air Purifier"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
+                            mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
+                        }
                     }  else {                    
                         String driver = "Govee v2 Air Purifier Driver"
                         if (drivers.contains(driver)) {
