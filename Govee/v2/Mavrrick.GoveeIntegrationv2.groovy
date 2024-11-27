@@ -395,10 +395,10 @@ def sceneExtract() {
                     String name = it.name.toString()
                     if (name == settings.goveeGroup) {
                         logger("sceneExtract(): found ${settings.goveeGroup} group moving forward", 'debug')
-                        it.oneClicks.iotRules.forEach {  
+                        it.oneClicks.iotRules.forEach { 
+                            logger("sceneExtract(): Response data ${it}", 'debug')
                             if (it.get(0).containsKey("deviceObj")) {
-                            logger("sceneExtract(): Tap to Run has deviceObj ${it.get(0).containsKey("deviceObj")} ", 'debug')
-                            logger("sceneExtract(): Response data ${it}", 'debug')    
+                            logger("sceneExtract(): Tap to Run has deviceObj ${it.get(0).containsKey("deviceObj")} ", 'debug')                                
                             logger("sceneExtract(): found ${it.deviceObj.feastType} feastType", 'debug')
                             int feastType = it.deviceObj.feastType.get(0)
                             if (feastType == 0) {
