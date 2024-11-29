@@ -401,59 +401,60 @@ def sceneExtract() {
                                 logger("sceneExtract(): iotRule is blank, skipping", 'debug')
                             } else {
                             logger("sceneExtract(): Response data ${it}", 'debug')
-                            if (it.get(0).containsKey("deviceObj")) {
-                            logger("sceneExtract(): Tap to Run has deviceObj ${it.get(0).containsKey("deviceObj")} ", 'debug')                                
+                                it.forEach() {    
+                            if (it.containsKey("deviceObj")) {
+                            logger("sceneExtract(): Tap to Run has deviceObj ${it.containsKey("deviceObj")} ", 'debug')                                
                             logger("sceneExtract(): found ${it.deviceObj.feastType} feastType", 'debug')
-                            int feastType = it.deviceObj.feastType.get(0)
+                            int feastType = it.deviceObj.feastType
                             if (feastType == 0) {
-                            devName = it.deviceObj.name.get(0) 
-                            devSku = it.deviceObj.sku.get(0)
+                            devName = it.deviceObj.name 
+                            devSku = it.deviceObj.sku
                             logger("sceneExtract(): Looking at ${devName} ${devSku}", 'info')  
-                            logger("sceneExtract(): Number of rules are  ${it.rule.get(0).size()}", 'debug')
-                           if (it.rule.get(0).get(0).cmdType == 3 || it.rule.get(0).get(0).cmdType == 4 || ((it.rule.get(0).get(0).cmdType >= 16 && it.rule.get(0).get(0).cmdType <= 19) && (slurper.parseText(it.rule.get(0).get(0).iotMsg)).msg.cmd == "ptReal" ) || it.rule.get(0).get(0).cmdType == 32) {    
-                                logger("sceneExtract(): First rule is scene or DIY ${it.rule.get(0).get(0).cmdType}", 'debug')
-                                if ((slurper.parseText(it.rule.get(0).get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(0).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(0).get(0).cmdVal)).snapshotName == null) {
-                                    sceneName = (slurper.parseText(it.rule.get(0).get(0).cmdVal)).diyName }
-                                else if ((slurper.parseText(it.rule.get(0).get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(0).cmdVal)).diyName == null && (slurper.parseText(it.rule.get(0).get(0).cmdVal)).snapshotName == null) {
-                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(0).get(0).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(0).get(0).cmdVal)).closeTime + " min"
+                            logger("sceneExtract(): Number of rules are  ${it.rule.size()}", 'debug')
+                           if (it.rule.get(0).cmdType == 3 || it.rule.get(0).cmdType == 4 || ((it.rule.get(0).cmdType >= 16 && it.rule.get(0).cmdType <= 19) && (slurper.parseText(it.rule.get(0).iotMsg)).msg.cmd == "ptReal" ) || it.rule.get(0).cmdType == 32) {    
+                                logger("sceneExtract(): First rule is scene or DIY ${it.rule.get(0).cmdType}", 'debug')
+                                if ((slurper.parseText(it.rule.get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(0).cmdVal)).snapshotName == null) {
+                                    sceneName = (slurper.parseText(it.rule.get(0).cmdVal)).diyName }
+                                else if ((slurper.parseText(it.rule.get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).cmdVal)).diyName == null && (slurper.parseText(it.rule.get(0).cmdVal)).snapshotName == null) {
+                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(0).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(0).cmdVal)).closeTime + " min"
                                     } 
                                 else {
-                                sceneName = (slurper.parseText(it.rule.get(0).get(0).cmdVal)).scenesStr
+                                sceneName = (slurper.parseText(it.rule.get(0).cmdVal)).scenesStr
                                 }
-                                command = (slurper.parseText(it.rule.get(0).get(0).iotMsg)).msg.data.command
-                            } else if (it.rule.get(0).get(1).cmdType == 3 || it.rule.get(0).get(1).cmdType == 4 || ((it.rule.get(0).get(1).cmdType >= 16 && it.rule.get(0).get(1).cmdType <= 19) && (slurper.parseText(it.rule.get(0).get(1).iotMsg)).msg.cmd == "ptReal" ) || it.rule.get(0).get(1).cmdType == 32) {
-                                logger("sceneExtract(): Second rule is scene or DIY ${it.rule.get(0).get(1).cmdType}", 'debug')
-                                logger("sceneExtract(): Second rule is scene or DIY ${(slurper.parseText(it.rule.get(0).get(1).iotMsg)).msg.cmd}", 'debug')
-                                if ((slurper.parseText(it.rule.get(0).get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).snapshotName == null) {
-                                    sceneName = (slurper.parseText(it.rule.get(0).get(1).cmdVal)).diyName }
-                                else if ((slurper.parseText(it.rule.get(0).get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).diyName == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).snapshotName == null) {
-                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(0).get(1).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(0).get(1).cmdVal)).closeTime + " min"
+                                command = (slurper.parseText(it.rule.get(0).iotMsg)).msg.data.command
+                            } else if (it.rule.get(1).cmdType == 3 || it.rule.get(1).cmdType == 4 || ((it.rule.get(1).cmdType >= 16 && it.rule.get(1).cmdType <= 19) && (slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd == "ptReal" ) || it.rule.get(1).cmdType == 32) {
+                                logger("sceneExtract(): Second rule is scene or DIY ${it.rule.get(1).cmdType}", 'debug')
+                                logger("sceneExtract(): Second rule is scene or DIY ${(slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd}", 'debug')
+                                if ((slurper.parseText(it.rule.get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(1).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(1).cmdVal)).snapshotName == null) {
+                                    sceneName = (slurper.parseText(it.rule.get(1).cmdVal)).diyName }
+                                else if ((slurper.parseText(it.rule.get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(1).cmdVal)).diyName == null && (slurper.parseText(it.rule.get(1).cmdVal)).snapshotName == null) {
+                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(1).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(1).cmdVal)).closeTime + " min"
                                     }
-                                else if ((slurper.parseText(it.rule.get(0).get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(0).get(1).cmdVal)).diyName == null) {
-                                    sceneName = "Snapshot "+ (slurper.parseText(it.rule.get(0).get(1).cmdVal)).snapshotName 
+                                else if ((slurper.parseText(it.rule.get(1).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(1).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(1).cmdVal)).diyName == null) {
+                                    sceneName = "Snapshot "+ (slurper.parseText(it.rule.get(1).cmdVal)).snapshotName 
                                     }
                                 else {
-                                sceneName = (slurper.parseText(it.rule.get(0).get(1).cmdVal)).scenesStr
+                                sceneName = (slurper.parseText(it.rule.get(1).cmdVal)).scenesStr
                                 }
-                            command = (slurper.parseText(it.rule.get(0).get(1).iotMsg)).msg.data.command                                
-                            } else if ( it.rule.get(0).size() > 2 ) {
-                                logger("sceneExtract(): First two rules failed falling back to third rule ${it.rule.get(0).get(2).cmdType}", 'debug')
-                                if ((slurper.parseText(it.rule.get(0).get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).snapshotName == null) {
+                            command = (slurper.parseText(it.rule.get(1).iotMsg)).msg.data.command                                
+                            } else if ( it.rule.size() > 2 ) {
+                                logger("sceneExtract(): First two rules failed falling back to third rule ${it.rule.get(2).cmdType}", 'debug')
+                                if ((slurper.parseText(it.rule.get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(2).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(2).cmdVal)).snapshotName == null) {
                                     logger("sceneExtract(): Processing third rule collect DIY name", 'debug')
-                                    sceneName = (slurper.parseText(it.rule.get(0).get(2).cmdVal)).diyName }
-                                else if ((slurper.parseText(it.rule.get(0).get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).diyName == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).snapshotName == null) {
+                                    sceneName = (slurper.parseText(it.rule.get(2).cmdVal)).diyName }
+                                else if ((slurper.parseText(it.rule.get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(2).cmdVal)).diyName == null && (slurper.parseText(it.rule.get(2).cmdVal)).snapshotName == null) {
                                     logger("sceneExtract(): Processing third rule collect sleep timer name", 'debug')
-                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(0).get(2).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(0).get(2).cmdVal)).closeTime + " min"
+                                    sceneName = "Sleep starting at "+ (slurper.parseText(it.rule.get(2).cmdVal)).startBri + "% for " + (slurper.parseText(it.rule.get(2).cmdVal)).closeTime + " min"
                                     }
-                                else if ((slurper.parseText(it.rule.get(0).get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(0).get(2).cmdVal)).diyName == null) {
+                                else if ((slurper.parseText(it.rule.get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(2).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(2).cmdVal)).diyName == null) {
                                     logger("sceneExtract(): Processing third rule collect Snapshot", 'debug')
-                                    sceneName = "Snapshot "+ (slurper.parseText(it.rule.get(0).get(2).cmdVal)).snapshotName 
+                                    sceneName = "Snapshot "+ (slurper.parseText(it.rule.get(2).cmdVal)).snapshotName 
                                     }
                                 else {
                                 logger("sceneExtract(): Processing third rule collect scene name", 'debug')    
-                                sceneName = (slurper.parseText(it.rule.get(0).get(2).cmdVal)).scenesStr
+                                sceneName = (slurper.parseText(it.rule.get(2).cmdVal)).scenesStr
                                 }
-                                command = (slurper.parseText(it.rule.get(0).get(2).iotMsg)).msg.data.command
+                                command = (slurper.parseText(it.rule.get(2).iotMsg)).msg.data.command
                             } else {
                                 logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
@@ -469,6 +470,7 @@ def sceneExtract() {
                             } else {
                                logger("sceneExtract(): Tap to run does not contain device only action. Ignoring", 'debug') 
                             }
+                        }
                         }
                         }
                     } 
