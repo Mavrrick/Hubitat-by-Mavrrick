@@ -457,8 +457,12 @@ def sceneExtract() {
                             } else {
                                 logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
-                            logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
-                            diyAdd(devSku, sceneName, command)
+                                if (sceneName == null || command == null) {
+                                    logger("sceneExtract(): Either Scene Name Or command is Null. Ignoring extracted scene", 'debug')
+                                } else {
+                                    logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
+                                    diyAdd(devSku, sceneName, command)
+                                }
                             } else {
                                 logger("sceneExtract(): Found scene that is not extractable. Moving on", 'debug')
                             }
