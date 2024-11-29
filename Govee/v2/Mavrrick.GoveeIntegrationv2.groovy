@@ -395,7 +395,11 @@ def sceneExtract() {
                     String name = it.name.toString()
                     if (name == settings.goveeGroup) {
                         logger("sceneExtract(): found ${settings.goveeGroup} group moving forward", 'debug')
-                        it.oneClicks.iotRules.forEach { 
+                        logger("sceneExtract(): Processing IOTrules found  ${it.oneClicks.iotRules}", 'debug')
+                        it.oneClicks.iotRules.forEach {
+                            if (it == null) {
+                                logger("sceneExtract(): iotRule is blank, skipping", 'debug')
+                            } else {
                             logger("sceneExtract(): Response data ${it}", 'debug')
                             if (it.get(0).containsKey("deviceObj")) {
                             logger("sceneExtract(): Tap to Run has deviceObj ${it.get(0).containsKey("deviceObj")} ", 'debug')                                
@@ -461,6 +465,7 @@ def sceneExtract() {
                             } else {
                                logger("sceneExtract(): Tap to run does not contain device only action. Ignoring", 'debug') 
                             }
+                        }
                         }
                     } 
                 }
