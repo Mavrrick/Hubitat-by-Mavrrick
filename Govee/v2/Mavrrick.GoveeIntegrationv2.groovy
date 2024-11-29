@@ -377,6 +377,7 @@ def sceneManualUpdate2() {
 }
 
 def sceneExtract() {
+    addedScenes = "<table> <tr> <th>Device Model</th> <th>Name</th> <th>Command</th> </tr>"
 
     logger('sceneExtract() DEVICE INFORMATION', 'debug')
     if (state.goveeHomeToken != null) {
@@ -463,6 +464,7 @@ def sceneExtract() {
                                 } else {
                                     logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
                                     diyAdd(devSku, sceneName, command)
+                               addedScenes = addedScenes + "<tr> <td>"+ devSku + "</td> <td>" + sceneName + "</td> <td>" + command.inspect().replaceAll("\'", "\"") + "</td> </tr>"
                                 }
                             } else {
                                 logger("sceneExtract(): Found scene that is not extractable. Moving on", 'debug')
@@ -475,6 +477,7 @@ def sceneExtract() {
                         }
                     } 
                 }
+            addedScenes = addedScenes + "</table>"
         }
     } catch (groovyx.net.http.HttpResponseException e) {
         logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
@@ -486,11 +489,13 @@ def sceneExtract() {
     dynamicPage(name: 'sceneExtract', title: 'Scene Extract', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
     {
         if (state.goveeHomeToken != null) {
-            section('<b>Extracted command below:</b>') {
-                paragraph "Device name ${devName}"
-                paragraph "Scene name is ${sceneName}"
-                paragraph "Command is <mark>${command.inspect().replaceAll("\'", "\"")}</mark>"
-                paragraph "This command will work with any device with model ${devSku}"
+            section('<b>Extracted scenes are shown below:</b>') {
+//                paragraph "Device name ${devName}"
+//                paragraph "Scene name is ${sceneName}"
+//                paragraph "Command is <mark>${command.inspect().replaceAll("\'", "\"")}</mark>"
+//                paragraph "This command will work with any device with model ${devSku}"
+                paragraph addedScenes
+                paragraph "If you want to backup the scenes pelase download the GoveeLanDIYScenes.json file from your hub."
             }
             
         } else {
