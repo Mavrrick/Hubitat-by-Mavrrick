@@ -457,7 +457,7 @@ def sceneExtract() {
                             } else {
                                 logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
-                                if (sceneName == null || command == null) {
+                            if ( sceneName == null || command == null) {
                                     logger("sceneExtract(): Either Scene Name Or command is Null. Ignoring extracted scene", 'debug')
                                 } else {
                                     logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
