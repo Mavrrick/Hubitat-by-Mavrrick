@@ -414,6 +414,7 @@ def sceneExtract() {
                             logger("sceneExtract(): Number of rules are  ${it.rule.size()}", 'debug')
                            if (it.rule.get(0).cmdType == 3 || it.rule.get(0).cmdType == 4 || ((it.rule.get(0).cmdType >= 16 && it.rule.get(0).cmdType <= 19) && (slurper.parseText(it.rule.get(0).iotMsg)).msg.cmd == "ptReal" ) || it.rule.get(0).cmdType == 32) {    
                                 logger("sceneExtract(): First rule is scene or DIY ${it.rule.get(0).cmdType}", 'debug')
+                                logger("sceneExtract(): First rule is scene or DIY ${(slurper.parseText(it.rule.get(0).iotMsg)).msg.cmd}", 'debug')
                                 if ((slurper.parseText(it.rule.get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(0).cmdVal)).snapshotName == null) {
                                     sceneName = (slurper.parseText(it.rule.get(0).cmdVal)).diyName }
                                 else if ((slurper.parseText(it.rule.get(0).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(0).cmdVal)).diyName == null && (slurper.parseText(it.rule.get(0).cmdVal)).snapshotName == null) {
@@ -437,7 +438,13 @@ def sceneExtract() {
                                 else {
                                 sceneName = (slurper.parseText(it.rule.get(1).cmdVal)).scenesStr
                                 }
-                            command = (slurper.parseText(it.rule.get(1).iotMsg)).msg.data.command                                
+                                commandType = (slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd
+                                if ((slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd == "ptUrl" ) {
+                                    command = (slurper.parseText(it.rule.get(1).iotMsg)).msg.data.value
+                                } else {
+                                    command = (slurper.parseText(it.rule.get(1).iotMsg)).msg.data.command
+                                }
+                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}, CommandType: ${commandType}", 'debug')   
                             } else if ( it.rule.size() > 2 ) {
                                 logger("sceneExtract(): First two rules failed falling back to third rule ${it.rule.get(2).cmdType}", 'debug')
                                 if ((slurper.parseText(it.rule.get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(2).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(2).cmdVal)).snapshotName == null) {
@@ -463,7 +470,7 @@ def sceneExtract() {
                                     logger("sceneExtract(): Either Scene Name Or command is Null. Ignoring extracted scene", 'debug')
                                 } else {
                                     logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
-                                    diyAdd(devSku, sceneName, command)
+                                    diyAdd(devSku, sceneName, command, commandType)
                                addedScenes = addedScenes + "<tr> <td>"+ devSku + "</td> <td>" + sceneName + "</td> <td>" + command.inspect().replaceAll("\'", "\"") + "</td> </tr>"
                                 }
                             } else {
@@ -610,11 +617,12 @@ def sendnotification (type, value) {
     }
 }
 
-def diyAdd(devSKU, diyName, command) {
-    logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
+def diyAdd(devSKU, diyName, command, commandType) {
+    logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${commandType}:${command}", 'trace')
     command = command.inspect().replaceAll("\'", "\"")
     Map diyEntry = [:]
     diyEntry.put("name", diyName)
+    diyEntry.put("cmdType", commandType)
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
     logger("diyAdd(): keys are  ${state.diyEffects.keySet()}", 'debug')
@@ -651,6 +659,7 @@ def diyAddManual(String devSKU, String diyName, String command) {
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
     Map diyEntry = [:]
     diyEntry.put("name", diyName)
+    diyEntry.put("cmdType", commandType)
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
     logger("diyAdd(): keys are  ${state.diyEffects.keySet()}", 'debug')
@@ -686,6 +695,7 @@ def diyUpdateManual(String devSKU, int diyAddNum, String diyName, String command
     logger("diyUpdateManual(): Attempting add DIY Scene ${devSKU}:${diyAddNum}:${diyName}:${command}", 'trace')
     Map diyEntry = [:]
     diyEntry.put("name", diyName)
+    diyEntry.put("cmdType", commandType)
     diyEntry.put("cmd", command)
     logger("diyUpdateManual(): Trying to add ${diyEntry}", 'debug')
     logger("diyUpdateManual(): keys are  ${state.diyEffects.keySet()}", 'debug')
