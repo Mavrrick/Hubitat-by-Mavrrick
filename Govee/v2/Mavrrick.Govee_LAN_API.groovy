@@ -130,6 +130,11 @@ def lanSetEffect (effectNo) {
     if (lanScenes.get(device.getDataValue("DevType")).containsKey(effectNumber)) {
         String sceneInfo =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).name
         String sceneCmd =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
+        String cmdType =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmdType
+        if (cmdType == null) {
+            if (debugLog) log.debug "cmdtype is null setting to ptReal"
+            cmdType = "ptReal"
+        }
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
         if (debugLog) log.debug "Scene number is present"
         sendEvent(name: "colorMode", value: "EFFECTS")
@@ -137,7 +142,7 @@ def lanSetEffect (effectNo) {
         sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
 //    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
+        String cmd2 = '{"msg":{"cmd":"'+cmdType+'","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
    } else {
@@ -632,3 +637,5 @@ def loadDIYFile() {
         return diyEffects
     }
 }
+
+
