@@ -11,7 +11,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
       "required": true,
-      "version": "2.1.13"
+      "version": "2.1.14"
     }
   ],
   "apps": [
@@ -23,7 +23,7 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.1.20"
+      "version": "2.1.21"
     }
   ],
   "drivers": [
@@ -379,9 +379,19 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Outdoor_Wall_Light.json"
     },
     {
+      "id": "66cdfbb6-6e9e-42a2-a8e6-ecb437a5b386",
+      "name": "GoveeLanScenes_TV_Light_Bar.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/Lan_Scene_Files/GoveeLanScenes_TV_Light_Bar.json"
+    },
+    {
       "id": "f810d875-ddf0-45e0-9dd0-7c814daadd8f",
       "name": "GoveeLanScenes_Wall_Sconce.json",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Wall_Sconce.json"
+    },
+    {
+      "id": "b91e18e9-6cc4-4e61-a072-538b2bf3365c",
+      "name": "GoveeLanScenes_Y_Light.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/Lan_Scene_Files/GoveeLanScenes_Y_Light.json"
     }
   ]
 }
