@@ -423,7 +423,13 @@ def sceneExtract() {
                                 else {
                                 sceneName = (slurper.parseText(it.rule.get(0).cmdVal)).scenesStr
                                 }
-                                command = (slurper.parseText(it.rule.get(0).iotMsg)).msg.data.command
+                                commandType = (slurper.parseText(it.rule.get(0).iotMsg)).msg.cmd
+                                if ((slurper.parseText(it.rule.get(0).iotMsg)).msg.cmd == "ptUrl" ) {
+                                    command = (slurper.parseText(it.rule.get(0).iotMsg)).msg.data.value
+                                } else {
+                                    command = (slurper.parseText(it.rule.get(0).iotMsg)).msg.data.command
+                                }
+                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}, CommandType: ${commandType}", 'debug')
                             } else if (it.rule.get(1).cmdType == 3 || it.rule.get(1).cmdType == 4 || ((it.rule.get(1).cmdType >= 16 && it.rule.get(1).cmdType <= 19) && (slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd == "ptReal" ) || it.rule.get(1).cmdType == 32) {
                                 logger("sceneExtract(): Second rule is scene or DIY ${it.rule.get(1).cmdType}", 'debug')
                                 logger("sceneExtract(): Second rule is scene or DIY ${(slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd}", 'debug')
@@ -462,7 +468,13 @@ def sceneExtract() {
                                 logger("sceneExtract(): Processing third rule collect scene name", 'debug')    
                                 sceneName = (slurper.parseText(it.rule.get(2).cmdVal)).scenesStr
                                 }
-                                command = (slurper.parseText(it.rule.get(2).iotMsg)).msg.data.command
+                                commandType = (slurper.parseText(it.rule.get(2).iotMsg)).msg.cmd
+                                if ((slurper.parseText(it.rule.get(2).iotMsg)).msg.cmd == "ptUrl" ) {
+                                    command = (slurper.parseText(it.rule.get(2).iotMsg)).msg.data.value
+                                } else {
+                                    command = (slurper.parseText(it.rule.get(2).iotMsg)).msg.data.command
+                                }
+                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}, CommandType: ${commandType}", 'debug')
                             } else {
                                 logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
