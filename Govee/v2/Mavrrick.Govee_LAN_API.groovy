@@ -439,6 +439,10 @@ def getDevType() {
             break;
         case "H70C1":
         case "H70C2":
+        case "H70C4":
+        case "H70C5":
+        case "H70C7":
+        case "H70C9":
         case "H70CB":
             device.updateDataValue("DevType", "XMAS_Light");
             break;
@@ -628,5 +632,3 @@ def loadDIYFile() {
         return diyEffects
     }
 }
-
-
