@@ -299,11 +299,16 @@ def lanActivateDIY (diyActivate) {
         String diyEffectNumber = diyActivate.toString()
         String sceneInfo = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).name
         String sceneCmd = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd
+        String cmdType =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmdType
+        if (cmdType == null) {
+            if (debugLog) log.debug "cmdtype is null setting to ptReal"
+            cmdType = "ptReal"
+        }
         if (debugLog) {log.debug ("activateDIY(): Activate effect number ${diyActivate} called ${sceneInfo} with command ${sceneCmd}")}
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: diyEffectNumber)
         sendEvent(name: "switch", value: "on")
-        String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
+        String cmd2 = '{"msg":{"cmd":"'+cmdType+'","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("activateDIY(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
 }
@@ -491,10 +496,13 @@ def getDevType() {
             device.updateDataValue("DevType", "Outdoor_Flood_Light");
             break;
         case "H70B1":
+        case "H70BC":
+            device.updateDataValue("DevType", "Curtain_Light");
+            break;
         case "H70B3":
         case "H70B4":
         case "H70B5":
-            device.updateDataValue("DevType", "Curtain_Light");
+            device.updateDataValue("DevType", "Curtain_Light2");
             break;
         case "H7075":
             device.updateDataValue("DevType", "Outdoor_Wall_Light");
