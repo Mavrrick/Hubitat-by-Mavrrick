@@ -423,13 +423,8 @@ def sceneExtract() {
                                 else {
                                 sceneName = (slurper.parseText(it.rule.get(0).cmdVal)).scenesStr
                                 }
-                                commandType = (slurper.parseText(it.rule.get(0).iotMsg)).msg.cmd
-                                if ((slurper.parseText(it.rule.get(0).iotMsg)).msg.cmd == "ptUrl" ) {
-                                    command = (slurper.parseText(it.rule.get(0).iotMsg)).msg.data.value
-                                } else {
-                                    command = (slurper.parseText(it.rule.get(0).iotMsg)).msg.data.command
-                                }
-                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}, CommandType: ${commandType}", 'debug')
+                                command = (slurper.parseText(it.rule.get(0).iotMsg)).msg.data.command
+                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}", 'debug')
                             } else if (it.rule.get(1).cmdType == 3 || it.rule.get(1).cmdType == 4 || ((it.rule.get(1).cmdType >= 16 && it.rule.get(1).cmdType <= 19) && (slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd == "ptReal" ) || it.rule.get(1).cmdType == 32) {
                                 logger("sceneExtract(): Second rule is scene or DIY ${it.rule.get(1).cmdType}", 'debug')
                                 logger("sceneExtract(): Second rule is scene or DIY ${(slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd}", 'debug')
@@ -444,13 +439,8 @@ def sceneExtract() {
                                 else {
                                 sceneName = (slurper.parseText(it.rule.get(1).cmdVal)).scenesStr
                                 }
-                                commandType = (slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd
-                                if ((slurper.parseText(it.rule.get(1).iotMsg)).msg.cmd == "ptUrl" ) {
-                                    command = (slurper.parseText(it.rule.get(1).iotMsg)).msg.data.value
-                                } else {
-                                    command = (slurper.parseText(it.rule.get(1).iotMsg)).msg.data.command
-                                }
-                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}, CommandType: ${commandType}", 'debug')   
+                                command = (slurper.parseText(it.rule.get(1).iotMsg)).msg.data.command
+                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}", 'debug')   
                             } else if ( it.rule.size() > 2 ) {
                                 logger("sceneExtract(): First two rules failed falling back to third rule ${it.rule.get(2).cmdType}", 'debug')
                                 if ((slurper.parseText(it.rule.get(2).cmdVal)).scenesStr == null && (slurper.parseText(it.rule.get(2).cmdVal)).startBri == null && (slurper.parseText(it.rule.get(2).cmdVal)).snapshotName == null) {
@@ -468,13 +458,8 @@ def sceneExtract() {
                                 logger("sceneExtract(): Processing third rule collect scene name", 'debug')    
                                 sceneName = (slurper.parseText(it.rule.get(2).cmdVal)).scenesStr
                                 }
-                                commandType = (slurper.parseText(it.rule.get(2).iotMsg)).msg.cmd
-                                if ((slurper.parseText(it.rule.get(2).iotMsg)).msg.cmd == "ptUrl" ) {
-                                    command = (slurper.parseText(it.rule.get(2).iotMsg)).msg.data.value
-                                } else {
-                                    command = (slurper.parseText(it.rule.get(2).iotMsg)).msg.data.command
-                                }
-                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}, CommandType: ${commandType}", 'debug')
+                                command = (slurper.parseText(it.rule.get(2).iotMsg)).msg.data.command
+                                logger("sceneExtract(): Second rule data collected is NAME: ${sceneName}, Command: ${command}", 'debug')
                             } else {
                                 logger("sceneExtract(): No Third rule to process. No valid data to extract", 'debug')
                             }
@@ -482,7 +467,7 @@ def sceneExtract() {
                                     logger("sceneExtract(): Either Scene Name Or command is Null. Ignoring extracted scene", 'debug')
                                 } else {
                                     logger("sceneExtract(): Scene Name is ${sceneName}: command is ${command}", 'debug')
-                                    diyAdd(devSku, sceneName, command, commandType)
+                                    diyAdd(devSku, sceneName, command)
                                addedScenes = addedScenes + "<tr> <td>"+ devSku + "</td> <td>" + sceneName + "</td> <td>" + command.inspect().replaceAll("\'", "\"") + "</td> </tr>"
                                 }
                             } else {
@@ -629,12 +614,11 @@ def sendnotification (type, value) {
     }
 }
 
-def diyAdd(devSKU, diyName, command, commandType) {
+def diyAdd(devSKU, diyName, command) {
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${commandType}:${command}", 'trace')
     command = command.inspect().replaceAll("\'", "\"")
     Map diyEntry = [:]
     diyEntry.put("name", diyName)
-    diyEntry.put("cmdType", commandType)
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
     logger("diyAdd(): keys are  ${state.diyEffects.keySet()}", 'debug')
@@ -671,7 +655,6 @@ def diyAddManual(String devSKU, String diyName, String command) {
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
     Map diyEntry = [:]
     diyEntry.put("name", diyName)
-    diyEntry.put("cmdType", commandType)
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
     logger("diyAdd(): keys are  ${state.diyEffects.keySet()}", 'debug')
@@ -707,7 +690,6 @@ def diyUpdateManual(String devSKU, int diyAddNum, String diyName, String command
     logger("diyUpdateManual(): Attempting add DIY Scene ${devSKU}:${diyAddNum}:${diyName}:${command}", 'trace')
     Map diyEntry = [:]
     diyEntry.put("name", diyName)
-    diyEntry.put("cmdType", commandType)
     diyEntry.put("cmd", command)
     logger("diyUpdateManual(): Trying to add ${diyEntry}", 'debug')
     logger("diyUpdateManual(): keys are  ${state.diyEffects.keySet()}", 'debug')
