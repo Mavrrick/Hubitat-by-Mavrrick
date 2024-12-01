@@ -17,7 +17,8 @@ metadata {
     }
 
 	preferences {		
-		section("Device Info") {            
+		section("Device Info") {  
+            input(name: "disableMQTT", type: "bool", title: "Enable/Disable MQTT communication", defaultValue: true)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
@@ -34,7 +35,9 @@ def updated() {
     sendEvent(name: "msgCount", value: 0)
     disconnect()
 	pauseExecution(1000)
-    mqttConnectionAttempt()
+    if (disableMQTT) {
+        mqttConnectionAttempt()
+    }
 }
 
 
@@ -46,7 +49,9 @@ def initialize() {
 //    goveeAPI = parent.state.goveeAppAPI
     disconnect()
     pauseExecution(1000)
-    mqttConnectionAttempt()
+    if (disableMQTT) {
+        mqttConnectionAttempt()
+    }
     sendEvent(name: "msgCount", value: 0)
     state.childCount = getChildDevices().size()
     allSceneReload()
