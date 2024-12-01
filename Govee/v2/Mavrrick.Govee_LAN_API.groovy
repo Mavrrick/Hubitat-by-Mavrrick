@@ -299,7 +299,7 @@ def lanActivateDIY (diyActivate) {
         String diyEffectNumber = diyActivate.toString()
         String sceneInfo = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).name
         String sceneCmd = diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).cmd
-        String cmdType =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmdType
+        String cmdType =  diyScenes.get(device.getDataValue("deviceModel")).get(diyEffectNumber).cmdType
         if (cmdType == null) {
             if (debugLog) log.debug "cmdtype is null setting to ptReal"
             cmdType = "ptReal"
