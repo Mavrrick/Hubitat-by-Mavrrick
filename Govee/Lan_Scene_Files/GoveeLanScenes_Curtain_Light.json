@@ -1,7 +1,7 @@
 [{
         "Curtain_Light": {
             "1": {
-                "name": "Unsupported - Change "Enable Local Lan Scene Control" to off to enable scenes by Cloud API",
+                "name": "Unsupported - Change Enable Local Lan Scene Control to off to enable scenes by Cloud API",
                 "cmd": ["\"owABIAxTuG5NZAEEdQAAbACJUOc\\=\"", "\"owFORw0KGgoAAAANSUhEUgAAAKY\\=\"", "\"owIUAAAAGggCAAAAOOHrKgAAAL0\\=\"", "\"owMzSURBVDgRY2AYBaMhMBoCo7U\\=\"", "\"owQhMKAhwPj//3+yHcBEtk6gRkU\\=\"", "\"owWWSd/J16RzYwM7wfIzxQ5G/M\\=\"", "\"owYAOAcGgy8DvRUAAAAASUVORJ0\\=\"", "\"oweuQmCCAABkAegDhQAAfACJUAQ\\=\"", "\"owhORw0KGgoAAAANSUhEUgAAAK8\\=\"", "\"owkUAAAAGggCAAAAOOHrKgAAALY\\=\"", "\"owpDSURBVDgRY2AYBaMhMGhDgNw\\=\"", "\"owvx////ZDuOiWydQI0sk76Tr/8\\=\"", "\"owydIpsp0szI8H6AAowiZ7MwHC4\\=\"", "\"ow0aoNBmYbg/YDZfGSCbKYoqAGY\\=\"", "\"ow4jdAkOQ3Q6ewAAAABJRU5EriM\\=\"", "\"ow9CYIIAAGQB6AOIAAB/AIlQTuI\\=\"", "\"oxBHDQoaCgAAAA1JSERSAAAAFO0\\=\"", "\"oxEAAAAaCAIAAAA44esqAAAARvw\\=\"", "\"oxJJREFUOBFjYBh5gPH///9k+/M\\=\"", "\"oxOaiWydQI0sk76Tr50imynSzLE\\=\"", "\"oxTI8H6AAowiZ7MwHBqKoc3CcGs\\=\"", "\"oxV/aDr7ytB09q2h6GxGBrYByk0\\=\"", "\"oxaSACwZCvyncH8MAAAAAElFTgI\\=\"", "\"oxdErkJgggAAZAHoA4UAAHwAiQA\\=\"", "\"oxhQTkcNChoKAAAADUlIRFIAAO8\\=\"", "\"oxkAFAAAABoIAgAAADjh6yoAAKY\\=\"", "\"oxoAQ0lEQVQ4EWNgGAWjITBoQ0w\\=\"", "\"oxuA8f///2Q7jolsnUCNLJO+k8A\\=\"", "\"oxyvnSKbKdLMyPB+gAKMImezMI0\\=\"", "\"ox0cGqDQZmG4P2A2XxkgmymKKmo\\=\"", "\"ox4AI3QJDkN0OnsAAAAASUVORJ0\\=\"", "\"o/+uQmCCAABkAegDAAAAAAAAANw\\=\"", "\"MwUEJR3/AAAAAAAAAAAAAAAAAPU\\=\""]
             },
             "999": {
