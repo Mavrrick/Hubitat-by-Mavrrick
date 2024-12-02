@@ -674,6 +674,7 @@ def diyAddManual(String devSKU, String diyName, String command) {
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
+        logger("diyAdd(): keys are  ${state.diyEffects."${devSKU}".keySet()}", 'debug')
         nameList  = []
         scenelist = state.diyEffects."${devSKU}".keySet()
         scenelist.forEach {
