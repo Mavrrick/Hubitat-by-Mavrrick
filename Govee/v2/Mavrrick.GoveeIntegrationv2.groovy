@@ -615,6 +615,7 @@ def sendnotification (type, value) {
 }
 
 def diyAdd(devSKU, diyName, command) {
+    def slurper = new JsonSlurper()
     logger("diyAdd(): Attempting add DIY Scene ${devSKU}:${diyName}:${commandType}:${command}", 'trace')
     command = command.inspect().replaceAll("\'", "\"")
     Map diyEntry = [:]
@@ -622,6 +623,7 @@ def diyAdd(devSKU, diyName, command) {
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
     logger("diyAdd(): keys are  ${state.diyEffects.keySet()}", 'debug')
+    logger("diyAdd(): keys are  ${state.diyEffects."${devSKU}".keySet()}", 'debug')
     if (state.diyEffects.containsKey(devSKU) == false) {
         logger("diyAdd(): Device ${devSKU} not found", 'debug')
         logger("diyAdd(): New Device. Starting at 1001", 'debug')
@@ -630,9 +632,15 @@ def diyAdd(devSKU, diyName, command) {
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
-        compare = state.diyEffects."${devSKU}".toString()
-        matchVal = compare.indexOf(diyName)
-        if (matchVal > 0) {
+        nameList  = []
+        scenelist = state.diyEffects."${devSKU}".keySet()
+        scenelist.forEach {
+            logger("diyAdd(): Adding Scene ${state.diyEffects."${devSKU}"."${it}".name} to compare list", 'debug')
+            nameList.add(state.diyEffects."${devSKU}"."${it}".name)    
+        }
+        logger("diyAdd(): Scene Name Compare list ${nameList}", 'debug')
+       
+        if (nameList.contains(diyName)) {
             logger("diyAdd(): Scene with same name already present", 'debug')
             } else {
             logger("diyAdd(): Device ${devSKU} was found. Adding Scene to existing scene list", 'debug')
@@ -666,9 +674,15 @@ def diyAddManual(String devSKU, String diyName, String command) {
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
-        compare = state.diyEffects."${devSKU}".toString()
-        matchVal = compare.indexOf(diyName)
-        if (matchVal > 0) {
+        nameList  = []
+        scenelist = state.diyEffects."${devSKU}".keySet()
+        scenelist.forEach {
+            logger("diyAdd(): Adding Scene ${state.diyEffects."${devSKU}"."${it}".name} to compare list", 'debug')
+            nameList.add(state.diyEffects."${devSKU}"."${it}".name)    
+        }
+        logger("diyAdd(): Scene Name Compare list ${nameList}", 'debug')
+       
+        if (nameList.contains(diyName)) {
             logger("diyAdd(): Scene with same name already present", 'debug')
             } else {
             logger("diyAdd(): Device ${devSKU} was found. Adding Scene to existing scene list", 'debug')
