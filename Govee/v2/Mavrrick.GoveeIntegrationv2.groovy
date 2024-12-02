@@ -623,7 +623,6 @@ def diyAdd(devSKU, diyName, command) {
     diyEntry.put("cmd", command)
     logger("diyAdd(): Trying to add ${diyEntry}", 'debug')
     logger("diyAdd(): keys are  ${state.diyEffects.keySet()}", 'debug')
-    logger("diyAdd(): keys are  ${state.diyEffects."${devSKU}".keySet()}", 'debug')
     if (state.diyEffects.containsKey(devSKU) == false) {
         logger("diyAdd(): Device ${devSKU} not found", 'debug')
         logger("diyAdd(): New Device. Starting at 1001", 'debug')
@@ -632,6 +631,7 @@ def diyAdd(devSKU, diyName, command) {
         diyEntry2.put(diyAddNum,diyEntry)
         state.diyEffects.put(devSKU,diyEntry2)
     } else {
+        logger("diyAdd(): keys are  ${state.diyEffects."${devSKU}".keySet()}", 'debug')
         nameList  = []
         scenelist = state.diyEffects."${devSKU}".keySet()
         scenelist.forEach {
