@@ -35,7 +35,7 @@ def updated() {
     sendEvent(name: "msgCount", value: 0)
     disconnect()
 	pauseExecution(1000)
-    if (disableMQTT) {
+    if (disableMQTT == true) {
         mqttConnectionAttempt()
     }
 }
@@ -49,7 +49,7 @@ def initialize() {
 //    goveeAPI = parent.state.goveeAppAPI
     disconnect()
     pauseExecution(1000)
-    if (disableMQTT) {
+    if (disableMQTT == true) {
         mqttConnectionAttempt()
     }
     sendEvent(name: "msgCount", value: 0)
