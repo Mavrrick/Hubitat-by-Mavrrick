@@ -363,6 +363,11 @@
       "name": "GoveeLanScenes_Table_Lamp.json",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Table_Lamp.json"
     },
+        {
+      "id": "bf4c6608-54a7-4bf0-ade5-8217acc11f90",
+      "name": "GoveeLanScenes_Table_Lamp_2.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/Lan_Scene_Files/GoveeLanScenes_Table_Lamp_2.json"
+    },
     {
       "id": "087630c6-7503-4e1a-a629-a9aed3a8963e",
       "name": "GoveeLanScenes_Wall_Light_Bar.json",
