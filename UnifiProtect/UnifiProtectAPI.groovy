@@ -32,6 +32,7 @@
 * Known Issue(s):
 * 
 * Version Control:
+* 0.2.50 - Typo correction for smartDetectTypes
 * 0.2.49 - Change to smartDetectTypes data handling, additional data handling, and a new WebSocket type
 * 0.2.48 - Change to Fingerprint data point due to Ubiquiti change
 * 0.2.47 - Additional data handling
@@ -101,7 +102,7 @@ def DriverName(){
 
 // Returns the driver version
 def DriverVersion(){
-    return "0.2.49"
+    return "0.2.50"
 }
 
 // Driver Metadata
@@ -132,12 +133,11 @@ metadata{
         // "api/backups" // 
         // "api/cameras" // May show camera data
         command "GetMotionEvents", [ [ name: "Number*", type: "ENUM", description: "REQUIRED: Number of events to get", defaultValue: 10, constraints: [ 1, 5, 10, 25, 50, 100 ] ] ]
-
+        
         // Generic WebHook command Mavrrick
         command "webhook", [[name: "DeviceID*", type: "STRING", description: "Camera ID to apply Webhook event to"],
                           [name: "Attribute", type: "STRING", description: "Type of attribute to be applied to child device"],
                           [name: "Value", type: "STRING", description: "Attribute value"]]
-        
         
 		// Attributes for the driver itself
 		attribute "DriverName", "string" // Identifies the driver being used for update purposes
@@ -339,10 +339,10 @@ def parse( String description ){
                             PostStateToChild( "${ Device }", "LastWSSAction", "motionDetected" )
 							break
 						case "smartDetectTypes":
-                            if( it.value.size() > 1 ){
+                        	def Size = it.value.size()
+                            if( Size > 1 ){
                                 def TempString = ""
                                 def Count = 0
-    							def Size = it.value.size()
                                 it.value.each{
                                     TempString = TempString + "${ it }"
                                     Count = ( Count + 1 )
@@ -359,7 +359,7 @@ def parse( String description ){
 							        ProcessState( "LastWSSAction", "smartDetectType" )
                                 }
                                 PostStateToChild( "${ Device }", "LastWSSAction", "smartDetectType" )
-                            } else if( it.value.size() == 1 ){
+                            } else if( Size == 1 ){
                                 if( ( "${ it.value[ 0 ] }" != null ) && ( "${ it.value[ 0 ] }" != "null" ) ){
                                     PostEventToChild( "${ Device }", "smartDetectType", "${ it.value[ 0 ] }", null, true )
                                 }
@@ -2701,4 +2701,3 @@ def webhook (DeviceID, Attribute, Value ) {
     log.debug "webhook: Device ${DeviceID} Type of alert ${Attribute} value ${Value} as ${AIRecognition}"
     PostEventToChild( "${ DeviceID }", "AIRecognition" , "${AIRecognition}" , null, true )    
 }
-
