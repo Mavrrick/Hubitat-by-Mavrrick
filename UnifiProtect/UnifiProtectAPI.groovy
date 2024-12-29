@@ -2695,9 +2695,10 @@ def CheckForUpdate(){
 // Webhook Helper processing
 
 def webhook (DeviceID, Attribute, Value ) {
-    log.debug "webhook: Device ${DeviceID} Type of alert ${Attribute} value ${Value}"
-    PostEventToChild( "${ DeviceID }", "${Attribute}" , "${Value}" , null, true )
-    
-    
+    Map AIRecognition = [:]
+    AIRecognition.put("Type", Attribute)
+    AIRecognition.put("Value", Value)
+    log.debug "webhook: Device ${DeviceID} Type of alert ${Attribute} value ${Value} as ${AIRecognition}"
+    PostEventToChild( "${ DeviceID }", "AIRecognition" , "${AIRecognition}" , null, true )    
 }
 
