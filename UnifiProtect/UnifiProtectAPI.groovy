@@ -2695,9 +2695,15 @@ def CheckForUpdate(){
 // Webhook Helper processing
 
 def webhook (DeviceID, Attribute, Value ) {
-    Map AIRecognition = [:]
-    AIRecognition.put("Type", Attribute)
-    AIRecognition.put("Value", Value)
-    log.debug "webhook: Device ${DeviceID} Type of alert ${Attribute} value ${Value} as ${AIRecognition}"
-    PostEventToChild( "${ DeviceID }", "AIRecognition" , "${AIRecognition}" , null, true )    
+    switch( Attribute ) {
+    	case "Face":
+        case "LicensePlate":    
+            log.debug "webhook: Device ${DeviceID} Type of alert ${Attribute} value ${Value} as ${AIRecognition}"
+            PostEventToChild( "${ DeviceID }", "AIRecognitionType" , "${Attribute}" , null, true )
+            PostEventToChild( "${ DeviceID }", "AIRecognitionValue" , "${Value}" , null, true )
+    	break
+    default:
+        Logging( "Attribute of ${Attribute} is not valid for this action. Pelase contact developer to add to process", 2 )
+        break
+    }    
 }
