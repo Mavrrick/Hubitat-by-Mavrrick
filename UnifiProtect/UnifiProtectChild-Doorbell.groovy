@@ -103,8 +103,8 @@ metadata{
         attribute "Tile", "string" // Ex: "[font size='2'][b]Temperature:[/b] ${ temperature }°${ location.getTemperatureScale() }[/br][/font]"
         
         // AI related Attributes
-        attribute "AIRecognition", "string" // Stores the ID associated with a persons face as recognized by AI
-        
+        attribute "AIRecognitionType", "string" // Stores the Type of AI detection triggered
+        attribute "AIRecognitionValue", "string" // Stores the ID associated with a persons face as recognized by AI
     }
 	preferences{
         if( ShowAllPreferences ){
