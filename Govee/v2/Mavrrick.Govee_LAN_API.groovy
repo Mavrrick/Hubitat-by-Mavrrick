@@ -308,9 +308,9 @@ def lanActivateDIY (diyActivate) {
 /////////////////////////////////////////////////////
 
 def retrieveScenes() {
-    state.remove("sceneOptions")
-    state.remove("diySceneOptions")  
-    state.remove("diyScene") 
+    state.remove("sceneOptions")  //Needs to be removed at a future date
+    state.remove("diySceneOptions")  //Needs to be removed at a future date
+    state.remove("diyScene") //Needs to be removed at a future date
     state.scenes = [] as List
     state.diyEffects = [] as List
     if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent device")}
@@ -421,9 +421,9 @@ def getDevType() {
             device.updateDataValue("DevType", "Y_Light");
             break;        
         case "H6072": 
-        case "H607C":
             device.updateDataValue("DevType", "Lyra_Lamp");
             break;
+        case "H607C":
         case "H6079":
             device.updateDataValue("DevType", "Lyra_Pro");
             break;        
@@ -437,6 +437,9 @@ def getDevType() {
         case "H6051":
             device.updateDataValue("DevType", "Table_Lamp");
             break;
+        case "H6022":
+            device.updateDataValue("DevType", "Table_Lamp_2");
+            break;        
         case "H70C1":
         case "H70C2":
         case "H70C4":
@@ -496,7 +499,10 @@ def getDevType() {
             break;
         case "H7075":
             device.updateDataValue("DevType", "Outdoor_Wall_Light");
-            break;        
+            break; 
+        case "H6811":
+            device.updateDataValue("DevType", "Net_Lights");
+            break;
         case "H6091":
         case "H6092":
             device.updateDataValue("DevType", "Galaxy_Projector");
@@ -613,10 +619,19 @@ def parse(message) {
 }
 
 def loadSceneFile() {
-    byte[] dBytes = downloadHubFile("GoveeLanScenes_"+getDataValue("DevType")+".json")
-    tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
-    scenes = tmpEffects.get(0)
-    return scenes
+    
+    String name = lanScenesFile
+    
+    if (name == null) {
+        if (debugLog) {log.debug "loadSceneFile: File name is null using default values"}
+        name = "GoveeLanScenes_"+getDataValue("DevType")+".json"    
+    } 
+    
+    byte[] dBytes = downloadHubFile(name)
+    if (debugLog) {log.debug "File loaded starting parse."}
+        tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+        scenes = tmpEffects.get(0)
+        return scenes 
 }
 
 def loadDIYFile() {
