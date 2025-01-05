@@ -625,7 +625,6 @@ def getIPString() {
 
 def parse(message) {  
   log.error "Got something to parseUDP"
-//  payload =  Base64.decoder.decode(message.payload)
   log.error "UDP Response -> ${message}"    
 }
 

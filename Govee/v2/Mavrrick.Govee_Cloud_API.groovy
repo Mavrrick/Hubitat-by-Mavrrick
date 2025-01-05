@@ -117,7 +117,6 @@ try {
                     if (descLog) { log.info "${device.label} scene was set to ${payload2}"}
                     }
                 else if (code == 200 && command == "diyScene") {
-                    if (debugLog) { log.debug "sendCommand(): Response data is "+resp.data}
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "DIY_EFFECTS")

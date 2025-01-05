@@ -553,7 +553,7 @@ def sceneExtract2() {
             } else {
                 paragraph "Please add a Email and Password to Obtain your Govee Home Token"
             }
-            paragraph "To clehttps://app2.govee.comar token clear Email address and password and then click button below to clear token"
+            paragraph "To clear token clear Email address and password and then click button below to clear token"
             input "goveeHomeTokenClear" , "button",  title: "Click here to reset Govee Home token"
         }
     }
@@ -810,33 +810,6 @@ def sceneFileCreate(devSKU, diyName, command) {
 //        diyEntry2.put(diyAddNum,diyEntry)
         goveeScene."${devSKU}".put(diyAddNum,diyEntry)
     }
-/*    if (state.diyEffects.containsKey(devSKU) == false) {
-        logger("sceneFileCretae(): Device ${devSKU} not found", 'debug')
-        logger("sceneFileCretae(): New Device. Starting at 1001", 'debug')
-        int diyAddNum = 1001
-        Map diyEntry2 = [:]
-        diyEntry2.put(diyAddNum,diyEntry)
-        state.diyEffects.put(devSKU,diyEntry2)
-    } else {
-        logger("sceneFileCretae(): keys are  ${state.diyEffects."${devSKU}".keySet()}", 'debug')
-        nameList  = []
-        scenelist = state.diyEffects."${devSKU}".keySet()
-        scenelist.forEach {
-//            logger("diyAdd(): Adding Scene ${state.diyEffects."${devSKU}"."${it}".name} to compare list", 'debug')
-            nameList.add(state.diyEffects."${devSKU}"."${it}".name)    
-        }
-        logger("sceneFileCretae(): Scene Name Compare list ${nameList}", 'debug')
-       
-        if (nameList.contains(diyName)) {
-            logger("sceneFileCretae(): Scene with same name already present", 'debug')
-            } else {
-            logger("sceneFileCretae(): Device ${devSKU} was found. Adding Scene to existing scene list", 'debug')
-            diySize = state.diyEffects."${devSKU}".size()
-            diyAddNum = (diySize + 1001).toInteger()
-            logger("sceneFileCretae(): Current DiY size is ${diySize}", 'debug')
-            state.diyEffects."${devSKU}".put(diyAddNum,diyEntry)
-        }
-    } */
     state.diyEffects = goveeScene
     writeGoveeSceneFile()
 }
@@ -862,7 +835,7 @@ def diyAdd(devSKU, diyName, command) {
         nameList  = []
         scenelist = state.diyEffects."${devSKU}".keySet()
         scenelist.forEach {
-//            logger("diyAdd(): Adding Scene ${state.diyEffects."${devSKU}"."${it}".name} to compare list", 'debug')
+            logger("diyAdd(): Adding Scene ${state.diyEffects."${devSKU}"."${it}".name} to compare list", 'debug')
             nameList.add(state.diyEffects."${devSKU}"."${it}".name)    
         }
         logger("diyAdd(): Scene Name Compare list ${nameList}", 'debug')
