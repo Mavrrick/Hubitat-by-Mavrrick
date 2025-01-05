@@ -125,11 +125,16 @@ def lanSetEffect (effectNo) {
     effectNumber = effectNo.toString()
     lanScenes = loadSceneFile()
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
-    if (debugLog) log.debug "${lanScenes.get(device.getDataValue("DevType")).keySet()}"
+    if (lanScenes.keySet().contains(device.getDataValue("DevType"))) {
+        tag = device.getDataValue("DevType")
+    } else if (lanScenes.keySet().contains(device.getDataValue("deviceModel"))) {
+        tag = device.getDataValue("deviceModel")
+    } 
+    if (debugLog) log.debug "${lanScenes.get("${tag}").keySet()}"
 //    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
-    if (lanScenes.get(device.getDataValue("DevType")).containsKey(effectNumber)) {
-        String sceneInfo =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).name
-        String sceneCmd =  lanScenes.get(device.getDataValue("DevType")).get(effectNumber).cmd
+    if (lanScenes.get("${tag}").containsKey(effectNumber)) {
+        String sceneInfo =  lanScenes.get("${tag}").get(effectNumber).name
+        String sceneCmd =  lanScenes.get("${tag}").get(effectNumber).cmd
         if (debugLog) {log.debug ("setEffect(): Activate effect number ${effectNo} called ${sceneInfo} with command ${sceneCmd}")}
         if (debugLog) log.debug "Scene number is present"
         sendEvent(name: "colorMode", value: "EFFECTS")
@@ -321,7 +326,12 @@ def retrieveScenes() {
     lanScenes = loadSceneFile()
     if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.get(device.getDataValue("DevType"))}")}
     if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.keySet()}")}
-    lanScenes.get(device.getDataValue("DevType")).each {
+    if (lanScenes.keySet().contains(device.getDataValue("DevType"))) {
+        tag = device.getDataValue("DevType")
+    } else if (lanScenes.keySet().contains(device.getDataValue("deviceModel"))) {
+        tag = device.getDataValue("deviceModel")
+    }                                                                  
+    lanScenes.get("${tag}").each {
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
@@ -615,6 +625,7 @@ def getIPString() {
 
 def parse(message) {  
   log.error "Got something to parseUDP"
+//  payload =  Base64.decoder.decode(message.payload)
   log.error "UDP Response -> ${message}"    
 }
 

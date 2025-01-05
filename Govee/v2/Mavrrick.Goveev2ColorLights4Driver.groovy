@@ -285,7 +285,7 @@ def segmentedBrightness(segment, brightness) {
     sendCommand("segmentedBrightness", values,"devices.capabilities.segment_color_setting")    
 }
 
-def musicMode(musicMode, sensitivity, autoColor, color) {
+def musicMode(musicMode, sensitivity, autoColor) {
         if (debugLog) {log.debug ("retrieveScenes(): auto color is set to ${autoColor}")}
     if (autoColor == "on")  { 
         if (debugLog) {log.debug ("retrieveScenes(): auto color is set to ${autoColor}")}
