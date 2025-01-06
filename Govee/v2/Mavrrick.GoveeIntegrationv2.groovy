@@ -44,6 +44,7 @@ import hubitat.helper.HexUtils
 @Field static List child = []
 @Field static List childDNI = []
 @Field static Map goveeScene = [:]
+@Field static def goveeApiRespons = {}
 @Field static final String goveeDIYScenesFileBackup = "GoveeLanDIYScenes_Backup.json"
 @Field static final String goveeDIYScenesFile = "GoveeLanDIYScenes.json"
 @Field static String statusMessage = ""
@@ -578,22 +579,25 @@ def sceneExtract3() {
         httpGet(params) { resp ->
 //            def slurper = new JsonSlurper()
 //            processed = 0
+            goveeApiRespons = resp.data.data.categories.scenes
             sceneNames = []
             sceneCodes = []
             sceneParms = []
             goveeScene = [:]
             String convrtCmd = ""
-            logger("sceneExtract3(): Obtained ${resp.data.data.categories.scenes} scene data", 'debug')
-            resp.data.data.categories.scenes.forEach {                
-                logger("sceneExtract3(): SceneName ${it.sceneName} size ${it.sceneName.size()}", 'debug')
+//			  logger("sceneExtract3(): Obtained ${resp.data.data.categories.scenes} scene data", 'debug')
+//            logger("sceneExtract3(): Obtained ${goveeApiRespons} scene data", 'debug')
+//            resp.data.data.categories.scenes.forEach { 
+            goveeApiRespons.forEach {     
+//                logger("sceneExtract3(): SceneName ${it.sceneName} size ${it.sceneName.size()}", 'debug')
                 sceneNames = sceneNames.plus(it.sceneName)                
-                logger("sceneExtract3(): Scene Codes ${it.lightEffects.sceneCode} size ${it.lightEffects.sceneCode.size()}", 'debug')
+//                logger("sceneExtract3(): Scene Codes ${it.lightEffects.sceneCode} size ${it.lightEffects.sceneCode.size()}", 'debug')
                 sceneCodes = sceneCodes.plus(it.lightEffects.sceneCode)
-                logger("sceneExtract3(): SceneParm code ${it.lightEffects.scenceParam} size ${it.lightEffects.scenceParam.size()}", 'debug')
+//                logger("sceneExtract3(): SceneParm code ${it.lightEffects.scenceParam} size ${it.lightEffects.scenceParam.size()}", 'debug')
                 sceneParms = sceneParms.plus(it.lightEffects.scenceParam)
 //                logger("sceneExtract3(): SceneName ${it.sceneName.get(processed)} SceneParm code ${it.lightEffects.scenceParam.get(processed)} size ${it.lightEffects.scenceParam.size()}", 'debug')
             }
-            logger("sceneExtract3(): Extracted whole variables ${sceneNames} size ${sceneCodes} size ${sceneParms}", 'debug')
+//            logger("sceneExtract3(): Extracted whole variables ${sceneNames} size ${sceneCodes} size ${sceneParms}", 'debug')
             logger("sceneExtract3(): Size of scene data fields ${sceneNames.size()} size ${sceneCodes.size()} size ${sceneParms.size()}", 'debug')
             recNum = 0
             sceneNames.forEach {
@@ -723,7 +727,7 @@ def sceneExtract3() {
                 sceneFileCreate(settings.devsku, sceneNames.get(recNum), diyAddManual)
                 recNum = recNum + 1
             }
-
+		sceneFileMax(settings.devsku, sceneNames.size())
         }
     } catch (groovyx.net.http.HttpResponseException e) {
         logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
@@ -830,7 +834,7 @@ def sendnotification (type, value) {
 }
 
 def sceneFileCreate(devSKU, diyName, command) {
-    def slurper = new JsonSlurper()
+//    def slurper = new JsonSlurper()
     logger("sceneFileCretae(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
 //    command = command.inspect().replaceAll("\'", "\"")
 	Map diyEntry = [:]
@@ -851,7 +855,16 @@ def sceneFileCreate(devSKU, diyName, command) {
 //        diyEntry2.put(diyAddNum,diyEntry)
         goveeScene."${devSKU}".put(diyAddNum,diyEntry)
     }
-    state.diyEffects = goveeScene
+//    state.diyEffects = goveeScene
+    writeGoveeSceneFile()
+}
+
+def sceneFileMax(devSKU, int maxNum) {
+    Map diyEntry = [:]
+    int maxScene = 100 + maxNum
+    diyEntry.put("maxScene", maxScene)
+    int diyAddNum = 999
+    goveeScene."${devSKU}".put(diyAddNum, diyEntry)
     writeGoveeSceneFile()
 }
 
