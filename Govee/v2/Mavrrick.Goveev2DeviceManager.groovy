@@ -268,6 +268,28 @@ def addLightDeviceHelper(String driver, String deviceID, String deviceName, Stri
 	}
 }
 
+def addLightDeviceHelper(String driver, String deviceID, String deviceName, String deviceModel, List commands, List capType) {
+	//Driver Settings
+	Map deviceType = [namespace:"Mavrrick", typeName: driver]
+	Map deviceTypeBak = [:]
+	String devModel = deviceModel
+	String dni = "Govee_${deviceID}"
+	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: ctMin, ctMax: ctMax, capTypes: capType]
+	if (debugLog) "Creating Child Device"
+
+	def childDev
+	try {
+		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+	}
+	catch (e) {
+		log.warn "The '${deviceType}' driver failed"
+		if (deviceTypeBak) {
+			logWarn "Defaulting to '${deviceTypeBak}' instead"
+			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+		}
+	}
+}
+
 ///////////////////////////////////////////
 // MQTT Helper to route events to device // 
 ///////////////////////////////////////////
