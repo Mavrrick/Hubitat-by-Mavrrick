@@ -467,7 +467,6 @@ try {
 			httpPost(params) { resp ->
 
                 if (debugLog) { log.debug "retrieveScenes2():"+resp.data.payload.capabilities}
-                state.remove("sceneOptions")
                 state.scenes = [:]
                 resp.data.payload.capabilities.parameters.options.get(0).each {
                     state.scenes.put(it.value.id,it.name)  
@@ -520,10 +519,11 @@ try {
 
                 if (debugLog) { log.debug "retrieveDIYScenes():"+resp.data.payload.capabilities}
                 state.remove("diyEffects")
-                state.remove("diyScene")                
-                state.diySceneOptions = [:]
+                state.remove("diyScene") //Needs to be removed at future date
+                state.remove("diySceneOptions") // needs to be removed at future date
+                state.diyEffects = [:]
                 resp.data.payload.capabilities.parameters.options.get(0).each {
-                    state.diySceneOptions.put(it.value,it.name)  
+                    state.diyEffects.put(it.value,it.name)
                 } 
 
                 if (debugLog) { log.debug "retrieveDIYScenes(): dynamic scenes loaded"}
