@@ -50,6 +50,19 @@ import hubitat.helper.HexUtils
 @Field static String statusMessage = ""
 @Field static String BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
+@Field static final Map deviceTag =  // a300 line device specific codes
+	["H6022":"585a", "H6052":"01", "H6078":"0c09", "H6065":"04", "H6066":"04"]
+
+@Field static final Map deviceTagll = // Final Line code for special device types
+	["H6065":"47", "H6066":"2d"]
+
+@Field static final Map goveeDevOffsets = // values to properly extract device hex string data
+	["H6022":["start":2, "line1End":28, "offset":0],
+     "H6052":["start":4, "line1End":32, "offset":4],
+     "H6065":["start":10, "line1End":38, "offset":10],
+     "H6066":["start":10, "line1End":38, "offset":10],
+     "H6078":["start":2, "line1End":28, "offset":0],
+     "H610A":["start":0, "line1End":30, "offset":0]]
 
 preferences
 {
@@ -606,9 +619,14 @@ def sceneExtract3() {
                 def sccode = HexUtils.integerToHexString(sceneCodes.get(recNum).get(0),2)
                 def hexString = base64ToHex(strSceneParm)
                 def hexSize = hexString.length() // each line is 35 charters except the first one which is 6 less
-                if (settings.devsku == "H6066"){
+				if (goveeDevOffsets.containsKey(settings.devsku)) { // if present subtract offset value from string for calculations
+                    hexSize = hexSize - goveeDevOffsets."${settings.devsku}".offset
+            	}
+/*                if (settings.devsku == "H6066" || settings.devsku == "H6065" ){
                     hexSize = hexSize - 10
-                }
+                } else if (settings.devsku == "H6052") {
+                    hexSize = hexSize - 4
+                } */
                 int splits = 0
                 if (isWholeNumber((hexSize - 28) / 34)) {
                     logger("sceneExtract3(): Split is a whole number ${(hexSize - 28) / 34}", 'debug')
@@ -621,6 +639,9 @@ def sceneExtract3() {
 //                int splits = (int) Math.floor((hexSize - 28) / 34)               
                 int action = 0
                 def position = 28
+                if (goveeDevOffsets.containsKey(settings.devsku)) { // if present set position of next line to start at appropriate location
+                    position =  goveeDevOffsets."${settings.devsku}".line1End
+            	}
                 convrtCmd = ""
                 logger("sceneExtract3(): SceneParm converted to hex:  ${hexString} Lenght: ${hexSize} Splits ${splits}", 'debug')
                 if (strSceneParm != null && strSceneParm != "") {
@@ -629,33 +650,15 @@ def sceneExtract3() {
                     	if (action == 0) {
                         	String section = ""
                             String id = ""
-                        	String lineHeader = "a"+ (300+ action)
-                            if (settings.devsku == "H6078") {
-                                id2 = "0c09" // replaces 0216 from default script with 0c09
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +id2).toLowerCase()
+                        	String lineHeader = "a"+ (300 + action)
+                            if (goveeDevOffsets.containsKey(settings.devsku)) {
+                            	id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
                                 if (hexSize < 28) {
-                                    section = hexString.substring(10)
+                                    section = hexString.substring(goveeDevOffsets."${settings.devsku}".start)
                                 } else {
-                                	section = hexString.substring(2,28)
+                                	section = hexString.substring(goveeDevOffsets."${settings.devsku}".start,goveeDevOffsets."${settings.devsku}".line1End)
                                 }
-                            } else if (settings.devsku == "H6022") {
-                                id2 = "585a" // replaces 0216 from default script with 0c09
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +id2).toLowerCase()
-                                if (hexSize < 28) {
-                                    section = hexString.substring(10)
-                                } else {
-                                	section = hexString.substring(2,28)
-                                }
-                            }  else if (settings.devsku == "H6066") {
-                                id2 = "04" // replaces default O2 value.
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +id2).toLowerCase()
-                                if (hexSize < 28) { // Adjust Starting point of file for H6066 scenes
-                                    section = hexString.substring(10)  
-                                } else {
-                                	section = hexString.substring(10,38)
-                                }                             
-                                position = 38
-                            }else {
+                            } else {
                                 id = ("01" + HexUtils.integerToHexString(splits+2,1) +"02").toLowerCase()
                                 if (hexSize < 28) {
                                     section = hexString.substring(0)
@@ -663,6 +666,56 @@ def sceneExtract3() {
                                 	section = hexString.substring(0,28)
                                 }
                             }
+            /*                if (settings.devsku == "H6078") { // Cylinder Lamp
+//                                id2 = "0c09" // replaces 0216 from default script with 0c09
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(2)
+                                } else {
+                                	section = hexString.substring(2,28)
+                                }
+                            } else if (settings.devsku == "H6052") { // Table Lamp 1
+//                                id2 = "07" // replaces 02 from default script with 07
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(4)
+                                } else {
+                                	section = hexString.substring(4,32)
+                                }
+                                position = 32
+                            } else if (settings.devsku == "H6022") { // Table Lamp 2
+//                                id2 = "585a" // replaces 02xx from default script with 0c09
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(2)
+                                } else {
+                                	section = hexString.substring(2,28)
+                                }
+                            }  else if (settings.devsku == "H6066" || settings.devsku == "H6065") { // Hexa Panel, and Y Light
+                                id2 = "04" // replaces default O2 value.
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
+                                if (hexSize < 28) { // Adjust Starting point of file for H6066 scenes
+                                    section = hexString.substring(10)  
+                                } else {
+                                	section = hexString.substring(10,38)
+                                }                             
+                                position = 38
+                            } else if (settings.devsku == "H610A" ) { // Lively Light Bar
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1)).toLowerCase()
+                                if (hexSize < 28) { // Adjust Starting point of file for H6066 scenes
+                                    section = hexString.substring(0)  
+                                } else {
+                                	section = hexString.substring(0,30)
+                                }                             
+                                position = 30
+                            } else {
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +"02").toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(0)
+                                } else {
+                                	section = hexString.substring(0,28)
+                                }
+                            } */
                         	action = action + 1
                             String minusChkSum = lineHeader+id+section
                             checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
@@ -708,11 +761,18 @@ def sceneExtract3() {
                 }
                 logger("sceneExtract3(): scene code :  ${sccode} ", 'debug')
                 String lastLine = ""
-                if (settings.devsku == "H6066"){ // add 2d value to final command to get closer to proper command for device.
-                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"002d000000000000000000000000").toLowerCase()
+                if (deviceTagll.containsKey(settings.devsku)) {
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"00"+deviceTagll."${settings.devsku}"+"000000000000000000000000").toLowerCase()
                 } else {
                     lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0000000000000000000000000000").toLowerCase()
                 }
+             /*   if (settings.devsku == "H6066"){ // add 2d value to final command to get closer to proper command for device.
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"002d000000000000000000000000").toLowerCase()
+                } else if (settings.devsku == "H6065"){ // add 47 value to final command to get closer to proper command for device.
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0047000000000000000000000000").toLowerCase()
+                } else {
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0000000000000000000000000000").toLowerCase()
+                } */
                 checksum = calculateChecksum8Xor(lastLine).toLowerCase()
                 hexConvString = lastLine+checksum
                 logger("sceneExtract3(): final line to complete command is needed. :  ${lastLine}${checksum} ", 'debug')
