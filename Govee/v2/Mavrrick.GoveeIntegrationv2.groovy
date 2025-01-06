@@ -331,6 +331,7 @@ def sceneManualAdd() {
 }
 
 def sceneGoveeExtract() {
+    goveeScene = [:]
     dynamicPage(name: 'sceneGoveeCreate', title: 'Extract All Govee Scenes from Govee API', uninstall: false, install: false, submitOnChange: false, nextPage: "sceneExtract3")
     {
         section('<b>Govee Scene Retrieval</b>')
@@ -601,6 +602,9 @@ def sceneExtract3() {
                 def sccode = HexUtils.integerToHexString(sceneCodes.get(recNum).get(0),2)
                 def hexString = base64ToHex(strSceneParm)
                 def hexSize = hexString.length() // each line is 35 charters except the first one which is 6 less
+                if (settings.devsku == "H6066"){
+                    hexSize = hexSize - 10
+                }
                 int splits = 0
                 if (isWholeNumber((hexSize - 28) / 34)) {
                     logger("sceneExtract3(): Split is a whole number ${(hexSize - 28) / 34}", 'debug')
@@ -615,13 +619,46 @@ def sceneExtract3() {
                 def position = 28
                 convrtCmd = ""
                 logger("sceneExtract3(): SceneParm converted to hex:  ${hexString} Lenght: ${hexSize} Splits ${splits}", 'debug')
-                if (splits > 0) {
+                if (strSceneParm != null && strSceneParm != "") {
                 	while(splits + 1 >= action) {
                     	logger("sceneExtract3(): SceneParm converted to on total splits:  ${splits} on action : ${action} ", 'debug')
                     	if (action == 0) {
-                        	section = hexString.substring(0,28)
-                        	String lineHeader = "a"+ (300+ action) 
-                        	String id = ("01" + HexUtils.integerToHexString(splits+2,1) +"02").toLowerCase()
+                        	String section = ""
+                            String id = ""
+                        	String lineHeader = "a"+ (300+ action)
+                            if (settings.devsku == "H6078") {
+                                id2 = "0c09" // replaces 0216 from default script with 0c09
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +id2).toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(10)
+                                } else {
+                                	section = hexString.substring(2,28)
+                                }
+                            } else if (settings.devsku == "H6022") {
+                                id2 = "585a" // replaces 0216 from default script with 0c09
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +id2).toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(10)
+                                } else {
+                                	section = hexString.substring(2,28)
+                                }
+                            }  else if (settings.devsku == "H6066") {
+                                id2 = "04" // replaces default O2 value.
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +id2).toLowerCase()
+                                if (hexSize < 28) { // Adjust Starting point of file for H6066 scenes
+                                    section = hexString.substring(10)  
+                                } else {
+                                	section = hexString.substring(10,38)
+                                }                             
+                                position = 38
+                            }else {
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +"02").toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(0)
+                                } else {
+                                	section = hexString.substring(0,28)
+                                }
+                            }
                         	action = action + 1
                             String minusChkSum = lineHeader+id+section
                             checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
@@ -666,8 +703,12 @@ def sceneExtract3() {
                     }    
                 }
                 logger("sceneExtract3(): scene code :  ${sccode} ", 'debug')
-                
-                String lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0000000000000000000000000000").toLowerCase()
+                String lastLine = ""
+                if (settings.devsku == "H6066"){ // add 2d value to final command to get closer to proper command for device.
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"002d000000000000000000000000").toLowerCase()
+                } else {
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0000000000000000000000000000").toLowerCase()
+                }
                 checksum = calculateChecksum8Xor(lastLine).toLowerCase()
                 hexConvString = lastLine+checksum
                 logger("sceneExtract3(): final line to complete command is needed. :  ${lastLine}${checksum} ", 'debug')
@@ -691,26 +732,26 @@ def sceneExtract3() {
         return 'unknown'
     }
     } 
-    dynamicPage(name: 'sceneExtract3', title: 'Scene Extract3', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
+    dynamicPage(name: 'sceneExtract3', title: 'Govee API Scene Extract', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
     {
-        if (state.goveeHomeToken != null) {
-            section('<b>Extracted scenes are shown below:</b>') {
-//                paragraph "Device name ${devName}"
+//        if (state.goveeHomeToken != null) {
+            section('<b>Scene extraction completed</b>') {
+                paragraph "All Scenes for Devices with model Number ${settings.devsku} have been extracted"
 //                paragraph "Scene name is ${sceneName}"
 //                paragraph "Command is <mark>${command.inspect().replaceAll("\'", "\"")}</mark>"
 //                paragraph "This command will work with any device with model ${devSku}"
-                paragraph addedScenes
-                paragraph "If you want to backup the scenes pelase download the GoveeLanDIYScenes.json file from your hub."
+//                paragraph addedScenes
+                paragraph "The Scenes have been extracted and written to GoveeLanScenes_${settings.devsku}.json."
             }
             
-        } else {
+/*        } else {
             section('<b>Extracted command below:</b>') {
                 paragraph "You either have not logging into with your Govee Home creds or the login has expired"
                 paragraph "Please return to the Scene Management Menu by clicking next below. Then click on the button to enter your Govee Home Account credentials"
                 paragraph "Once the Credentials are setup you should be able to extract Scenes"
 
             }
-        }
+        }*/
     }
 }
 
