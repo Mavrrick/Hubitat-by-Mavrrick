@@ -51,7 +51,7 @@ import hubitat.helper.HexUtils
 @Field static String BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
 @Field static final Map deviceTag =  // a300 line device specific codes
-	["H6022":"585a", "H6052":"01", "H6078":"0c09", "H6065":"04", "H6066":"04", "H6079":"", "H610A":""]
+	["H6022":"585a", "H6052":"01", "H6078":"0c09", "H6065":"04", "H6066":"04", "H6079":"", "H610A":"", "H6092":"560b"]
 
 @Field static final Map deviceTagll = // Final Line code for special device types
 	["H6065":"47", "H6066":"2d"]
@@ -63,6 +63,7 @@ import hubitat.helper.HexUtils
      "H6066":["start":10, "line1End":38, "offset":10],
      "H6078":["start":2, "line1End":28, "offset":0],
      "H6079":["start":0, "line1End":30, "offset":0],
+     "H6092":["start":2, "line1End":28, "offset":0],
      "H610A":["start":0, "line1End":30, "offset":0]]
 
 preferences
