@@ -1136,6 +1136,16 @@ def goveeDevAdd() { //testing
                             logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
                             setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                         }    
+                    } else if (deviceModel == "H6093") {
+                        String driver = "Govee v2 H6093 Starlight Driver"
+                        if (drivers.contains(driver)) {
+                            logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                            setBackgroundStatusMessage("Installing device ${deviceName}")
+                            mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                        } else {
+                            logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                            setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
+                        }    
                     } else {
                         String driver = "Govee v2 White Light Driver"
                         if (drivers.contains(driver)) {
