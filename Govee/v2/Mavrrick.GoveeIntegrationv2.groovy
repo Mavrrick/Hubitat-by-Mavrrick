@@ -24,6 +24,7 @@ definition(
     iconUrl: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
     iconX2Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
     iconX3Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
+    singleThreaded: true,
     singleInstance: true)
 
 /*
@@ -65,6 +66,9 @@ import hubitat.helper.HexUtils
      "H6079":["start":0, "line1End":30, "offset":0],
      "H6092":["start":2, "line1End":28, "offset":0],
      "H610A":["start":0, "line1End":30, "offset":0]]
+
+@Field static final List goveeDevPtURL = // devices that use ptURL command and may cause extraction process to fail.
+	["H6800","H6810","H6811","H6840","H70B1","H70B3","H70B4","H70B5","H70BC"]
 
 preferences
 {
@@ -324,6 +328,8 @@ def sceneManagement() {
             input "savDIYScenes" , "button",  title: "Backup DIY Scene Information to file"
             paragraph "Click button below to restore DIY scenes"
             input "resDIYScenes" , "button",  title: "Restore DIY Scene Information from file"
+            paragraph "Retrieve scenes for all devices"
+            input "resGovScenes" , "button",  title: "Retrieve all default Govee scense to local files"
         }
         section('<b>Scene Manual Add</b>')
         {
@@ -577,231 +583,12 @@ def sceneExtract2() {
 }
 
 def sceneExtract3() {
-    addedScenes = "<table> <tr> <th>Device Model</th> <th>Name</th> <th>Command</th> </tr>"
-
-    logger('sceneExtract3() DEVICE INFORMATION', 'debug')
-    if (state.goveeHomeToken != null) {
-    String goveeHomeToken = "Bearer " + state.goveeHomeToken
-
-    def params = [
-            uri   : 'https://app2.govee.com',
-            path  : '/appsku/v1/light-effect-libraries',
-            headers: [ 'appVersion': '9999999'],
-            query: ['sku': settings.devsku],
-        ]
-        logger("sceneExtract3(): Calling HTTP server with ${params}", 'debug')
-    try {
-        httpGet(params) { resp ->
-//            def slurper = new JsonSlurper()
-//            processed = 0
-            goveeApiRespons = resp.data.data.categories.scenes
-            sceneNames = []
-            sceneCodes = []
-            sceneParms = []
-            goveeScene = [:]
-            String convrtCmd = ""
-//			  logger("sceneExtract3(): Obtained ${resp.data.data.categories.scenes} scene data", 'debug')
-//            logger("sceneExtract3(): Obtained ${goveeApiRespons} scene data", 'debug')
-//            resp.data.data.categories.scenes.forEach { 
-            goveeApiRespons.forEach {     
-//                logger("sceneExtract3(): SceneName ${it.sceneName} size ${it.sceneName.size()}", 'debug')
-                sceneNames = sceneNames.plus(it.sceneName)                
-//                logger("sceneExtract3(): Scene Codes ${it.lightEffects.sceneCode} size ${it.lightEffects.sceneCode.size()}", 'debug')
-                sceneCodes = sceneCodes.plus(it.lightEffects.sceneCode)
-//                logger("sceneExtract3(): SceneParm code ${it.lightEffects.scenceParam} size ${it.lightEffects.scenceParam.size()}", 'debug')
-                sceneParms = sceneParms.plus(it.lightEffects.scenceParam)
-//                logger("sceneExtract3(): SceneName ${it.sceneName.get(processed)} SceneParm code ${it.lightEffects.scenceParam.get(processed)} size ${it.lightEffects.scenceParam.size()}", 'debug')
-            }
-//            logger("sceneExtract3(): Extracted whole variables ${sceneNames} size ${sceneCodes} size ${sceneParms}", 'debug')
-            logger("sceneExtract3(): Size of scene data fields ${sceneNames.size()} size ${sceneCodes.size()} size ${sceneParms.size()}", 'debug')
-            recNum = 0
-            sceneNames.forEach {
-                logger("sceneExtract3(): records for each variable Name: ${sceneNames.get(recNum)} Scene Code: ${sceneCodes.get(recNum).get(0)} Parm: ${sceneParms.get(recNum).get(0)}", 'debug')                                
-				String strSceneParm = sceneParms.get(recNum).get(0)
-                def sccode = HexUtils.integerToHexString(sceneCodes.get(recNum).get(0),2)
-                def hexString = base64ToHex(strSceneParm)
-                def hexSize = hexString.length() // each line is 35 charters except the first one which is 6 less
-				if (goveeDevOffsets.containsKey(settings.devsku)) { // if present subtract offset value from string for calculations
-                    hexSize = hexSize - goveeDevOffsets."${settings.devsku}".offset
-            	}
-/*                if (settings.devsku == "H6066" || settings.devsku == "H6065" ){
-                    hexSize = hexSize - 10
-                } else if (settings.devsku == "H6052") {
-                    hexSize = hexSize - 4
-                } */
-                int splits = 0
-                if (isWholeNumber((hexSize - 28) / 34)) {
-                    logger("sceneExtract3(): Split is a whole number ${(hexSize - 28) / 34}", 'debug')
-                    splits = (int) Math.floor(((hexSize - 28) / 34) -1)
-                } else {
-                    logger("sceneExtract3(): Split is not whole number ${(hexSize - 28) / 34}", 'debug')
-                    splits = (int) Math.floor((hexSize - 28) / 34) 
-                }
-                
-//                int splits = (int) Math.floor((hexSize - 28) / 34)               
-                int action = 0
-                def position = 28
-                if (goveeDevOffsets.containsKey(settings.devsku)) { // if present set position of next line to start at appropriate location
-                    position =  goveeDevOffsets."${settings.devsku}".line1End
-            	}
-                convrtCmd = ""
-                logger("sceneExtract3(): SceneParm converted to hex:  ${hexString} Lenght: ${hexSize} Splits ${splits}", 'debug')
-                if (strSceneParm != null && strSceneParm != "") {
-                	while(splits + 1 >= action) {
-                    	logger("sceneExtract3(): SceneParm converted to on total splits:  ${splits} on action : ${action} ", 'debug')
-                    	if (action == 0) {
-                        	String section = ""
-                            String id = ""
-                        	String lineHeader = "a"+ (300 + action)
-                            if (deviceTag.containsKey(settings.devsku)) {
-                            	id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
-                                if (hexSize < 28) {
-                                    section = hexString.substring(goveeDevOffsets."${settings.devsku}".start)
-                                } else {
-                                	section = hexString.substring(goveeDevOffsets."${settings.devsku}".start,goveeDevOffsets."${settings.devsku}".line1End)
-                                }
-                            } else {
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +"02").toLowerCase()
-                                if (hexSize < 28) {
-                                    section = hexString.substring(0)
-                                } else {
-                                	section = hexString.substring(0,28)
-                                }
-                            }
-            /*                if (settings.devsku == "H6078") { // Cylinder Lamp
-//                                id2 = "0c09" // replaces 0216 from default script with 0c09
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
-                                if (hexSize < 28) {
-                                    section = hexString.substring(2)
-                                } else {
-                                	section = hexString.substring(2,28)
-                                }
-                            } else if (settings.devsku == "H6052") { // Table Lamp 1
-//                                id2 = "07" // replaces 02 from default script with 07
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
-                                if (hexSize < 28) {
-                                    section = hexString.substring(4)
-                                } else {
-                                	section = hexString.substring(4,32)
-                                }
-                                position = 32
-                            } else if (settings.devsku == "H6022") { // Table Lamp 2
-//                                id2 = "585a" // replaces 02xx from default script with 0c09
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
-                                if (hexSize < 28) {
-                                    section = hexString.substring(2)
-                                } else {
-                                	section = hexString.substring(2,28)
-                                }
-                            }  else if (settings.devsku == "H6066" || settings.devsku == "H6065") { // Hexa Panel, and Y Light
-                                id2 = "04" // replaces default O2 value.
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${settings.devsku}").toLowerCase()
-                                if (hexSize < 28) { // Adjust Starting point of file for H6066 scenes
-                                    section = hexString.substring(10)  
-                                } else {
-                                	section = hexString.substring(10,38)
-                                }                             
-                                position = 38
-                            } else if (settings.devsku == "H610A" ) { // Lively Light Bar
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1)).toLowerCase()
-                                if (hexSize < 28) { // Adjust Starting point of file for H6066 scenes
-                                    section = hexString.substring(0)  
-                                } else {
-                                	section = hexString.substring(0,30)
-                                }                             
-                                position = 30
-                            } else {
-                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +"02").toLowerCase()
-                                if (hexSize < 28) {
-                                    section = hexString.substring(0)
-                                } else {
-                                	section = hexString.substring(0,28)
-                                }
-                            } */
-                        	action = action + 1
-                            String minusChkSum = lineHeader+id+section
-                            logger("sceneExtract3(): Minus Checksum :  ${minusChkSum} ", 'debug')
-                            checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
-                            hexConvString = lineHeader+id+section+checksum
-                        	logger("sceneExtract3(): Parsing first line :  ${hexConvString} ", 'debug')                        
-                        	logger("sceneExtract3(): Parsing first line :  ${lineHeader}${id}${section}${checksum} ", 'debug')
-                            base64String = hexToBase64(hexConvString)
-                            logger("sceneExtract3(): Base64 Command first line :  ${base64String} ", 'debug')
-                            convrtCmd = '"'+ base64String  +'"'
-                        
-                    	} else if (action > 0 && action <= (splits )) {
-                        	String section = hexString.substring(position , position+34)
-                        	String lineHeader = "a3" + (HexUtils.integerToHexString(action,1)) 
-                        	action = action +1
-                        	position = position + 34
-                            String minusChkSum = lineHeader+section
-                            checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
-                            hexConvString = lineHeader+section+checksum
-//                        	logger("sceneExtract3(): Parsing Middle line :  ${section} ", 'debug')                        
-                        	logger("sceneExtract3(): Parsing Middle line :  ${lineHeader}${section}${checksum} ", 'debug')
-                            base64String = hexToBase64(hexConvString)
-                            logger("sceneExtract3(): Base64 Command Middle line :  ${base64String} ", 'debug')
-                            convrtCmd = convrtCmd + ',"' + base64String + '"'
-                    	}  else if (action > splits) {
-                        	action = action + 1
-                        	String section = hexString.substring(position)
-                        	def sectionLen = section.length()
-                        	def needLen  = 37 - sectionLen
-                        	def sectionPad = section.padRight(34,'0')
-                        	String lineHeader = "a3ff"
-                            String minusChkSum = lineHeader+sectionPad
-                            checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
-                            hexConvString = lineHeader+sectionPad+checksum
-                        	logger("sceneExtract3(): Parsing last line padding review : Section data${section}, Section Length ${sectionLen}, padding needed ${needLen}, padded value ${sectionPad} ", 'debug')                        
-                        	logger("sceneExtract3(): Parsing last line :  ${lineHeader}${sectionPad}${checksum} ", 'debug')
-                            base64String = hexToBase64(hexConvString)
-                            logger("sceneExtract3(): Base64 Command last command line :  ${base64String} ", 'debug')
-                            convrtCmd = convrtCmd + ',"' + base64String + '"'
-                        } else {
-                        	logger("sceneExtract3(): Parsing error aborting ", 'debug')
-                        }
-                    }    
-                }
-                logger("sceneExtract3(): scene code :  ${sccode} ", 'debug')
-                String lastLine = ""
-                if (deviceTagll.containsKey(settings.devsku)) {
-                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"00"+deviceTagll."${settings.devsku}"+"000000000000000000000000").toLowerCase()
-                } else {
-                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0000000000000000000000000000").toLowerCase()
-                }
-             /*   if (settings.devsku == "H6066"){ // add 2d value to final command to get closer to proper command for device.
-                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"002d000000000000000000000000").toLowerCase()
-                } else if (settings.devsku == "H6065"){ // add 47 value to final command to get closer to proper command for device.
-                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0047000000000000000000000000").toLowerCase()
-                } else {
-                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0000000000000000000000000000").toLowerCase()
-                } */
-                checksum = calculateChecksum8Xor(lastLine).toLowerCase()
-                hexConvString = lastLine+checksum
-                logger("sceneExtract3(): final line to complete command is needed. :  ${lastLine}${checksum} ", 'debug')
-                base64String = hexToBase64(hexConvString)
-                logger("sceneExtract3(): Base64 Command fine line :  ${base64String} ", 'debug')
-                if (convrtCmd == "") {
-                   diyAddManual = '["'+ base64String + '"]' 
-                } else {               
-                	diyAddManual = "["+convrtCmd + ',"' + base64String + '"]'
-                }
-                logger("sceneExtract3(): Base64 command list:  ${diyAddManual} ", 'debug')
-                sceneFileCreate(settings.devsku, sceneNames.get(recNum), diyAddManual)
-                recNum = recNum + 1
-            }
-		sceneFileMax(settings.devsku, sceneNames.size())
-        }
-    } catch (groovyx.net.http.HttpResponseException e) {
-        logger("deviceSelect() Error: e.statusCode ${e.statusCode}", 'error')
-        logger("deviceSelect() ${e}", 'error')
-
-        return 'unknown'
-    }
-    } 
+    
+    goveeScene.clear()
+    goveeSceneRetrieve(settings.devsku)
+    
     dynamicPage(name: 'sceneExtract3', title: 'Govee API Scene Extract', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
     {
-//        if (state.goveeHomeToken != null) {
             section('<b>Scene extraction completed</b>') {
                 paragraph "All Scenes for Devices with model Number ${settings.devsku} have been extracted"
 //                paragraph "Scene name is ${sceneName}"
@@ -810,15 +597,6 @@ def sceneExtract3() {
 //                paragraph addedScenes
                 paragraph "The Scenes have been extracted and written to GoveeLanScenes_${settings.devsku}.json."
             }
-            
-/*        } else {
-            section('<b>Extracted command below:</b>') {
-                paragraph "You either have not logging into with your Govee Home creds or the login has expired"
-                paragraph "Please return to the Scene Management Menu by clicking next below. Then click on the button to enter your Govee Home Account credentials"
-                paragraph "Once the Credentials are setup you should be able to extract Scenes"
-
-            }
-        }*/
     }
 }
 
@@ -896,6 +674,157 @@ def sendnotification (type, value) {
     }
 }
 
+def goveeSceneRetrieve(String model) {
+    if (goveeDevPtURL.contains(model)) {
+        logger("goveeSceneRetrieve() Device is not eligiable to be extracted ignoring", 'debug')                                   
+    } else {
+    logger("goveeSceneRetrieve() Processing Scene retrieval for models ${model}", 'debug')
+    def params = [
+        uri   : 'https://app2.govee.com',
+        path  : '/appsku/v1/light-effect-libraries',
+        headers: [ 'appVersion': '9999999'],
+        query: ['sku': model],
+        ]
+    logger("goveeSceneRetrieve(): Calling HTTP server with ${params}", 'debug')
+    try {
+        httpGet(params) { resp ->
+            goveeApiRespons = resp.data.data.categories.scenes
+            sceneNames = []
+            sceneCodes = []
+            sceneParms = []
+            String convrtCmd = "" 
+            goveeApiRespons.forEach {     
+                sceneNames = sceneNames.plus(it.sceneName)                
+                sceneCodes = sceneCodes.plus(it.lightEffects.sceneCode)
+                sceneParms = sceneParms.plus(it.lightEffects.scenceParam)
+            }
+            logger("goveeSceneRetrieve(): Size of scene data fields ${sceneNames.size()} size ${sceneCodes.size()} size ${sceneParms.size()}", 'debug')
+            recNum = 0
+            sceneNames.forEach {
+                logger("goveeSceneRetrieve(): records for each variable Name: ${sceneNames.get(recNum)} Scene Code: ${sceneCodes.get(recNum).get(0)} Parm: ${sceneParms.get(recNum).get(0)}", 'debug')                                
+				String strSceneParm = sceneParms.get(recNum).get(0)
+                def sccode = HexUtils.integerToHexString(sceneCodes.get(recNum).get(0),2)
+                def hexString = base64ToHex(strSceneParm)
+                def hexSize = hexString.length() // each line is 35 charters except the first one which is 6 less
+				if (goveeDevOffsets.containsKey(model)) { // if present subtract offset value from string for calculations
+                    hexSize = hexSize - goveeDevOffsets."${model}".offset
+            	}
+                int splits = 0
+                if (isWholeNumber((hexSize - 28) / 34)) {
+                    logger("goveeSceneRetrieve(): Split is a whole number ${(hexSize - 28) / 34}", 'debug')
+                    splits = (int) Math.floor(((hexSize - 28) / 34) -1)
+                } else {
+                    logger("goveeSceneRetrieve(): Split is not whole number ${(hexSize - 28) / 34}", 'debug')
+                    splits = (int) Math.floor((hexSize - 28) / 34) 
+                }                              
+                int action = 0
+                def position = 28
+                if (goveeDevOffsets.containsKey(model)) { // if present set position of next line to start at appropriate location
+                    position =  goveeDevOffsets."${model}".line1End
+            	}
+                convrtCmd = ""
+                logger("goveeSceneRetrieve(): SceneParm converted to hex:  ${hexString} Lenght: ${hexSize} Splits ${splits}", 'debug')
+                if (strSceneParm != null && strSceneParm != "") {
+                	while(splits + 1 >= action) {
+                    	logger("goveeSceneRetrieve(): SceneParm converted to on total splits:  ${splits} on action : ${action} ", 'debug')
+                    	if (action == 0) {
+                        	String section = ""
+                            String id = ""
+                        	String lineHeader = "a"+ (300 + action)
+                            if (deviceTag.containsKey(model)) {
+                            	id = ("01" + HexUtils.integerToHexString(splits+2,1) + deviceTag."${model}").toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(goveeDevOffsets."${model}".start)
+                                } else {
+                                	section = hexString.substring(goveeDevOffsets."${model}".start,goveeDevOffsets."${model}".line1End)
+                                }
+                            } else {
+                                id = ("01" + HexUtils.integerToHexString(splits+2,1) +"02").toLowerCase()
+                                if (hexSize < 28) {
+                                    section = hexString.substring(0)
+                                } else {
+                                	section = hexString.substring(0,28)
+                                }
+                            }
+                        	action = action + 1
+                            String minusChkSum = lineHeader+id+section
+                            logger("goveeSceneRetrieve(): Minus Checksum :  ${minusChkSum} ", 'debug')
+                            checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
+                            hexConvString = lineHeader+id+section+checksum
+                        	logger("goveeSceneRetrieve(): Parsing first line :  ${hexConvString} ", 'debug')                        
+                        	logger("goveeSceneRetrieve(): Parsing first line :  ${lineHeader}${id}${section}${checksum} ", 'debug')
+                            base64String = hexToBase64(hexConvString)
+                            logger("goveeSceneRetrieve(): Base64 Command first line :  ${base64String} ", 'debug')
+                            convrtCmd = '"'+ base64String  +'"'                        
+                    	} else if (action > 0 && action <= (splits )) {
+                        	String section = hexString.substring(position , position+34)
+                        	String lineHeader = "a3" + (HexUtils.integerToHexString(action,1)) 
+                        	action = action +1
+                        	position = position + 34
+                            String minusChkSum = lineHeader+section
+                            checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
+                            hexConvString = lineHeader+section+checksum                       
+                        	logger("goveeSceneRetrieve(): Parsing Middle line :  ${lineHeader}${section}${checksum} ", 'debug')
+                            base64String = hexToBase64(hexConvString)
+                            logger("goveeSceneRetrieve(): Base64 Command Middle line :  ${base64String} ", 'debug')
+                            convrtCmd = convrtCmd + ',"' + base64String + '"'
+                    	}  else if (action > splits) {
+                        	action = action + 1
+                        	String section = hexString.substring(position)
+                        	def sectionLen = section.length()
+                        	def needLen  = 37 - sectionLen
+                        	def sectionPad = section.padRight(34,'0')
+                        	String lineHeader = "a3ff"
+                            String minusChkSum = lineHeader+sectionPad
+                            checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
+                            hexConvString = lineHeader+sectionPad+checksum
+                        	logger("goveeSceneRetrieve(): Parsing last line padding review : Section data${section}, Section Length ${sectionLen}, padding needed ${needLen}, padded value ${sectionPad} ", 'debug')                        
+                        	logger("goveeSceneRetrieve(): Parsing last line :  ${lineHeader}${sectionPad}${checksum} ", 'debug')
+                            base64String = hexToBase64(hexConvString)
+                            logger("goveeSceneRetrieve(): Base64 Command last command line :  ${base64String} ", 'debug')
+                            convrtCmd = convrtCmd + ',"' + base64String + '"'
+                        } else {
+                        	logger("goveeSceneRetrieve(): Parsing error aborting ", 'debug')
+                        }
+                    }    
+                }
+                logger("goveeSceneRetrieve(): scene code :  ${sccode} ", 'debug')
+                String lastLine = ""
+                if (deviceTagll.containsKey(model)) {
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"00"+deviceTagll."${model}"+"000000000000000000000000").toLowerCase()
+                } else {
+                    lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"0000000000000000000000000000").toLowerCase()
+                }
+                checksum = calculateChecksum8Xor(lastLine).toLowerCase()
+                hexConvString = lastLine+checksum
+                logger("goveeSceneRetrieve(): final line to complete command is needed. :  ${lastLine}${checksum} ", 'debug')
+                base64String = hexToBase64(hexConvString)
+                logger("goveeSceneRetrieve(): Base64 Command fine line :  ${base64String} ", 'debug')
+                if (convrtCmd == "") {
+                   diyAddManual = '["'+ base64String + '"]' 
+                } else {               
+                	diyAddManual = "["+convrtCmd + ',"' + base64String + '"]'
+                }
+                logger("goveeSceneRetrieve(): Base64 command list:  ${diyAddManual} ", 'debug')
+                sceneFileCreate(model, sceneNames.get(recNum), diyAddManual)
+                recNum = recNum + 1
+                }
+            if  (resp.data.data.categories.isEmpty()) {
+                logger("goveeSceneRetrieve(): Device ${model} does not have scenes. Ignoring", 'debug')
+            } else {
+		    sceneFileMax(model, sceneNames.size())
+            }                
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+        logger("goveeSceneRetrieve() Error: e.statusCode ${e.statusCode}", 'error')
+        logger("goveeSceneRetrieve() ${e}", 'error')
+
+        return 'unknown'
+    }
+    logger("goveeSceneRetrieve(): Device Extraction complete for model ${model} ", 'debug')
+    }
+}
+
 def sceneFileCreate(devSKU, diyName, command) {
 //    def slurper = new JsonSlurper()
     logger("sceneFileCretae(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
@@ -919,7 +848,7 @@ def sceneFileCreate(devSKU, diyName, command) {
         goveeScene."${devSKU}".put(diyAddNum,diyEntry)
     }
 //    state.diyEffects = goveeScene
-    writeGoveeSceneFile()
+    writeGoveeSceneFile(devSKU)
 }
 
 def sceneFileMax(devSKU, int maxNum) {
@@ -928,7 +857,7 @@ def sceneFileMax(devSKU, int maxNum) {
     diyEntry.put("maxScene", maxScene)
     int diyAddNum = 999
     goveeScene."${devSKU}".put(diyAddNum, diyEntry)
-    writeGoveeSceneFile()
+    writeGoveeSceneFile(devSKU)
 }
 
 def diyAdd(devSKU, diyName, command) {
@@ -1498,6 +1427,15 @@ private def appButtonHandler(button) {
         saveFile()
     } else if (button == "resDIYScenes") {
         loadFile()
+    } else if (button == "resGovScenes") {
+        mqttDevice = getChildDevice('Govee_v2_Device_Manager')
+        models = (mqttDevice.getChildDevices().data.deviceModel).unique()
+        logger("appButtonHandler(): child device models are ${models}", 'info')
+        models.forEach {
+            logger("appButtonHandler(): Processing  ${it}", 'info')
+            goveeScene.clear()
+            goveeSceneRetrieve(it)
+        }
     }
     
 }
@@ -1646,10 +1584,10 @@ void writeDIYFile() {
     uploadHubFile("$goveeDIYScenesFile",listJson.getBytes())
 }
 
-void writeGoveeSceneFile() { // create and store lan scene files from Govee API
+void writeGoveeSceneFile(model) { // create and store lan scene files from Govee API
     log.debug ("writeDIYFile: Writing DIY Scenes to flat file for Drivers")
     String listJson = "["+JsonOutput.toJson(goveeScene)+"]" as String
-    uploadHubFile("GoveeLanScenes_$settings.devsku"+".json",listJson.getBytes())
+    uploadHubFile("GoveeLanScenes_$model"+".json",listJson.getBytes())
 }
 
 def setBackgroundStatusMessage(msg, level="info") {
