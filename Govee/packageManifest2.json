@@ -196,6 +196,14 @@
       "version": "2.1.3"
     },
     {
+      "id": "5717d67f-fec8-4ede-937c-77c25dde9ce8",
+      "name": "Govee v2 H6093 Starlight Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H6093StarlightDriver.groovy",
+      "required": false,
+      "version": "2.1.0"
+    },
+    {
       "id": "2d93d701-0a93-46bc-aa70-ffbc6370c66f",
       "name": "Govee v2 Heating Appliance Driver",
       "namespace": "Mavrrick",
