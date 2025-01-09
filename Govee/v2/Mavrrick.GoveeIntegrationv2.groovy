@@ -698,7 +698,7 @@ def goveeSceneRetrieve(String model) {
                 sceneCodes = sceneCodes.plus(it.lightEffects.sceneCode)
                 sceneParms = sceneParms.plus(it.lightEffects.scenceParam)
             }
-            logger("goveeSceneRetrieve(): Size of scene data fields ${sceneNames.size()} size ${sceneCodes.size()} size ${sceneParms.size()}", 'debug')
+            logger("goveeSceneRetrieve(): Size of scene data fields ${sceneNames.size()} size ${sceneCodes.size()} size ${sceneParms.size()}", 'trace')
             recNum = 0
             sceneNames.forEach {
                 logger("goveeSceneRetrieve(): records for each variable Name: ${sceneNames.get(recNum)} Scene Code: ${sceneCodes.get(recNum).get(0)} Parm: ${sceneParms.get(recNum).get(0)}", 'debug')                                
@@ -711,10 +711,10 @@ def goveeSceneRetrieve(String model) {
             	}
                 int splits = 0
                 if (isWholeNumber((hexSize - 28) / 34)) {
-                    logger("goveeSceneRetrieve(): Split is a whole number ${(hexSize - 28) / 34}", 'debug')
+                    logger("goveeSceneRetrieve(): Split is a whole number ${(hexSize - 28) / 34}", 'trace')
                     splits = (int) Math.floor(((hexSize - 28) / 34) -1)
                 } else {
-                    logger("goveeSceneRetrieve(): Split is not whole number ${(hexSize - 28) / 34}", 'debug')
+                    logger("goveeSceneRetrieve(): Split is not whole number ${(hexSize - 28) / 34}", 'trace')
                     splits = (int) Math.floor((hexSize - 28) / 34) 
                 }                              
                 int action = 0
@@ -723,10 +723,10 @@ def goveeSceneRetrieve(String model) {
                     position =  goveeDevOffsets."${model}".line1End
             	}
                 convrtCmd = ""
-                logger("goveeSceneRetrieve(): SceneParm converted to hex:  ${hexString} Lenght: ${hexSize} Splits ${splits}", 'debug')
+                logger("goveeSceneRetrieve(): SceneParm converted to hex:  ${hexString} Lenght: ${hexSize} Splits ${splits}", 'trace')
                 if (strSceneParm != null && strSceneParm != "") {
                 	while(splits + 1 >= action) {
-                    	logger("goveeSceneRetrieve(): SceneParm converted to on total splits:  ${splits} on action : ${action} ", 'debug')
+                    	logger("goveeSceneRetrieve(): SceneParm converted to on total splits:  ${splits} on action : ${action} ", 'trace')
                     	if (action == 0) {
                         	String section = ""
                             String id = ""
@@ -748,13 +748,13 @@ def goveeSceneRetrieve(String model) {
                             }
                         	action = action + 1
                             String minusChkSum = lineHeader+id+section
-                            logger("goveeSceneRetrieve(): Minus Checksum :  ${minusChkSum} ", 'debug')
+                            logger("goveeSceneRetrieve(): Minus Checksum :  ${minusChkSum} ", 'trace')
                             checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
                             hexConvString = lineHeader+id+section+checksum
-                        	logger("goveeSceneRetrieve(): Parsing first line :  ${hexConvString} ", 'debug')                        
-                        	logger("goveeSceneRetrieve(): Parsing first line :  ${lineHeader}${id}${section}${checksum} ", 'debug')
+                        	logger("goveeSceneRetrieve(): Parsing first line :  ${hexConvString} ", 'trace')                        
+                        	logger("goveeSceneRetrieve(): Parsing first line :  ${lineHeader}${id}${section}${checksum} ", 'trace')
                             base64String = hexToBase64(hexConvString)
-                            logger("goveeSceneRetrieve(): Base64 Command first line :  ${base64String} ", 'debug')
+                            logger("goveeSceneRetrieve(): Base64 Command first line :  ${base64String} ", 'trace')
                             convrtCmd = '"'+ base64String  +'"'                        
                     	} else if (action > 0 && action <= (splits )) {
                         	String section = hexString.substring(position , position+34)
@@ -764,9 +764,9 @@ def goveeSceneRetrieve(String model) {
                             String minusChkSum = lineHeader+section
                             checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
                             hexConvString = lineHeader+section+checksum                       
-                        	logger("goveeSceneRetrieve(): Parsing Middle line :  ${lineHeader}${section}${checksum} ", 'debug')
+                        	logger("goveeSceneRetrieve(): Parsing Middle line :  ${lineHeader}${section}${checksum} ", 'trace')
                             base64String = hexToBase64(hexConvString)
-                            logger("goveeSceneRetrieve(): Base64 Command Middle line :  ${base64String} ", 'debug')
+                            logger("goveeSceneRetrieve(): Base64 Command Middle line :  ${base64String} ", 'trace')
                             convrtCmd = convrtCmd + ',"' + base64String + '"'
                     	}  else if (action > splits) {
                         	action = action + 1
@@ -778,17 +778,17 @@ def goveeSceneRetrieve(String model) {
                             String minusChkSum = lineHeader+sectionPad
                             checksum = calculateChecksum8Xor(minusChkSum).toLowerCase()
                             hexConvString = lineHeader+sectionPad+checksum
-                        	logger("goveeSceneRetrieve(): Parsing last line padding review : Section data${section}, Section Length ${sectionLen}, padding needed ${needLen}, padded value ${sectionPad} ", 'debug')                        
-                        	logger("goveeSceneRetrieve(): Parsing last line :  ${lineHeader}${sectionPad}${checksum} ", 'debug')
+                        	logger("goveeSceneRetrieve(): Parsing last line padding review : Section data${section}, Section Length ${sectionLen}, padding needed ${needLen}, padded value ${sectionPad} ", 'trace')                        
+                        	logger("goveeSceneRetrieve(): Parsing last line :  ${lineHeader}${sectionPad}${checksum} ", 'trace')
                             base64String = hexToBase64(hexConvString)
-                            logger("goveeSceneRetrieve(): Base64 Command last command line :  ${base64String} ", 'debug')
+                            logger("goveeSceneRetrieve(): Base64 Command last command line :  ${base64String} ", 'trace')
                             convrtCmd = convrtCmd + ',"' + base64String + '"'
                         } else {
-                        	logger("goveeSceneRetrieve(): Parsing error aborting ", 'debug')
+                        	logger("goveeSceneRetrieve(): Parsing error aborting ", 'trace')
                         }
                     }    
                 }
-                logger("goveeSceneRetrieve(): scene code :  ${sccode} ", 'debug')
+                logger("goveeSceneRetrieve(): scene code :  ${sccode} ", 'trace')
                 String lastLine = ""
                 if (deviceTagll.containsKey(model)) {
                     lastLine = ("330504"+sccode.substring(2)+sccode.substring(0,2)+"00"+deviceTagll."${model}"+"000000000000000000000000").toLowerCase()
@@ -797,9 +797,9 @@ def goveeSceneRetrieve(String model) {
                 }
                 checksum = calculateChecksum8Xor(lastLine).toLowerCase()
                 hexConvString = lastLine+checksum
-                logger("goveeSceneRetrieve(): final line to complete command is needed. :  ${lastLine}${checksum} ", 'debug')
+                logger("goveeSceneRetrieve(): final line to complete command is needed. :  ${lastLine}${checksum} ", 'trace')
                 base64String = hexToBase64(hexConvString)
-                logger("goveeSceneRetrieve(): Base64 Command fine line :  ${base64String} ", 'debug')
+                logger("goveeSceneRetrieve(): Base64 Command fine line :  ${base64String} ", 'trace')
                 if (convrtCmd == "") {
                    diyAddManual = '["'+ base64String + '"]' 
                 } else {               
@@ -826,14 +826,13 @@ def goveeSceneRetrieve(String model) {
 }
 
 def sceneFileCreate(devSKU, diyName, command) {
-//    def slurper = new JsonSlurper()
     logger("sceneFileCretae(): Attempting add DIY Scene ${devSKU}:${diyName}:${command}", 'trace')
 //    command = command.inspect().replaceAll("\'", "\"")
 	Map diyEntry = [:]
     diyEntry.put("name", diyName)
     diyEntry.put("cmd", command)
     logger("sceneFileCretae(): Trying to add ${diyEntry}", 'debug')
-    logger("sceneFileCretae(): keys are  ${goveeScene.keySet()}", 'debug')
+    logger("sceneFileCretae(): keys are  ${goveeScene.keySet()}", 'trace')
     diySize = goveeScene.size()
     if (diySize == 0){
         int diyAddNum = 101
@@ -843,11 +842,8 @@ def sceneFileCreate(devSKU, diyName, command) {
     } else {
         diySize = goveeScene."${devSKU}".size()
         int diyAddNum = (diySize + 101).toInteger()
-//        Map diyEntry2 = [:]
-//        diyEntry2.put(diyAddNum,diyEntry)
         goveeScene."${devSKU}".put(diyAddNum,diyEntry)
     }
-//    state.diyEffects = goveeScene
     writeGoveeSceneFile(devSKU)
 }
 
