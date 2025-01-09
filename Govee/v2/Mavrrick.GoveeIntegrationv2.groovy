@@ -52,16 +52,36 @@ import hubitat.helper.HexUtils
 @Field static String BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
 @Field static final Map deviceTag =  // a300 line device specific codes
-	["H6022":"585a", "H6052":"01", "H6078":"0c09", "H6065":"04", "H6066":"04", "H6079":"", "H610A":"", "H6092":"560b"]
+	["H6022":"585a", 
+     "H6052":"01", 
+     "H6078":"0c09", 
+     "H6061":"04", 
+     "H6065":"04", 
+     "H6066":"04", 
+     "H6067":"04", 
+     "H6069":"04", 
+     "H606A":"04", 
+     "H6079":"", 
+     "H610A":"", 
+     "H6092":"560b"]
 
 @Field static final Map deviceTagll = // Final Line code for special device types
-	["H6065":"47", "H6066":"2d"]
+	["H6061":"2d", 
+     "H6065":"47", 
+     "H6066":"2d", 
+     "H6067":"2d", 
+     "H6069":"2d", 
+     "H606A":"2d"]
 
 @Field static final Map goveeDevOffsets = // values to properly extract device hex string data
 	["H6022":["start":2, "line1End":28, "offset":0],
      "H6052":["start":4, "line1End":32, "offset":4],
+     "H6061":["start":10, "line1End":38, "offset":10],
      "H6065":["start":10, "line1End":38, "offset":10],
      "H6066":["start":10, "line1End":38, "offset":10],
+     "H6067":["start":10, "line1End":38, "offset":10],
+     "H6069":["start":10, "line1End":38, "offset":10],
+     "H606A":["start":10, "line1End":38, "offset":10],
      "H6078":["start":2, "line1End":28, "offset":0],
      "H6079":["start":0, "line1End":30, "offset":0],
      "H6092":["start":2, "line1End":28, "offset":0],
