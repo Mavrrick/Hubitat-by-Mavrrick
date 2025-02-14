@@ -18,8 +18,8 @@ metadata
 {
     definition (name: "Air Gradient Universal Driver", namespace: "mavrrick", author: "Mavrrick")
     {
-		capability "TemperatureMeasurement"
-		capability "RelativeHumidityMeasurement"
+	capability "TemperatureMeasurement"
+	capability "RelativeHumidityMeasurement"
         capability "CarbonDioxideMeasurement"
         capability "Polling"
         capability "Initialize"
@@ -27,7 +27,7 @@ metadata
         
         attribute "rssi", "number"
         attribute "pm01", "number"		
-		attribute "pm25", "number"
+	attribute "pm25", "number"
         attribute "pm10", "number"
         attribute "pmCount", "number"
         attribute "tvoc", "number"
@@ -44,7 +44,7 @@ metadata
 		{
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input("ip", "text", title: "IP Address", description: "IP address of your Air Gradient Device", required: false)
-			input(name: "cOrF", type: "enum", title: "Select your Temperature Unit", options: ["Celsius", "Fahrenheit"], defaultValue: "Celsius")		
+	    input(name: "cOrF", type: "enum", title: "Select your Temperature Unit", options: ["Celsius", "Fahrenheit"], defaultValue: "Celsius")		
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("displayBright", "number", title: "Level of brightness for onboard display\nDefault:100", defaultValue:100, range: '0..100', width:3, required: false)
             input("ledBarBrightness", "number", title: "Level of brightness of LED Bar\nDefault:100", defaultValue:100, range: '0..100',width:3, required: false)
@@ -182,10 +182,15 @@ def poll() {
                 }  else if (it.key == "noxIndex") {
                     sendEvent(name: "nox", value: it.value)
                 } else if (it.key == "atmpCompensated") {
-                    float temp = it.value
-                    if (cOrF) { temperature=((temp*9/5)+32).round(1) 
-                        sendEvent(name: "temperature", value: temperature)
-                    } else sendEvent(name: "temperature", value: temperature)
+                    if (it.value <= -20) {
+                        if (debugLog) {log.debug "Invalid value of ${it.value}. Ignoring value"}
+                    } else {
+                        float temp = it.value
+                        if (cOrF == "Fahrenheit") { 
+                            temperature=((temp*9/5)+32).round(1) 
+                            sendEvent(name: "temperature", value: temperature)
+                        } else sendEvent(name: "temperature", value: temp.round(1))
+                    }
                 } else {
                     if (debugLog) {log.debug "Unknown parm to parse ${it.key} = ${it.value}"}
                 }
