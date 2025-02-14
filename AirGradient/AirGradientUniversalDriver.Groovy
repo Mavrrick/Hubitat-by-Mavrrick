@@ -29,7 +29,7 @@ metadata
         attribute "pm01", "number"		
 		attribute "pm25", "number"
         attribute "pm10", "number"
-        attribute "pmCount", "number"
+        attribute "pm003Count", "number"
         attribute "tvoc", "number"
         attribute "nox", "number"
         
@@ -131,8 +131,8 @@ void configure(){
                 if (debugLog) {log.debug "configure(): Set ${it.key} to ${it.value}"};     
             break;
             case "temperatureUnit":
-                if (cOrF =="Celsius") { unit = "c"};
-                if (cOrF =="Fahrenheit") { unit = "f"};
+                unit = "c"
+                if (cOrF == "Fahrenheit") { unit = "f"};
                 if (it.value != unit) { sendConfig(it.key, '"'+unit+'"')};
                 if (debugLog) {log.debug "configure(): Set ${it.key} to ${it.value}"};     
             break;
@@ -170,7 +170,7 @@ def poll() {
                 } else if (it.key == "pm10") {
                     sendEvent(name: "pm10", value: it.value)
                 }  else if (it.key == "pm003Count") {
-                    sendEvent(name: "pmCount", value: it.value)
+                    sendEvent(name: "pm003Count", value: it.value)
                 } else if (it.key == "rhumCompensated") {
                     sendEvent(name: "humidity", value: it.value)
                 } else if (it.key == "wifi") {
@@ -183,9 +183,9 @@ def poll() {
                     sendEvent(name: "nox", value: it.value)
                 } else if (it.key == "atmpCompensated") {
                     float temp = it.value
-                    if (cOrF) { temperature=((temp*9/5)+32).round(1) 
+                    if (cOrF == "Fahrenheit") { temperature=((temp*9/5)+32).round(1) 
                         sendEvent(name: "temperature", value: temperature)
-                    } else sendEvent(name: "temperature", value: temperature)
+                    } else sendEvent(name: "temperature", value: temp.round(1))
                 } else {
                     if (debugLog) {log.debug "Unknown parm to parse ${it.key} = ${it.value}"}
                 }
