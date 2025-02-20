@@ -58,3 +58,7 @@ def changeInterval(v=300) {
     sendEvent(name: "pollInterval", value: v)
     if (v > 0)  runIn(pollRate,poll) 
 }
+
+def ipLookup() {
+    log.info("ipLookup: Device is Govee Life object with no ip to return")
+}

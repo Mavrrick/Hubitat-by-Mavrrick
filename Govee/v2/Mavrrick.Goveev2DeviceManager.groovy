@@ -4,6 +4,7 @@
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
 import groovy.json.JsonSlurper
+import hubitat.helper.HexUtils
 import groovy.transform.Field
 
 
@@ -14,6 +15,8 @@ metadata {
         attribute "connectionState", "string"
         attribute "msgCount", "integer" 
         command "allSceneReload"
+        command "LookupLanAPIDevices"
+        command "RetrievechildDeviceInfo"
     }
 
 	preferences {		
@@ -55,6 +58,8 @@ def initialize() {
     sendEvent(name: "msgCount", value: 0)
     state.childCount = getChildDevices().size()
     allSceneReload()
+    multicastListenerSocket(4002)
+    multicastListenerSocket(4001)
 //    log.warn "Govee API Data is ${parent.state.goveeAppAPI}"
 //    log.warn "Govee API Data is ${goveeAppAPI}"
 }
@@ -175,16 +180,44 @@ def disconnected() {
 // Parse
 /////////////////////////////////////////////////////////////////////
 
-def parse(String event) {
-    def jsonSlurper = new JsonSlurper()     
-    if (descLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
-    def payloadJson = jsonSlurper.parseText(interfaces.mqtt.parseMessage(event).payload)
-    int mqttMsgCount = device.currentValue("msgCount").toInteger() + 1
-    sendEvent(name: "msgCount", value: mqttMsgCount)
+void parse(String event) {
+    if (event.matches("(.*)topic(.*)")) {
+        def jsonSlurper = new JsonSlurper()     
+        if (debugLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
+        def payloadJson = jsonSlurper.parseText(interfaces.mqtt.parseMessage(event).payload)
+        int mqttMsgCount = device.currentValue("msgCount").toInteger() + 1
+        sendEvent(name: "msgCount", value: mqttMsgCount)
     
         if (debugLog) log.debug "In parse, received message: ${payloadJson} for deviceid is ${payloadJson.device} capability is ${payloadJson.capabilities}"
 
         mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
+        
+    } else {
+//        if (descLog) log.info "parse() LAN API Message recieved. Parsing and sending to device. Full message is ${event}"
+        slurper = new JsonSlurper()
+        messageJson = slurper.parseText(event)
+        payload = new String(HexUtils.hexStringToByteArray(messageJson.payload))
+        payloadJson = slurper.parseText(payload)
+        if (payloadJson.msg.cmd == "devStatus") {        
+            if (debugLog) log.info "parse() LAN API Device StatusMessage recieved. Parsing and sending to device."  
+            if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} payload: ${new String(HexUtils.hexStringToByteArray(messageJson.payload))}")}
+            if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} cmd: ${payloadJson.msg.cmd} data: ${payloadJson.msg.data}")}
+            childIP = messageJson.fromIp
+            if (state.ipxdni.containsKey(messageJson.fromIp)) {
+                if (debugLog) {log.info("received: sourceIP: device is Configured. child to send it is ${state.ipxdni.get(childIP)} for ip ${childIP}")}
+                device = getChildDevice(state.ipxdni.get(childIP))
+                device.lanAPIPost(payloadJson.msg.data)
+            }
+        } else if (payloadJson.msg.cmd == "scan") {
+            if (payloadJson.msg.data.containsKey("account_topic")) {
+                if (debugLog) log.info "parse() LAN API Discovery Message recieved. Return message ${payloadJson.msg.data}, sourceIP: ${messageJson.fromIp}"
+            } else {
+//            [bleVersionHard:3.01.01, bleVersionSoft:1.01.13, device:67:32:C7:39:32:33:52:57, ip:192.168.86.175, sku:H6066, wifiVersionHard:1.02.00, wifiVersionSoft:2.05.08]
+//            if (descLog) log.info "parse() LAN API Discovery Message recieved. Parsing and sending to device. Scan data message is ${payloadJson.msg.data}"
+            if (descLog) log.info "parse() Device IP: ${payloadJson.msg.data.ip}, sku: ${payloadJson.msg.data.sku}, deviceId: ${payloadJson.msg.data.device}"
+            }
+        }    
+    }        
 }
     
 
@@ -290,6 +323,28 @@ def addLightDeviceHelper(String driver, String deviceID, String deviceName, Stri
 	}
 }
 
+def addManLightDeviceHelper(String driver, String ip, String deviceName, String deviceModel) {
+	//Driver Settings
+	Map deviceType = [namespace:"Mavrrick", typeName: driver]
+	Map deviceTypeBak = [:]
+	String devModel = deviceModel
+	String dni = "Govee_${ip}"
+	Map properties = [name: driver, label: deviceName, IP: ip, deviceModel: deviceModel, ctMin: 2000, ctMax: 9000]
+	if (debugLog) "Creating Child Device"
+
+	def childDev
+	try {
+		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+	}
+	catch (e) {
+		log.warn "The '${deviceType}' driver failed"
+		if (deviceTypeBak) {
+			logWarn "Defaulting to '${deviceTypeBak}' instead"
+			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+		}
+	}
+}
+
 ///////////////////////////////////////////
 // MQTT Helper to route events to device // 
 ///////////////////////////////////////////
@@ -319,17 +374,6 @@ def retrieveGoveeAPI(deviceid) {
 // Method to return the Govee DIY Scene Data for specific device from Prent App //
 /////////////////////////////////////////////////////////////////////////////////
 
-/* def retrieveGoveeDIY(deviceModel) {
-    if (parent.state.diyEffects.containsKey(deviceModel) == false) {
-        if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")} 
-    } else {
-        if (debugLog) "retrieveGoveeDIY(): ${deviceModel}"
-        def diyScenes = parent.state.diyEffects.get(deviceModel)
-        if (debugLog) "retrieveGoveeDIY(): ${diyScenes}"
-        return diyScenes
-    }    
-} */
-
 def allSceneReload(){
     child = getChildDevices()
     if (debugLog) {log.debug ("allSceneReload(): ${child}")}
@@ -358,4 +402,44 @@ def apiKeyUpdate() {
             it.apiKeyUpdate()
         }
     }
+}
+
+////////////////////////////////////////////////
+// LAN API Helpers                            //
+////////////////////////////////////////////////
+
+void multicastListenerSocket(int port) {
+    log.info("received: initializeing Multicast Listening port")
+    def socket = interfaces.getMulticastSocket("239.255.255.250", port)
+    if (!socket.connected) socket.connect()    
+}
+
+void socketStatus(message) {
+	log.warn("socket status is: ${message}")
+}
+
+void LookupLanAPIDevices() {
+    log.info("LookupLanAPIDevices: Placing call to Multicast Listening port")
+    def socket = interfaces.getMulticastSocket("239.255.255.250", 4001)
+    if (!socket.connected) socket.connect()
+    socket.sendMessage(HexUtils.byteArrayToHexString('{"msg":{"cmd":"scan","data":{"account_topic":"reserve"}}}'.getBytes()))
+}
+
+def RetrievechildDeviceInfo(){
+    if (debugLog) {log.info("RetrievechildDeviceInfo: Retrieving Child device ID Information")}
+    state.remove("ipxdni")
+    state.ipxdni = [:]
+    child = getChildDevices()
+    if (debugLog) {log.debug ("RetrievechildDeviceInfo(): ${child}")}
+    child.each {
+        ipAddress = it.ipLookup()
+        if (ipAddress != null) {
+            if (debugLog) {log.debug ("RetrievechildDeviceInfo(): ${ipAddress} ip address")}
+            if (debugLog) {log.debug ("RetrievechildDeviceInfo(): ${it.deviceNetworkId} dni")}
+            state.ipxdni.put(ipAddress,it.deviceNetworkId) 
+        } else { 
+            if (debugLog) {log.debug ("RetrievechildDeviceInfo(): Child device is using LAN API")} 
+        }
+    }
+    if (debugLog) {log.debug ("RetrievechildDeviceInfo(): ${state.ipxdni} crossReference")} 
 }

@@ -395,7 +395,7 @@ try {
                             case "devices.capabilities.property":
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value.toDouble().round(2)), unit: "C");
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
-                                if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value.currentHumidity, unit: "%");
+                                if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value, unit: "%");
                                 if (it.instance == "airQuality") sendEvent(name: "airQuality", value: it.state.value);
                                 if (it.instance == "filterLifeTime") sendEvent(name: "filterLifeTime", value: it.state.value, unit: "%");                            
                             break;  

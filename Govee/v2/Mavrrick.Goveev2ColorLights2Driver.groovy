@@ -98,9 +98,13 @@ def poll() {
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-        unschedule(poll)
-        if (pollRate > 0) runIn(pollRate,poll)
+    unschedule(poll)
+    if (pollRate > 0) runIn(pollRate,poll)
+    if (lanControl) { 
+        devStatus() 
+    } else {
         getDeviceState()
+    }
 }
 
 def updated() {

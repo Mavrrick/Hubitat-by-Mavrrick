@@ -14,6 +14,8 @@ import groovy.json.JsonBuilder
 #include Mavrrick.Govee_LAN_API
 
 def commandPort() { "4003" }
+def multicastListenerPort() { "4002" }
+def deviceScanPort() { "4001" }
 
 metadata {
 	definition(name: "Govee Manual LAN API Device", namespace: "Mavrrick", author: "Mavrrick") {
@@ -35,10 +37,13 @@ metadata {
             [name: "diyName", type: "STRING", description: "DIY Number to activate"]
            ]
         command "sceneLoad" 
+//        command "devStatus"
+//        command "LookupLanAPIDevices"
     }
 
 	preferences {		
 		section("Device Info") {
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("deviceModel")+".json")
@@ -54,7 +59,17 @@ metadata {
 // Methods to setup manage device properties //
 ///////////////////////////////////////////////
 
+def poll() {
+    if (debugLog) {log.warn "poll(): Poll Initated"}
+	refresh()
+}
 
+def refresh() {
+    if (debugLog) {log.warn "refresh(): Performing refresh"}
+    unschedule(poll)
+    if (pollRate > 0) runIn(pollRate,poll) 
+    devStatus() 
+}
 
 def updated() {
     initialize()
@@ -104,8 +119,13 @@ def off() {
 
 def setColorTemperature(value,level = null,transitionTime = null) {
     lanCT(value, level, transitionTime)    
-}   
+}
 
+// {"msg":{"cmd":"devStatus","data":{}}}
+/* def devStatus() {
+        sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
+        if (descLog) log.info "${device.label} status was requested."  
+} */
 
 ////////////////////
 // Helper Methods //

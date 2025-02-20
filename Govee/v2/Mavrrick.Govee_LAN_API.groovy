@@ -12,37 +12,55 @@ library (
 //////////////////////////////
 
 def lanOn() {
-        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-        sendEvent(name: "switch", value: "on")
-        if (descLog) log.info "${device.label} was turned on."  
+    sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
+//    sendEvent(name: "switch", value: "on")
+    runInMillis(500, 'devStatus')
+    if (descLog) log.info "${device.label} was turned on."  
 }
 
 def lanOff() {
-        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-        sendEvent(name: "switch", value: "off")
-        if (descLog) log.info "${device.label} was turned off."
+    sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
+//    sendEvent(name: "switch", value: "off")
+    runInMillis(500, 'devStatus')
+    if (descLog) log.info "${device.label} was turned off."
 } 
 
 def lanCT(value, level, transitionTime) {
-        int intvalue = value.toInteger()
-        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) lanSetLevel(level,transitionTime);
-        sendEvent(name: "colorTemperature", value: intvalue)
-        sendEvent(name: "switch", value: "on")
-        sendEvent(name: "colorMode", value: "CT")
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
-	    setCTColorName(intvalue)
+    int intvalue = value.toInteger()
+    sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+    if (level != null) lanSetLevel(level,transitionTime);
+//        sendEvent(name: "colorTemperature", value: intvalue)
+//        sendEvent(name: "switch", value: "on")
+    sendEvent(name: "colorMode", value: "CT")
+    runInMillis(500, 'devStatus')   
+    if (effectNum != 0){
+        sendEvent(name: "effectNum", value: 0)
+        sendEvent(name: "effectName", value: "None") 
+    }
+	setCTColorName(intvalue)
 }
 
 def lanSetLevel(float v,duration = 0){
     int intv = v.toInteger()
+    switch(true) {
+        case intv > 100:
+        	if (debugLog) {log.debug ("lanSetLevel(): Value of ${v} is over 100. Setting to 100")};
+            intv = 100;
+        break;
+        case intv < 0:
+        	if (debugLog) {log.debug ("lanSetLevel(): Value of ${v} is below 0. Setting to 0")};
+            intv = 0;
+        break;
+        default: 
+            if (debugLog) {log.debug ("lanSetLevel(): Setting Level to ${v}")};
+        break;
+    } 
+//    int intv = v.toInteger()
 //    if (descLog) log.info "${device.label} Level was set to ${intv}%"
     if (duration>0){
         int intduration = duration.toInteger()
-        sendEvent(name: "switch", value: "on")
+//        sendEvent(name: "switch", value: "on")
+    runInMillis(500, 'devStatus')
         fade(intv,intduration)
     }
     else {
@@ -51,12 +69,11 @@ def lanSetLevel(float v,duration = 0){
 }
 
 def lanSetLevel2(int v){
-    
-        if (descLog) log.info "${device.label} Level was set to ${v}%"      
-    
-        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        sendEvent(name: "level", value: v)
-        sendEvent(name: "switch", value: "on")
+    if (descLog) log.info "${device.label} Level was set to ${v}%"      
+    sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+//        sendEvent(name: "level", value: v)
+//        sendEvent(name: "switch", value: "on")
+    runInMillis(500, 'devStatus')
 }
 
 def fade(int v,float duration){
@@ -81,18 +98,24 @@ def fade(int v,float duration){
 def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeDown(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
     int v = (curLevel-fadeInc).toInteger()
-    log.debug "fadeDown(): v ${v}"
-    if ( v == 0 ) {
-        log.debug "fadeDown(): Next fade is to 0 turning off device. Fade is complete"
-        off()
-    } else if (level==v) {
-            if (debugLog) {log.debug "Final Loop"}
-            sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-            sendEvent(name: "level", value: v)
+//    log.debug "fadeDown(): v ${v}"
+    if (v <= level) {
+        if (debugLog) {log.debug "Final Loop Setting level to ${level}"}
+        if ( level == 0 ) {
+            log.debug "fadeDown(): to off"
+            off()
+        } else {
+            log.debug "fadeDown(): Final fade to ${level}"
+            sendCommandLan(GoveeCommandBuilder("brightness",level, "level"))
+//            sendEvent(name: "level", value: level) 
+            runInMillis(500, 'devStatus')
+        }
     } else {
+        log.debug "fadeDown(): Fade to ${v}"
             sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-            sendEvent(name: "level", value: v)
-            if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
+            runInMillis(500, 'devStatus')
+//            sendEvent(name: "level", value: v)
+//            if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
             def int delay = fadeRep
             if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
             if (debugLog) {log.debug "fadeDown(): executing loop to fadedown() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
@@ -103,19 +126,21 @@ def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
 def fadeUp( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeUp(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
     int v= (curLevel+fadeInc).toInteger()
-    log.debug "fadeUp(): v ${v}"
-    if (level==v)    {
-        if (debugLog) {log.debug "Final Loop"}
-        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        sendEvent(name: "level", value: v)
+//    log.debug "fadeUp(): v ${v}"
+    if (v >= level)    {
+        log.debug "fadeUp(): Final fade to ${level}"
+        sendCommandLan(GoveeCommandBuilder("brightness",level, "level"))
+//        sendEvent(name: "level", value: level)
+        runInMillis(500, 'devStatus')
     }
     else {
-        if (debugLog) {log.debug "fadeUp(): continueing  fading to ${v}"}
+        log.debug "fadeUp(): Fade to ${v}"
         def int delay= fadeRep
         if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
         if (debugLog) {log.debug "fadeUp(): executing loop to fadeup() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        sendEvent(name: "level", value: v)
+//        sendEvent(name: "level", value: v)
+        runInMillis(500, 'devStatus')
         runInMillis(delay, fadeUp, [data:[v ,level, fadeInt,fadeRep]])
     }
 } 
@@ -467,7 +492,6 @@ def getDevType() {
         case "H6046":
         case "H6056":
         case "H6047":
-        case "H70CB":
             device.updateDataValue("DevType", "TV_Light_Bar"); 
             break;        
         case "H6088":
@@ -625,7 +649,7 @@ def getIPString() {
 
 def parse(message) {  
   log.error "Got something to parseUDP"
-  log.error "UDP Response -> ${message}"    
+  log.error "UDP Response -> ${new String(HexUtils.hexStringToByteArray(message))}"    
 }
 
 def loadSceneFile() {
@@ -661,4 +685,62 @@ def loadDIYFile() {
     }
 }
 
+void devStatus() {
+    
+        sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
+        if (debugLog) log.info "${device.label} status was requested."  
+}
 
+def ipLookup() {
+    if (ip) {
+        if (debugLog) {log.info("ipLookup: Looking up ip of ${ip}")}
+        ipAddress = ip
+    } else if (getDataValue("IP")) {
+        if (debugLog) {log.info("ipLookup: Looking up Alt ip of ${getDataValue("IP")}")}
+        ipAddress = getDataValue("IP")
+    } 
+    return ipAddress
+}
+
+void lanAPIPost(data) {
+    if (debugLog) {log.info("lanAPIPost: Processing update from LAN API. Data: ${data}")}
+    if (data.onOff == 1) { onOffSwitch = on}
+    if (data.onOff == 0) { onOffSwitch = off}
+    
+        if (onOffSwitch == "on") {
+            if (onOffSwitch != device.currentValue("switch")) {
+                if (debugLog) {log.info("lanAPIPost: Switch Changed to on.")}
+                sendEvent(name: "switch", value: onOffSwitch)
+            }
+            if (data.brightness != device.currentValue("level")) {
+                sendEvent(name: "level", value: data.brightness)
+            } else {
+                if (debugLog) {log.info("lanAPIPost: Brightness has not changed. Ignoring")}
+            }
+            if (data.colorTemInKelvin != device.currentValue("colorTemperature")) {
+                sendEvent(name: "colorTemperature", value: data.colorTemInKelvin)
+            } else {
+                if (debugLog) {log.info("lanAPIPost: Color Temperature has not changed. Ignoring")}
+            }
+            rgb = []
+            rgb = [data.color.r,data.color.g, data.color.b]
+            hsv = hubitat.helper.ColorUtils.rgbToHSV(rgb)
+            if (debugLog) {log.info("lanAPIPost: Hue is ${hsv.get(0)}.")}
+            if (hsv.get(0) != device.currentValue("hue")) {
+                sendEvent(name: "hue", value: hsv.get(0))
+            } else {
+                if (debugLog) {log.info("lanAPIPost: Color Hue has not changed. Ignoring")}
+            } 
+            if (debugLog) {log.info("lanAPIPost: Saturation is  is ${hsv.get(1)}.")}
+            if (hsv.get(1) != device.currentValue("saturation")) {
+                sendEvent(name: "saturation", value: hsv.get(1))
+            } else {
+                if (debugLog) {log.info("lanAPIPost: Color Saturation has not changed. Ignoring")}
+            } 
+        } else {
+            if (onOffSwitch != device.currentValue("switch")) {
+                if (debugLog) {log.info("lanAPIPost: Switch Changed to off.")}
+                sendEvent(name: "switch", value: onOffSwitch)
+            }
+        }
+}

@@ -53,13 +53,13 @@ def poll() {
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-//    if(device.getDataValue("retrievable") =='true'){
-//       if (debugLog) {log.warn "refresh(): Device is retrievable. Setting up Polling"}
-        unschedule(poll)
-        if (pollRate > 0) runIn(pollRate,poll)
+    unschedule(poll)
+    if (pollRate > 0) runIn(pollRate,poll)
+    if (lanControl) { 
+        devStatus() 
+    } else {
         getDeviceState()
-//    }
-//    if (debugLog) runIn(1800, logsOff)
+    }
 }
 
 def updated() {

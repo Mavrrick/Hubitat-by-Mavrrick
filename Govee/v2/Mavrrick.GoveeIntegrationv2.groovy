@@ -1387,13 +1387,15 @@ def goveeDevAdd() { //testing
  **/
 private goveeLightManAdd(String model, String ip, String name) {
     def newDNI = "Govee_" + ip
+    mqttDevice = getChildDevice('Govee_v2_Device_Manager')
     logger("goveeLightManAdd() Adding ${name} Model: ${model} at ${ip} with ${newDNI}", 'info')
     logger('goveeLightManAdd() DEVICE INFORMATION', 'info')
     if (childDNI.contains(newDNI) == false) {
         String driver = "Govee Manual LAN API Device"
         logger("goveeLightManAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug') 
         logger("goveeLightManAdd():  configuring ${deviceName}", 'info')
-        addManLightDeviceHelper(driver, ip, name, model)
+        mqttDevice.addManLightDeviceHelper(driver, ip, name, model)
+      //  mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
         } else { 
         logger("goveeLightManAdd(): Manual add request ignored as device is already added.", 'info')
         }
@@ -1540,7 +1542,9 @@ def getBaseUrl() {
 	return "$scheme://127.0.0.1:$port"
 }
 
-private def addManLightDeviceHelper( String driver, String ip, String deviceName, String deviceModel) {
+/* private def addManLightDeviceHelper( String driver, String ip, String deviceName, String deviceModel) {
+    
+//    mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
     
             addChildDevice('Mavrrick', driver, "Govee_${ip}" , location.hubs[0].id, [
                 'name': 'Govee Manual LAN API Device',
@@ -1553,7 +1557,7 @@ private def addManLightDeviceHelper( String driver, String ip, String deviceName
                         ],
                 'completedSetup': true,
                 ])    
-}  
+}  */
 
 
 ///////////////////////////////////////////////////////////////////////////
