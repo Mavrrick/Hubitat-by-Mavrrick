@@ -349,6 +349,7 @@ def retrieveScenes() {
             scenes = scenes + parent."${"lightEffect_"+(device.getDataValue("DevType"))}"()
     } */
     lanScenes = loadSceneFile()
+    if (lanScenes != null) {
     if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.get(device.getDataValue("DevType"))}")}
     if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.keySet()}")}
     if (lanScenes.keySet().contains(device.getDataValue("DevType"))) {
@@ -362,6 +363,7 @@ def retrieveScenes() {
             String sceneValue = it.getKey() + "=" + it.value.name
             state.scenes.add(sceneValue)
             state.scenes = state.scenes.sort()
+        }
     }
 
     if (parent.label == "Govee v2 Device Manager") {   
@@ -660,12 +662,20 @@ def loadSceneFile() {
         if (debugLog) {log.debug "loadSceneFile: File name is null using default values"}
         name = "GoveeLanScenes_"+getDataValue("DevType")+".json"    
     } 
-    
-    byte[] dBytes = downloadHubFile(name)
-    if (debugLog) {log.debug "File loaded starting parse."}
+    try {
+        byte[] dBytes = downloadHubFile(name)
+        if (debugLog) {log.debug "File loaded starting parse."}
         tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
         scenes = tmpEffects.get(0)
         return scenes 
+    }
+    catch (Exception e) {      
+        if (debugLog) {log.debug "loadSceneFile: ${e}"}
+    }
+/*    if (debugLog) {log.debug "File loaded starting parse."}
+        tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
+        scenes = tmpEffects.get(0)
+        return scenes */
 }
 
 def loadDIYFile() {
@@ -674,8 +684,7 @@ def loadDIYFile() {
         dBytes = downloadHubFile("GoveeLanDIYScenes.json")
     }
     catch (Exception e) {
-        diyEffects = [:]
-        return diyEffects
+        if (debugLog) {log.debug "loadDIYFile: ${e}"}
     }
     if (dBytes != null) {
         tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List

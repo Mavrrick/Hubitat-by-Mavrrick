@@ -14,8 +14,6 @@ import groovy.json.JsonBuilder
 #include Mavrrick.Govee_LAN_API
 
 def commandPort() { "4003" }
-def multicastListenerPort() { "4002" }
-def deviceScanPort() { "4001" }
 
 metadata {
 	definition(name: "Govee Manual LAN API Device", namespace: "Mavrrick", author: "Mavrrick") {
@@ -37,13 +35,12 @@ metadata {
             [name: "diyName", type: "STRING", description: "DIY Number to activate"]
            ]
         command "sceneLoad" 
-//        command "devStatus"
-//        command "LookupLanAPIDevices"
+
     }
 
 	preferences {		
 		section("Device Info") {
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:30", defaultValue:30, submitOnChange: true, width:4)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("deviceModel")+".json")
@@ -73,24 +70,29 @@ def refresh() {
 
 def updated() {
     initialize()
-    sceneLoad()
 }
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
-        sendEvent(name: "effectNum", value: 0) 
+        sendEvent(name: "hue", value: 0)
+        sendEvent(name: "saturation", value: 100)
+        sendEvent(name: "effectNum", value: 0)
     unschedule()
     if (debugLog) runIn(1800, logsOff)
+//    if (pollRate > 0) runIn(pollRate,poll)
+    if (pollRate > 0) {
+        pollRateInt = pollRate.toInteger()
+        randomOffset(pollRateInt)
+        runIn(offset,poll)
+    }
+    sceneLoad()
+    devStatus()
     
 }
 
 
 def installed(){
-    if (debugLog) {log.warn "installed(): Driver Installed"}
-        sendEvent(name: "hue", value: 0)
-        sendEvent(name: "saturation", value: 100)
-        sendEvent(name: "effectNum", value: 0) 
-    retrieveScenes()
+    initialize()
 }
 
 def logsOff() {
@@ -323,4 +325,18 @@ def getColor(hue, saturation)
             break;
     }
   return color
+}
+
+
+///////////////////////////////////////////
+// Helper Methods /////////////////////////
+///////////////////////////////////////////
+
+def randomOffset(int pollRateInt){
+    if (debugLog) {log.debug "randomOffset(): Entered random offset Calc with ${pollRateInt}"} 
+    Random random = new Random()
+    offset = random.nextInt(pollRateInt) // see explanation below
+//    int number = random.nextInt(pollRateInt) + start; // see explanation below
+    if (debugLog) {log.debug "randomOffset(): random offset is ${offset}"}    
+    return offset
 }

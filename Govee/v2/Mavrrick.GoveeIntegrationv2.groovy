@@ -280,30 +280,79 @@ def deviceSelect2() {
 
 
 def deviceLanManual() {
+    Map options = [:] 
+    lanApiDevices = getChildDevice('Govee_v2_Device_Manager').retrieveApiDevices()
+    lanApiDevicesId = lanApiDevices.keySet() as List
+    logger("deviceLanManual()  Device id's to match with ${lanApiDevicesId}", 'debug')
+                lanApiDevices.keySet().each {
+                    String deviceName = it 
+                    String deviceip = lanApiDevices."${it}".ip
+                    logger("deviceLanManual() $deviceName ${lanApiDevices."${it}".ip}", 'debug')
+                    options["${deviceip}"] = deviceip
+                    
+                } 
+                logger("deviceLanManual() $options", 'debug')
     dynamicPage(name: 'deviceLanManual', title: 'Manual Setup for LAN API Enabled Devices', uninstall: false, install: false, nextPage: "deviceLanManual2" )
     {
         section('<b>***Warning***</b> Using the manual Addd option will potentially severaly limit your use of the device. This should be a last resort and only used if the device does not support adding with the normal method using the Cloud API. LAN API control can be enable on traditionally added devices as well.')
         {
             paragraph 'Please enter the needed parameters below to create your device '
             input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
-            input(name: 'goveeModel', type: 'string', required:false, title: 'Enter Govee Device Model Number.', description: 'E.g. H####')
-            input(name: 'goveeManLanIP', type: 'string', required:false, title: 'Enter Govee Device Ip Address.', description: 'E.g. 192.168.1.2')
+            input(name: 'goveeManSelection', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:false,
+                options: options.sort() , width: 8, height: 1)
+   
+//            input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
+//            input(name: 'goveeModel', type: 'string', required:false, title: 'Enter Govee Device Model Number.', description: 'E.g. H####')
+//            input(name: 'goveeManLanIP', type: 'string', required:false, title: 'Enter Govee Device Ip Address.', description: 'E.g. 192.168.1.2')
             paragraph 'Click the next button when you are ready to create the device. '
         }
     }
 }
 
 def deviceLanManual2() {
-    if (settings.goveeModel && settings.goveeManLanIP && settings.goveeDevName) {
-        goveeLightManAdd(settings.goveeModel, settings.goveeManLanIP, settings.goveeDevName)
+    mqttDevice = getChildDevice('Govee_v2_Device_Manager')
+    String deviceID = "default"
+    String ip = "default"
+    String deviceModel = "default"
+    List childDNI = []
+    if (mqttDevice.getChildDevices()) {
+        childDNI = mqttDevice.getChildDevices().deviceNetworkId
+    }
+    if (settings.goveeManSelection && settings.goveeDevName) {
+        lanApiDevices = getChildDevice('Govee_v2_Device_Manager').retrieveApiDevices()
+
+        lanApiDevices.keySet().each {
+                if (lanApiDevices."${it}".ip == settings.goveeManSelection) {
+                    deviceID = it 
+                    ip = lanApiDevices."${it}".ip
+                    deviceModel = lanApiDevices."${it}".sku
+                    logger("deviceLanManual2() DEVICE INFORMATION Name: Matched device and found ip: ${ip}, sku: ${deviceModel}, deviceid: ${deviceID}", 'debug')
+                    
+            }
+
+        } 
+        logger("deviceLanManual2() Device Add information Name: ${settings.goveeDevName}, SKU: ${deviceModel}, ip: ${ip}, Deviceid: ${deviceID}", 'debug')
+        if (!childDNI.contains("Govee_"+deviceID)) {
+            String driver = "Govee Manual LAN API Device"
+            mqttDevice.addManLightDeviceHelper(driver,  deviceID, ip, settings.goveeDevName, deviceModel)
+        } else {
+            logger("deviceLanManual2() Add Aborted for  Name: ${settings.goveeDevName} deviceid: ${deviceID}", 'debug')
+        }
     }
     dynamicPage(name: 'deviceLanManual2', title: 'Results of manual device add', uninstall: false, install: false, nextPage: "mainPage")
     {
-        if (settings.goveeModel && settings.goveeManLanIP && settings.goveeDevName) {
-            section('<b>Device Manual Add</b>') {
-            paragraph "Attempted manual add of ${settings.goveeDevName} at ip ${settings.goveeManLanIP}."
-            paragraph "Click Next to return to the main menu."
-            } 
+        if (settings.goveeManSelection && settings.goveeDevName) {
+            if (!childDNI.contains("Govee_"+deviceID)) {
+                section('<b>Device Manual Add</b>') {
+                paragraph "Attempted manual add of ${settings.goveeDevName} at ip ${settings.goveeManSelection}."
+                paragraph "Click Next to return to the main menu."
+                }
+            } else {
+                section('<b>Device Manual Add</b>') {
+                paragraph "Manual add of device aborted as it was already present"
+                paragraph "Click Next to return to the main menu."
+                }
+            }
         } else {
             section('<b>Device Manual Add</b>') {
             paragraph "Please try again and fill in all needed values."
@@ -649,6 +698,9 @@ def installed() {
          ])
     state.isInstalled = true
     state.diyEffects = [:]
+    if (!state.goveeAppAPI && settings.APIKey) {
+        retrieveGoveeAPIData()
+    }
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
 }
 
@@ -669,10 +721,15 @@ def updated() {
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
     if (settings.APIKey != state.APIKey ) {
         child.each {
-            logger("updated() API key has been updated. Calling child devices: ${it} to udpate", 'debug')
-            it.apiKeyUpdate()
+            if (it != null ) {
+                logger("updated() API key has been updated. Calling child devices: ${it} to udpate", 'debug')            
+                it.apiKeyUpdate()
+            }
         }
         state?.APIKey = settings.APIKey
+    }
+    if (!state.goveeAppAPI && settings.APIKey) {
+        retrieveGoveeAPIData()
     }
 }
 
