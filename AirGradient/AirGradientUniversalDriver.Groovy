@@ -18,8 +18,8 @@ metadata
 {
     definition (name: "Air Gradient Universal Driver", namespace: "mavrrick", author: "Mavrrick")
     {
-	capability "TemperatureMeasurement"
-	capability "RelativeHumidityMeasurement"
+		capability "TemperatureMeasurement"
+		capability "RelativeHumidityMeasurement"
         capability "CarbonDioxideMeasurement"
         capability "Polling"
         capability "Initialize"
@@ -27,7 +27,7 @@ metadata
         
         attribute "rssi", "number"
         attribute "pm01", "number"		
-	attribute "pm25", "number"
+		attribute "pm25", "number"
         attribute "pm10", "number"
         attribute "pmCount", "number"
         attribute "tvoc", "number"
@@ -44,7 +44,7 @@ metadata
 		{
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input("ip", "text", title: "IP Address", description: "IP address of your Air Gradient Device", required: false)
-	    input(name: "cOrF", type: "enum", title: "Select your Temperature Unit", options: ["Celsius", "Fahrenheit"], defaultValue: "Celsius")		
+			input(name: "cOrF", type: "enum", title: "Select your Temperature Unit", options: ["Celsius", "Fahrenheit"], defaultValue: "Celsius")		
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("displayBright", "number", title: "Level of brightness for onboard display\nDefault:100", defaultValue:100, range: '0..100', width:3, required: false)
             input("ledBarBrightness", "number", title: "Level of brightness of LED Bar\nDefault:100", defaultValue:100, range: '0..100',width:3, required: false)
@@ -155,7 +155,9 @@ def poll() {
         uri   : "http://"+ip,
         path  : '/measures/current',
         contentType: "application/json"   
-    ]  
+    ] 
+    
+    try {
     httpGet(params) { resp ->
         if (debugLog) {log.debug "poll(): Response Data is "+resp.data}
         if (resp.status == 200) {
@@ -197,6 +199,10 @@ def poll() {
             }
         } 
     }
+    } catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"               
+        }
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         runIn(pollRateInt,poll)
