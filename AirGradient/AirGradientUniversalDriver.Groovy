@@ -42,7 +42,7 @@ metadata
 	{	
 		section
 		{
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
+            input("pollRate", "number", title: "Polling Rate (Minutes)\nDefault:5", defaultValue:5, range: '1..59', submitOnChange: true, width:4)
             input("ip", "text", title: "IP Address", description: "IP address of your Air Gradient Device", required: false)
 			input(name: "cOrF", type: "enum", title: "Select your Temperature Unit", options: ["Celsius", "Fahrenheit"], defaultValue: "Celsius")		
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
@@ -63,6 +63,7 @@ metadata
 def installed()
 {
 	log.info "Air Gradient is loaded. Waiting for updates"
+    initialize()
 	settingsInitialize()
 }
 
@@ -70,6 +71,7 @@ def installed()
 def updated()
 {
 	log.info "Air Gradient is loaded. Waiting for updates"
+    initialize()
 	settingsInitialize()
 }
 
@@ -87,10 +89,7 @@ def settingsInitialize()
 void initialize()
 	{
 	log.info "Air Gradient Driver is initializing"
-    if (pollRate > 0) {
-        pollRateInt = pollRate.toInteger()
-        runIn(pollRateInt,poll)
-    }        
+    schedPoll()        
 }
 
 void configure(){
@@ -150,7 +149,7 @@ void configure(){
 /*
     Retrieve data states from device
 */
-def poll() {
+def poll() {    
     def params = [
         uri   : "http://"+ip,
         path  : '/measures/current',
@@ -158,55 +157,53 @@ def poll() {
     ] 
     
     try {
-    httpGet(params) { resp ->
-        if (debugLog) {log.debug "poll(): Response Data is "+resp.data}
-        if (resp.status == 200) {
-            if (debugLog) {log.debug "Poll(): Successful poll. Parsing data to apply to device"}
-            resp.data.each {
-                if (debugLog) {log.debug "poll(): Respone Data Key Name "+it.key}
-                if (debugLog) {log.debug "poll(): Respone Data Value "+it.value}
-                if (it.key == "pm01") {
-                    sendEvent(name: "pm01", value: it.value)
-                } else if (it.key == "pm02") {
-                    sendEvent(name: "pm25", value: it.value)
-                } else if (it.key == "pm10") {
-                    sendEvent(name: "pm10", value: it.value)
-                }  else if (it.key == "pm003Count") {
-                    sendEvent(name: "pmCount", value: it.value)
-                } else if (it.key == "rhumCompensated") {
-                    sendEvent(name: "humidity", value: it.value)
-                } else if (it.key == "wifi") {
-                    sendEvent(name: "rssi", value: it.value)
-                } else if (it.key == "rco2") {
-                    sendEvent(name: "carbonDioxide", value: it.value)
-                } else if (it.key == "tvocIndex") {
-                    sendEvent(name: "tvoc", value: it.value)
-                }  else if (it.key == "noxIndex") {
-                    sendEvent(name: "nox", value: it.value)
-                } else if (it.key == "atmpCompensated") {
-                    if (it.value <= -20) {
-                        if (debugLog) {log.debug "Invalid value of ${it.value}. Ignoring value"}
+        httpGet(params) { resp ->
+            if (debugLog) {log.debug "poll(): Response Data is "+resp.data}
+            if (resp.status == 200) {
+                if (debugLog) {log.debug "Poll(): Successful poll. Parsing data to apply to device"}
+                resp.data.each {
+                    if (debugLog) {log.debug "poll(): Respone Data Key Name "+it.key}
+                    if (debugLog) {log.debug "poll(): Respone Data Value "+it.value}
+                    if (it.key == "pm01") {
+                        sendEvent(name: "pm01", value: it.value)
+                    } else if (it.key == "pm02") {
+                        sendEvent(name: "pm25", value: it.value)
+                    } else if (it.key == "pm10") {
+                        sendEvent(name: "pm10", value: it.value)
+                    }  else if (it.key == "pm003Count") {
+                        sendEvent(name: "pmCount", value: it.value)
+                    } else if (it.key == "rhumCompensated") {
+                        sendEvent(name: "humidity", value: it.value)
+                    } else if (it.key == "wifi") {
+                        sendEvent(name: "rssi", value: it.value)
+                    } else if (it.key == "rco2") {
+                        sendEvent(name: "carbonDioxide", value: it.value)
+                    } else if (it.key == "tvocIndex") {
+                        sendEvent(name: "tvoc", value: it.value)
+                    }  else if (it.key == "noxIndex") {
+                        sendEvent(name: "nox", value: it.value)
+                    } else if (it.key == "atmpCompensated") {
+                        if (it.value <= -20) {
+                            if (debugLog) {log.debug "Invalid value of ${it.value}. Ignoring value"}
+                        } else {
+                            float temp = it.value
+                            if (cOrF == "Fahrenheit") { 
+                                temperature=((temp*9/5)+32).round(1) 
+                                sendEvent(name: "temperature", value: temperature)
+                            } else sendEvent(name: "temperature", value: temp.round(1))
+                        }
                     } else {
-                        float temp = it.value
-                        if (cOrF == "Fahrenheit") { 
-                            temperature=((temp*9/5)+32).round(1) 
-                            sendEvent(name: "temperature", value: temperature)
-                        } else sendEvent(name: "temperature", value: temp.round(1))
+                        if (debugLog) {log.debug "Unknown parm to parse ${it.key} = ${it.value}"}
                     }
-                } else {
-                    if (debugLog) {log.debug "Unknown parm to parse ${it.key} = ${it.value}"}
                 }
-            }
+            }               
         } 
-    }
     } catch (groovyx.net.http.HttpResponseException e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"               
-        }
-    if (pollRate > 0) {
-        pollRateInt = pollRate.toInteger()
-        runIn(pollRateInt,poll)
-    }
+		log.error "${e}"
+    } /* finally {
+        schedPoll()
+    } */
 } 
 
 /* 
@@ -286,4 +283,19 @@ def co2CalibrateRequest() {
     command = "co2CalibrationRequested"
 //    request = true
     sendConfig(command, true)
+}
+
+/* void schedPoll(){
+    if (pollRate > 0) {
+        pollRateInt = pollRate.toInteger()
+        runIn(pollRateInt,poll)
+    } 
+} */
+
+void schedPoll(){
+    if (pollRate <= 59) {
+        unschedule()
+        String pollCron = '0 */'+pollRate+' * ? * *' 
+        schedule(pollCron, poll)
+    }
 }
