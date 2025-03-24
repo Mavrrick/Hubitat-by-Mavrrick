@@ -70,9 +70,10 @@ metadata {
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
 			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
+            if (ipLookup() != "N/A") { 
             input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
+            }
             if (lanControl) {
-            input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)
             input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false)    
             if (lanScenes) {
                 input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("DevType")+".json")    
@@ -98,8 +99,12 @@ def poll() {
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
         unschedule(poll)
-        if (pollRate > 0) runIn(pollRate,poll)
+    if (pollRate > 0) runIn(pollRate,poll)
+    if (lanControl) { 
+        devStatus() 
+    } else {
         getDeviceState()
+    }
 }
 
 def updated() {
@@ -121,6 +126,7 @@ def initialize(){
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
+    retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
     
 }
