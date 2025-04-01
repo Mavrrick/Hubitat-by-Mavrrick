@@ -46,6 +46,7 @@ def setHsb(h,s,b)
     if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
 
 	rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
+    if (debugLog) { log.debug "setHsb(): Cmd = ${rgb}"}
 	def rgbmap = [:]
 	rgbmap.r = rgb[0]
 	rgbmap.g = rgb[1]

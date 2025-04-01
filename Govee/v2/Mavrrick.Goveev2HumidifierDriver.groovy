@@ -7,7 +7,7 @@
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_Life
-// #include Mavrrick.Govee_Cloud_MQTT
+#include Mavrrick.Govee_Cloud_MQTT
 
 import groovy.json.JsonSlurper 
 import java.util.Random 

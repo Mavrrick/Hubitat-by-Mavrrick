@@ -301,7 +301,6 @@ try {
                                                 if (debugLog) {log.debug ("getDeviceState(): child = ${child} Hue = ${hue} Saturation = ${sat} ColorRGBNum = ${it.state.value})}") }
 					                            child.postEvent("hue" , hue);
 					                            child.postEvent("saturation", sat);
-					                            child.postEvent("colorMode", "RGB");
                                                child.postEvent("colorRGBNum", it.state.value);
                                             } else {
                                                 child.postEvent("colorRGBNum", it.state.value);    
@@ -321,7 +320,6 @@ try {
 					                            sat=HSVlst[1].toInteger();
 					                            sendEvent(name: "hue", value: hue);
 					                            sendEvent(name: "saturation", value: sat);
-					                            sendEvent(name: "colorMode", value: "RGB");
                                                 sendEvent(name: "colorRGBNum", value: it.state.value);
                                             } else {
                                                 sendEvent(name: "colorRGBNum", value: it.state.value);    
@@ -335,7 +333,6 @@ try {
                                     if (device.currentValue("colorTemperature") != it.state.value) {
                                         if (it.state.value >= 1) {
                                             sendEvent(name: "colorTemperature", value: it.state.value);
-                                            sendEvent(name: "colorMode", value: "CT");
                                         }
                                         else {
                                             sendEvent(name: "colorTemperature", value: it.state.value);                                    
@@ -395,7 +392,7 @@ try {
                             case "devices.capabilities.property":
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "C") sendEvent(name: "temperature", value: fahrenheitToCelsius(it.state.value.toDouble().round(2)), unit: "C");
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
-                                if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value.currentHumidity, unit: "%");
+                                if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value, unit: "%");
                                 if (it.instance == "airQuality") sendEvent(name: "airQuality", value: it.state.value);
                                 if (it.instance == "filterLifeTime") sendEvent(name: "filterLifeTime", value: it.state.value, unit: "%");                            
                             break;  
