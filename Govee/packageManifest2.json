@@ -55,7 +55,7 @@
       "id": "c388d20f-109f-4f90-bae5-14f428aa0242",
       "name": "Govee v2 Group Light Driver",
       "namespace": "Mavrrick",
-      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2GroupLightDriver.groovy",
       "required": false,
       "version": "2.1.0"
     },
