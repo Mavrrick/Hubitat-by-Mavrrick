@@ -39,40 +39,6 @@ def setColor(value) {
     }
 }
 
-def setColor( r, g,  b) {
-    if (debugLog) { log.debug "setColorRGB(): RGB Values are  R = ${r} G = ${g} B =${b}"}
-    def rgbmap = [:]
-    List rgblist = [r.toInteger(), g.toInteger(), b.toInteger()]
-    if (debugLog) { log.debug "setColorRGB(): RGB list ${rgblist}"}
-	rgbmap.r = r
-	rgbmap.g = g
-	rgbmap.b = b   
-    rgbvalue = ((rgblist[0] & 0xFF) << 16) | ((rgblist[1] & 0xFF) << 8) | ((rgblist[2] & 0xFF) << 0)
-    if (debugLog) { log.debug "setColorRGB(): rgbvalue = ${rgbvalue}"}
-    if (lanControl) {
-        if (debugLog) { log.debug "setColorRGB(): ${rgbmap}"}
-        sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
-      	sendEvent(name: "hue", value: "${h}")
-        sendEvent(name: "saturation", value: "${s}")
-        sendEvent(name: "switch", value: "on")
-   		sendEvent(name: "colorMode", value: "RGB")
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
-    } else {
-        if (device.currentValue("cloudAPI") == "Retry") {
-            log.error "setHsb(): CloudAPI already in retry state. Aborting call." 
-        } else { 
-        sendEvent(name: "cloudAPI", value: "Pending")
-        sendCommand("colorRgb", rgbvalue,"devices.capabilities.color_setting")
-        }
-    }
-    if(100 != device.currentValue("level")?.toInteger()) {
-    setLevel(100)
-    }
-} 
-
 def setHsb(h,s,b)
 {
 

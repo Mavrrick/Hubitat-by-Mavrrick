@@ -59,11 +59,6 @@ metadata {
             [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],
 //            [name: "color ", type: "COLOR_MAP", description: "color to set"]            
            ]
-/*         command "setColor", [
-            [name: "Red", type: "NUMBER", description: "Red value between 0 and 255"],
-            [name: "Green ", type: "NUMBER", description: "Green value between 0 and 255"],
-            [name: "Blue", type: "NUMBER", description: "Blue value between 0 and 255"],       
-           ] */
         command "gradient", [
             [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
            ]

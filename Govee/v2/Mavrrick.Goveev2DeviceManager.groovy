@@ -201,6 +201,7 @@ def disconnected() {
 /////////////////////////////////////////////////////////////////////
 
 void parse(String event) {
+    long startTime = now()
     if (event.matches("(.*)topic(.*)")) {
         def jsonSlurper = new JsonSlurper()     
         if (debugLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
@@ -220,15 +221,12 @@ void parse(String event) {
         payloadJson = slurper.parseText(payload)
         if (payloadJson.msg.cmd == "devStatus") {        
             if (debugLog) log.info "parse() LAN API Device StatusMessage recieved. Parsing and sending to device."  
-            if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} payload: ${new String(HexUtils.hexStringToByteArray(messageJson.payload))}")}
+//            if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} payload: ${new String(HexUtils.hexStringToByteArray(messageJson.payload))}")}
             if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} cmd: ${payloadJson.msg.cmd} data: ${payloadJson.msg.data}")}
             childIP = messageJson.fromIp
             if (state.ipxdni.containsKey(messageJson.fromIp)) {
-//            if (ipxdni.containsKey(messageJson.fromIp)) {    
-                if (debugLog) {log.info("received: sourceIP: device is Configured. child to send it is ${state.ipxdni.get(childIP)} for ip ${childIP}")}
+//                if (debugLog) {log.info("received: sourceIP: device is Configured. child to send it is ${state.ipxdni.get(childIP)} for ip ${childIP}")}
                device = getChildDevice(state.ipxdni.get(childIP))
-//                if (debugLog) {log.info("received: sourceIP: device is Configured. child to send it is ${ipxdni.get(childIP)} for ip ${childIP}")}
-//                device = getChildDevice(ipxdni.get(childIP))
                 if (debugLog) {log.info("received: sourceIP: device is Configured. device to send it is ${device}")}
                 device.lanAPIPost(payloadJson.msg.data)
             }
@@ -272,7 +270,30 @@ void parse(String event) {
                 }
             }
         }    
-    }        
+    }
+    long endTime = now()
+    long duration = endTime - startTime
+    def formattedDuration = formatDuration(duration)
+    if (debugLog) log.info "parse() Elapse time ${formattedDuration}."
+}
+
+def formatDuration(long milliseconds) {
+    if (milliseconds < 1000) {
+        return "${milliseconds} ms"
+    }
+
+    long seconds = milliseconds / 1000
+    if (seconds < 60) {
+        return "${seconds} s ${milliseconds % 1000} ms"
+    }
+
+    long minutes = seconds / 60
+    if (minutes < 60) {
+        return "${minutes} min ${seconds % 60} s ${milliseconds % 1000} ms"
+    }
+
+    long hours = minutes / 60
+    return "${hours} h ${minutes % 60} min ${seconds % 60} s ${milliseconds % 1000} ms"
 }
     
 
