@@ -265,7 +265,7 @@ void parse(String event) {
                     state.ipxdni.put(payloadJson.msg.data.ip,"Govee_"+payloadJson.msg.data.device)
 //                    ipxdni.put(payloadJson.msg.data.ip,"Govee_"+payloadJson.msg.data.device)
                     if (enableLanApiInstall) { 
-                        runIn(30, installNewDevices())
+                        runIn(30, installNewDevices)
                     }
                 }
             }
