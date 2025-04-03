@@ -219,7 +219,7 @@ void parse(String event) {
         payload = new String(HexUtils.hexStringToByteArray(messageJson.payload))
         payloadJson = slurper.parseText(payload)
         if (payloadJson.msg.cmd == "devStatus") {  
-            if (state.ipxdni.containsKey(messageJson.fromIp) == null ) {
+            if (!state.ipxdni ) {
                 if (debugLog) log.info "parse() ipxdni is null. LAN API Device StatusMessage recieved but ignored. Calling for device Scan"  
                 LookupLanAPIDevices()
             } else {
