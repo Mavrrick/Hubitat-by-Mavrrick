@@ -30,7 +30,7 @@ metadata {
         capability "Battery"
         capability "Alarm"
         capability "PowerSource"
-        capability "LockCodes"
+//        capability "LockCodes"
         capability "Motion Sensor"
         capability "PushableButton"
         capability "HoldableButton"
