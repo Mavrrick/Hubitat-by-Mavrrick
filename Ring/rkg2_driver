@@ -23,7 +23,7 @@ def version() {
 }
 
 metadata {
-    definition (name: "Ring Alarm Keypad G2 Community 4", namespace: "hubitat", author: "Community") {
+    definition (name: "Ring Alarm Keypad G2 Community", namespace: "hubitat", author: "Community") {
         capability "Actuator"
         capability "Sensor"
         capability "Configuration"
