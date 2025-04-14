@@ -214,21 +214,23 @@ void parse(String event) {
         mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
         
     } else {
-//        if (descLog) log.info "parse() LAN API Message recieved. Parsing and sending to device. Full message is ${event}"
         slurper = new JsonSlurper()
         messageJson = slurper.parseText(event)
         payload = new String(HexUtils.hexStringToByteArray(messageJson.payload))
         payloadJson = slurper.parseText(payload)
-        if (payloadJson.msg.cmd == "devStatus") {        
-            if (debugLog) log.info "parse() LAN API Device StatusMessage recieved. Parsing and sending to device."  
-//            if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} payload: ${new String(HexUtils.hexStringToByteArray(messageJson.payload))}")}
-            if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} cmd: ${payloadJson.msg.cmd} data: ${payloadJson.msg.data}")}
-            childIP = messageJson.fromIp
-            if (state.ipxdni.containsKey(messageJson.fromIp)) {
-//                if (debugLog) {log.info("received: sourceIP: device is Configured. child to send it is ${state.ipxdni.get(childIP)} for ip ${childIP}")}
-               device = getChildDevice(state.ipxdni.get(childIP))
-                if (debugLog) {log.info("received: sourceIP: device is Configured. device to send it is ${device}")}
-                device.lanAPIPost(payloadJson.msg.data)
+        if (payloadJson.msg.cmd == "devStatus") {  
+            if (!state.ipxdni ) {
+                if (debugLog) log.info "parse() ipxdni is null. LAN API Device StatusMessage recieved but ignored. Calling for device Scan"  
+                LookupLanAPIDevices()
+            } else {
+                if (debugLog) log.info "parse() LAN API Device StatusMessage recieved. Parsing and sending to device."  
+                if (debugLog) {log.info("received: sourceIP: ${messageJson.fromIp} cmd: ${payloadJson.msg.cmd} data: ${payloadJson.msg.data}")}
+                childIP = messageJson.fromIp
+                if (state.ipxdni.containsKey(messageJson.fromIp)) {
+                    device = getChildDevice(state.ipxdni.get(childIP))
+                    if (debugLog) {log.info("received: sourceIP: device is Configured. device to send it is ${device}")}                   
+                    device.lanAPIPost(payloadJson.msg.data)
+                }
             }
         } else if (payloadJson.msg.cmd == "scan") {
             if (payloadJson.msg.data.containsKey("account_topic")) {
@@ -265,7 +267,7 @@ void parse(String event) {
                     state.ipxdni.put(payloadJson.msg.data.ip,"Govee_"+payloadJson.msg.data.device)
 //                    ipxdni.put(payloadJson.msg.data.ip,"Govee_"+payloadJson.msg.data.device)
                     if (enableLanApiInstall) { 
-                        runIn(30, installNewDevices())
+                        runIn(30, installNewDevices)
                     }
                 }
             }
