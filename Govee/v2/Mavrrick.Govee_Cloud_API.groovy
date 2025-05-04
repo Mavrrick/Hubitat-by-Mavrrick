@@ -651,6 +651,23 @@ def randomUUID(){
     return requestID
 }
 
+def cloudInitDefaultValues() {
+    if(device.getDataValue("commands").contains("color")) {
+        sendEvent(name: "hue", value: 0)
+        sendEvent(name: "saturation", value: 100)
+    }
+    if(device.getDataValue("commands").contains("lightScene")) {
+        sendEvent(name: "effectNum", value: 0) 
+    	sendEvent(name: "colorMode", value: "CT") 
+    }
+    if(device.getDataValue("commands").contains("brightness")) {
+        sendEvent(name: "level", value: 0)  
+    }
+    if(device.getDataValue("commands").contains("colorTemperatureK")) {
+        sendEvent(name: "colorTemperature", value: 2000)  
+    }
+}
+
 
 ///////////////////////////////////////////
 // Helper Methods /////////////////////////
