@@ -166,6 +166,18 @@ def sceneLoad() {
     }
 }
 
+def initDefaultValues() {
+    if (lanControl) { 
+        lanInitDefaultValues() 
+    } else {
+        cloudInitDefaultValues()
+    }
+    if (lanControl) { 
+        devStatus() 
+    } else {
+        getDeviceState()
+    }
+}
 
 /////////////////////////
 // Commands for Driver //
