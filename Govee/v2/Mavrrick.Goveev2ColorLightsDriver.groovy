@@ -118,9 +118,9 @@ def initialize(){
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
         }
-    if(device.getDataValue("commands").contains("lightScene")) {
-        sendEvent(name: "effectNum", value: 0) }
+    initDefaultValues()
     unschedule()
+
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
@@ -131,18 +131,12 @@ def initialize(){
     
 }
 
-
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
-    if(device.getDataValue("commands").contains("color")) {
-        sendEvent(name: "hue", value: 0)
-        sendEvent(name: "saturation", value: 100)
-    }
-    if(device.getDataValue("commands").contains("lightScene")) {
-        sendEvent(name: "effectNum", value: 0) }
+    initDefaultValues()
     if (pollRate > 0) runIn(pollRate,poll)
     retrieveScenes2()
-    retrieveStateData() 
+    retrieveStateData()
     getDevType()
 }
 

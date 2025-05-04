@@ -469,6 +469,10 @@ def getDevType() {
         case "H6051":
             device.updateDataValue("DevType", "Table_Lamp");
             break;
+        case "H6038": 
+        case "H6039":
+            device.updateDataValue("DevType", "Wall_Sconce");
+            break;
         case "H6022":
             device.updateDataValue("DevType", "Table_Lamp_2");
             break;        
@@ -761,4 +765,13 @@ void retrieveIPAdd() {
     }
     if (debugLog) {log.info("retrieveIPAdd: LAN API Ip Address for device is ${ipAddress}")}
     device.updateDataValue("IP", ipAddress)
+}
+
+void lanInitDefaultValues() {
+        sendEvent(name: "hue", value: 0)
+        sendEvent(name: "saturation", value: 100)
+        sendEvent(name: "effectNum", value: 0) 
+    	sendEvent(name: "colorMode", value: "CT") 
+        sendEvent(name: "level", value: 0)  
+        sendEvent(name: "colorTemperature", value: 2000)  
 }

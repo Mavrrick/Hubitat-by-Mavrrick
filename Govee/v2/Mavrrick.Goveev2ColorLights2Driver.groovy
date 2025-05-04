@@ -119,8 +119,7 @@ def initialize(){
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
         }
-    if(device.getDataValue("commands").contains("lightScene")) {
-        sendEvent(name: "effectNum", value: 0) }
+    initDefaultValues()
     unschedule()
 
     if (pollRate > 0) {
@@ -133,15 +132,9 @@ def initialize(){
     
 }
 
-
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
-    if(device.getDataValue("commands").contains("color")) {
-        sendEvent(name: "hue", value: 0)
-        sendEvent(name: "saturation", value: 100)
-    }
-    if(device.getDataValue("commands").contains("lightScene")) {
-        sendEvent(name: "effectNum", value: 0) }
+    initDefaultValues()
     if (pollRate > 0) runIn(pollRate,poll)
     retrieveScenes2()
     retrieveStateData()
@@ -171,6 +164,21 @@ def sceneLoad() {
             if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
             retrieveDIYScenes()
         }
+    }
+}
+
+
+
+def initDefaultValues() {
+    if (lanControl) { 
+        lanInitDefaultValues() 
+    } else {
+        cloudInitDefaultValues()
+    }
+    if (lanControl) { 
+        devStatus() 
+    } else {
+        getDeviceState()
     }
 }
 

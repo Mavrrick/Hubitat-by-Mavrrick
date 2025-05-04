@@ -56,10 +56,8 @@ def setHsb(h,s,b)
     if (lanControl) {
         if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
         sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
-      	sendEvent(name: "hue", value: "${h}")
-        sendEvent(name: "saturation", value: "${s}")
-        sendEvent(name: "switch", value: "on")
    		sendEvent(name: "colorMode", value: "RGB")
+        runInMillis(500, 'devStatus')
         if (effectNum != 0){
             sendEvent(name: "effectNum", value: 0)
             sendEvent(name: "effectName", value: "None") 
