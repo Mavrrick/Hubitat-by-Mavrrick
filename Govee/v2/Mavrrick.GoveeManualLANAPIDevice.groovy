@@ -74,9 +74,7 @@ def updated() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
-        sendEvent(name: "hue", value: 0)
-        sendEvent(name: "saturation", value: 100)
-        sendEvent(name: "effectNum", value: 0)
+    cloudInitDefaultValues()
     unschedule()
     if (debugLog) runIn(1800, logsOff)
 //    if (pollRate > 0) runIn(pollRate,poll)
