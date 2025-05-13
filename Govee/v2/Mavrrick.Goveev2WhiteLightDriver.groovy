@@ -94,6 +94,7 @@ def initialize(){
     }
         getDeviceState()
     }
+    device.removeSetting(ip) //remove legacy IP preference value
     retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
 }
