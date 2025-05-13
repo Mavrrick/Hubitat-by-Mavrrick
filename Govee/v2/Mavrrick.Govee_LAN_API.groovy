@@ -641,7 +641,7 @@ def sendCommandLan(String cmd) {
 
 def getIPString() {
     if (ip){
-       return ip+":"+commandPort()
+       initialize()
     } else {
         return device.getDataValue("IP")+":"+commandPort()
     }
@@ -755,12 +755,9 @@ void updateIPAdd(ipAddress) {
 void retrieveIPAdd() {
     if (debugLog) {log.info("retrieveIPAdd: Reaching out to Parent device for IP Address")}
     deviceID = device.getDataValue("deviceID")
-//    lanScenes.keySet().contains(device.getDataValue("DevType"))
     if (parent.retrieveApiDevices().keySet().contains(deviceID)) {
-//        ipAddress = "N/A"
         ipAddress = parent.retrieveApiDevices()."${deviceID}".ip
     } else {
-//    ipAddress = parent.retrieveApiDevices()."${deviceID}".ip
         ipAddress = "N/A"
     }
     if (debugLog) {log.info("retrieveIPAdd: LAN API Ip Address for device is ${ipAddress}")}
