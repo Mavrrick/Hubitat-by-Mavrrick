@@ -114,7 +114,6 @@ def initialize(){
         runIn(offset,poll)
     }
 //    if (pollRate > 0) runIn(pollRate,poll)
-    device.removeSetting(ip) //remove legacy IP preference value
     retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
 }
