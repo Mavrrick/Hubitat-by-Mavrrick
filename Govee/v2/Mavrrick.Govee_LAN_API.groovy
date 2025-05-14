@@ -640,11 +640,7 @@ def sendCommandLan(String cmd) {
 }
 
 def getIPString() {
-    if (ip){
-       initialize()
-    } else {
-        return device.getDataValue("IP")+":"+commandPort()
-    }
+    return device.getDataValue("IP")+":"+commandPort()
 }
 
 

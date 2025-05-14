@@ -120,7 +120,9 @@ def updated() {
 }
 
 def initialize(){
-    if (debugLog) {log.warn "initialize(): Driver Initializing"}    
+    if (debugLog) {log.warn "initialize(): Driver Initializing"}
+    if (debugLog) {log.warn "initialize(): Driver performing cleanup"}
+    cleanup()
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
@@ -133,7 +135,6 @@ def initialize(){
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
-    device.removeSetting(ip) //remove legacy IP preference value
     retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
     
