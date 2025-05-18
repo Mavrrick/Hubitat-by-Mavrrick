@@ -364,7 +364,9 @@ def addLightDeviceHelper(String driver, String deviceID, String deviceName, Stri
 	String devModel = deviceModel
 	String dni = "Govee_${deviceID}"
     String ip = "N/A"
-    if (state.lanApiDevices.containsKey(deviceID)) {
+    if (!state.lanApiDevices) {
+        if (debugLog) "addLightDeviceHelper(): No LAN API Device found/present on network. Leaving default value of N/A"
+    } else if (state.lanApiDevices.containsKey(deviceID)) {
         ip = state.lanApiDevices."${deviceID}".ip
     }
 	Map properties = [name: driver, label: deviceName, deviceID: deviceID, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: ctMin, ctMax: ctMax, capTypes: capType]
@@ -389,7 +391,10 @@ def addLightDeviceHelper(String driver, String deviceID, String deviceName, Stri
 	Map deviceTypeBak = [:]
 	String devModel = deviceModel
 	String dni = "Govee_${deviceID}"
-    if (state.lanApiDevices.containsKey(deviceID)) {
+    String ip = "N/A"
+    if (!state.lanApiDevices) {
+        if (debugLog) "addLightDeviceHelper(): No LAN API Device found/present on network. Leaving default value of N/A"
+    } else if (state.lanApiDevices.containsKey(deviceID)) {
         ip = state.lanApiDevices."${deviceID}".ip
     }
 	Map properties = [name: driver, label: deviceName, deviceID: deviceID, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: 2000, ctMax: 9000, capTypes: capType]
