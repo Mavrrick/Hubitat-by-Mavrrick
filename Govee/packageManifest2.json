@@ -33,7 +33,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
-      "version": "2.1.7"
+      "version": "2.1.8"
     },
     {
       "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
