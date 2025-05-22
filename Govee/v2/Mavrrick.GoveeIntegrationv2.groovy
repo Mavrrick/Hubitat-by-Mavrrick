@@ -54,6 +54,7 @@ import hubitat.helper.HexUtils
 @Field static final Map deviceTag =  // a300 line device specific codes
 	["H6022":"585a", 
      "H6052":"01", 
+     "H6008":"01",
      "H6078":"0c09", 
      "H6061":"04", 
      "H6065":"04", 
