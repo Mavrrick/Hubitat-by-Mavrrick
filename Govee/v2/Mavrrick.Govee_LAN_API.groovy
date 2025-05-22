@@ -551,6 +551,7 @@ def getDevType() {
             break;
         default: 
             if (debugLog) {log.debug ("getDevType(): Unknown device Type  ${device.getDataValue("deviceModel")}")}; 
+	    device.updateDataValue("DevType", "Generic");   
         break; 
         
     }       
