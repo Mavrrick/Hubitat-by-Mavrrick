@@ -265,8 +265,11 @@ void parse(String event) {
                     if (debugLog) log.info "parse() Device info: ${deviceInfo}"
                     state.lanApiDevices.put(payloadJson.msg.data.device,deviceInfo)
                     state.ipxdni.put(payloadJson.msg.data.ip,"Govee_"+payloadJson.msg.data.device)
-//                    ipxdni.put(payloadJson.msg.data.ip,"Govee_"+payloadJson.msg.data.device)
-                    if (enableLanApiInstall) { 
+                    if (getChildDevices().deviceNetworkId.contains("Govee_"+payloadJson.msg.data.device)) {
+                        device = getChildDevice("Govee_${payloadJson.msg.data.device}")
+                        if (debugLog) log.info "parse() Sending call to device to update ip: ${getChildDevice("Govee_${payloadJson.msg.data.device}")}"
+                        device.updateIPAdd(payloadJson.msg.data.ip)
+                    } else if (enableLanApiInstall) { 
                         runIn(30, installNewDevices)
                     }
                 }
