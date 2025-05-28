@@ -94,13 +94,12 @@ def initialize(){
         }
     initDefaultValues()
     unschedule()
-
+    retrieveIPAdd()
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
-    retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
     
 }

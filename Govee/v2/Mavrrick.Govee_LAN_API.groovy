@@ -550,8 +550,8 @@ def getDevType() {
             device.updateDataValue("DevType", "Outdoor_String_Light");
             break;
         default: 
-            if (debugLog) {log.debug ("getDevType(): Unknown device Type  ${device.getDataValue("deviceModel")}")}; 
-	    device.updateDataValue("DevType", "Generic");   
+            if (debugLog) {log.debug ("getDevType(): Unknown device Type  ${device.getDataValue("deviceModel")}")};
+            device.updateDataValue("DevType", "Generic");    
         break; 
         
     }       
@@ -646,8 +646,14 @@ def getIPString() {
 
 
 def parse(message) {  
-  log.error "Got something to parseUDP"
-  log.error "UDP Response -> ${new String(HexUtils.hexStringToByteArray(message))}"    
+    log.error "Got something to parseUDP"
+    valueMap = [:]
+    def message2 = message.replaceAll(/\s+/, "")  
+    message2.split(",").each{ item ->
+        valueMap.put(item.substring(0,(item.indexOf(':'))),item.substring((item.indexOf(':')+1),item.length()))
+        } 
+    def utf8String = new String(valueMap.payload.decodeBase64(), "UTF-8")
+    log.error "UDP Response -> Error Type: ${valueMap.type} Error Message: ${utf8String}"    
 }
 
 def loadSceneFile() {

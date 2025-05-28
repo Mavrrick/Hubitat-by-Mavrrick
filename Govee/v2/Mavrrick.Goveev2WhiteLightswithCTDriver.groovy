@@ -108,13 +108,13 @@ def initialize(){
         }
     if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
     unschedule()
+    retrieveIPAdd()
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
 //    if (pollRate > 0) runIn(pollRate,poll)
-    retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
 }
 
