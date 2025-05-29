@@ -284,29 +284,32 @@ def deviceSelect2() {
 def deviceLanManual() {
     Map options = [:] 
     lanApiDevices = getChildDevice('Govee_v2_Device_Manager').retrieveApiDevices()
-    lanApiDevicesId = lanApiDevices.keySet() as List
-    logger("deviceLanManual()  Device id's to match with ${lanApiDevicesId}", 'debug')
-                lanApiDevices.keySet().each {
-                    String deviceName = it 
-                    String deviceip = lanApiDevices."${it}".ip
-                    logger("deviceLanManual() $deviceName ${lanApiDevices."${it}".ip}", 'debug')
-                    options["${deviceip}"] = deviceip
-                    
-                } 
-                logger("deviceLanManual() $options", 'debug')
+    if (lanApiDevices != null) {
+        lanApiDevicesId = lanApiDevices.keySet() as List
+        logger("deviceLanManual()  Device id's to match with ${lanApiDevicesId}", 'debug')
+            lanApiDevices.keySet().each {
+            String deviceName = it 
+            String deviceip = lanApiDevices."${it}".ip
+            logger("deviceLanManual() $deviceName ${lanApiDevices."${it}".ip}", 'debug')
+            options["${deviceip}"] = deviceip
+            }            
+    } else {
+        logger("deviceLanManual() No LAN API device currently detected", 'debug')    
+    }
+        logger("deviceLanManual() $options", 'debug')
     dynamicPage(name: 'deviceLanManual', title: 'Manual Setup for LAN API Enabled Devices', uninstall: false, install: false, nextPage: "deviceLanManual2" )
     {
         section('<b>***Warning***</b> Using the manual Addd option will potentially severaly limit your use of the device. This should be a last resort and only used if the device does not support adding with the normal method using the Cloud API. LAN API control can be enable on traditionally added devices as well.')
         {
-            paragraph 'Please enter the needed parameters below to create your device '
-            input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
-            input(name: 'goveeManSelection', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:false,
-                options: options.sort() , width: 8, height: 1)
-   
-//            input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
-//            input(name: 'goveeModel', type: 'string', required:false, title: 'Enter Govee Device Model Number.', description: 'E.g. H####')
-//            input(name: 'goveeManLanIP', type: 'string', required:false, title: 'Enter Govee Device Ip Address.', description: 'E.g. 192.168.1.2')
-            paragraph 'Click the next button when you are ready to create the device. '
+            if (lanApiDevices != null) {
+                paragraph 'Please enter the needed parameters below to create your device '
+                input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
+                input(name: 'goveeManSelection', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:false,
+                    options: options.sort() , width: 8, height: 1)
+                paragraph 'Click the next button when you are ready to create the device. '
+            } else {
+                paragraph 'There are currently no LAN API devices detected on your network. Please ensure the device Settings are updated in the Govee Home app to turn on "LAN Control" '
+            }
         }
     }
 }
