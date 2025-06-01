@@ -541,12 +541,15 @@ def RetrievechildDeviceInfo(){
     if (debugLog) {log.info("RetrievechildDeviceInfo: Retrieving Child device ID Information")}
     state.remove("ipxdni")
     state.ipxdni = [:]
-    deviceids = state.lanApiDevices.keySet()
-    deviceids.each {
-        if (debugLog) {log.debug ("RetrievechildDeviceInfo(): it ${it} ${state.lanApiDevices."${it}".ip}")}
-        state.ipxdni.put(state.lanApiDevices."${it}".ip,"Govee_"+it) 
+    if (state.lanApiDevices) {
+        deviceids = state.lanApiDevices.keySet()
+        deviceids.each {
+            if (debugLog) {log.debug ("RetrievechildDeviceInfo(): it ${it} ${state.lanApiDevices."${it}".ip}")}
+            state.ipxdni.put(state.lanApiDevices."${it}".ip,"Govee_"+it) 
+        }
+        
+        if (debugLog) {log.debug ("RetrievechildDeviceInfo(): ${state.ipxdni} crossReference")}
     }
-    if (debugLog) {log.debug ("RetrievechildDeviceInfo(): ${state.ipxdni} crossReference")}
     state.childCount = getChildDevices().size()
 } 
 
