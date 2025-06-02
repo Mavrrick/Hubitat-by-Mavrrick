@@ -74,7 +74,7 @@ def updated() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
-    cloudInitDefaultValues()
+    lanInitDefaultValues()
     unschedule()
     if (debugLog) runIn(1800, logsOff)
 //    if (pollRate > 0) runIn(pollRate,poll)
