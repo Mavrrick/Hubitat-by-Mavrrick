@@ -1,0 +1,27 @@
+{
+  "packageName": "Unifi Integrtion Manager",
+  "author": "Mavrrick",
+  "version": "1.0.0",
+  "minimumHEVersion": "2.4.1",
+  "dateReleased": "2025-6-25",
+  "apps": [
+    {
+      "id": "15451330-8cc6-4b1b-9cd2-d597451d53a9",
+      "name": "Unifi Integratin Manager",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Unifi/Mavrrick.UnifiIntegrationManager.groovy",
+      "required": true,
+      "oauth": true,
+      "primary": false
+    },
+    {
+      "id": "17952022-674f-44d6-a5f3-a2bb81f48ba5",
+      "name": "Unifi Integratin Manager",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Unifi/Mavrrick.UnifiIntegrationManagerOutboundWebhook.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    },
+  ]
+}
