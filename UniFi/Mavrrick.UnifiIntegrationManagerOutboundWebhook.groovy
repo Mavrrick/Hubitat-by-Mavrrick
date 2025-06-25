@@ -24,7 +24,7 @@ definition(
     description: "Unifi Integration Manager webhook Child app",
     category: "Convenience",
     parent: "Mavrrick:Unifi Integration Manager",
-    importUrl: "https://raw.githubusercontent.com/Mavrrick/Unifi/refs/heads/main/unifiIntegrationManagerOutbound-Webhook.groovy",
+    importUrl: "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/UniFi/Mavrrick.UnifiIntegrationManagerOutboundWebhook.groovy",
     iconUrl: "https://graph.api.smartthings.com/api/devices/icons/st.Weather.weather2-icn",
     iconX2Url: "https://graph.api.smartthings.com/api/devices/icons/st.Weather.weather2-icn"
 )
