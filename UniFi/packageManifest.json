@@ -9,7 +9,7 @@
       "id": "15451330-8cc6-4b1b-9cd2-d597451d53a9",
       "name": "Unifi Integratin Manager",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Unifi/Mavrrick.UnifiIntegrationManager.groovy",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/UniFi/Mavrrick.UnifiIntegrationManager.groovy",
       "required": true,
       "oauth": true,
       "primary": false
