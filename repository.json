@@ -46,6 +46,20 @@
       ]
     },
     {
+      "id": "48805193-498a-4e5d-8cc7-60e362545c64",
+      "name": "Unifi Integration Manager",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Unifi/packageManifest.json",
+      "description": "Unifi Integration Manager for Snell's Unifi Network, Protect, and Connect integrations",
+      "tags": [
+        "Misc. Devices",
+        "Cloud",
+        "Lights & Switches",
+        "Appliances",
+        "Integrations"
+      ]
+    },
+    {
       "id": "258bbd07-300b-4a45-a4c9-622f1f06ccb3",
       "name": "Air Gradient Universal driver",
       "category": "Convenience",
