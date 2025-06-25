@@ -20,7 +20,7 @@ definition(
     author: 'CRAIG KING',
     description: "Unifi Integration Manager, helps manage devices and drivers based on @Snell's Unifi API projects.",
     category: 'Networking',
-    importUrl: "https://raw.githubusercontent.com/Mavrrick/Unifi/refs/heads/main/unifiIntegrationManager.groovy",
+    importUrl: "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/UniFi/Mavrrick.UnifiIntegrationManager.groovy",
     iconUrl: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
     iconX2Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
 //    iconX3Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
