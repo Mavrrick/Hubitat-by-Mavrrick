@@ -72,7 +72,7 @@ def mainPage() {
     {
         section('<b>Integration Configuration</b>') {
             paragraph('When selecting the option for the type of setup to use, you can select the following options: Not Enabled, Managed, External.')
-            paragraph('<ul><li>Not Enabled - Will not be used at all.</li><li>Managed - Integration will manage all aspects of the setup. Best for new setups.</li><li>External - Integration will allow additional features but not manage setup. Best for already configured setups. (Maybe rename this to "Unmanaged"?)</li></ul>')
+            paragraph('<ul><li>Not Enabled - Will not be used at all.</li><li>Managed - Integration will manage all aspects of the setup. Best for new setups.</li><li>External - Integration will allow additional features but not manage setup. Best for already configured setups.</li></ul>')
 //                href 'setup', title: 'Unifi Environment Setup', description: 'Click to load values for Unifi Integrations.'
 //            paragraph('<hr style="height:4px;border-width:0;color:gray;background-color:gray">')
             input 'unifiNetwork', 'enum', title: 'Unifi Network Integration', required: true, submitOnChange: true, options:[ "Not Enabled", "Managed", "External" ], defaultValue: "Not Enabled"
