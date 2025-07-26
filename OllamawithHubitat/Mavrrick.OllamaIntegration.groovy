@@ -644,13 +644,18 @@ def toolFunctions() {
     return toolsJSON
 }
 
-
+///
+// Create List for context to pass to the Conversation
+///
 
 //
 // Ollama function Processing
 //
 
+
+
 def control_device(parms) {
+    logger("control_device(): Enter device control routine", 'info')
     controlState = parms.state
     controlDevice = parms.device
     value  = ""
@@ -773,5 +778,6 @@ def presence_Check(parms) {
 
 def clearConversation() {
     conversation = null
-    logger("device_state_lookup(): conversation is ${conversation}", 'info')
+    logger("clearConversation(): conversation is has been cleared. Passing along context info in new chat", 'info')
+    chat("You are a assistant to control a Hubitat Home Automation system. The list of devices you can control are ${devices}")
 }

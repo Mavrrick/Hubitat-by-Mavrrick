@@ -24,6 +24,7 @@ metadata
         attribute "response", "string"
         attribute "model", "string"
         attribute "ConvTime", "number"
+        attribute "ollamaState", "string"
         
         command "askQuestion", [
             [name: "question", type: "STRING", description: "AI Prompt for question or action"]
@@ -79,6 +80,7 @@ void configure(){
     Retrieve data states from device
 */
 def askQuestion(question) {
+    sendEvent(name: "ollamaState", value: "Processing Request")
     long startTime = now()
     sendEvent(name: "prompt", value: question)
     response = parent.chat(question)
@@ -88,6 +90,7 @@ def askQuestion(question) {
     def formattedDuration = formatDuration(duration)
     if (debugLog) log.info "parse() Elapse time ${formattedDuration}."
     sendEvent(name: "ConvTime", value: formattedDuration)
+    sendEvent(name: "ollamaState", value: "Ready")
 } 
 
 
@@ -110,39 +113,10 @@ def formatDuration(long milliseconds) {
     return "${hours} h ${minutes % 60} min ${seconds % 60} s ${milliseconds % 1000} ms"
 }
 
-
-/* 
-    Retrieve List of avaliable Models
-*/
-
-def getModels() {
-    List models = []
-        def params = [
-        uri   : "http://"+device.getDataValue("server"),
-        path  : '/api/tags',
-        contentType: "application/json",
-    ]
-        try {
-        httpGet(params) { resp ->
-            if (debugLog) {log.debug "getModels(): Response Data is "+resp.data.models}
-            if (resp.status == 200) {
-                if (debugLog) {log.debug "getModels(): Successful poll. Parsing data to apply to device"}
-                resp.data.models.each {
-                    if (debugLog) {log.debug "getModels(): Adding model "+it.model+" to list"}
-                    models.add(it.model)
-                }
-            }
-        } 
-    } catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-    }
-    if (debugLog) {log.debug "getModels() List of loaded models are ${models}"}
-    return models
-}
-
 def newConversation() {
+    sendEvent(name: "ollamaState", value: "Starting New Conversation")
     parent.clearConversation()
+    sendEvent(name: "ollamaState", value: "Ready")
 }
 
 /*
