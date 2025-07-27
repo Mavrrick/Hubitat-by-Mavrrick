@@ -19,10 +19,10 @@ import groovy.json.JsonOutput
 metadata
 {
     definition (
-	    name: "Ollama Driver", 
-	    namespace: "Mavrrick", 
-	    author: "Mavrrick",
-	    importUrl: 'https://raw.githubusercontent.com/apwelsh/hubitat/master/roku/device/roku-tv.groovy')    
+        name: "Ollama Driver", 
+        namespace: "Mavrrick", 
+        author: "Mavrrick",
+        importUrl: 'https://raw.githubusercontent.com/apwelsh/hubitat/master/roku/device/roku-tv.groovy')
     {        
         attribute "prompt", "string"
         attribute "response", "string"

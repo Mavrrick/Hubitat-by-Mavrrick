@@ -41,6 +41,22 @@ import hubitat.helper.HexUtils
 @Field static Map goveeScene = [:]
 @Field static String conversation = null
 
+/**
+ * Maps common color names to their HSL values (Hue: 0-360, Saturation: 0-100, Lightness: 0-100).
+ */
+@Field Map<String, Map<String, Integer>> colorNameToHsl = [
+    "red": [hue: 0, saturation: 100, lightness: 50],
+    "green": [hue: 33, saturation: 100, lightness: 50],
+    "blue": [hue: 66, saturation: 100, lightness: 50],
+    "yellow": [hue: 17, saturation: 100, lightness: 50],
+    "cyan": [hue: 50, saturation: 100, lightness: 50],
+    "magenta": [hue: 83, saturation: 100, lightness: 50],
+    "white": [hue: 0, saturation: 0, lightness: 100],
+    "black": [hue: 0, saturation: 0, lightness: 0],
+    "orange": [hue: 8, saturation: 100, lightness: 50],
+    "purple": [hue: 75, saturation: 100, lightness: 50],
+    "pink": [hue: 92, saturation: 100, lightness: 70]
+]
 
 preferences
 {
@@ -488,6 +504,9 @@ def chat(question) {
                                 counter = counter +1
                             }
                         } else {
+                            logger("chat(): No Function was called. Responding with response Message", 'info')
+                            message = JsonOutput.toJson(it.value.content)
+                            toolResponse = message
                         }
                     } else {
                     }
@@ -558,7 +577,7 @@ def toolFunctions() {
             },
             "stateType": {
               "type": "string",
-              "description": "This is the type of state being asked to change, e.g. switch, brightness, temperature,  or color temperature"
+              "description": "This is the type of state being asked to change, e.g. switch, brightness, color, temperature, or color temperature"
             }
           },
           "required": ["state","device","stateType"]
@@ -627,16 +646,16 @@ def toolFunctions() {
               "type": "string",
               "description": "Device name to look up current state, e.g. Lyra Lamp or Light Switch"
             },
-            "group": {
+            "stateType": {
               "type": "string",
-              "description": "identifier for a group of devices"
+              "description": "The type of state to check e.g. switch, temperature, speed, Humidity, Presence"
             },
             "state": {
               "type": "string",
-              "description": "The state or sensor value eg on, off, temperature, speed, humidity, presence"
+              "description": "The value of the stateType often relating to a device attribute or sensor value"
             }
           },
-          "required": ["state","device"]
+          "required": ["stateType","device"]
         }
       }
     }
@@ -644,15 +663,9 @@ def toolFunctions() {
     return toolsJSON
 }
 
-///
-// Create List for context to pass to the Conversation
-///
-
 //
 // Ollama function Processing
 //
-
-
 
 def control_device(parms) {
     logger("control_device(): Enter device control routine", 'info')
@@ -678,19 +691,39 @@ def control_device(parms) {
             }
         }
         break;
-        
+        case "color":
+        devices.each {
+            if (it.toString() == parms.device.toString()) {
+                logger("control_device(): Set Color to ${parms.state} in HSL ${colorNameToHsl[parms.state]}", 'info')
+                it.setColor(colorNameToHsl[parms.state])                
+                logger("control_device(): Setting color to ${controlState}", 'info')
+            }
+        }
+        break;
+        case "color temperature":
+        devices.each {
+            if (it.toString() == parms.device.toString()) {
+                logger("control_device(): Set Color Temperature to ${parms.state}", 'info')
+                it.setColorTemperature(controlState.toInteger())                
+                logger("control_device(): Setting color temperature to ${controlState}", 'info')
+            }
+        }
+        break;
+        default:
+        logger("control_device(): Control request with stateType: ${parms.stateType}. Please report to developer to add this handler the routine", 'info') 
+        break;
     }
     responseMessage = "${controlDevice} ${parms.stateType} changed to ${controlState}"
     return responseMessage
-    logger("control_device(): Control request made with the following vaules ${parms}", 'info')
+//    logger("control_device(): Control request made with the following vaules ${parms}", 'info')
 }
 
 def device_state_lookup(parms) {
-    lookupState = parms.state
+    lookupState = parms.stateType
     lookupDevice = parms.device
     value  = ""
     unit = ""
-    switch(parms.state){
+    switch(parms.stateType){
         case "temperature":
         devices.each {
             if (it.toString() == parms.device.toString()) { 
@@ -698,7 +731,16 @@ def device_state_lookup(parms) {
                 unit = "Degrees"
                 logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
-        }
+        }  
+        case "switch":
+        case "on":
+        case "off":
+        devices.each {
+            if (it.toString() == parms.device.toString()) { 
+                value = it.currentSwitch
+                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+            }
+        }  
         break;
         case "humidity":
         devices.each {
@@ -727,7 +769,8 @@ def device_state_lookup(parms) {
             }
         }
         break;
-        
+        default :
+        logger("device_state_lookup(): stateType is not recognized ${parms.statetype}. Forward to developer to update function for this task.", 'info')
     }
     responseMessage = "${parms.device}  is ${value} ${unit}"
     return responseMessage
@@ -747,37 +790,31 @@ def set_temp(parms) {  // not yet implemented. Here as a place holder for alread
                 logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
         }
-        break;
-        case "humidity":
-        devices.each {
-            if (it.toString() == parms.device.toString()) { 
-                value = it.currentHumidity
-                unit = "%"
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
-            }
-        }
-        break;
-        case "presence":
-        devices.each {
-            if (it.toString() == parms.device.toString()) { 
-                value = it.currentPresence
-                unit = ""
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
-            }
-        }
-        break;
-        
+        break; 
     }*/
     responseMessage = "${parms.device} current ${parms.state} is "
     return responseMessage 
 }
 
-def presence_Check(parms) {
-    logger("presence_Check(): Control request made with the following vaules ${parms}", 'info')
-}
+///
+//  Helper Method to pass context when a new Conversation is started
+///
 
 def clearConversation() {
     conversation = null
     logger("clearConversation(): conversation is has been cleared. Passing along context info in new chat", 'info')
-    chat("You are a assistant to control a Hubitat Home Automation system. The list of devices you can control are ${devices}")
+    String deviceContext = ""
+    devices.forEach {
+        if (deviceContext == " ") {
+        deviceContext =  "${it} in room ${it.getRoomName()}"
+        } else {
+            if (it.getRoomName() == null) {
+                deviceContext = deviceContext + ", ${it}"    
+            } else {
+                deviceContext = deviceContext + ", ${it} in room: ${it.getRoomName()}"   
+            }
+        }
+    }
+    chat("You are a assistant to control a Hubitat Home Automation system. The list of devices you can control are ${deviceContext}")
+//    chat("You are a assistant to control a Hubitat Home Automation system. The list of devices you can control are ${devices}")
 }
