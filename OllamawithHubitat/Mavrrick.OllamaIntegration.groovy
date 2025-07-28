@@ -186,14 +186,13 @@ def installed() {
 def updated() {
     log.debug "Updated with settings: ${settings}"
     child = getChildDevices()
-
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
-        child.each {
-            if (it != null ) {
-                logger("updated() Calling child device to update Ollama instance information", 'debug')            
-                it.updateOllamaConfig()
-            }
-    }
+/*    child.each {
+          if (it != null ) {
+              logger("updated() Calling child device to update Ollama instance information", 'debug')            
+              it.updateOllamaConfig()
+          } 
+    } */
 }
 
 def uninstalled() {
@@ -498,11 +497,18 @@ def chat(question) {
                             while (size >= counter +1) {
                                 logger("chat(): Function identified by Ollama ${it.value.tool_calls.get(counter).function.name}", 'info')
                                 logger("chat(): Arguments extracted by Ollama ${it.value.tool_calls.get(counter).function.arguments}", 'info')
-                                toolResponse = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
-                                conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolResponse+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
-                                logger("chat(): tool conversation add ${conversationAdd}", 'trace')
+                                if ( counter > 0) {
+                                    toolResponse = toolResponse +","+ "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
+                                } else {
+                                    toolResponse = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)   
+                                }
+                                toolConvAdd = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
+                                conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolConvAdd+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
+                            //    logger("chat(): tool conversation add ${conversationAdd}", 'trace')
                                 counter = counter +1
                             }
+//                            conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolResponse+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
+                            logger("chat(): tool conversation add ${conversationAdd}", 'trace')
                         } else {
                             logger("chat(): No Function was called. Responding with response Message", 'info')
                             message = JsonOutput.toJson(it.value.content)
@@ -648,7 +654,7 @@ def toolFunctions() {
             },
             "stateType": {
               "type": "string",
-              "description": "The type of state to check e.g. switch, temperature, speed, Humidity, Presence"
+              "description": "The type of state to check e.g. switch, temperature, speed, humidity, presence, contact, open/close"
             },
             "state": {
               "type": "string",
@@ -719,27 +725,34 @@ def control_device(parms) {
 }
 
 def device_state_lookup(parms) {
+    logger("device_state_lookup(): Entered Device State Lookup Routine.", 'info')
     lookupState = parms.stateType
     lookupDevice = parms.device
     value  = ""
     unit = ""
+    responseMessage = ""
+    logger("device_state_lookup(): StateType = ${parms.stateType}: Device = ${parms.device}.", 'info')
     switch(parms.stateType){
         case "temperature":
+        logger("device_state_lookup(): stateType matched on temperature", 'info')
         devices.each {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentTemperature
                 unit = "Degrees"
                 logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
-        }  
+            responseMessage = "Temperature on ${parms.device}  is ${value} ${unit}"
+        }
+        break;
         case "switch":
         case "on":
         case "off":
         devices.each {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentSwitch
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+                logger("device_state_lookup() State Value is ${value}", 'info')
             }
+            responseMessage = "${parms.device} is ${value} ${unit}"
         }  
         break;
         case "humidity":
@@ -749,6 +762,7 @@ def device_state_lookup(parms) {
                 unit = "%"
                 logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
+            responseMessage = "The humidity on ${parms.device} is ${value} ${unit}"
         }
         break;
         case "brightness":
@@ -758,6 +772,7 @@ def device_state_lookup(parms) {
                 unit = "%"
                 logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
+            responseMessage = "Brightness on the ${parms.device} is ${value} ${unit}"
         }
         break;
         case "presence":
@@ -767,12 +782,25 @@ def device_state_lookup(parms) {
                 unit = ""
                 logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
+            responseMessage = "${parms.device} is ${value} ${unit}"
         }
         break;
-        default :
-        logger("device_state_lookup(): stateType is not recognized ${parms.statetype}. Forward to developer to update function for this task.", 'info')
+        case "contact":
+        case "open/close":
+        devices.each {
+            if (it.toString() == parms.device.toString()) { 
+                value = it.currentContact
+                unit = ""
+                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+            }
+            responseMessage = "${parms.device} is ${value}"
+        }
+        break;
+        default:
+        logger("device_state_lookup(): stateType is not recognized ${parms.stateType}. Forward to developer to update function for this task.", 'info')
+        break;
     }
-    responseMessage = "${parms.device}  is ${value} ${unit}"
+//    responseMessage = "${parms.device}  is ${value} ${unit}"
     return responseMessage
 }
 
@@ -811,7 +839,7 @@ def clearConversation() {
             if (it.getRoomName() == null) {
                 deviceContext = deviceContext + ", ${it}"    
             } else {
-                deviceContext = deviceContext + ", ${it} in room: ${it.getRoomName()}"   
+                deviceContext = deviceContext + ", ${it} in the ${it.getRoomName()}"   
             }
         }
     }
