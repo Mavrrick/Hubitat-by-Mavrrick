@@ -92,7 +92,7 @@ def askQuestion(question) {
     long endTime = now()
     long duration = endTime - startTime
     def formattedDuration = formatDuration(duration)
-    if (debugLog) log.info "parse() Elapse time ${formattedDuration}."
+    if (debugLog) log.info "askQuestion() Elapse time ${formattedDuration}."
     sendEvent(name: "ConvTime", value: formattedDuration)
     sendEvent(name: "ollamaState", value: "Ready")
 } 
@@ -119,8 +119,11 @@ def formatDuration(long milliseconds) {
 
 def newConversation() {
     sendEvent(name: "ollamaState", value: "Starting New Conversation")
+    sendEvent(name: "prompt", value: "New Conversation")
     parent.clearConversation()
     sendEvent(name: "ollamaState", value: "Ready")
+    sendEvent(name: "response", value: " ")
+    
 }
 
 /*
@@ -151,139 +154,5 @@ def updateData()
         device.updateDataValue("model", parent?.serverIP)
     }
 }
-
-/*
-    Custom Functions
-*/
-
-def toolFunctions() {
-    def toolsJSON = '''"tools": [
-    {
-      "type": "function",
-      "function": {
-        "name": "get_time",
-        "description": "Get the time",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "location": {
-              "type": "string",
-              "description": "The location to get the time for, e.g. San Francisco, CA"
-            },
-            "format": {
-              "type": "string",
-              "description": "The format to return the weather in, e.g. 'celsius' or 'fahrenheit'",
-              "enum": ["24 hour", "AM/PM"]
-            }
-          },
-          "required": ["location", "format"]
-        }
-      }
-    },
-     {
-      "type": "function",
-      "function": {
-        "name": "control_device",
-        "description": "Change a device to a given state",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "device": {
-              "type": "string",
-              "description": "Device name to turn on or activate, e.g. Lyra Lamp or Light Switch"
-            },
-            "area": {
-              "type": "string",
-              "description": "Area, Room, or grouping of devices"
-            },
-            "state": {
-              "type": "string",
-              "description": "The requested state for a device to be changed to"
-            }
-          },
-          "required": ["state"]
-        }
-      }
-    },
-     {
-      "type": "function",
-      "function": {
-        "name": "lookup_all_Devices",
-        "description": "Review a list of all devices",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "device": {
-              "type": "string",
-              "description": "Device name to turn on or activate, e.g. Lyra Lamp or Light Switch"
-            },
-            "area": {
-              "type": "string",
-              "description": "Area, Room, or grouping of devices"
-            },
-            "state": {
-              "type": "string",
-              "description": "The requested state for a device to be changed to"
-            }
-          },
-          "required": ["state"]
-        }
-      }
-    },
-     {
-      "type": "function",
-      "function": {
-        "name": "set_temp",
-        "description": "Used to set temp of thermostat",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "device": {
-              "type": "string",
-              "description": "Device name to turn on or activate, e.g. Lyra Lamp or Light Switch"
-            },
-            "area": {
-              "type": "string",
-              "description": "Area, Room, or grouping of devices"
-            },
-            "state": {
-              "type": "desiredTemp",
-              "description": "The requested state for a device to be changed to"
-            }
-          },
-          "required": ["state"]
-        }
-      }
-    },
-     {
-      "type": "function",
-      "function": {
-        "name": "device_state_lookup",
-        "description": "Used to query a device for current associated attributes",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "device": {
-              "type": "string",
-              "description": "Device name to look up current state, e.g. Lyra Lamp or Light Switch"
-            },
-            "group": {
-              "type": "string",
-              "description": "identifier for a group of devices"
-            },
-            "state": {
-              "type": "string",
-              "description": "The state or sensor value eg on, off, temperature, speed, amount"
-            }
-          },
-          "required": ["state"]
-        }
-      }
-    }
-  ]'''
-    return toolsJSON
-}
-
-
 
 

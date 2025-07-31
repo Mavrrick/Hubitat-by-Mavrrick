@@ -110,7 +110,8 @@ def mainPage() {
 def setup() {
     app.clearSetting("modelID")
     if (serverIP) {
-    options = getModels()
+        options = getModels()
+        state.modelCapabilities = showModels()    
     }
     logger(" setup() $options", 'debug')
     dynamicPage(name: 'setup', title: 'Setup Ollama integration Parms', uninstall: false, install: false, nextPage: "mainPage", submitOnChange: true)
@@ -118,24 +119,28 @@ def setup() {
         section('<b>Server Information</b>')
         {
             paragraph 'Please enter your Ollama server local network IP address and port. It should look something like 192.168.1.125:11434'
-            input(name: 'serverIP', type: 'string', required:false, description: 'Please enter the IP and port of your server.', multiple:false)
+            input(name: 'serverIP', type: 'string', required:false, description: 'Please enter the IP and port of your server.', multiple:false, submitOnchange: true,)
         }
- 
-        section('<b>Model</b>')
-        {
-            if (serverIP) {
-            paragraph 'Please select the desired model from the selection below'
-            input(name: 'model', type: 'enum', required:false, description: 'Please select the downloaded LLM model you wish to use.', multiple:false,
-                options: options.sort() , width: 8, height: 1)
+        if (serverIP) { 
+            if (options != null) {
+                section('<b>Model</b>') {
+                    paragraph 'Please select the desired model from the selection below'
+                    input(name: 'model', type: 'enum', required:false, description: 'Please select the downloaded LLM model you wish to use.', multiple:false, submitOnChange: true,
+                        options: options.sort() , width: 8, height: 1)
+                    paragraph ' The model supports '+state.modelCapabilities+' capabilities' 
+                    if (state.modelCapabilities.contains("thinking")) {
+                        input(name: 'thinking', title: "Would you like to hide the LLM thinking from the response", type: 'bool', defaultvalue: false , description: 'If you LLM Mode supports thinking this allow it the thinking to be hidden')    
+                    }
+                }   
+            }
+        
+            section('<b>Manage Models in Ollama</b>') {
+                paragraph "Enter the LLM Identifier in the field below and then click on the button for the action you want to take"
+                input(name: 'modelID', type: 'string', required:false, description: 'Please enter a valid LLM idenitifier such as qwen3:latest .', multiple:false)
+                input "modelPull" , "button",  title: "Pull Model"
+//              input "modelDelete" , "button",  title: "Delete Model" // Needed call not supported
             }
         }
-        
-        section('<b>Manage Models in Ollama</b>') {
-            paragraph "Enter the LLM Identifier in the field below and then click on the button for the action you want to take"
-            input(name: 'modelID', type: 'string', required:false, description: 'Please enter a valid LLM idenitifier such as qwen3:latest .', multiple:false)
-            input "modelPull" , "button",  title: "Pull Model"
-//            input "modelDelete" , "button",  title: "Delete Model" // Needed call not supported
-        } 
     }
 }
 
@@ -174,8 +179,8 @@ def installed() {
             'name': 'Ollama',
             'label': 'Ollama',
              'data': [
-                'server': settings.serverIP,
-                'model': settings.model
+//                'server': settings.serverIP,
+//                'model': settings.model
              ],
              'completedSetup': true,
          ])
@@ -187,12 +192,6 @@ def updated() {
     log.debug "Updated with settings: ${settings}"
     child = getChildDevices()
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
-/*    child.each {
-          if (it != null ) {
-              logger("updated() Calling child device to update Ollama instance information", 'debug')            
-              it.updateOllamaConfig()
-          } 
-    } */
 }
 
 def uninstalled() {
@@ -407,11 +406,11 @@ def getModels() {
 */
 
 def pullModels() {
-    bodyparm = '{"name": "'+modelID+'","stream": false}'
+    bodyparm = '{"model": "'+modelID+'","stream": false}'
         def params = [
         uri   : "http://"+serverIP,
         path  : '/api/pull',
-        contentType: "application/json",
+//        contentType: "application/json",
         body : bodyparm,
         timeout : 300
     ]
@@ -429,29 +428,33 @@ def pullModels() {
 }
 
 /* 
-   Delete Models
+   Show Model information to retrieve Capabilities
 */
 
-def deleteModels() {
-    bodyparm = '{"name": "'+modelID+'"}'
+def showModels() {
+    List modelCapabilities = []
+    bodyparm = '{"model": "'+model+'"}'
         def params = [
         uri   : "http://"+serverIP,
-        path  : '/api/delete',
+        path  : '/api/show',
         contentType: "application/json",
         body : bodyparm
     ]
         try {
-        httpDelete(params) { resp ->
-            if (debugLog) {log.debug "pullModels(): Response Data is "+resp.data}
+        httpPost(params) { resp ->
+            logger("showModels(): Response Data is ${resp.data}", 'trace')
+            
             if (resp.status == 200) {
-                if (debugLog) {log.debug "pullModels(): Sucessfully Deleted Model"}
+                modelCapabilities = resp.data.capabilities
+                logger("showModels(): Capabilities found ${resp.data.capabilities}", 'info')
             }
         } 
     } catch (groovyx.net.http.HttpResponseException e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
     }
-    if (debugLog) {log.debug "getModels() List of loaded models are ${models}"}
+//    logger("showModels(): Response Data is ${resp.data}", 'info')
+    return modelCapabilities
 }
 
 //
@@ -461,6 +464,7 @@ def deleteModels() {
 def chat(question) {
     def conversationAdd = null
     def toolResponse = null
+    def processJSON = null
     logger("chat(): Conversation History : ${conversation}", 'trace')
     if (conversation == null) {
         conversation  = '{"role":"user","content":"'+question+'"}'
@@ -468,14 +472,24 @@ def chat(question) {
     conversation  =  conversation + ',{"role":"user","content":"'+question+'"}' 
     }
     logger("chat(): Current Submited Conversation : ${conversation}", 'trace')
-    def toolsJSON = toolFunctions()
+    if (state.modelCapabilities.contains("tools")) {
+        processJSON = toolFunctions()
+    } else {
+        processJSON = structuredOutputJSON()
+    }
+    String bodyParm = ""
+    
+    if (state.modelCapabilities.contains("thinking")) {
+        bodyParm = '{"model":"'+model+'","messages":['+conversation+'],"think":true,"stream":false,'+processJSON+'}'
+    } else {
+        bodyParm = '{"model":"'+model+'","messages":['+conversation+'],"stream":false,'+processJSON+'}'    
+    }
 
-    String bodyParm = '{"model":"'+model+'","messages":['+conversation+'],"stream":false,'+toolsJSON+'}'
     def params = [
         uri   : "http://"+serverIP,
         path  : '/api/chat',
         contentType: "application/json",
-        timeout: 300, 
+        timeout: 600, 
         body: bodyParm
     ] 
     logger("chat(): Attempting to send request to ollama server at ${serverIP}, parms: ${params}", 'info')
@@ -502,8 +516,8 @@ def chat(question) {
                                 } else {
                                     toolResponse = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)   
                                 }
-                                toolConvAdd = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
-                                conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolConvAdd+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
+//                                toolConvAdd = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
+                                conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolResponse+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
                             //    logger("chat(): tool conversation add ${conversationAdd}", 'trace')
                                 counter = counter +1
                             }
@@ -531,6 +545,88 @@ def chat(question) {
     return toolResponse
 } 
 
+//
+// Ollama Conversation Procesing (Generate)
+//
+
+def generate(question) {
+    def conversationAdd = null
+    def toolResponse = null
+    logger("chat(): Conversation History : ${conversation}", 'trace')
+/*    if (conversation == null) {
+        conversation  = '{"role":"user","content":"'+question+'"}'
+    } else {
+    conversation  =  conversation + ',{"role":"user","content":"'+question+'"}' 
+    } */
+    logger("chat(): Current Submited Conversation : ${conversation}", 'trace')
+    def structureJSON = structuredOutputJSON()
+    String bodyParm = ""
+    
+    if (thinking) {
+        bodyParm = '{"model":"'+model+'","prompt":"'+question+'","think":true,"stream":false,'+structureJSON+'}'
+    } else {
+        bodyParm = '{"model":"'+model+'","prompt":"'+question+'","stream":false,'+structureJSON+'}'    
+    }
+
+    def params = [
+        uri   : "http://"+serverIP,
+        path  : '/api/generate',
+        contentType: "application/json",
+        timeout: 300, 
+        body: bodyParm
+    ] 
+    logger("chat(): Attempting to send request to ollama server at ${serverIP}, parms: ${params}", 'info')
+    sendEvent(name: "prompt", value: question)
+    try {
+        httpPostJson(params) { resp ->
+            logger("chat(): Response Data is ${resp.data}", 'debug')
+            if (resp.status == 200) {
+//                tokens_per_sec = resp.data.eval_count.toInteger() / (resp.data.eval_duration.toInteger() / 1000000000)
+                logger("chat(): Successful query to Ollama. Parsing response data for action", 'info')
+                resp.data.each {
+/*                    if (it.key == "response") {
+                    }  else if (it.key == "message") {
+                        conversationAdd = JsonOutput.toJson(it.value)
+                        if (it.value.tool_calls) {
+                            size = it.value.tool_calls.size()
+                            logger("chat(): Number of functions ${size}", 'info')
+                            counter = 0 
+                            while (size >= counter +1) {
+                                logger("chat(): Function identified by Ollama ${it.value.tool_calls.get(counter).function.name}", 'info')
+                                logger("chat(): Arguments extracted by Ollama ${it.value.tool_calls.get(counter).function.arguments}", 'info')
+                                if ( counter > 0) {
+                                    toolResponse = toolResponse +","+ "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
+                                } else {
+                                    toolResponse = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)   
+                                }
+                                toolConvAdd = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
+                                conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolConvAdd+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
+                            //    logger("chat(): tool conversation add ${conversationAdd}", 'trace')
+                                counter = counter +1
+                            }
+//                            conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolResponse+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
+                            logger("chat(): tool conversation add ${conversationAdd}", 'trace')
+                        } else {
+                            logger("chat(): No Function was called. Responding with response Message", 'info')
+                            message = JsonOutput.toJson(it.value.content)
+                            toolResponse = message
+                        }
+                    } else {
+                    } */
+                }
+//                logger("chat(): Tokens per second ${tokens_per_sec}", 'info')
+//                logger("chat(): Curent Conversation value is ${conversation}", 'info')
+            }               
+        } 
+    } catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+    } 
+    conversation  = conversation + ',' + conversationAdd
+//    logger("chat(): tool conversation add ${conversationAdd}", 'info')
+//    logger("chat(): Curent Conversation value is ${conversation}", 'info')
+    return toolResponse
+} 
 
 
 /*
@@ -598,20 +694,12 @@ def toolFunctions() {
         "parameters": {
           "type": "object",
           "properties": {
-            "device": {
-              "type": "string",
-              "description": "Device name to turn on or activate, e.g. Lyra Lamp or Light Switch"
-            },
             "area": {
               "type": "string",
               "description": "Area, Room, or grouping of devices"
-            },
-            "state": {
-              "type": "string",
-              "description": "The requested state for a device to be changed to"
             }
           },
-          "required": ["state"]
+          "required": ["area"]
         }
       }
     },
@@ -654,11 +742,11 @@ def toolFunctions() {
             },
             "stateType": {
               "type": "string",
-              "description": "The type of state to check e.g. switch, temperature, speed, humidity, presence, contact, open/close"
+              "description": "The type of stateType to check e.g. switch, temperature, speed, humidity, presence, contact, open/close"
             },
             "state": {
               "type": "string",
-              "description": "The value of the stateType often relating to a device attribute or sensor value"
+              "description": "The value of state  often relating to a device attribute or sensor value"
             }
           },
           "required": ["stateType","device"]
@@ -668,6 +756,31 @@ def toolFunctions() {
   ]'''
     return toolsJSON
 }
+
+def structuredOutputJSON() {
+    def structuredJSON = '''"format": {
+    "type": "object",
+    "properties": {
+      "deviceName": {
+        "type": "string"
+      },
+       "Value": {
+        "type": "string"
+      },
+       "attribute": {
+        "type": "string"
+      },
+       "command": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "deviceName" 
+    ]
+  }'''
+    return structuredJSON
+}
+
 
 //
 // Ollama function Processing
@@ -800,7 +913,6 @@ def device_state_lookup(parms) {
         logger("device_state_lookup(): stateType is not recognized ${parms.stateType}. Forward to developer to update function for this task.", 'info')
         break;
     }
-//    responseMessage = "${parms.device}  is ${value} ${unit}"
     return responseMessage
 }
 
@@ -828,21 +940,37 @@ def set_temp(parms) {  // not yet implemented. Here as a place holder for alread
 //  Helper Method to pass context when a new Conversation is started
 ///
 
-def clearConversation() {
+def clearConversation() {    
     conversation = null
-    logger("clearConversation(): conversation is has been cleared. Passing along context info in new chat", 'info')
-    String deviceContext = ""
+    logger("clearConversation(): Conversation has been cleared. Passing along context info in new chat", 'info')
+
+    deviceContext2 = [:]
+    deviceList= [:]
     devices.forEach {
-        if (deviceContext == " ") {
-        deviceContext =  "${it} in room ${it.getRoomName()}"
+        logger("clarConversation(): generating Device information: Device Name ${it}", 'info')
+        deviceDetails = [:]
+        attributeList = [:]
+        if (it.getLabel() != null) {
+            deviceDetails["name"] = it.getLabel()
         } else {
-            if (it.getRoomName() == null) {
-                deviceContext = deviceContext + ", ${it}"    
-            } else {
-                deviceContext = deviceContext + ", ${it} in the ${it.getRoomName()}"   
-            }
+            deviceDetails["name"] = it
+        } 
+        if (it.getRoomName() != null) {
+        deviceDetails["room"] = it.getRoomName()
         }
+        it.getCurrentStates().forEach { 
+            attributeList[it.name] = it.value
+        }
+        deviceDetails["attributes"] = attributeList // providing allot of extra info
+        deviceList[it.getId()] = deviceDetails
+        logger("clarConversation(): generating Device information: ${deviceDetails} : ${deviceList}", 'info')
     }
-    chat("You are a assistant to control a Hubitat Home Automation system. The list of devices you can control are ${deviceContext}")
-//    chat("You are a assistant to control a Hubitat Home Automation system. The list of devices you can control are ${devices}")
+    deviceContext2["devices"] = deviceList
+    logger("clarConversation(): generating Device information: ${deviceContext2}", 'info')    
+    chat("You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes ${deviceContext2}")
 }
+
+    
+    
+    
+    
