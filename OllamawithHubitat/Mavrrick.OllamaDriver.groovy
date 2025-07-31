@@ -22,7 +22,7 @@ metadata
         name: "Ollama Driver", 
         namespace: "Mavrrick", 
         author: "Mavrrick",
-        importUrl: 'https://raw.githubusercontent.com/apwelsh/hubitat/master/roku/device/roku-tv.groovy')
+        importUrl: 'https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/OllamawithHubitat/Mavrrick.OllamaDriver.groovy')
     {        
         attribute "prompt", "string"
         attribute "response", "string"
