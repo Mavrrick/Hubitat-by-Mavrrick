@@ -712,7 +712,6 @@ def control_device(parms) {
     unit = ""
     switch(parms.stateType){
         case "switch":
-        logger("control_device(): switch action found ${parms.device}", 'info')
         devices.each {
             if (parms.device.contains(it.toString())) {
                 it."${parms.state}"()
