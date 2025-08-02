@@ -533,6 +533,7 @@ def chat(question) {
                     }
                 }
                 logger("chat(): Tokens per second ${tokens_per_sec}", 'info')
+                logger("chat(): Tokens in prompt ${resp.data.prompt_eval_count.toInteger()}, Tokens in Reponse ${resp.data.eval_count.toInteger()}", 'info')
 //                logger("chat(): Curent Conversation value is ${conversation}", 'info')
             }               
         } 
@@ -710,8 +711,10 @@ def control_device(parms) {
     controlDevice = parms.device
     value  = ""
     unit = ""
+    responseMessage = ""
     switch(parms.stateType){
         case "switch":
+        case "light":
         devices.each {
             if (parms.device.contains(it.toString())) {
                 it."${parms.state}"()
@@ -863,7 +866,8 @@ def clearConversation() {
     logger("clearConversation(): Conversation has been cleared. Passing along context info in new chat", 'info')
 
     deviceContext2 = [:]
-    deviceList= [:]
+//    deviceList= [:]
+    deviceList= []
     devices.forEach {
         logger("clarConversation(): generating Device information: Device Name ${it}", 'debug')
         deviceDetails = [:]
@@ -875,13 +879,19 @@ def clearConversation() {
         } 
         if (it.getRoomName() != null) {
             deviceDetails["room"] = it.getRoomName()
+        } else{
+        	deviceDetails["room"] = "unassigned"
         }
-        deviceList[it.getId()] = deviceDetails
+//        deviceList[it.getId()] = deviceDetails
+        deviceDetails["id"] = it.getId()
+//        deviceDetails["capabilities"] = it.getCapabilities()
+        deviceList.add(deviceDetails)
         logger("clarConversation(): generating Device information: ${deviceDetails} : ${deviceList}", 'debug')
     }
     deviceContext2["devices"] = deviceList
     logger("clarConversation(): generating Device information: ${deviceContext2}", 'debug')    
-    chat("You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes ${deviceContext2}")
+//    chat("You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes ${deviceContext2}")
+    conversation = '{"role":"system","content":"You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes'+deviceContext2+'"}'
 }
 
     
