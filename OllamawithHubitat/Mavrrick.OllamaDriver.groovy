@@ -15,6 +15,9 @@
  */
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
+//import groovy.transform.Field
+
+//@Field static String lastAction = now()
 
 metadata
 {
@@ -90,11 +93,13 @@ def askQuestion(question) {
     response = parent.chat(question)
     sendEvent(name: "response", value: response)
     long endTime = now()
+//    lastAction = endTime
     long duration = endTime - startTime
     def formattedDuration = formatDuration(duration)
     if (debugLog) log.info "askQuestion() Elapse time ${formattedDuration}."
     sendEvent(name: "ConvTime", value: formattedDuration)
     sendEvent(name: "ollamaState", value: "Ready")
+    runIn(300, newConversation)
 } 
 
 

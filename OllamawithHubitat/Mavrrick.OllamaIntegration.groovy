@@ -20,7 +20,7 @@ definition(
     author: 'CRAIG KING',
     description: 'Ollama Integration for Chat and AI Interations',
     category: 'AI',
-    importUrl: 'https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/OllamawithHubitat/Mavrrick.OllamaIntegration.groovy',
+    importUrl: 'https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/OllamawithHubitat/Mavrrick.OllamaDriver.groovy',
 //    documentationLink: "https://docs.google.com/document/d/e/2PACX-1vRsjfv0eefgPGKLYffNpbZWydtp0VqxFL_Xcr-xjRKgl8vga18speyGITyCQOqlQmyiO0_xLJ9_wRqU/pub",
     iconUrl: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
     iconX2Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
@@ -189,7 +189,7 @@ def installed() {
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
-    child = getChildDevices()
+    clearConversation()
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
 }
 
@@ -260,13 +260,13 @@ private def appButtonHandler(button) {
 ///////////////////////////////////////////
 
 
-private String escapeStringForPassword(String str) {
+private String escapeString(String str) {
     //logger("$str", "info")
     if (str) {
-//        str = str.replaceAll(" ", "\\\\ ") // Escape spaces.
-//        str = str.replaceAll(",", "\\\\,") // Escape commas.
-        str = str.replaceAll("=", "\u003D") // Escape equal signs.
-//        str = str.replaceAll("\"", "\u0022") // Escape double quotes.
+//        str = str.replaceAll('["', "") // Escape spaces.
+//        str = str.replaceAll(" ]", "") // Escape commas.
+//        str = str.replaceAll("=", "\u003D") // Escape equal signs.
+//        str = str.replaceAll('\"', "\u0022") // Escape double quotes.
 //    str = str.replaceAll("'", "_")  // Replace apostrophes with underscores.
     }
     else {
@@ -456,6 +456,36 @@ def showModels() {
     return modelCapabilities
 }
 
+/* 
+   Show Model information to retrieve Capabilities
+*/
+
+def loadModel(until) {
+    List modelCapabilities = []
+    bodyparm = '{"model": "'+model+'","messages": [],"keep_alive": '+until+'}'
+        def params = [
+        uri   : "http://"+serverIP,
+        path  : '/api/chat',
+        contentType: "application/json",
+        body : bodyparm
+    ]
+        try {
+        httpPost(params) { resp ->
+            logger("loadModel(): Response Data is ${resp.data}", 'trace')
+            
+/*            if (resp.status == 200) {
+                modelCapabilities = resp.data.capabilities
+                logger("showModels(): Capabilities found ${resp.data.capabilities}", 'info')
+            } */
+        } 
+    } catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+    }
+    logger("loadModel(): Model loaded", 'info')
+//    return modelCapabilities
+}
+
 //
 // Ollama Conversation Procesing
 //
@@ -497,7 +527,8 @@ def chat(question) {
         httpPostJson(params) { resp ->
             logger("chat(): Response Data is ${resp.data}", 'trace')
             if (resp.status == 200) {
-                tokens_per_sec = resp.data.eval_count.toInteger() / (resp.data.eval_duration.toInteger() / 1000000000)
+                
+                tokens_per_sec = resp.data.eval_count / (resp.data.eval_duration / 1000000000)
                 logger("chat(): Successful query to Ollama. Parsing response data for action", 'info')
                 resp.data.each {
                     if (it.key == "response") {
@@ -596,7 +627,7 @@ def toolFunctions() {
             },
             "stateType": {
               "type": "string",
-              "description": "This is the type of state being asked to change, e.g. switch, brightness, color, temperature, or color temperature"
+              "description": "This is the type of state being asked to change, e.g. switch, turn, brightness, color, temperature, or color temperature"
             }
           },
           "required": ["state","device","stateType"]
@@ -709,7 +740,7 @@ def control_device(parms) {
     controlDevice = parms.device
     value  = ""
     unit = ""
-    responseMessage = ""
+    String deviceList = null
     switch(parms.stateType){
         case "switch":
         case "light":
@@ -717,6 +748,11 @@ def control_device(parms) {
             if (parms.device.contains(it.toString())) {
                 it."${parms.state}"()
                 logger("control_device(): ${it} has been switched ${parms.state}", 'info')
+                if (deviceList == null) {
+                    deviceList = it
+                } else {
+                    deviceList = deviceList+', '+it
+                }
             }
         }
         break;
@@ -726,6 +762,11 @@ def control_device(parms) {
                 dimNum = controlState.replace("%", "").toInteger()
                 it.setLevel(dimNum, 0)                
                 logger("control_device(): Dimming  ${it} to  ${dimNum}%", 'info')
+                if (deviceList == null) {
+                    deviceList = it
+                } else {
+                    deviceList = deviceList+', '+it
+                }
             }
         }
         break;
@@ -735,6 +776,11 @@ def control_device(parms) {
                 logger("control_device(): Set Color to ${parms.state} in HSL ${colorNameToHsl[parms.state]}", 'info')
                 it.setColor(colorNameToHsl[parms.state])                
                 logger("control_device(): Setting color to ${controlState}", 'info')
+                if (deviceList == null) {
+                    deviceList = it
+                } else {
+                    deviceList = deviceList+', '+it
+                }
             }
         }
         break;
@@ -744,6 +790,11 @@ def control_device(parms) {
                 logger("control_device(): Set Color Temperature to ${parms.state}", 'info')
                 it.setColorTemperature(controlState.toInteger())                
                 logger("control_device(): Setting color temperature to ${controlState}", 'info')
+                if (deviceList == null) {
+                    deviceList = it
+                } else {
+                    deviceList = deviceList+', '+it
+                }
             }
         }
         break;
@@ -751,7 +802,8 @@ def control_device(parms) {
         logger("control_device(): Control request with stateType: ${parms.stateType}. Please report to developer to add this handler the routine", 'info') 
         break;
     }
-    responseMessage = "${controlDevice.toString()} ${parms.stateType} changed to ${controlState}"
+//    responseMessage = "${parms.device.replaceAll("\"", "")} ${parms.stateType} changed to ${controlState}"
+    responseMessage = "${deviceList} ${parms.stateType} changed to ${controlState}"
     return responseMessage
 //    logger("control_device(): Control request made with the following vaules ${parms}", 'info')
 }
@@ -771,7 +823,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentTemperature
                 unit = "Degrees"
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
             }
             responseMessage = "Temperature on ${parms.device}  is ${value} ${unit}"
         }
@@ -792,7 +844,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentHumidity
                 unit = "%"
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
             }
             responseMessage = "The humidity on ${parms.device} is ${value} ${unit}"
         }
@@ -802,7 +854,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentLevel
                 unit = "%"
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
             }
             responseMessage = "Brightness on the ${parms.device} is ${value} ${unit}"
         }
@@ -812,7 +864,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentPresence
                 unit = ""
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
             }
             responseMessage = "${parms.device} is ${value} ${unit}"
         }
@@ -823,7 +875,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentContact
                 unit = ""
-                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
             }
             responseMessage = "${parms.device} is ${value}"
         }
@@ -855,11 +907,17 @@ def set_temp(parms) {  // not yet implemented. Here as a place holder for alread
     return responseMessage 
 }
 
+def lookup_all_Devices(parms) {
+    responseMessage = "lookup_all_Devices() This hasn't been implemented yet"
+    return responseMessage
+}
+
 ///
 //  Helper Method to pass context when a new Conversation is started
 ///
 
-def clearConversation() {    
+def clearConversation() { 
+    loadModel(0) // zero unloads the model from memory
     conversation = null
     logger("clearConversation(): Conversation has been cleared. Passing along context info in new chat", 'info')
 
@@ -880,15 +938,30 @@ def clearConversation() {
         } else{
         	deviceDetails["room"] = "unassigned"
         }
-//        deviceList[it.getId()] = deviceDetails
         deviceDetails["id"] = it.getId()
-//        deviceDetails["capabilities"] = it.getCapabilities()
+        it.getCapabilities().each() {
+            switch(it){
+                case "Light":
+                    deviceDetails["deviceType"] = "light"
+                break;
+                case "TemperatureMeasurement":
+                case "RelativeHumidityMeasurement":
+                case "MotionSensor":
+                case "WaterSensor":
+                    deviceDetails["deviceType"] = "sensor"
+                break;
+                default:
+//                logger("clearConversation(): Device Type is not recognized ${it}. Forward to developer to update function for this task.", 'debug')
+                break;
+            }
+        }
         deviceList.add(deviceDetails)
         logger("clarConversation(): generating Device information: ${deviceDetails} : ${deviceList}", 'debug')
     }
     deviceContext2["devices"] = deviceList
     logger("clarConversation(): generating Device information: ${deviceContext2}", 'debug')    
 //    chat("You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes ${deviceContext2}")
+    loadModel(-1) // -1 keeps the model inmemory currently
     conversation = '{"role":"system","content":"You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes'+deviceContext2+'"}'
 }
 
