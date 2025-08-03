@@ -45,6 +45,7 @@ metadata
 		section
         {
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input(name: "newConvTimer", type: "number", title: "Time after last action to restart conversation", defaultValue: 300)
 		}
 	}
 }
@@ -99,7 +100,7 @@ def askQuestion(question) {
     if (debugLog) log.info "askQuestion() Elapse time ${formattedDuration}."
     sendEvent(name: "ConvTime", value: formattedDuration)
     sendEvent(name: "ollamaState", value: "Ready")
-    runIn(300, newConversation)
+    runIn(newConvTimer, newConversation)
 } 
 
 
