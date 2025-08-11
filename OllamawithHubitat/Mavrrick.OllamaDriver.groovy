@@ -15,9 +15,6 @@
  */
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
-//import groovy.transform.Field
-
-//@Field static String lastAction = now()
 
 metadata
 {
@@ -25,7 +22,7 @@ metadata
         name: "Ollama Driver", 
         namespace: "Mavrrick", 
         author: "Mavrrick",
-        importUrl: 'https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/OllamawithHubitat/Mavrrick.OllamaDriver.groovy')
+        importUrl: 'https://raw.githubusercontent.com/apwelsh/hubitat/master/roku/device/roku-tv.groovy')
     {        
         attribute "prompt", "string"
         attribute "response", "string"
@@ -45,7 +42,6 @@ metadata
 		section
         {
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input(name: "newConvTimer", type: "number", title: "Time after last action to restart conversation in minutes", defaultValue: 5)
 		}
 	}
 }
@@ -94,13 +90,11 @@ def askQuestion(question) {
     response = parent.chat(question)
     sendEvent(name: "response", value: response)
     long endTime = now()
-//    lastAction = endTime
     long duration = endTime - startTime
     def formattedDuration = formatDuration(duration)
     if (debugLog) log.info "askQuestion() Elapse time ${formattedDuration}."
     sendEvent(name: "ConvTime", value: formattedDuration)
     sendEvent(name: "ollamaState", value: "Ready")
-    runIn(newConvTimer*60, newConversation)
 } 
 
 

@@ -1,6 +1,6 @@
 /* groovylint-disable LineLength, DuplicateNumberLiteral, DuplicateStringLiteral, ImplementationAsType, ImplicitClosureParameter, InvertedCondition, LineLength, MethodReturnTypeRequired, MethodSize, NestedBlockDepth, NglParseError, NoDef, NoJavaUtilDate, NoWildcardImports, ParameterReassignment, UnnecessaryGString, UnnecessaryObjectReferences, UnnecessaryToString, UnusedImport, VariableTypeRequired */
 /**
- *  Ollama Integration
+ *  Govee Integration
  *
  *  Copyright 2018 CRAIG KING
  *
@@ -20,7 +20,6 @@ definition(
     author: 'CRAIG KING',
     description: 'Ollama Integration for Chat and AI Interations',
     category: 'AI',
-    importUrl: 'https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/OllamawithHubitat/Mavrrick.OllamaIntegration.groovy',
 //    documentationLink: "https://docs.google.com/document/d/e/2PACX-1vRsjfv0eefgPGKLYffNpbZWydtp0VqxFL_Xcr-xjRKgl8vga18speyGITyCQOqlQmyiO0_xLJ9_wRqU/pub",
     iconUrl: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
     iconX2Url: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg',
@@ -38,6 +37,8 @@ import groovy.transform.Field
 import hubitat.helper.HexUtils
 
 @Field static List child = []
+@Field static List childDNI = []
+@Field static Map goveeScene = [:]
 @Field static String conversation = null
 
 /**
@@ -59,7 +60,7 @@ import hubitat.helper.HexUtils
 
 preferences
 {
-    page(name: 'mainPage', title: 'Ollama Integration')
+    page(name: 'mainPage', title: 'Govee Integration')
     page(name: 'setup', title: 'Setup of Ollama environment')
     page(name: 'deviceSelection', title: 'Device Install Process')
     page(name: 'about', title: 'About')
@@ -101,7 +102,7 @@ def mainPage() {
             )
         }
         section('About') {
-            href 'about', title: 'About Information menu', description: 'About Menu for Ollama Integration'
+            href 'about', title: 'About Information menu', description: 'About Menu for Govee Integration'
         }
     }
 }
@@ -157,15 +158,15 @@ def deviceSelection() {
 
 
 def about() {
-    dynamicPage(name: 'about', title: 'About Ollama Integration with HE', uninstall: false, install: false, nextPage: "mainPage")
+    dynamicPage(name: 'about', title: 'About Govee Integration with HE', uninstall: false, install: false, nextPage: "mainPage")
     {
         section()
         {
-            paragraph image: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg', 'Ollama Integration'
+            paragraph image: 'https://lh4.googleusercontent.com/-1dmLp--W0OE/AAAAAAAAAAI/AAAAAAAAEYU/BRuIXPPiOmI/s0-c-k-no-ns/photo.jpg', 'Govee Integration'
         }
         section('Support the Project')
         {
-            paragraph 'Ollama is provided free for personal and non-commercial use.  I have worked on this app in my free time to fill the needs I have found for myself and others like you.  I will continue to make improvements where I can. If you would like you can donate to continue to help with development please use the link below.'
+            paragraph 'Govee is provided free for personal and non-commercial use.  I have worked on this app in my free time to fill the needs I have found for myself and others like you.  I will continue to make improvements where I can. If you would like you can donate to continue to help with development please use the link below.'
             href(name: 'donate', style:'embedded', title: "Consider making a \$5 or \$10 donation today to support my ongoing effort to continue improving this integration.", url: 'https://www.paypal.me/mavrrick58')
             paragraph("<style>/* The icon */ .help-tip{ 	position: absolute; 	top: 50%; 	left: 50%; 	transform: translate(-50%, -50%); 	margin: auto; 	text-align: center; 	border: 2px solid #444; 	border-radius: 50%; 	width: 40px; 	height: 40px; 	font-size: 24px; 	line-height: 42px; 	cursor: default; } .help-tip:before{     content:'?';     font-family: sans-serif;     font-weight: normal;     color:#444; } .help-tip:hover p{     display:block;     transform-origin: 100% 0%;     -webkit-animation: fadeIn 0.3s ease;     animation: fadeIn 0.3s ease; } /* The tooltip */ .help-tip p {    	display: none; 	font-family: sans-serif; 	text-rendering: optimizeLegibility; 	-webkit-font-smoothing: antialiased; 	text-align: center; 	background-color: #FFFFFF; 	padding: 12px 16px; 	width: 178px; 	height: auto; 	position: absolute; 	left: 50%; 	transform: translate(-50%, 5%); 	border-radius: 3px; /* 	border: 1px solid #E0E0E0; */ 	box-shadow: 0 0px 20px 0 rgba(0,0,0,0.1); 	color: #37393D; 	font-size: 12px; 	line-height: 18px; 	z-index: 99; } .help-tip p a { 	color: #067df7; 	text-decoration: none; } .help-tip p a:hover { 	text-decoration: underline; } /* The pointer of the tooltip */ .help-tip p:before { 	position: absolute; 	content: ''; 	width: 0; 	height: 0; 	border: 10px solid transparent; 	border-bottom-color:#FFFFFF; 	top: -9px; 	left: 50%; 	transform: translate(-50%, -50%); }  /* Prevents the tooltip from being hidden */ .help-tip p:after { 	width: 10px; 	height: 40px; 	content:''; 	position: absolute; 	top: -40px; 	left: 0; } /* CSS animation */ @-webkit-keyframes fadeIn {     0% { opacity:0; }     100% { opacity:100%; } } @keyframes fadeIn {     0% { opacity:0; }     100% { opacity:100%; } }</style><div class='help-tip'><p>This is the inline help tip! It can contain all kinds of HTML. Style it as you please.<br /><a href='#'>Here is a link</a></p></div>")
         }
@@ -189,7 +190,7 @@ def installed() {
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
-    clearConversation()
+    child = getChildDevices()
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
 }
 
@@ -260,13 +261,13 @@ private def appButtonHandler(button) {
 ///////////////////////////////////////////
 
 
-private String escapeString(String str) {
+private String escapeStringForPassword(String str) {
     //logger("$str", "info")
     if (str) {
-//        str = str.replaceAll('["', "") // Escape spaces.
-//        str = str.replaceAll(" ]", "") // Escape commas.
-//        str = str.replaceAll("=", "\u003D") // Escape equal signs.
-//        str = str.replaceAll('\"', "\u0022") // Escape double quotes.
+//        str = str.replaceAll(" ", "\\\\ ") // Escape spaces.
+//        str = str.replaceAll(",", "\\\\,") // Escape commas.
+        str = str.replaceAll("=", "\u003D") // Escape equal signs.
+//        str = str.replaceAll("\"", "\u0022") // Escape double quotes.
 //    str = str.replaceAll("'", "_")  // Replace apostrophes with underscores.
     }
     else {
@@ -456,36 +457,6 @@ def showModels() {
     return modelCapabilities
 }
 
-/* 
-   Show Model information to retrieve Capabilities
-*/
-
-def loadModel(until) {
-    List modelCapabilities = []
-    bodyparm = '{"model": "'+model+'","messages": [],"keep_alive": '+until+'}'
-        def params = [
-        uri   : "http://"+serverIP,
-        path  : '/api/chat',
-        contentType: "application/json",
-        body : bodyparm
-    ]
-        try {
-        httpPost(params) { resp ->
-            logger("loadModel(): Response Data is ${resp.data}", 'trace')
-            
-/*            if (resp.status == 200) {
-                modelCapabilities = resp.data.capabilities
-                logger("showModels(): Capabilities found ${resp.data.capabilities}", 'info')
-            } */
-        } 
-    } catch (groovyx.net.http.HttpResponseException e) {
-		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
-    }
-    logger("loadModel(): Model loaded", 'info')
-//    return modelCapabilities
-}
-
 //
 // Ollama Conversation Procesing
 //
@@ -521,14 +492,13 @@ def chat(question) {
         timeout: 600, 
         body: bodyParm
     ] 
-    logger("chat(): Attempting to send request to ollama server at ${serverIP}, parms: ${params}", 'debug')
+    logger("chat(): Attempting to send request to ollama server at ${serverIP}, parms: ${params}", 'info')
     sendEvent(name: "prompt", value: question)
     try {
         httpPostJson(params) { resp ->
             logger("chat(): Response Data is ${resp.data}", 'trace')
             if (resp.status == 200) {
-                
-                tokens_per_sec = resp.data.eval_count / (resp.data.eval_duration / 1000000000)
+                tokens_per_sec = resp.data.eval_count.toInteger() / (resp.data.eval_duration.toInteger() / 1000000000)
                 logger("chat(): Successful query to Ollama. Parsing response data for action", 'info')
                 resp.data.each {
                     if (it.key == "response") {
@@ -562,7 +532,89 @@ def chat(question) {
                     }
                 }
                 logger("chat(): Tokens per second ${tokens_per_sec}", 'info')
-                logger("chat(): Tokens in prompt ${resp.data.prompt_eval_count.toInteger()}, Tokens in Reponse ${resp.data.eval_count.toInteger()}", 'info')
+                logger("chat(): Curent Conversation value is ${conversation}", 'info')
+            }               
+        } 
+    } catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}"
+    } 
+    conversation  = conversation + ',' + conversationAdd
+    logger("chat(): tool conversation add ${conversationAdd}", 'info')
+    logger("chat(): Curent Conversation value is ${conversation}", 'info')
+    return toolResponse
+} 
+
+//
+// Ollama Conversation Procesing (Generate)
+//
+
+def generate(question) {
+    def conversationAdd = null
+    def toolResponse = null
+    logger("chat(): Conversation History : ${conversation}", 'trace')
+/*    if (conversation == null) {
+        conversation  = '{"role":"user","content":"'+question+'"}'
+    } else {
+    conversation  =  conversation + ',{"role":"user","content":"'+question+'"}' 
+    } */
+    logger("chat(): Current Submited Conversation : ${conversation}", 'trace')
+    def structureJSON = structuredOutputJSON()
+    String bodyParm = ""
+    
+    if (thinking) {
+        bodyParm = '{"model":"'+model+'","prompt":"'+question+'","think":true,"stream":false,'+structureJSON+'}'
+    } else {
+        bodyParm = '{"model":"'+model+'","prompt":"'+question+'","stream":false,'+structureJSON+'}'    
+    }
+
+    def params = [
+        uri   : "http://"+serverIP,
+        path  : '/api/generate',
+        contentType: "application/json",
+        timeout: 300, 
+        body: bodyParm
+    ] 
+    logger("chat(): Attempting to send request to ollama server at ${serverIP}, parms: ${params}", 'info')
+    sendEvent(name: "prompt", value: question)
+    try {
+        httpPostJson(params) { resp ->
+            logger("chat(): Response Data is ${resp.data}", 'debug')
+            if (resp.status == 200) {
+//                tokens_per_sec = resp.data.eval_count.toInteger() / (resp.data.eval_duration.toInteger() / 1000000000)
+                logger("chat(): Successful query to Ollama. Parsing response data for action", 'info')
+                resp.data.each {
+/*                    if (it.key == "response") {
+                    }  else if (it.key == "message") {
+                        conversationAdd = JsonOutput.toJson(it.value)
+                        if (it.value.tool_calls) {
+                            size = it.value.tool_calls.size()
+                            logger("chat(): Number of functions ${size}", 'info')
+                            counter = 0 
+                            while (size >= counter +1) {
+                                logger("chat(): Function identified by Ollama ${it.value.tool_calls.get(counter).function.name}", 'info')
+                                logger("chat(): Arguments extracted by Ollama ${it.value.tool_calls.get(counter).function.arguments}", 'info')
+                                if ( counter > 0) {
+                                    toolResponse = toolResponse +","+ "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
+                                } else {
+                                    toolResponse = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)   
+                                }
+                                toolConvAdd = "${it.value.tool_calls.get(counter).function.name}"(it.value.tool_calls.get(counter).function.arguments)
+                                conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolConvAdd+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
+                            //    logger("chat(): tool conversation add ${conversationAdd}", 'trace')
+                                counter = counter +1
+                            }
+//                            conversationAdd = conversationAdd+',{"role":"tool","content":"'+toolResponse+'","tool_name":"'+it.value.tool_calls.get(counter).function.name+'"}'
+                            logger("chat(): tool conversation add ${conversationAdd}", 'trace')
+                        } else {
+                            logger("chat(): No Function was called. Responding with response Message", 'info')
+                            message = JsonOutput.toJson(it.value.content)
+                            toolResponse = message
+                        }
+                    } else {
+                    } */
+                }
+//                logger("chat(): Tokens per second ${tokens_per_sec}", 'info')
 //                logger("chat(): Curent Conversation value is ${conversation}", 'info')
             }               
         } 
@@ -571,8 +623,8 @@ def chat(question) {
 		log.error "${e}"
     } 
     conversation  = conversation + ',' + conversationAdd
-    logger("chat(): tool conversation add ${conversationAdd}", 'debug')
-    logger("chat(): Curent Conversation value is ${conversation}", 'debug')
+//    logger("chat(): tool conversation add ${conversationAdd}", 'info')
+//    logger("chat(): Curent Conversation value is ${conversation}", 'info')
     return toolResponse
 } 
 
@@ -614,8 +666,8 @@ def toolFunctions() {
           "type": "object",
           "properties": {
             "device": {
-              "type": "array",
-              "description": "Device(s) name to control"
+              "type": "string",
+              "description": "Device name to turn on or activate, e.g. Lyra Lamp or Light Switch"
             },
             "area": {
               "type": "string",
@@ -627,7 +679,7 @@ def toolFunctions() {
             },
             "stateType": {
               "type": "string",
-              "description": "This is the type of state being asked to change, e.g. switch, turn, brightness, color, temperature, or color temperature"
+              "description": "This is the type of state being asked to change, e.g. switch, brightness, color, temperature, or color temperature"
             }
           },
           "required": ["state","device","stateType"]
@@ -740,61 +792,39 @@ def control_device(parms) {
     controlDevice = parms.device
     value  = ""
     unit = ""
-    String deviceList = null
     switch(parms.stateType){
         case "switch":
-        case "light":
         devices.each {
-            if (parms.device.contains(it.toString())) {
+            if (it.toString() == parms.device.toString()) { 
                 it."${parms.state}"()
                 logger("control_device(): ${it} has been switched ${parms.state}", 'info')
-                if (deviceList == null) {
-                    deviceList = it
-                } else {
-                    deviceList = deviceList+', '+it
-                }
             }
         }
         break;
         case "brightness":
         devices.each {
-            if (parms.device.contains(it.toString())) {
+            if (it.toString() == parms.device.toString()) {
                 dimNum = controlState.replace("%", "").toInteger()
                 it.setLevel(dimNum, 0)                
                 logger("control_device(): Dimming  ${it} to  ${dimNum}%", 'info')
-                if (deviceList == null) {
-                    deviceList = it
-                } else {
-                    deviceList = deviceList+', '+it
-                }
             }
         }
         break;
         case "color":
         devices.each {
-            if (parms.device.contains(it.toString())) {
+            if (it.toString() == parms.device.toString()) {
                 logger("control_device(): Set Color to ${parms.state} in HSL ${colorNameToHsl[parms.state]}", 'info')
                 it.setColor(colorNameToHsl[parms.state])                
                 logger("control_device(): Setting color to ${controlState}", 'info')
-                if (deviceList == null) {
-                    deviceList = it
-                } else {
-                    deviceList = deviceList+', '+it
-                }
             }
         }
         break;
         case "color temperature":
         devices.each {
-            if (parms.device.contains(it.toString())) {
+            if (it.toString() == parms.device.toString()) {
                 logger("control_device(): Set Color Temperature to ${parms.state}", 'info')
                 it.setColorTemperature(controlState.toInteger())                
                 logger("control_device(): Setting color temperature to ${controlState}", 'info')
-                if (deviceList == null) {
-                    deviceList = it
-                } else {
-                    deviceList = deviceList+', '+it
-                }
             }
         }
         break;
@@ -802,8 +832,7 @@ def control_device(parms) {
         logger("control_device(): Control request with stateType: ${parms.stateType}. Please report to developer to add this handler the routine", 'info') 
         break;
     }
-//    responseMessage = "${parms.device.replaceAll("\"", "")} ${parms.stateType} changed to ${controlState}"
-    responseMessage = "${deviceList} ${parms.stateType} changed to ${controlState}"
+    responseMessage = "${controlDevice} ${parms.stateType} changed to ${controlState}"
     return responseMessage
 //    logger("control_device(): Control request made with the following vaules ${parms}", 'info')
 }
@@ -823,7 +852,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentTemperature
                 unit = "Degrees"
-                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
             responseMessage = "Temperature on ${parms.device}  is ${value} ${unit}"
         }
@@ -844,7 +873,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentHumidity
                 unit = "%"
-                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
             responseMessage = "The humidity on ${parms.device} is ${value} ${unit}"
         }
@@ -854,7 +883,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentLevel
                 unit = "%"
-                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
             responseMessage = "Brightness on the ${parms.device} is ${value} ${unit}"
         }
@@ -864,7 +893,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentPresence
                 unit = ""
-                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
             responseMessage = "${parms.device} is ${value} ${unit}"
         }
@@ -875,7 +904,7 @@ def device_state_lookup(parms) {
             if (it.toString() == parms.device.toString()) { 
                 value = it.currentContact
                 unit = ""
-                logger("device_state_lookup(): State is ${it} State Value is ${value}", 'info')
+                logger("device_state_lookup(): State is ${parms.state} State Value is ${value}", 'info')
             }
             responseMessage = "${parms.device} is ${value}"
         }
@@ -907,25 +936,18 @@ def set_temp(parms) {  // not yet implemented. Here as a place holder for alread
     return responseMessage 
 }
 
-def lookup_all_Devices(parms) {
-    responseMessage = "lookup_all_Devices() This hasn't been implemented yet"
-    return responseMessage
-}
-
 ///
 //  Helper Method to pass context when a new Conversation is started
 ///
 
-def clearConversation() { 
-    loadModel(0) // zero unloads the model from memory
+def clearConversation() {    
     conversation = null
     logger("clearConversation(): Conversation has been cleared. Passing along context info in new chat", 'info')
 
     deviceContext2 = [:]
-//    deviceList= [:]
-    deviceList= []
+    deviceList= [:]
     devices.forEach {
-        logger("clarConversation(): generating Device information: Device Name ${it}", 'debug')
+        logger("clarConversation(): generating Device information: Device Name ${it}", 'info')
         deviceDetails = [:]
         attributeList = [:]
         if (it.getLabel() != null) {
@@ -934,35 +956,18 @@ def clearConversation() {
             deviceDetails["name"] = it
         } 
         if (it.getRoomName() != null) {
-            deviceDetails["room"] = it.getRoomName()
-        } else{
-        	deviceDetails["room"] = "unassigned"
+        deviceDetails["room"] = it.getRoomName()
         }
-        deviceDetails["id"] = it.getId()
-        it.getCapabilities().each() {
-            switch(it){
-                case "Light":
-                    deviceDetails["deviceType"] = "light"
-                break;
-                case "TemperatureMeasurement":
-                case "RelativeHumidityMeasurement":
-                case "MotionSensor":
-                case "WaterSensor":
-                    deviceDetails["deviceType"] = "sensor"
-                break;
-                default:
-//                logger("clearConversation(): Device Type is not recognized ${it}. Forward to developer to update function for this task.", 'debug')
-                break;
-            }
+        it.getCurrentStates().forEach { 
+            attributeList[it.name] = it.value
         }
-        deviceList.add(deviceDetails)
-        logger("clarConversation(): generating Device information: ${deviceDetails} : ${deviceList}", 'debug')
+        deviceDetails["attributes"] = attributeList // providing allot of extra info
+        deviceList[it.getId()] = deviceDetails
+        logger("clarConversation(): generating Device information: ${deviceDetails} : ${deviceList}", 'info')
     }
     deviceContext2["devices"] = deviceList
-    logger("clarConversation(): generating Device information: ${deviceContext2}", 'debug')    
-//    chat("You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes ${deviceContext2}")
-    loadModel(-1) // -1 keeps the model inmemory currently
-    conversation = '{"role":"system","content":"You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes'+deviceContext2+'"}'
+    logger("clarConversation(): generating Device information: ${deviceContext2}", 'info')    
+    chat("You are a assistant to control a Hubitat Home Automation system. Here is a map of all of the devices as well as their commands and attributes ${deviceContext2}")
 }
 
     
