@@ -4,7 +4,8 @@
     Copyright 2020 -> 2021 Hubitat Inc.  All Rights Reserved
     Special Thanks to Bryan Copeland (@bcopeland) for writing and releasing this code to the community!
 
-    1.2.6 - 04/13/25 - Update to eliminate manual hex parsing (for ZWaveJS compatibility) @jtp10181
+    1.3.1 - 05/13/25 - Fix motion event parsing, fix debug logging in NotificationReport parse
+    1.3.0 - 04/13/25 - Update to eliminate manual hex parsing (for ZWaveJS compatibility) @jtp10181
     1.2.5 - 08/02/22 - Rework Driver to allow options to use Subscription to armingIn device status for apps that support it @mavrrick58
     1.2.4 - 08/01/22 - Rollback Changes
     1.2.3 - 07/31/22 - remove Redundent calls causing multiple events in HSM. Added Additional Logging. @mavrrick58
@@ -19,7 +20,7 @@ import groovy.transform.Field
 import groovy.json.JsonOutput
 
 def version() {
-    return "1.2.6"
+    return "1.3.1"
 }
 
 metadata {
@@ -773,7 +774,7 @@ void zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd) {
                 break
         }
     }
-    else if (cmd.notificationType == 8) {
+    else if (cmd.notificationType == 7) {
         // security
         if ( cmd.event == 8) {
             // motion active
@@ -786,7 +787,7 @@ void zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd) {
             evt.value = "inactive"
         }
         else {
-            logDebug "Unhandled Notification (Security): ${cmd}"
+            if (logEnable) log.debug "Unhandled Notification (Security): ${cmd}"
         }
 
         // send event if found
@@ -796,7 +797,7 @@ void zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd) {
         }
     }
     else {
-        logDebug "Unhandled NotificationReport: ${cmd}"
+        if (logEnable) log.debug "Unhandled NotificationReport: ${cmd}"
     }
 }
 
