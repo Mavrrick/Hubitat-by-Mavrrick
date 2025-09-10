@@ -278,7 +278,7 @@ def webHook () {
     log.debug("Processing a webHook() $params.dni $params.type $params.value")
     String devicedni = params.dni.toString()
     String type = params.type.toString()
-    Stringvalue = params.value.toString()
+    String value = params.value.toString()
     if (unifiProtect == "Managed"){
         device = getChildDevice('UnifiProtectAPI')
         device.ApplyWebHook(devicedni, type, value)
