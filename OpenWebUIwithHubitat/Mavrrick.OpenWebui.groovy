@@ -306,6 +306,7 @@ def updated() {
     jsonID = uploadRAGButton("RAG.json", "json")
     state.markdownID = markdownID
     state.jsonID = jsonID
+    resetKnowledge(state.knowledgeID)
     fileStatus(markdownID)
     addToKnowledge(markdownID)
     fileStatus(jsonID)
@@ -669,18 +670,45 @@ def addToKnowledge(fileID) {
 def deleteRAGFile(fileID) {
     
     String token = "Bearer " + openWebUIToken    
-        def params = [
+    def params = [
         uri   : "http://"+serverIP,
         path  : '/api/v1/files/'+fileID,
         headers: ['Authorization': token]  
         ]
     logger("deleteRAGFile(): Params are  :${params}", 'debug')
     
-//    try {
+    try {
     
         httpDelete(params) { resp ->       
             if (resp.status == 200) {
                 logger("deleteRAGFile(): Delete of Knowledge file successfull", 'debug')
+                }
+            }
+    } catch (groovyx.net.http.HttpResponseException e) {
+		log.error "Error: e.statusCode ${e.statusCode}"
+		log.error "${e}" 
+    } 
+}
+
+/* 
+    Delete Knowledge file for reload
+*/
+def resetKnowledge(fileID) {
+    
+    String token = "Bearer " + openWebUIToken    
+        def params = [
+        uri   : "http://"+serverIP,
+        path  : '/api/v1/knowledge/'+fileID+'/reset',
+        headers: ['Authorization': token],  
+        ]
+    logger("resetKnowledge(): Params are  :${params}", 'debug')
+    
+//    try {
+    
+        httpPost(params) { resp ->       
+            if (resp.status == 200) {
+                logger("resetKnowledge(): Reset of Knowledge successfull", 'debug')
+
                 }
             }
 /*        } 
@@ -903,7 +931,7 @@ def chat(question) {
 /*            resp.data.usage.each {
                 logger("chat(): Response Usage Information is ${it.key}: ${it.value}", 'trace')    
             } */
-            logger("chat(): Response Data sources document ${resp.data.sources.document[0]}", 'trace')
+            logger("chat(): Response Data sources document data: ${resp.data.sources}" , 'trace')
             
             if (resp.status == 200) {
                     
@@ -1195,6 +1223,21 @@ def control_device(parms) {
 //            if (parms.device.contains(it.toString())) {
                 it."${parms.command}"()
                 logger("control_device(): ${it} has been switched ${parms.command}", 'info')
+                if (deviceList == null) {
+                    deviceList = it
+                } else {
+                    deviceList = deviceList+', '+it
+                }
+            }
+//        }
+        responseMessage = "${deviceList} was switched ${parms.command}"
+        break;
+        case "turn":
+        case "switch":
+        matchedDevices.each {
+//            if (parms.device.contains(it.toString())) {
+                it."${newValue}"()
+                logger("control_device(): ${it} has been switched ${newValue}", 'info')
                 if (deviceList == null) {
                     deviceList = it
                 } else {
