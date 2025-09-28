@@ -99,19 +99,19 @@ def mainPage() {
         }
         section("") {
         if (state.accessToken == null) {
-             section("Inbound Webhook", hidden: true) {
+             section("Access Token", hidden: true) {
                 paragraph("API is not yet Initialized! Setup OpenWebUI integration to complete")
 //                href(name: "hrefPageEnableAPI", title: "Enable API", description: "", page: "pageEnableAPI")
              }
          } else { 
-		        section("Inbound Webhook: (Expand for directions on use)", hideable: true, hidden: true) {
+/*		        section("Inbound Webhook: (Expand for directions on use)", hideable: true, hidden: true) {
                     paragraph """This url is to allow you to send information from Unifi Alarm manager to Hubitat based on known alarm manager events. You will use the below URLs with updated params for dni, type, and value to convey what the Alarm Manager event means. <br><br><ul><li>Replace %DEVICE_DNI% with the Hubitat Device DNI intended to recieve the event.</li> <li>Replace %DETECTION_TYPE% with the Detection type from Alarm Manager.</li> <li>Replace %Additional_PARM% with any additional relevant info for the Alarm Manager event like the person or license plate detected</li></ul>"""
-                    paragraph """Valid Detection types are:<br><br><ul><li>Face</li><li>LicensePlate</li><li>NFCCardScan</li><li>FingerprintScan</li><li>Sound</li><li>PersonOfInterest</li><li>KnownFace</li><li>UnknownFace</li><li>VehicleOfInterest</li><li>KnownVehicle</li><li>UnknownVehicle</li><li>Person</li><li>Vehicle</li><li>Package</li><li>Animal</li><li>LineCrossing</li><li>Loitering</li><li>DoorbellRings</li><li>Motion</li></ul> Enter exactly as shown here with proper case"""
-                } 
+//                    paragraph """Valid Detection types are:<br><br><ul><li>Face</li><li>LicensePlate</li><li>NFCCardScan</li><li>FingerprintScan</li><li>Sound</li><li>PersonOfInterest</li><li>KnownFace</li><li>UnknownFace</li><li>VehicleOfInterest</li><li>KnownVehicle</li><li>UnknownVehicle</li><li>Person</li><li>Vehicle</li><li>Package</li><li>Animal</li><li>LineCrossing</li><li>Loitering</li><li>DoorbellRings</li><li>Motion</li></ul> Enter exactly as shown here with proper case"""
+                } */
                 
-  		        section("Inbound Webook URLs") {
-                    String localURL = "${state.localAPIEndpoint}/?access_token=${state.accessToken}&dni=%DEVICE_DNI%&type=%DETECTION_TYPE%&value=%Additional_PARM%"
-                    paragraph("LOCAL API URL: <a href=\"$localURL\" target=\"_blank\">$localURL</a>")
+  		        section("Access Token") {
+//                    String localURL = "${state.localAPIEndpoint}/?access_token=${state.accessToken}&dni=%DEVICE_DNI%&type=%DETECTION_TYPE%&value=%Additional_PARM%"
+                    paragraph("Access Token: ${state.accessToken}")
                 }             
             }
             paragraph('<hr style="height:4px;border-width:0;color:gray;background-color:gray">')
@@ -142,8 +142,7 @@ def mainPage() {
 }
 
 def setupConnect() {
-    if (serverIP) {
-        options = getModels()   
+    if (serverIP) {  
     }
     logger(" setup() $options", 'debug')
     dynamicPage(name: 'setupConnect', title: 'Setup Open Web UI Connectivity', uninstall: false, install: false, nextPage: "pageEnableAPI", submitOnChange: true)
@@ -154,30 +153,12 @@ def setupConnect() {
             input(name: 'serverIP', type: 'string', required:true, description: 'Please enter the IP and port of your server.', submitOnchange: true,)
             input(name: 'openWebUIToken', type: 'string', required:true, description: 'Please enter the API Token obtained from Open WebUI.', submitOnchange: true,)
         }
-/*        section("") {
-        if (state.accessToken == null) {
-             section("Inbound Webhook", hidden: true) {
-                paragraph("API is not yet Initialized! Click below to complete setup")
-                href(name: "hrefPageEnableAPI", title: "Enable API", description: "", page: "pageEnableAPI")
-             }
-         } else { 
-		        section("Inbound Webhook: (Expand for directions on use)", hideable: true, hidden: true) {
-                    paragraph """This url is to allow you to send information from Unifi Alarm manager to Hubitat based on known alarm manager events. You will use the below URLs with updated params for dni, type, and value to convey what the Alarm Manager event means. <br><br><ul><li>Replace %DEVICE_DNI% with the Hubitat Device DNI intended to recieve the event.</li> <li>Replace %DETECTION_TYPE% with the Detection type from Alarm Manager.</li> <li>Replace %Additional_PARM% with any additional relevant info for the Alarm Manager event like the person or license plate detected</li></ul>"""
-                    paragraph """Valid Detection types are:<br><br><ul><li>Face</li><li>LicensePlate</li><li>NFCCardScan</li><li>FingerprintScan</li><li>Sound</li><li>PersonOfInterest</li><li>KnownFace</li><li>UnknownFace</li><li>VehicleOfInterest</li><li>KnownVehicle</li><li>UnknownVehicle</li><li>Person</li><li>Vehicle</li><li>Package</li><li>Animal</li><li>LineCrossing</li><li>Loitering</li><li>DoorbellRings</li><li>Motion</li></ul> Enter exactly as shown here with proper case"""
-                } 
-                
-  		        section("Inbound Webook URLs") {
-                    String localURL = "${state.localAPIEndpoint}/?access_token=${state.accessToken}&dni=%DEVICE_DNI%&type=%DETECTION_TYPE%&value=%Additional_PARM%"
-                    paragraph("LOCAL API URL: <a href=\"$localURL\" target=\"_blank\">$localURL</a>")
-                }             
-            }
-            paragraph('<hr style="height:4px;border-width:0;color:gray;background-color:gray">')
-        } */
     }
 }
 
 def setupParms() {
     options = getModels()
+    toolsOptions = getToolID()
     logger(" setupParms() $options", 'debug')
     dynamicPage(name: 'setupParms', title: 'Setup Open WebUI integration Parms', uninstall: false, install: false, nextPage: "deviceSelection", submitOnChange: true)
     { 
@@ -188,6 +169,8 @@ def setupParms() {
                     options: options.sort() , width: 8, height: 1)
 //                paragraph ' The model supports '+state.modelCapabilities+' capabilities'
                 input(name: 'knowledgeName', title: "Please specify the name of the Knowledge base for Hubitat", type: 'string', required:true, defaultValue: "Hubitat_RAG" , description: 'This will be cretaed and updated in Open WebUI with context information from your Hub') 
+                input(name: 'toolID', type: 'enum', required:true, description: 'Please select the tool setup in Open WebUI.', multiple:false, submitOnChange: true,
+                    options: toolsOptions.sort() , width: 8, height: 1)
 /*                if (state.modelCapabilities.contains("thinking")) {
                     input(name: 'showThinking', title: "Would you like to hide the LLM thinking from the response", type: 'bool', defaultvalue: false , description: 'If you LLM Mode supports thinking this allow it the thinking to be hidden')    
                 } */
@@ -528,15 +511,13 @@ def getModels() {
         def params = [
         uri   : "http://"+serverIP,
         path  : '/api/models',
-//        contentType: "application/json",
         headers: ['Authorization': token]    
         ]
     logger("getModels(): Params are  :${params}", 'debug')
     
 //    try {
     
-        httpGet(params) { resp ->
-//    asynchttpGet("asyncHTTPHandler", params)        
+        httpGet(params) { resp ->      
             logger("getModels(): Response Data is ${resp.data.data.id}", 'debug')
             if (resp.status == 200) {
                 logger("getModels(): Sucesssfull Poll. Parsing data to apply to device", 'debug')
@@ -556,12 +537,29 @@ def getModels() {
     return models
 }
 
-def asyncHTTPHandler(response, data) {
-        log.debug "Request was successful, $response.status, $data"
+def getToolID() {
+    String token = "Bearer " + openWebUIToken    
+    List toolID = []
+        def params = [
+        uri   : "http://"+serverIP,
+        path  : '/api/v1/tools/',
+        headers: ['Authorization': token]    
+        ]
+    logger("getToolID(): Params are  :${params}", 'debug')
     
-     response.headers.each {
-//       log.debug "${it.name} : ${it.value}"
-    }}
+        httpGet(params) { resp ->      
+            if (resp.status == 200) {
+                logger("getToolID(): Sucesssfull Poll. Parsing data to apply to device", 'debug')
+                resp.data.forEach {
+                    logger("getToolID(): Adding model ${it.id} to list", 'debug')
+                    toolID.add(it.id)
+                }
+            }
+
+    } 
+    logger("getModels(): list of loaded models are ${models}", 'debug')
+    return toolID
+}
 
 /* 
     Create Knowledge
@@ -882,7 +880,7 @@ def chat(question) {
     logger("chat(): Current Submited Conversation : ${conversation}", 'trace')
     String bodyParm = ""
     
-    bodyParm = '{"model":"'+model+'","messages":['+conversation+'],"files": [{"type": "collection", "id": "'+state.knowledgeID+'"}], "tool_ids":["included_tools"]}'    
+    bodyParm = '{"model":"'+model+'","messages":['+conversation+'],"files": [{"type": "collection", "id": "'+state.knowledgeID+'"}], "tool_ids":["'+toolID+'"]}'    
 
 
     String token = "Bearer " + openWebUIToken
