@@ -48,7 +48,6 @@ def cloudCT(value, level, transitionTime){
 
 private def sendCommand(String command, payload2, type) {
      requestID = randomUUID()
-//     if (debugLog) { log.debug "sendCommand(): ${requestID}"}
      String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
      def params = [
             uri   : "https://openapi.api.govee.com",
@@ -60,11 +59,13 @@ private def sendCommand(String command, payload2, type) {
     if (debugLog) { log.debug "sendCommand(): ${command}, ${type}, ${params}"}
 try {
 
-			httpPost(params) { resp ->
+	    httpPost(params) { resp ->
 				
-                if (debugLog) { log.debug "sendCommand(): Response data is "+resp.data}
-                code = resp.data.code
-                if (code == 200 && command == "powerSwitch") {
+            if (debugLog) { log.debug "sendCommand(): Response data is "+resp.data}
+            code = resp.data.code
+                
+            switch (true) { // begining of new code
+                case (code == 200 && command == "powerSwitch"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     if (payload2 == 1) {
                         sendEvent(name: "switch", value: "on")
@@ -74,22 +75,22 @@ try {
                         sendEvent(name: "switch", value: "off")
                         if (descLog) { log.info "${device.label} was turned off"}
                     }
-                    } 
-                else if (code == 200 && command == "brightness") {
+                    break 
+                case (code == 200 && command == "brightness"): 
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "level", value: payload2)
                     if (descLog) { log.info "${device.label} Level was set to ${payload2}"}
-                    }
-                else if (code == 200 && command == "colorTemperatureK") {
+                    break
+                case (code == 200 && command == "colorTemperatureK"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "CT")
                     sendEvent(name: "colorTemperature", value: payload2)
                     setCTColorName(payload2)
                     if (descLog) log.info "${device.label} Color Temp was set to. ${payload2}"
-                    }
-                else if (code == 200 && command == "nightlightToggle") {
+                    break
+                case (code == 200 && command == "nightlightToggle") :
                     sendEvent(name: "cloudAPI", value: "Success")
                     if (payload2 == 1) {
                         sendEvent(name: "switch", value: "on")
@@ -99,40 +100,40 @@ try {
                         sendEvent(name: "switch", value: "off")
                         if (descLog) { log.info "${device.label} nightlight was turned off"}
                     }
-                    }
-                else if (code == 200 && command == "nightlightScene") {
+                    break
+                case (code == 200 && command == "nightlightScene"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.scenes."${payload2}")
                     if (descLog) { log.info "${device.label} nightlight scene was set to ${payload2}"}
-                    }
-                else if (code == 200 && command == "lightScene") {
+                    break
+                case (code == 200 && command == "lightScene"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.scenes."${payload2}")
                     if (descLog) { log.info "${device.label} scene was set to ${payload2}"}
-                    }
-                else if (code == 200 && command == "diyScene") {
+                    break
+                case (code == 200 && command == "diyScene"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "DIY_EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
-                    sendEvent(name: "effectName", value: state.diyEffects."${payload2}")
+                    sendEvent(name: "effectName", value: state.diyScene."${payload2}")
                     if (descLog) { log.info "${device.label} DIY scene was set to ${payload2}"}
-                   }
-                else if (code == 200 && command == "snapshot") {
+                   break
+                case (code == 200 && command == "snapshot"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "Snapshot_EFFECTS")
                     sendEvent(name: "effectNum", value: payload2)
                     sendEvent(name: "effectName", value: state.snapshot."${payload2}")
                     if (descLog) { log.info "${device.label} snapshot scene was set to ${payload2}"}
-                   }
-               else if (code == 200 && command == "airDeflectorToggle") {
+                   break
+               case (code == 200 && command == "airDeflectorToggle"):
                    sendEvent(name: "cloudAPI", value: "Success")
                    if (payload2 == 1) {
                        sendEvent(name: "airDeflector", value: "on")
@@ -142,9 +143,9 @@ try {
                        sendEvent(name: "airDeflector", value: "off")
                        if (descLog) { log.info "${device.label} Air Deflector was turned off"}
                    }
-                   }
-               else if (code == 200 && command == "oscillationToggle") {
-                    sendEvent(name: "cloudAPI", value: "Success")
+                   break
+               case (code == 200 && command == "oscillationToggle"):
+                   sendEvent(name: "cloudAPI", value: "Success")
                    if (payload2 == 1) {
                        sendEvent(name: "oscillation", value: "on")
                        if (descLog) { log.info "${device.label} Oscillation was turned on"}
@@ -153,8 +154,8 @@ try {
                        sendEvent(name: "oscillation", value: "off")
                        if (descLog) { log.info "${device.label} Oscillation was turned off"}
                    }
-                   }
-               else if (code == 200 && command == "workMode") {
+                   break
+              case (code == 200 && command == "workMode"):
                    def jsonSlurper = new JsonSlurper()
                    def payloadJson = jsonSlurper.parseText(payload2)
                    sendEvent(name: "cloudAPI", value: "Success")
@@ -167,8 +168,8 @@ try {
                    }
                    setModeDescription(payloadJson.workMode)
                    if (descLog) { log.info "${device.label} workMode was set to ${payload2}"}
-                   }
-               else if (code == 200 && command == "sliderTemperature") {
+                   break
+               case (code == 200 && command == "sliderTemperature"):
                    def jsonSlurper = new JsonSlurper()
                    def payloadJson = jsonSlurper.parseText(payload2)
                    log.debug "${device.label} payloadJson= ${payloadJson}"
@@ -178,8 +179,8 @@ try {
                    sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
                    sendEvent(name: "targetTempUnit", value: units)
                    if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
-                   }
-               else if (code == 200 && command == "targetTemperature") {
+                   break
+               case (code == 200 && command == "targetTemperature") :
                    def jsonSlurper = new JsonSlurper()
                    def payloadJson = jsonSlurper.parseText(payload2)
                    log.debug "${device.label} payloadJson= ${payloadJson}"
@@ -190,8 +191,8 @@ try {
                    sendEvent(name: "targetTemp", value: payloadJson?.temperature, unit: units)
                    sendEvent(name: "targetTempUnit", value: units)
                    if (descLog) { log.info "${device.label} TargetTemp was set to ${payloadJson?.temperature}°${units}"}
-                   }                 
-               else if (code == 200 && command == "colorRgb") {
+                   break                 
+               case (code == 200 && command == "colorRgb") :
                     int r = (payload2 >> 16) & 0xFF;
                     int g = (payload2 >> 8) & 0xFF;
                     int b = payload2 & 0xFF;
@@ -205,27 +206,15 @@ try {
 					sendEvent(name: "hue", value: hue)
 					sendEvent(name: "saturation", value: sat)
                     if (descLog) { log.info "${device.label} Color was set to ${payload2}"}
-                    }
-  /*              resp.headers.each {
-                    if (debugLog) { log.debug "sendCommand(): ${it.name}: ${it.value}" }                   
-                    name = it.name
-                    value=it.value
-                    if (name == "X-RateLimit-Remaining") {
-                        state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemaining", value)
-                    }
-                    if (name == "API-RateLimit-Remaining") {
-                        state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainig", value)
-                    }
-            }   */
-                return resp.data
+                    break
+                default:
+                    if (descLog) { log.info "command failed"}
+            }   
 		}
 	} catch (groovyx.net.http.HttpResponseException e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
-//        if (debugLog) {log.debug "sendCommand(): ${resp.header}"}
-                if (e.statusCode == 429) {
+        if (e.statusCode == 429) {
             log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
                        sendEvent(name: "cloudAPI", value: "Retry")
                        pauseExecution(60000)
@@ -234,8 +223,6 @@ try {
         else {
           log.error "sendCommand():Unknwon Error. Attempting again in one min." 
             sendEvent(name: "cloudAPI", value: "Retry")
-//            pauseExecution(60000)
-//            sendCommand(command, payload2, type)
         }    
 		return 'unknown'
 	}
@@ -251,8 +238,6 @@ def getDeviceState(){
 			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
             body: bodyParm
         ]
-    
-
 
 try {
 
@@ -351,6 +336,9 @@ try {
                             case "devices.capabilities.toggle":
                                 if (it.state.value == 0) toggle = "off";
                                 if (it.state.value == 1) toggle = "on";
+                                if (it.instance == "socketToggle1") sendEvent(name: "outlet1", value: toggle);
+                                if (it.instance == "socketToggle2") sendEvent(name: "outlet2", value: toggle);
+                                if (it.instance == "socketToggle3") sendEvent(name: "outlet3", value: toggle);
                                 if (it.instance == "gradientToggle") sendEvent(name: "gradient", value: toggle);
                                 if (it.instance == "nightlightToggle") { 
                                     if (getChildDevices().size() > 0) {
@@ -394,7 +382,8 @@ try {
                                 if (it.instance == "sensorTemperature" && getTemperatureScale() == "F") sendEvent(name: "temperature", value: it.state.value.toDouble().round(2), unit: "F");
                                 if (it.instance == "sensorHumidity") sendEvent(name: "humidity", value: it.state.value, unit: "%");
                                 if (it.instance == "airQuality") sendEvent(name: "airQuality", value: it.state.value);
-                                if (it.instance == "filterLifeTime") sendEvent(name: "filterLifeTime", value: it.state.value, unit: "%");                            
+                                if (it.instance == "filterLifeTime") sendEvent(name: "filterLifeTime", value: it.state.value, unit: "%"); 
+                                if (it.instance == "carbonDioxideConcentration") sendEvent(name: "carbonDioxide", value: it.state.value, unit: "ppm");
                             break;  
                             case "devices.capabilities.work_mode":
                                 if (it.instance == "workMode") {
@@ -459,32 +448,17 @@ def retrieveScenes2(){
             body: bodyParm
         ]
     
-try {
-
+    try {
 			httpPost(params) { resp ->
 
                 if (debugLog) { log.debug "retrieveScenes2():"+resp.data.payload.capabilities}
                 state.scenes = [:]
-                resp.data.payload.capabilities.parameters.options.get(0).each {
-                    state.scenes.put(it.value.id,it.name)  
+                resp.data.payload.capabilities.parameters.options.get(0).each { 
+                    state.scenes[it.value.id] = it.name
                 }
                 state.sceneMax = state.scenes.size()
                 state.sceneValue = 0 
                 if (debugLog) { log.debug "retrieveScenes2(): dynamic scenes loaded"}
-/*                resp.headers.each {
-                    if (debugLog) { log.debug "getDeviceState(): ${it.name}: ${it.value}"}                    
-                    name = it.name
-                    value = it.value
-                    if (name == "X-RateLimit-Remaining") {
-                        state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemaining", value)
-                    }
-                    if (name == "API-RateLimit-Remaining") {
-                        state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainig", value)
-                    }
-                }	*/							
-				
                 if (device.currentValue("cloudAPI") == "Retry") {
                     if (debugLog) {log.error "retrieveScenes2(): Cloud API in retry state. Reseting "}
                     sendEvent(name: "cloudAPI", value: "Success")
@@ -510,34 +484,15 @@ def retrieveDIYScenes(){
             body: bodyParm
         ]
     
-try {
-
+    try {
 			httpPost(params) { resp ->
-
                 if (debugLog) { log.debug "retrieveDIYScenes():"+resp.data.payload.capabilities}
-                state.remove("diyEffects")
-                state.remove("diyScene") //Needs to be removed at future date
-                state.remove("diySceneOptions") // needs to be removed at future date
-                state.diyEffects = [:]
+                state.remove("diyScene")
+                state.diyScene = [:]
                 resp.data.payload.capabilities.parameters.options.get(0).each {
-                    state.diyEffects.put(it.value,it.name)
+                    state.diyScene[it.value] = it.name
                 } 
-
-                if (debugLog) { log.debug "retrieveDIYScenes(): dynamic scenes loaded"}
-/*                resp.headers.each {
-                    if (debugLog) { log.debug "retrieveDIYScenes(): ${it.name}: ${it.value}"}                    
-                    name = it.name
-                    value = it.value
-                    if (name == "X-RateLimit-Remaining") {
-                        state.DailyLimitRemaining = value
-                        parent.apiRateLimits("DailyLimitRemaining", value)
-                    }
-                    if (name == "API-RateLimit-Remaining") {
-                        state.MinRateLimitRemainig = value
-                        parent.apiRateLimits("MinRateLimitRemainig", value)
-                    }
-                }	*/							
-				
+                if (debugLog) { log.debug "retrieveDIYScenes(): dynamic scenes loaded"}											
                 if (device.currentValue("cloudAPI") == "Retry") {
                     if (debugLog) {log.error "retrieveDIYScenes(): Cloud API in retry state. Reseting "}
                     sendEvent(name: "cloudAPI", value: "Success")
@@ -553,76 +508,54 @@ try {
 }
 
 def retrieveStateData(){
-    if (device.getDataValue("commands").contains("nightlightScene")) { retrieveDynamicScene("nightlightScene") }
-    if (device.getDataValue("commands").contains("diyScene")) { retrieveDynamicScene("diyScene") }
-    if (device.getDataValue("commands").contains("workMode")) { retrieveCmdParms("workMode") }
-    if (device.getDataValue("commands").contains("targetTemperature")) { retrieveCmdParms("targetTemperature") } 
-    if (device.getDataValue("commands").contains("segmentedBrightness")) { retrieveCmdParms("segmentedBrightness") }
-    if (device.getDataValue("commands").contains("segmentedColorRgb")) { retrieveCmdParms("segmentedColorRgb") }
-    if (device.getDataValue("commands").contains("musicMode")) { retrieveCmdParms("musicMode") }
-    if (device.getDataValue("commands").contains("snapshot")) { retrieveSnapshot() }
-    if (device.getDataValue("commands").contains("presetScene")) { retrieveDynamicScene("presetScene") }    
-}
-
-void retrieveSnapshot() {
-    if (debugLog) { log.debug "retrieveSnapshot(): Retrieving Snapshots for device"}
     def device = device.getDataValue("deviceID")
     def goveeAppAPI = parent.retrieveGoveeAPI(device)
-    state.snapshot = [:]
-    goveeAppAPI.capabilities.each{
-        if (debugLog) { log.debug "retrieveSnapshot(): found ${it.get("instance")}"}
-        if (it.get("instance") == "snapshot") {
-            if (debugLog) { log.debug "retrieveSnapshot(): Snapshot instance"}
-            if (debugLog) { log.debug "retrieveSnapshot(): Adding ${it.parameters.options} to state value" }
-            it.parameters.options.each {
-                if (debugLog) { log.debug "retrieveSnapshot(): Adding ${it.name} = ${it.value} to state value" }
-                state.snapshot.put(it.value,it.name)
-            }
+    def scenesCommands = ["nightlightScene","diyScene","presetScene"]
+    def devCommands = ["workMode","targetTemperature","segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"]
+    goveeAppAPI.capabilities.each {        
+        switch (true) {
+            case (it.get("instance") == "snapshot") :
+                state."${it.get("instance")}" = [:]
+                if (debugLog) { log.debug "retrieveStateData(): Snapshot instance"}
+                if (debugLog) { log.debug "retrieveStateData(): Adding ${it.parameters.options} to state value" }
+                it.parameters.options.each {
+                    if (debugLog) { log.debug "retrieveStateData(): Adding ${it.name} = ${it.value} to state value" }
+                    state.snapshot[it.name] = it.value
+                }
+            break
+            case (scenesCommands.contains(it.get("instance"))):
+                state."${it.get("instance")}" = []
+                state."${it.get("instance")}" = it.parameters.options
+                if (debugLog) { log.debug "retrieveStateData(): Successfully added options for type '${it.get("instance")}': ${state."${it.get("instance")}"}" }
+            break
+            case (devCommands.contains(it.get("instance"))):
+                state."${it.get("instance")}" = []
+                state."${it.get("instance")}" = it.parameters.fields
+                if (debugLog) { log.debug "retrieveStateData(): Successfully added options for type '${it.get("instance")}': ${state."${it.get("instance")}"}" }
+            break
+            default:
+                if (debugLog) { log.debug "retrieveStateData(): Unable to add  options for type '${it.get("instance")}'" }
         }
     }
 }
 
-
-def retrieveDynamicScene(type){
+ void retrieveSnapshot() {
+    if (debugLog) { log.debug "retrieveSnapshot(): Retrieving Snapshots for device"}
+    def type = "snapshot"
     def device = device.getDataValue("deviceID")
     def goveeAppAPI = parent.retrieveGoveeAPI(device)
-    state."${type}" = []
-//    parent.goveeAppAPI.each {
-//        if (it.device == device.getDataValue("deviceID")) {
-            if (debugLog) { log.debug "retrieveDynamicScene(): found matching device"}
-            goveeAppAPI.capabilities.each{
-                if (debugLog) { log.debug "retrieveDynamicScene(): found ${it.get("instance")}"}
-                if (it.get("instance") == type) {
-                    if (debugLog) { log.debug "retrieveDynamicScene(): nightLightScene instance"}
-                    if (debugLog) { log.debug "retrieveDynamicScene(): Adding ${it.parameters.options} to state value" }
-                    state."${type}" = it.parameters.options
-
-                }
- //           }
- //       }            
-    }          
-}
-
-def retrieveCmdParms(type){
-    def device = device.getDataValue("deviceID")
-    def goveeAppAPI = parent.retrieveGoveeAPI(device)
-    if (debugLog) { log.debug "retrieveCmdParms(): Getting command data2 for ${type} ${goveeAppAPI} ${device} ${goveeAppAPI.capabilities}"}
-    state."${type}" = [] as List
-//    goveeAppAPI.each {
-//        if (it.device == device.getDataValue("deviceID")) {
-            if (debugLog) { log.debug "retrieveCmdParms(): found matching device"}
-//            it.capabilities.each{
-             goveeAppAPI.capabilities.each{
-//                if (debugLog) { log.debug "retrieveCmdParms(): found ${it.get("instance")}"}
-                if (it.get("instance") == type) {
-                    if (debugLog) { log.debug "retrieveCmdParms(): found ${it.get("instance")}"}
-                    if (debugLog) { log.debug "retrieveCmdParms(): Adding ${it.parameters} to state value" }
-                    state."${type}" = it.parameters.fields
-
-                }
- //           }
- //       }            
-    }          
+    state.snapshot = [:]
+     
+    def matchedCapability = goveeAppAPI.capabilities.find { capability ->
+    capability?.get("instance") == type
+    }
+     
+    if (matchedCapability) {
+        matchedCapability.parameters?.options.each {
+            state."${type}"[it.name] = it.value
+            if (debugLog) { log.debug "retrieveSnapshot(): Successfully added options for type '${type}': ${state."${type}"}" }
+        }     
+    } 
 }
 
 void setModeDescription(mode=null) {

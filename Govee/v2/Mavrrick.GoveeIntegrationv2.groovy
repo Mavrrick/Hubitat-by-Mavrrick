@@ -1078,7 +1078,7 @@ private logger(msg, level = 'debug') {
  *
  *  Wrapper function to create devices.
  **/
-def goveeDevAdd() { //testing
+/* def goveeDevAdd() { //testing
 
 // private goveeDevAdd(goveeAdd) {
 //    def goveeAdd = settings.goveeDev - child.label    // testing
@@ -1395,7 +1395,17 @@ def goveeDevAdd() { //testing
                         logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
                         setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
                     }
-                } else if (devType == "devices.types.sensor") {
+                } else if (devType == "devices.types.air_quality_monitor") {
+                    String driver = "Govee v2 Air Quality Sensor with CO2"
+                    if (drivers.contains(driver)) {
+                        logger("goveeDevAdd()  configuring ${deviceName}", 'info')
+                        setBackgroundStatusMessage("Installing device ${deviceName}")
+                        mqttDevice.addMQTTDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
+                    } else {
+                        logger('goveeDevAdd(): You selected a device that needs driver "'+driver+'". Please load it', 'info')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver  <mark>${driver} is not installed</mark>. Please correct and try again")
+                    }
+                }else if (devType == "devices.types.sensor") {
                     String driver = "Govee v2 Presence Sensor"
                     if (drivers.contains(driver)) {
                         logger("goveeDevAdd()  configuring ${deviceName}", 'info')
@@ -1449,8 +1459,287 @@ def goveeDevAdd() { //testing
     state?.installDev = goveeDev
     atomicState.backgroundActionInProgress = false
     logger('goveeDevAdd() Govee devices integrated', 'info')
-}
+} */
 
+
+def goveeDevAdd() { // AI Enhanced code for Govee Device add process
+
+    if (settings.goveeDev == null) {
+        setBackgroundStatusMessage("No devices selected. No action")
+        // Assuming 'settings.goveeDev' is the intended reference for 'goveeDev'
+        state?.installDev = settings.goveeDev
+        atomicState.backgroundActionInProgress = false
+        logger('goveeDevAdd() Govee devices integration complete.', 'info')
+        return
+    }
+
+    def devices = settings.goveeDev - child.label
+    def drivers = getDriverList()
+    def mqttDevice = getChildDevice('Govee_v2_Device_Manager')
+
+    logger("goveeDevAdd() drivers detected are ${drivers}", 'debug')
+    logger("goveeDevAdd() Children DNI  ${childDNI} MQTT device DNI ${mqttChildredDNI}", 'debug') // Fix mqttChildredDNI if it's undefined
+    logger("goveeDevAdd() $devices are selected to be integrated", 'info')
+    logger('goveeDevAdd() DEVICE INFORMATION', 'info')
+
+    def childDNIset = childDNI as Set // For faster lookups
+
+    // Define driver mapping rules
+    // Each rule is a map. The 'condition' closure evaluates to true if the rule applies.
+    // The 'driver' field holds the driver name.
+    // The 'helper' field indicates which helper method to call.
+    // Rules are ordered by specificity, most specific first.
+    def driverRules = [
+        // Light Devices (more specific capability combinations first)
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb", "dreamViewToggle"]) },
+            driver: "Govee v2 Color Lights Dreamview Sync",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb"]) },
+            driver: "Govee v2 Color Lights 3 Driver",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness"]) },
+            driver: "Govee v2 Color Lights 2 Driver",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedColorRgb", "dreamViewToggle"]) },
+            driver: "Govee v2 Color Lights 4 Dreamview Sync",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedColorRgb"]) },
+            driver: "Govee v2 Color Lights 4 Driver",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK"]) },
+            driver: "Govee v2 Color Lights Driver",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.contains("colorTemperatureK") },
+            driver: "Govee v2 White Lights with CT Driver",
+            helper: "addLightDeviceHelper"
+        ],
+        // Specific Light Models (order matters if capabilities overlap with generic light rules)
+        [
+            condition: { dev -> dev.type == "devices.types.light" && (dev.sku == "H6091" || dev.sku == "H6092") },
+            driver: "Govee v2 Galaxy Projector",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.sku == "H6093" },
+            driver: "Govee v2 H6093 Starlight Driver",
+            helper: "addLightDeviceHelper"
+        ],
+        // Default Light Driver
+        [
+            condition: { dev -> dev.type == "devices.types.light" },
+            driver: "Govee v2 White Light Driver",
+            helper: "addLightDeviceHelper"
+        ],
+
+        // Air Quality Monitor
+        [
+            condition: { dev -> dev.type == "devices.types.air_quality_monitor" && dev.sku == "H5140" },
+            driver: "Govee v2 Air Quality Sensor with CO2",
+            helper: "addMQTTDeviceHelper"
+        ],        
+        
+        // Air Purifier Devices
+        [
+            condition: { dev -> dev.type == "devices.types.air_purifier" && dev.sku == "H7120" },
+            driver: "Govee v2 H7120 Air Purifier",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.air_purifier" && dev.sku == "H7122" },
+            driver: "Govee v2 H7122 Air Purifier",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.air_purifier" && dev.sku == "H7123" },
+            driver: "Govee v2 H7123 Air Purifier",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.air_purifier" && dev.sku == "H7126" },
+            driver: "Govee v2 H7126 Air Purifier",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.air_purifier" && dev.sku == "H712C" },
+            driver: "Govee v2 H712C Air Purifier",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.air_purifier" },
+            driver: "Govee v2 Air Purifier Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+
+        // Heater Devices
+        [
+            condition: { dev -> dev.type == "devices.types.heater" && (dev.sku == "H7131" || dev.sku == "H7134") },
+            driver: "Govee v2 H7131 Space Heater",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.heater" && dev.sku == "H7133" },
+            driver: "Govee v2 H7133 Space Heater Pro",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.heater" },
+            driver: "Govee v2 Heating Appliance Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+
+        // Fan Devices
+        [
+            condition: { dev -> dev.type == "devices.types.fan" && dev.sku == "H7102" },
+            driver: "Govee v2 H7102 Tower Fan",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.fan" && dev.sku == "H7106" },
+            driver: "Govee v2 H7106 Tower Fan",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.fan" },
+            driver: "Govee v2 Fan Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+
+        // Single-driver Types
+        [
+            condition: { dev -> dev.type == "devices.types.socket" },
+            driver: "Govee v2 Sockets Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.ice_maker" },
+            driver: "Govee v2 Ice Maker",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.kettle" },
+            driver: "Govee v2 Kettle Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.thermometer" },
+            driver: "Govee v2 Thermo/Hygrometer Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.sensor" },
+            driver: "Govee v2 Presence Sensor",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.aroma_diffuser" },
+            driver: "Govee v2 Aroma Diffuser Driver with Lights",
+            helper: "addMQTTDeviceHelper"
+        ],
+
+        // Fallback for no specific devType (e.g., groups)
+        [
+            condition: { dev -> !dev.type }, // `dev.type` is null or empty
+            driver: "Govee v2 Group Light Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+
+        // Research Driver (Catch-all for unknown types) - This should be the very last rule
+        [
+            condition: { dev -> true }, // Matches any remaining device
+            driver: "Govee v2 Research Driver",
+            helper: "addLightDeviceHelper" // Original code uses addLightDeviceHelper for this
+        ]
+    ]
+
+    state.goveeAppAPI.each { apiDevice -> // Renamed 'it' to 'apiDevice' for clarity
+        def dniCompare = "Govee_${apiDevice.device}"
+        def deviceName = apiDevice.deviceName
+
+        if (!childDNIset.contains(dniCompare)) {
+            logger("goveeDevAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug')
+
+            if (devices.contains(deviceName)) {
+                def deviceID = apiDevice.device
+                def deviceModel = apiDevice.sku
+                def devType = apiDevice.type
+                def commands = []
+                def capType = []
+                def int ctMin = 0
+                def int ctMax = 0
+
+                apiDevice.capabilities.each { cap ->
+                    logger ("goveeDevAdd(): ${cap} instance is ${cap.instance}",'trace')
+                    commands.add(cap.instance)
+                    capType.add(cap.type)
+                    if (cap.instance == "colorTemperatureK") {
+                        logger ("goveeDevAdd(): ${cap} instance is ${cap.instance} Parms is ${cap.parameters} range is ${cap.parameters.range} min is ${cap.parameters.range.min}",'trace')
+                        ctMin = cap.parameters.range.min
+                        ctMax = cap.parameters.range.max
+                        logger ("goveeDevAdd(): Min is ${ctMin} Max is ${ctMax}",'trace')
+                    }
+                }
+
+                logger ("goveeDevAdd(): ${deviceID} ${deviceModel} ${deviceName} ${devType} ${commands}",'trace')
+
+                def foundRule = driverRules.find { rule ->
+                    // Pass a context object to the condition closure
+                    rule.condition.call([
+                        type: devType,
+                        sku: deviceModel, // 'sku' is deviceModel
+                        commands: commands // List of extracted commands
+                    ])
+                }
+
+                if (foundRule) {
+                    def selectedDriver = foundRule.driver
+                    def helperMethod = foundRule.helper
+
+                    if (drivers.contains(selectedDriver)) {
+                        logger("goveeDevAdd() configuring ${deviceName} with driver: ${selectedDriver}", 'info')
+                        setBackgroundStatusMessage("Installing device ${deviceName}")
+
+                        // Dynamically call the appropriate helper method
+                        if (helperMethod == "addLightDeviceHelper") {
+                            // Ensure addLightDeviceHelper can handle ctMin, ctMax (even if 0) and capType
+                            mqttDevice.addLightDeviceHelper(selectedDriver, deviceID, deviceName, deviceModel, commands, ctMin, ctMax, capType)
+                        } else { // Assuming it's addMQTTDeviceHelper for others
+                            mqttDevice.addMQTTDeviceHelper(selectedDriver, deviceID, deviceName, deviceModel, commands, capType)
+                        }
+                    } else {
+                        logger("goveeDevAdd(): You selected device '${deviceName}' which needs driver '${selectedDriver}'. Please load it.", 'warn')
+                        setBackgroundStatusMessage("Device ${deviceName} was selected for install but driver <mark>${selectedDriver}</mark> is not installed. Please correct and try again.")
+                    }
+                } else {
+                    logger("goveeDevAdd(): No suitable rule found for device ${deviceName} (Type: ${devType}, Model: ${deviceModel}). This should not happen if the last 'Research Driver' rule is present.", 'error')
+                    setBackgroundStatusMessage("Device ${deviceName} was selected for install but no suitable driver could be determined. Please contact support.")
+                }
+
+            } else {
+                logger("goveeDevAdd(): Device '${deviceName}' not selected for installation. Skipping.", 'debug')
+            }
+        } else {
+            logger("goveeDevAdd(): Device ID '${deviceName}' (DNI: ${dniCompare}) already installed. Skipping.", 'debug')
+            setBackgroundStatusMessage("Device ${deviceName} is already installed. Ignored.")
+        }
+    }
+
+    state?.installDev = settings.goveeDev
+    atomicState.backgroundActionInProgress = false
+    logger('goveeDevAdd() Govee devices integration complete.', 'info')
+}
 
 /**
  *  goveeLightManAdd()
@@ -1613,23 +1902,6 @@ def getBaseUrl() {
 	def port = sslEnabled ? "8443" : "8080"
 	return "$scheme://127.0.0.1:$port"
 }
-
-/* private def addManLightDeviceHelper( String driver, String ip, String deviceName, String deviceModel) {
-    
-//    mqttDevice.addLightDeviceHelper(driver, deviceID, deviceName, deviceModel, commands, capType)
-    
-            addChildDevice('Mavrrick', driver, "Govee_${ip}" , location.hubs[0].id, [
-                'name': 'Govee Manual LAN API Device',
-                'label': deviceName,
-                'data': [
-                    'IP': ip,
-                    'deviceModel': deviceModel,
-                    'ctMin': 2000,
-                    'ctMax': 9000
-                        ],
-                'completedSetup': true,
-                ])    
-}  */
 
 
 ///////////////////////////////////////////////////////////////////////////

@@ -51,11 +51,8 @@ def lanSetLevel(float v,duration = 0){
             if (debugLog) {log.debug ("lanSetLevel(): Setting Level to ${v}")};
         break;
     } 
-//    int intv = v.toInteger()
-//    if (descLog) log.info "${device.label} Level was set to ${intv}%"
     if (duration>0){
         int intduration = duration.toInteger()
-//        sendEvent(name: "switch", value: "on")
     runInMillis(500, 'devStatus')
         fade(intv,intduration)
     }
@@ -92,7 +89,6 @@ def fade(int v,float duration){
 def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeDown(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
     int v = (curLevel-fadeInc).toInteger()
-//    log.debug "fadeDown(): v ${v}"
     if (v <= level) {
         if (debugLog) {log.debug "Final Loop Setting level to ${level}"}
         if ( level == 0 ) {
@@ -100,16 +96,13 @@ def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
             off()
         } else {
             log.debug "fadeDown(): Final fade to ${level}"
-            sendCommandLan(GoveeCommandBuilder("brightness",level, "level"))
-//            sendEvent(name: "level", value: level) 
+            sendCommandLan(GoveeCommandBuilder("brightness",level, "level")) 
             runInMillis(500, 'devStatus')
         }
     } else {
         log.debug "fadeDown(): Fade to ${v}"
             sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
             runInMillis(500, 'devStatus')
-//            sendEvent(name: "level", value: v)
-//            if (debugLog) {log.debug "fadeDown(): continueing  fading to ${v}"}
             def int delay = fadeRep
             if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
             if (debugLog) {log.debug "fadeDown(): executing loop to fadedown() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
@@ -120,11 +113,9 @@ def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
 def fadeUp( int curLevel, int level, fadeInt, fadeRep) {
     if (debugLog) {log.debug "fadeUp(): curLevel ${curLevel}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
     int v= (curLevel+fadeInc).toInteger()
-//    log.debug "fadeUp(): v ${v}"
     if (v >= level)    {
         log.debug "fadeUp(): Final fade to ${level}"
         sendCommandLan(GoveeCommandBuilder("brightness",level, "level"))
-//        sendEvent(name: "level", value: level)
         runInMillis(500, 'devStatus')
     }
     else {
@@ -133,14 +124,12 @@ def fadeUp( int curLevel, int level, fadeInt, fadeRep) {
         if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
         if (debugLog) {log.debug "fadeUp(): executing loop to fadeup() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-//        sendEvent(name: "level", value: v)
         runInMillis(500, 'devStatus')
         runInMillis(delay, fadeUp, [data:[v ,level, fadeInt,fadeRep]])
     }
 } 
 
 def lanSetEffect (effectNo) {
-//    effectNumber = effectNo.toInteger()
     effectNumber = effectNo.toString()
     lanScenes = loadSceneFile()
     if (descLog) log.info "${device.label} SetEffect: ${effectNumber}"
@@ -150,7 +139,6 @@ def lanSetEffect (effectNo) {
         tag = device.getDataValue("deviceModel")
     } 
     if (debugLog) log.debug "${lanScenes.get("${tag}").keySet()}"
-//    if (descLog) log.info "${lanScenes.get(device.getDataValue("DevType")).get(effectNumber)}"
     if (lanScenes.get("${tag}").containsKey(effectNumber)) {
         String sceneInfo =  lanScenes.get("${tag}").get(effectNumber).name
         String sceneCmd =  lanScenes.get("${tag}").get(effectNumber).cmd
@@ -160,7 +148,6 @@ def lanSetEffect (effectNo) {
         sendEvent(name: "effectName", value: sceneInfo)
         sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
-//    if (debugLog) {log.debug ("setEffect(): setEffect to ${effectNo}")}
         String cmd2 = '{"msg":{"cmd":"ptReal","data":{"command":'+sceneCmd+'}}}'
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
@@ -333,16 +320,9 @@ def lanActivateDIY (diyActivate) {
 /////////////////////////////////////////////////////
 
 def retrieveScenes() {
-    state.remove("sceneOptions")  //Needs to be removed at a future date
-    state.remove("diySceneOptions")  //Needs to be removed at a future date
-    state.remove("diyScene") //Needs to be removed at a future date
+    state.remove("diyEffects") // Needs to be removed at a future date
     state.scenes = [] as List
-    state.diyEffects = [] as List
-    if (debugLog) {log.debug ("retrieveScenes(): Retrieving Scenes from parent device")}
-/*    if (scenes.containsKey(device.getDataValue("DevType")) == false ) {   
-        if (debugLog) {log.debug ("retrieveScenes(): Scenes does not contain entries for device")}
-            scenes = scenes + parent."${"lightEffect_"+(device.getDataValue("DevType"))}"()
-    } */
+    state.diyScene = [] as List
     lanScenes = loadSceneFile()
     if (lanScenes != null) {
     if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.get(device.getDataValue("DevType"))}")}
@@ -356,9 +336,9 @@ def retrieveScenes() {
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
-            state.scenes.add(sceneValue)
-            state.scenes = state.scenes.sort()
+            state.scenes.add(sceneValue)            
         }
+        state.scenes = state.scenes.sort()
     }
 
     if (parent.label == "Govee v2 Device Manager") {   
@@ -367,195 +347,123 @@ def retrieveScenes() {
         if (diyScenes == null) {
             if (debugLog) {log.debug ("retrieveScenes(): Device has no DIY Scenes")}
         } else {        
-//        if (debugLog) {log.debug ("retrieveScenes(): DIY Keyset ${diyScenes.keySet()}")}
-      diyScenes.get(device.getDataValue("deviceModel")).each {
-//        diyScenes.each {    
+      diyScenes.get(device.getDataValue("deviceModel")).each {   
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             String sceneValue = it.getKey() + "=" + it.value.name
-            state.diyEffects.add(sceneValue)
-            state.diyEffects = state.diyEffects.sort()
+            state.diyScene.add(sceneValue)            
             }
+            state.diyScene = state.diyScene.sort()
         }
     } else {
         diyScenes = loadDIYFile()
         if (diyScenes.containsKey((device.getDataValue("deviceModel"))) == false) {
             if (debugLog) {log.debug ("retrieveScenes(): No DIY Scenes to retrieve for device")}    
         } else {
-//            diyScenes = parent.state.diyEffects.(device.getDataValue("deviceModel"))
-//            diyScenes.put((device.getDataValue("deviceModel")),diyReturn)
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
             diyScenes.get(device.getDataValue("deviceModel")).each {
-//            diyScenes.each {
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
                 String sceneValue = it.getKey() + "=" + it.value.name
-                state.diyEffects.add(sceneValue)
-                state.diyEffects = state.diyEffects.sort()
+                state.diyScene.add(sceneValue)                
             }
+            state.diyScene = state.diyScene.sort()
         }        
     }        
 }
 
-def getDevType() {
-//    String state.DevType = null= 
-    switch(device.getDataValue("deviceModel")) {
-        case "H6117":
-        case "H6163":
-        case "H6168":
-        case "H6172":
-        case "H6173":
-        case "H6175":
-        case "H6176":
-        case "H617A":
-        case "H617C":
-        case "H617E":
-        case "H617F":        
-        case "H618A":
-        case "H618B":
-        case "H618C":
-        case "H618E":
-        case "H618F":
-        case "H619A":
-        case "H619B": 
-        case "H619C": 
-        case "H619D":
-        case "H619E":
-        case "H619Z":
-        case "H61A0":
-        case "H61A1":
-        case "H61A2":
-        case "H61A3":
-        case "H61A5":
-        case "H61A8":
-        case "H61A9":
-        case "H61B2":
-        case "H61C2": 
-        case "H61C3":
-        case "H61C5":
-        case "H61E1":
-        case "H61E0":
-        case "H6167":
-            if (debugLog) {log.debug ("getDevType(): Found   ${device.getDataValue("deviceModel")} setting DevType to RGBIC_STRIP")}; 
-            device.updateDataValue("DevType", "RGBIC_Strip");
-            break; 
-        case "H6066": 
-        case "H606A":
-        case "H6061":
-            if (debugLog) {log.debug ("getDevType(): Found   ${device.getDataValue("deviceModel")} setting DevType to Hexa_Light")};
-            device.updateDataValue("DevType", "Hexa_Light");            
-            break;
-        case "H6067": //Not added yet
-            device.updateDataValue("DevType", "Tri_Light"); 
-            break;
-        case "H6065":
-            device.updateDataValue("DevType", "Y_Light");
-            break;        
-        case "H6072": 
-            device.updateDataValue("DevType", "Lyra_Lamp");
-            break;
-        case "H607C":
-        case "H6079":
-            device.updateDataValue("DevType", "Lyra_Pro");
-            break;        
-        case "H6076":
-            device.updateDataValue("DevType", "Basic_Lamp");
-            break;
-        case "H6078":
-            device.updateDataValue("DevType", "Cylinder_Lamp");
-            break;        
-        case "H6052": 
-        case "H6051":
-            device.updateDataValue("DevType", "Table_Lamp");
-            break;
-        case "H6038": 
-        case "H6039":
-            device.updateDataValue("DevType", "Wall_Sconce");
-            break;
-        case "H6022":
-            device.updateDataValue("DevType", "Table_Lamp_2");
-            break;        
-        case "H70C1":
-        case "H70C2":
-        case "H70C4":
-        case "H70C5":
-        case "H70C7":
-        case "H70C9":
-        case "H70CB":
-            device.updateDataValue("DevType", "XMAS_Light");
-            break;
-        case "H610A": 
-        case "H610B": 
-        case "H6062":
-            device.updateDataValue("DevType", "Wall_Light_Bar");
-            break;
-        case "H6046":
-        case "H6056":
-        case "H6047":
-            device.updateDataValue("DevType", "TV_Light_Bar"); 
-            break;        
-        case "H6088":
-        case "H6087":
-        case "H608A": 
-        case "H608B":
-        case "H608C":
-            device.updateDataValue("DevType", "Indoor_Pod_Lights");
-            break;        
-        case "H705A":
-        case "H705B":
-        case "H705C":
-        case "H706A":
-        case "H706B":
-        case "H706C":
-            device.updateDataValue("DevType", "Outdoor_Perm_Light");
-            break;
-        case "H7050":
-        case "H7051":
-        case "H7052":
-        case "H7055":
-            device.updateDataValue("DevType", "Outdoor_Pod_Light");
-            break;
-        case "H7060":
-        case "H7061":
-        case "H7062":
-        case "H7065":
-        case "H7066":
-            device.updateDataValue("DevType", "Outdoor_Flood_Light");
-            break;
-        case "H70B1":
-        case "H70BC":
-            device.updateDataValue("DevType", "Curtain_Light");
-            break;
-        case "H70B3":
-        case "H70B4":
-        case "H70B5":
-            device.updateDataValue("DevType", "Curtain_Light2");
-            break;
-        case "H7075":
-            device.updateDataValue("DevType", "Outdoor_Wall_Light");
-            break; 
-        case "H6811":
-            device.updateDataValue("DevType", "Net_Lights");
-            break;
-        case "H6091":
-        case "H6092":
-            device.updateDataValue("DevType", "Galaxy_Projector");
-            break;
-        case "H7020":
-        case "H7021":
-        case "H7028":
-        case "H7041":
-        case "H7042":
-            device.updateDataValue("DevType", "Outdoor_String_Light");
-            break;
-        default: 
-            if (debugLog) {log.debug ("getDevType(): Unknown device Type  ${device.getDataValue("deviceModel")}")};
-            device.updateDataValue("DevType", "Generic");    
-        break; 
-        
-    }       
+void getDevType() {
+    // Retrieve deviceModel once to avoid repeated calls
+    def model = device.getDataValue("deviceModel")
+    def newDevType = "Generic" // Default value
+
+    // Use a Map for O(1) lookup, much more efficient than a long switch or repeated if/else if
+    def modelToDevTypeMap = [
+        // RGBIC_STRIP
+        "H6117": "RGBIC_Strip", "H6163": "RGBIC_Strip", "H6168": "RGBIC_Strip",
+        "H6172": "RGBIC_Strip", "H6173": "RGBIC_Strip", "H6175": "RGBIC_Strip",
+        "H6176": "RGBIC_Strip", "H617A": "RGBIC_Strip", "H617C": "RGBIC_Strip",
+        "H617E": "RGBIC_Strip", "H617F": "RGBIC_Strip", "H618A": "RGBIC_Strip",
+        "H618B": "RGBIC_Strip", "H618C": "RGBIC_Strip", "H618E": "RGBIC_Strip",
+        "H618F": "RGBIC_Strip", "H619A": "RGBIC_Strip", "H619B": "RGBIC_Strip",
+        "H619C": "RGBIC_Strip", "H619D": "RGBIC_Strip", "H619E": "RGBIC_Strip",
+        "H619Z": "RGBIC_Strip", "H61A0": "RGBIC_Strip", "H61A1": "RGBIC_Strip",
+        "H61A2": "RGBIC_Strip", "H61A3": "RGBIC_Strip", "H61A5": "RGBIC_Strip",
+        "H61A8": "RGBIC_Strip", "H61A9": "RGBIC_Strip", "H61B2": "RGBIC_Strip",
+        "H61C2": "RGBIC_Strip", "H61C3": "RGBIC_Strip", "H61C5": "RGBIC_Strip",
+        "H61E1": "RGBIC_Strip", "H61E0": "RGBIC_Strip", "H6167": "RGBIC_Strip",
+
+        // Hexa_Light
+        "H6066": "Hexa_Light", "H606A": "Hexa_Light", "H6061": "Hexa_Light",
+
+        // Other Specific Types
+        "H6067": "Tri_Light", // Not added yet - consider if this should be 'null' or 'Generic' if truly not implemented
+        "H6065": "Y_Light",
+        "H6072": "Lyra_Lamp",
+        "H607C": "Lyra_Pro", "H6079": "Lyra_Pro",
+        "H6076": "Basic_Lamp",
+        "H6078": "Cylinder_Lamp",
+        "H6052": "Table_Lamp", "H6051": "Table_Lamp",
+        "H6038": "Wall_Sconce", "H6039": "Wall_Sconce",
+        "H6022": "Table_Lamp_2",
+
+        // XMAS_Light
+        "H70C1": "XMAS_Light", "H70C2": "XMAS_Light", "H70C4": "XMAS_Light",
+        "H70C5": "XMAS_Light", "H70C7": "XMAS_Light", "H70C9": "XMAS_Light",
+        "H70CB": "XMAS_Light",
+
+        // Wall_Light_Bar
+        "H610A": "Wall_Light_Bar", "H610B": "Wall_Light_Bar", "H6062": "Wall_Light_Bar",
+
+        // TV_Light_Bar
+        "H6046": "TV_Light_Bar", "H6056": "TV_Light_Bar", "H6047": "TV_Light_Bar",
+
+        // Indoor_Pod_Lights
+        "H6088": "Indoor_Pod_Lights", "H6087": "Indoor_Pod_Lights", "H608A": "Indoor_Pod_Lights",
+        "H608B": "Indoor_Pod_Lights", "H608C": "Indoor_Pod_Lights",
+
+        // Outdoor_Perm_Light
+        "H705A": "Outdoor_Perm_Light", "H705B": "Outdoor_Perm_Light", "H705C": "Outdoor_Perm_Light",
+        "H706A": "Outdoor_Perm_Light", "H706B": "Outdoor_Perm_Light", "H706C": "Outdoor_Perm_Light",
+
+        // Outdoor_Pod_Light
+        "H7050": "Outdoor_Pod_Light", "H7051": "Outdoor_Pod_Light", "H7052": "Outdoor_Pod_Light",
+        "H7055": "Outdoor_Pod_Light",
+
+        // Outdoor_Flood_Light
+        "H7060": "Outdoor_Flood_Light", "H7061": "Outdoor_Flood_Light", "H7062": "Outdoor_Flood_Light",
+        "H7065": "Outdoor_Flood_Light", "H7066": "Outdoor_Flood_Light",
+
+        // Curtain_Light
+        "H70B1": "Curtain_Light", "H70BC": "Curtain_Light",
+
+        // Curtain_Light2
+        "H70B3": "Curtain_Light2", "H70B4": "Curtain_Light2", "H70B5": "Curtain_Light2",
+
+        // Outdoor_Wall_Light
+        "H7075": "Outdoor_Wall_Light",
+
+        // Net_Lights
+        "H6811": "Net_Lights",
+
+        // Galaxy_Projector
+        "H6091": "Galaxy_Projector", "H6092": "Galaxy_Projector",
+
+        // Outdoor_String_Light
+        "H7020": "Outdoor_String_Light", "H7021": "Outdoor_String_Light", "H7028": "Outdoor_String_Light",
+        "H7041": "Outdoor_String_Light", "H7042": "Outdoor_String_Light"
+    ]
+
+    newDevType = modelToDevTypeMap.get(model, "Generic") // If model is not a key, default to "Generic"
+
+    if (debugLog) {
+        log.debug("getDevType(): Model ${model} resolved to DevType: ${newDevType}")
+    }
+
+    device.updateDataValue("DevType", newDevType)
 }
+
 
 def GoveeCommandBuilder(String command1, value1, String type) {   
     if (type=="ct") {
@@ -674,10 +582,6 @@ def loadSceneFile() {
     catch (Exception e) {      
         if (debugLog) {log.debug "loadSceneFile: ${e}"}
     }
-/*    if (debugLog) {log.debug "File loaded starting parse."}
-        tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
-        scenes = tmpEffects.get(0)
-        return scenes */
 }
 
 def loadDIYFile() {
