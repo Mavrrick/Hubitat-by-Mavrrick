@@ -11,7 +11,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
       "required": true,
-      "version": "2.1.18"
+      "version": "2.1.19"
     }
   ],
   "apps": [
@@ -23,7 +23,7 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.1.34"
+      "version": "2.1.35"
     }
   ],
   "drivers": [
@@ -33,7 +33,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
-      "version": "2.1.9"
+      "version": "2.1.10"
     },
     {
       "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
@@ -49,7 +49,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
       "required": false,
-      "version": "2.1.7"
+      "version": "2.1.8"
     },
     {
       "id": "c388d20f-109f-4f90-bae5-14f428aa0242",
@@ -106,6 +106,14 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H712CAirPurifier.groovy",
       "required": false,
       "version": "2.1.1"
+    },
+    {
+      "id": "c4272d50-779e-4568-ae33-624dc57d1cff",
+      "name": "Govee v2 Air Quality Sensor with CO2",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2AirQualitySensorwithCO2.groovy",
+      "required": false,
+      "version": "2.1.0"
     },
     {
       "id": "78500f3c-9f4f-4c66-81b7-58b91486706e",
@@ -265,6 +273,14 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2SocketsDriver.groovy",
       "required": false,
+      "version": "2.1.1"
+    },
+    {
+      "id": "c85850b9-d7ab-4370-9939-5949bf942460",
+      "name": "Govee v2 Sockets Driver - Component",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2SocketsDriverComponent.groovy",
+      "required": false,
       "version": "2.1.0"
     },
     {
@@ -400,3 +416,4 @@
     }
   ]
 }
+
