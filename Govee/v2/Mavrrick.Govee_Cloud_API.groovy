@@ -75,7 +75,18 @@ try {
                         sendEvent(name: "switch", value: "off")
                         if (descLog) { log.info "${device.label} was turned off"}
                     }
-                    break 
+                    break
+                case (code == 200 && command.contains("socketToggle")):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "switch", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "switch", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
                 case (code == 200 && command == "brightness"): 
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
@@ -336,9 +347,9 @@ try {
                             case "devices.capabilities.toggle":
                                 if (it.state.value == 0) toggle = "off";
                                 if (it.state.value == 1) toggle = "on";
-                                if (it.instance == "socketToggle1") sendEvent(name: "outlet1", value: toggle);
-                                if (it.instance == "socketToggle2") sendEvent(name: "outlet2", value: toggle);
-                                if (it.instance == "socketToggle3") sendEvent(name: "outlet3", value: toggle);
+                                if (it.instance.contains("socketToggle")) childSwitchUpdate(it.instance, toggle);
+//                                if (it.instance == "socketToggle2") sendEvent(name: "outlet2", value: toggle);
+//                                if (it.instance == "socketToggle3") sendEvent(name: "outlet3", value: toggle);
                                 if (it.instance == "gradientToggle") sendEvent(name: "gradient", value: toggle);
                                 if (it.instance == "nightlightToggle") { 
                                     if (getChildDevices().size() > 0) {
