@@ -959,8 +959,8 @@ def diyAdd(devSKU, diyName, command) {
         nameList  = []
         scenelist = state.diyEffects."${devSKU}".keySet()
         scenelist.forEach {
-            logger("diyAdd(): Adding Scene ${state.diyEffects."${devSKU}"."${it}".name} to compare list", 'debug')
-            nameList.add(state.diyEffects."${devSKU}"."${it}".name)    
+            logger("diyAdd(): Adding Scene ${state.diyEffects."${devSKU}"[it].name} to compare list", 'debug')
+            nameList.add(state.diyEffects."${devSKU}"[it].name)    
         }
         logger("diyAdd(): Scene Name Compare list ${nameList}", 'debug')
        
