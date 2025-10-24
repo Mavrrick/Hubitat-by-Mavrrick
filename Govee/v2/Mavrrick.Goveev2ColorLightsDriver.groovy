@@ -40,7 +40,7 @@ metadata {
         attribute "cloudAPI", "string"
         attribute "effectNum", "integer" 
         command "activateDIY", [
-            [name: "diyName", type: "STRING", description: "DIY Number to activate"]
+            [name: "diyNumber", type: "NUMBER", description: "DIY Number to activate"]
            ]
         command "snapshot", [
             [name: "snapshotNum", type: "STRING", description: "Activate Snapshot"]

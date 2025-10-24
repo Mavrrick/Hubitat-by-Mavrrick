@@ -31,7 +31,7 @@ metadata {
         attribute "online", "string"        
         
         command "activateDIY", [
-            [name: "diyName", type: "STRING", description: "DIY Number to activate"]
+            [name: "diyNumber", type: "NUMBER", description: "DIY Number to activate"]
            ]
     }
 
