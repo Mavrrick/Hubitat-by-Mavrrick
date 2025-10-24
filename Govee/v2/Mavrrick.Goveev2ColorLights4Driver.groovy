@@ -160,10 +160,10 @@ def sceneLoad() {
     } else if ((lanControl == false) || (lanControl && lanScenes == false)) { 
         retrieveScenes2()
         retrieveStateData()
-        if (state.diyScene.isEmpty()) {
-            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
+//        if (state.diyScene.isEmpty()) {
+//            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
             retrieveDIYScenes()
-        }
+//        }
     }
 }
 

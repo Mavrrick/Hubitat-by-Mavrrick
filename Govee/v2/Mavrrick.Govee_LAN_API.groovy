@@ -320,9 +320,8 @@ def lanActivateDIY (diyActivate) {
 /////////////////////////////////////////////////////
 
 def retrieveScenes() {
-    state.remove("diyEffects") // Needs to be removed at a future date
-    state.scenes = [] as List
-    state.diyScene = [] as List
+    state.scenes = [:]
+    state.diyScene = [:]
     lanScenes = loadSceneFile()
     if (lanScenes != null) {
     if (debugLog) {log.debug ("retrieveScenes(): Scenes Keyset ${lanScenes.get(device.getDataValue("DevType"))}")}
@@ -334,9 +333,8 @@ def retrieveScenes() {
     }                                                                  
     lanScenes.get("${tag}").each {
         if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
-        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
-            String sceneValue = it.getKey() + "=" + it.value.name
-            state.scenes.add(sceneValue)            
+        if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}   
+            state.scenes[it.getKey()] = it.value.name
         }
         state.scenes = state.scenes.sort()
     }
@@ -350,8 +348,7 @@ def retrieveScenes() {
       diyScenes.get(device.getDataValue("deviceModel")).each {   
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
             if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
-            String sceneValue = it.getKey() + "=" + it.value.name
-            state.diyScene.add(sceneValue)            
+                state.diyScene[it.getKey()] = it.value.name
             }
             state.diyScene = state.diyScene.sort()
         }
@@ -365,12 +362,13 @@ def retrieveScenes() {
             diyScenes.get(device.getDataValue("deviceModel")).each {
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.getKey()}")}
                 if (debugLog) {log.debug ("retrieveScenes(): Show all scenes in application ${it.value.name}")}
-                String sceneValue = it.getKey() + "=" + it.value.name
-                state.diyScene.add(sceneValue)                
+                state.diyScene[it.getKey()] = it.value.name                
             }
             state.diyScene = state.diyScene.sort()
         }        
-    }        
+    }
+    def le = new groovy.json.JsonBuilder(state.scenes + state.diyScene)
+    sendEvent(name: "lightEffects", value: le)
 }
 
 void getDevType() {
@@ -594,7 +592,7 @@ def loadDIYFile() {
     }
     if (dBytes != null) {
         tmpEffects = (new JsonSlurper().parseText(new String(dBytes))) as List
-        if (debugLog) {log.debug "loadDIYFile: Loaded ${tmpEffects.get(0)} from ${goveeDIYScenesFile}"}
+        if (debugLog) {log.debug "loadDIYFile: Loaded ${tmpEffects.get(0)} from GoveeLanDIYScenes.json"}
         diyEffects = tmpEffects.get(0)
         return diyEffects
     }

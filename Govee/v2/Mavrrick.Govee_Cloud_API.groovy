@@ -516,6 +516,8 @@ def retrieveDIYScenes(){
 		log.error "${e}"
 		return 'unknown'
 	}
+    def le = new groovy.json.JsonBuilder(state.scenes + state.diyScene)
+    sendEvent(name: "lightEffects", value: le)
 }
 
 def retrieveStateData(){
