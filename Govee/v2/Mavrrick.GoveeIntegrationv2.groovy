@@ -90,7 +90,7 @@ import hubitat.helper.HexUtils
      "H610A":["start":0, "line1End":30, "offset":0]]
 
 @Field static final List goveeDevPtURL = // devices that use ptURL command and may cause extraction process to fail.
-	["H6800","H6810","H6811","H6840","H70B1","H70B3","H70B4","H70B5","H70BC"]
+	["H6800","H6810","H6811","H6840","H70B1","H70B3","H70B4","H70BC"]
 
 preferences
 {
@@ -391,7 +391,7 @@ def sceneManagement() {
         }
         section('<b>Govee Scene Extract</b>') {
             href 'sceneExtract', title: 'Extract Scene from Tap to Run', description: 'Click here to perform Tap-To-Run analysis and extract DIY and Snapshots'
-            href 'sceneGoveeExtract', title: 'Extract Govee Scenes from API (Experimental, may not generate a working scene file)', description: 'Click here to extract Govee Default scenes from Govee API for device model above'
+            href 'sceneGoveeExtract', title: 'Extract Govee Scenes from API (New Method, May not work for new device types that are not tested)', description: 'Click here to extract Govee Default scenes from Govee API for a specific device'
 //            paragraph "Click button below to refresh scenes to all children device"
 //            input "pushScenesUpdate" , "button",  title: "Refresh Device Scene Awareness"
 //            paragraph "Click button below to reload preload scenes"
@@ -432,7 +432,7 @@ def sceneGoveeExtract() {
     {
         section('<b>Govee Scene Retrieval</b>')
         {
-            paragraph "Three items are needed to perform a manual Add. You will need the Device model number, a name for the Scene, and the command"
+            paragraph "Enter the device Model number."
             input 'devsku', 'string', title: '5 charecter Model (ie H6172)', required: false, default: ""
 
         }
