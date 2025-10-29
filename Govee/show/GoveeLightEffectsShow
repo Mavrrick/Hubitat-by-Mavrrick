@@ -270,8 +270,15 @@ def runNextAction() {
     }
     def dKey = "duration_interval_${state.curInt}"
     def duration = (settings[dKey]?.toInteger() ?: 0)
-    
+    if (state.curInt == numIntervals && cycleRepeat == false) { 
+        if(debugEnable) log.debug "Last interval Scheduling off in x seconds"
+        runIn(duration, "runNextAction")
+    } else if (state.curInt == numIntervals && cycleRepeat == true) {
+        state.curInt = 0
+        runIn(duration, "runNextAction")
+    } else {
     runIn(duration, "runNextAction")
+    }
 }
 
 def switchAction(evt) {
@@ -287,6 +294,11 @@ private def endAction(){
 //	unschedule()
     scheduleByDate()
     state.curInt = 0
+    List devices   = (settings?.selectedDevices ?: []) as List
+    devices.each { dev ->
+//        log.debug "runNextAction(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+        dev.off()
+    }
 }
 
 private def appButtonHandler(button) {
