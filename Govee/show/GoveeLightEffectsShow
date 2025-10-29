@@ -1,0 +1,295 @@
+/**
+ *  Govee LightEffects Show
+ */
+definition(
+    name:        "Govee LightEffects Show",
+    namespace:   "Mavrrick",
+    author:      "mavrrick",
+    description: "Setup Scene Rotation for multiple devicesIt ",
+    category:    "Convenience",
+    iconUrl:     "",
+    iconX2Url:   ""
+)
+
+import groovy.json.JsonSlurper
+import java.time.*
+import java.time.format.DateTimeFormatter
+
+// ======== Preferences ========
+preferences {
+    page(name: "setupPage")
+    page(name: "intervalConfigPage")
+}
+
+// ======== Page 1 – Setup ========
+def setupPage() {
+    dynamicPage(name: "setupPage", uninstall: true, install: true) {
+        section("Pick Devices to set Light Effects") {
+            // Pick any device that has the "switch" capability (you can change to the cap you need)
+            input "selectedDevices", "capability.lightEffects",
+                title: "Choose Devices",
+                multiple: true,
+                required: true,
+                submitOnChange: true
+        }
+        section("Number of different Effect intervals") {
+            input "numIntervals", "number",
+                title: "Number of intervals",
+                required: true,
+                defaultValue: 2,
+                submitOnChange: true
+            input 'cycleRepeat', 'bool', 
+                title: 'Repeat intervals until stoped', 
+                required: false, 
+                defaultValue: false
+        }
+        section {
+            // Next button – goes to the second page
+            href name: "intervalConfigPage",
+                 title: "Configure Light Effect intervals",
+                 description: "${settings?.numIntervals ?: 'Choose a number'} intervals",
+                 page: "intervalConfigPage",
+                 submitOnChange: true
+        }
+        section("<b>Triggers</b>") {
+            input "startcycle" , "button",  title: "Start effects"
+            input "stopcycle" , "button",  title: "Stop effects"
+            // Pick any device that has the "switch" capability (you can change to the cap you need)
+            paragraph "What do you want to use to trigger Light Effect Cycle"
+            input 'switchTrigger', 'bool', 
+                title: 'Use Switch to activate Effect cycle', 
+                required: false, 
+                defaultValue: false,
+                submitOnChange: true
+            if (switchTrigger){     
+                paragraph "Select a Switch what will be used to trigger the light effect to start and stop"
+                input "triggerSwitch", "capability.switch",
+                    title: "Choose switch device",
+                    multiple: false,
+                    required: false,
+                    submitOnChange: true
+            }
+            input 'datetimeTrigger', 'bool', 
+                title: 'Use Date and Time to activate Effect cycle', 
+                required: false, 
+                defaultValue: false,
+                submitOnChange: true
+            if (datetimeTrigger){
+                paragraph "Enter Date which effects will start to work"
+                input "startDate", "date",
+                    title: "Choose starting date",
+                    multiple: false,
+                    required: false,
+                    submitOnChange: true
+/*                paragraph "Enter time which effects will be activated on valid days between valid Dates."
+                input "startTime", "time",
+                    title: "Choose starting date",
+                    multiple: false,
+                    required: false,
+                    submitOnChange: true */
+                paragraph "Enter Date which effects will start to work"
+                input "endDate", "date",
+                    title: "Choose ending date",
+                    multiple: false,
+                    required: false,
+                    submitOnChange: true
+                paragraph "Enter time which effects will be activated on valid days between valid Dates."
+                input "startTime", "time",
+                    title: "Enter starting time of day",
+                    multiple: false,
+                    required: false,
+                    submitOnChange: true
+                paragraph "Enter time which effects will be activated on valid days between valid Dates."
+                input "endTime", "time",
+                    title: "Enter ending time of day",
+                    multiple: false,
+                    required: false,
+                    submitOnChange: true
+            }	               
+        }
+        section {
+            // Next button – goes to the second page
+            input("debugEnable", "bool",title:"Enable Debug Logging",width:4,submitOnChange:true)
+        }
+    }
+}
+
+// ======== Page 2 – Interval configuration ========
+def intervalConfigPage() {
+    // Pull the number of intervals & selected devices from settings
+    int nIntervals = (settings?.numIntervals?.toInteger() ?: 1)
+    List devices   = (settings?.selectedDevices ?: []) as List
+
+//    sceneOpts = ['0':'None']
+
+    dynamicPage(name: "intervalConfigPage", uninstall: false, install: false, nextPage: "setupPage") {
+        section("Interval Scene Selection Page") {
+            // Loop over intervals
+            (1..nIntervals).each { i ->
+                paragraph "<b>Interval ${i}</b>"
+                // Loop over devices
+                devices.each { dev ->
+                    log.debug "Scenes for device are ${dev.currentValue("lightEffects")}"
+                    def jsonSlurper = new JsonSlurper()
+                    def lightEffects = jsonSlurper.parseText(dev.currentValue("lightEffects"))
+                    log.debug "Scenes for device are ${lightEffects}"
+                    // Scene selection
+                    input "scene_${dev.id}_interval_${i}",
+                        "enum",
+                        title: "${dev.displayName} – Scene",
+                        options: lightEffects,
+                        required: false,
+                        defaultValue: '0'          // “None”
+                }
+                    // Duration (seconds)
+                     input "duration_interval_${i}",
+                        "number",
+                        title: "Interval ${i} – Duration (seconds)",
+                        required: false,
+                        defaultValue: 10,
+                        range: "1..3600"          // 1‑60 min
+//                }
+            }
+        }
+    }
+}
+
+/*
+// ======== Page 3 – Confirmation / Install ========
+def savePage() {
+    dynamicPage(name: "savePage", title: "Schedule Saved", uninstall: true, install: true) {
+        section {
+            paragraph "Your schedule has been saved. Click *Done* to finish installing."
+        }
+    }
+} */
+
+// ======== SmartApp Lifecycle ========
+def installed() {
+    log.debug "installed() called"
+    initialize()
+}
+
+def updated() {
+    log.debug "updated() called"
+    initialize()
+}
+
+def initialize() {
+    unsubscribe()
+    state.curInt = 0
+    if (triggerSwitch) {
+        subscribe(triggerSwitch, "switch", switchAction)
+    }
+    if (datetimeTrigger) {
+        scheduleByDate()
+    }
+}
+
+void scheduleByDate(){
+    unschedule()
+    if(LocalDate.parse(endDate) < LocalDate.now())
+    	return
+	if(LocalDate.parse(startDate) <= LocalDate.now()){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
+        sTime = LocalTime.parse(startTime, formatter)
+        eTime = LocalTime.parse(endTime, formatter)
+		if(sTime > LocalTime.now())
+			tDate = LocalDate.now()
+		else
+			tDate = LocalDate.now().plusDays(1)
+		if(debugEnable)
+			log.debug "${tDate.getYear()} ${tDate.getMonthValue()} ${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"
+		runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
+        runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
+	} else {
+		tDate = LocalDate.ofEpochDay(startDate.toLong())
+		if(debugEnable)
+			log.debug "${tDate.getYear()} ${tDate.getMonthValue()}<br>${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"		
+        runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
+        runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
+    }  
+}
+
+
+/**
+ * Start Cycles  
+ */
+def startSequence() {    
+    log.debug "startSequence(): Automation."
+    unschedule()
+    if (state.curInt != 0) {
+        log.debug "startSequence(): Resetting. Interval is not at starting point."
+    }
+		state.curInt = state.curInt + 1
+        List devices   = (settings?.selectedDevices ?: []) as List
+        log.debug "startSequence(): Processing Interval 1."
+        devices.each { dev ->
+            log.debug "startSequence(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+            def sKey = "scene_${dev.id}_interval_${state.curInt}"
+            def sceneId  = (settings[sKey]?.toInteger() ?: 0)
+            dev.setEffect(sceneId)
+        }
+    def dKey = "duration_interval_${i}"
+    def duration = (settings[dKey]?.toInteger() ?: 0)
+    
+    runIn(duration, "runNextAction")
+}
+
+/**
+ * Helper that Manages cycle duration and submitting commands for next effect.
+ */
+def runNextAction() {
+    log.debug "runNextAction(): proessing next cycle."
+    
+//    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
+//    eTime = LocalTime.parse(endTime, formatter)
+    
+    state.curInt = state.curInt + 1
+    List devices   = (settings?.selectedDevices ?: []) as List
+    log.debug "runNexAction(): Processing Interval ${state.curInt}."
+    devices.each { dev ->
+        log.debug "runNextAction(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+        def sKey = "scene_${dev.id}_interval_${state.curInt}"
+        def sceneId  = (settings[sKey]?.toInteger() ?: 0)
+        dev.setEffect(sceneId)
+    }
+    def dKey = "duration_interval_${state.curInt}"
+    def duration = (settings[dKey]?.toInteger() ?: 0)
+    
+    runIn(duration, "runNextAction")
+}
+
+def switchAction(evt) {
+    log.debug "switchAction(): Event is ${evt}"
+    if (evt == "on") {
+        startSequence()
+    } else {
+        endAction()
+    }
+}
+
+private def endAction(){
+//	unschedule()
+    scheduleByDate()
+    state.curInt = 0
+}
+
+private def appButtonHandler(button) {
+    log.debug "appButtonHandler() ${button}"
+    if (button == "startcycle") {
+        startSequence()
+/*        log.debug "appButtonHandler() ${button} provided."
+		state.curInt = state.curInt + 1
+        List devices   = (settings?.selectedDevices ?: []) as List
+        
+        devices.each { dev ->
+            log.debug "appButtonHandler() Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+            def sKey = "scene_${dev.id}_interval_${state.curInt}"
+            def sceneId  = (settings[sKey]?.toInteger() ?: 0)
+            dev.setEffect(sceneId)
+        } */
+    }  else if (button == "stopcycle") {
+        endAction()
+    }
+}
