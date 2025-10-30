@@ -28,6 +28,7 @@ definition(
     singleInstance: "true",
     iconUrl: "https://graph.api.smartthings.com/api/devices/icons/st.Weather.weather2-icn",
     iconX2Url: "https://graph.api.smartthings.com/api/devices/icons/st.Weather.weather2-icn?displaySize=2x"
+    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/show/GoveeLightEffectsShow",
 )
 
 preferences {
