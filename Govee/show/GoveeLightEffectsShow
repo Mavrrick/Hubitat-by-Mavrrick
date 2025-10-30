@@ -65,11 +65,11 @@ def setupPage() {
                  description: "${settings?.numIntervals ?: 'Choose a number'} intervals",
                  page: "intervalConfigPage",
                  submitOnChange: true
-            href name: "deviceConfigPage",
+/*            href name: "deviceConfigPage",
                  title: "Configure multiple Scenes per device at once",
                  description: "${settings?.numIntervals ?: 'Choose a number'} intervals",
                  page: "deviceConfigPage",
-                 submitOnChange: true
+                 submitOnChange: true */
         }
         section ("<b>Overrides</b>"){
             paragraph "Use these buttons to Activate or stop the Effect processing at any time."
