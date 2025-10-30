@@ -20,6 +20,7 @@ definition(
     author:      "Craig King",
     description: "Easy way to stup Light effect rotation between devices",
     category:    "lighting",
+    parent:      "Mavrrick:Govee Integrataion Tools",
     importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/show/GoveeLightEffectsShow",
     iconUrl:     "",
     iconX2Url:   ""
@@ -39,6 +40,12 @@ preferences {
 // ======== Page 1 – Setup ========
 def setupPage() {
     dynamicPage(name: "setupPage", uninstall: true, install: true) {
+        section("Give this app a name?") {
+            label(name: "label",
+            title: "Give this app a name?",
+            required: true,
+            multiple: false)
+	    }
         section("Pick Devices to set Light Effects") {
             // Pick any device that has the "switch" capability (you can change to the cap you need)
             input "selectedDevices", "capability.lightEffects",
@@ -65,11 +72,6 @@ def setupPage() {
                  description: "${settings?.numIntervals ?: 'Choose a number'} intervals",
                  page: "intervalConfigPage",
                  submitOnChange: true
-/*            href name: "deviceConfigPage",
-                 title: "Configure multiple Scenes per device at once",
-                 description: "${settings?.numIntervals ?: 'Choose a number'} intervals",
-                 page: "deviceConfigPage",
-                 submitOnChange: true */
         }
         section ("<b>Overrides</b>"){
             paragraph "Use these buttons to Activate or stop the Effect processing at any time."
@@ -155,7 +157,7 @@ def intervalConfigPage() {
                     def lightEffects = jsonSlurper.parseText(dev.currentValue("lightEffects")).sort { it.value }
                     if(debugEnable) log.debug "Scenes for device are ${lightEffects}"
                     // Scene selection
-                    input "scene_${dev.id}_interval_${i}",
+                    input "scene_${dev.id}",
                         "enum",
                         title: "${dev.displayName} – Scene",
                         options: lightEffects,
@@ -164,7 +166,7 @@ def intervalConfigPage() {
                         defaultValue: '0'          // “None”
                 }
                     // Duration (seconds)
-                     input "duration_interval_${i}",
+                     input "duration_interval",
                         "number",
                         title: "Interval ${i} – Duration (seconds)",
                         required: false,
@@ -228,7 +230,7 @@ def initialize() {
 }
 
 void scheduleByDate(){
-    unschedule()
+//    unschedule()
     if(LocalDate.parse(endDate) < LocalDate.now())
     	return
 	if(LocalDate.parse(startDate) <= LocalDate.now()){
@@ -262,11 +264,45 @@ def startSequence() {
     if (state.curInt != 0) {
         if(debugEnable) log.debug "startSequence(): Resetting. Interval is not at starting point."
     }
+     if (selectionType == '0') {
+         startSequenceSmp()
+     } else if (selectionType == '1') {
+         startSequenceSmp()
+     }
+}
+
+def startSequenceSmp() {
+    if (state.curInt == null) {
+        if(debugEnable) log.debug "startSequence(): Resetting. Interval is not at starting point."
+        state.curInt = 0
+    }
 		state.curInt = state.curInt + 1
         List devices   = (settings?.selectedDevices ?: []) as List
-        if(debugEnable) log.debug "startSequence(): Processing Interval 1."
+//        Random random = new Random()
+//        scenePos = random.nextInt(pollRateInt) // see explanation below
+        if(debugEnable) log.debug "startSequenceSmp(): Processing Interval 1."
         devices.each { dev ->
-            if(debugEnable) log.debug "startSequence(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+            List scenes = settings."scene_${dev.id}" as List
+            sceneCount = scenes.size()
+            Random random = new Random()
+            scenePos = random.nextInt(sceneCount) // see explanation below
+            if(debugEnable) log.debug "startSequenceSmp(): Processing effect for ${dev} with ${sceneCount} ${scenes}scenes selected. scene number ${scenes.get(scenePos)}."
+//            def sKey = "scene_${dev.id}_interval_${state.curInt}"
+//            def sceneId  = (settings[sKey]?.toInteger() ?: 0)
+            dev.setEffect(scenes.get(scenePos))
+        }
+//    def dKey = "duration_interval"
+    def duration = settings.duration_interval
+    
+    runIn(duration, "runNextActionSmp")
+}
+
+def startSequenceAdv() {    
+		state.curInt = state.curInt + 1
+        List devices   = (settings?.selectedDevices ?: []) as List
+        if(debugEnable) log.debug "startSequenceAdv(): Processing Interval 1."
+        devices.each { dev ->
+            if(debugEnable) log.debug "startSequenceAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
             def sKey = "scene_${dev.id}_interval_${state.curInt}"
             def sceneId  = (settings[sKey]?.toInteger() ?: 0)
             dev.setEffect(sceneId)
@@ -274,23 +310,53 @@ def startSequence() {
     def dKey = "duration_interval_${i}"
     def duration = (settings[dKey]?.toInteger() ?: 0)
     
-    runIn(duration, "runNextAction")
+    runIn(duration, "runNextActionAdv")
 }
 
 /**
  * Helper that Manages cycle duration and submitting commands for next effect.
  */
-def runNextAction() {
-    if(debugEnable) log.debug "runNextAction(): proessing next cycle."
+
+def runNextActionSmp() {
+    if(debugEnable) log.debug "runNextActionSmp(): proessing next cycle."
     
 //    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
 //    eTime = LocalTime.parse(endTime, formatter)
     
     state.curInt = state.curInt + 1
     List devices   = (settings?.selectedDevices ?: []) as List
-    if(debugEnable) log.debug "runNexAction(): Processing Interval ${state.curInt}."
+    if(debugEnable) log.debug "runNextActionSmp(): Processing Interval ${state.curInt}."
     devices.each { dev ->
-        if(debugEnable) log.debug "runNextAction(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+            List scenes = settings."scene_${dev.id}" as List
+            sceneCount = scenes.size()
+            Random random = new Random()
+            scenePos = random.nextInt(sceneCount) // see explanation below
+            if(debugEnable) log.debug "runNextActionSmp(): Processing effect for ${dev} with ${sceneCount} ${scenes}scenes selected. scene number ${scenes.get(scenePos)}."
+            dev.setEffect(scenes.get(scenePos))
+    }
+    def duration = settings.duration_interval
+    if (state.curInt == numIntervals && cycleRepeat == false) { 
+        if(debugEnable) log.debug "Last interval Scheduling off in x seconds"
+        runIn(duration, "endAction")
+    } else if (state.curInt == numIntervals && cycleRepeat == true) {
+        state.curInt = 0
+        runIn(duration, "runNextActionSmp")
+    } else {
+    runIn(duration, "runNextActionSmp")
+    }
+}
+
+def runNextActionAdv() {
+    if(debugEnable) log.debug "runNextActionAdv(): proessing next cycle."
+    
+//    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
+//    eTime = LocalTime.parse(endTime, formatter)
+    
+    state.curInt = state.curInt + 1
+    List devices   = (settings?.selectedDevices ?: []) as List
+    if(debugEnable) log.debug "runNextActionAdv(): Processing Interval ${state.curInt}."
+    devices.each { dev ->
+        if(debugEnable) log.debug "runNextActionAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
         def sKey = "scene_${dev.id}_interval_${state.curInt}"
         def sceneId  = (settings[sKey]?.toInteger() ?: 0)
         dev.setEffect(sceneId)
@@ -299,12 +365,12 @@ def runNextAction() {
     def duration = (settings[dKey]?.toInteger() ?: 0)
     if (state.curInt == numIntervals && cycleRepeat == false) { 
         if(debugEnable) log.debug "Last interval Scheduling off in x seconds"
-        runIn(duration, "runNextAction")
+        runIn(duration, "endAction")
     } else if (state.curInt == numIntervals && cycleRepeat == true) {
         state.curInt = 0
-        runIn(duration, "runNextAction")
+        runIn(duration, "runNextActionAdv")
     } else {
-    runIn(duration, "runNextAction")
+    runIn(duration, "runNextActionAdv")
     }
 }
 
@@ -318,8 +384,10 @@ def switchAction(evt) {
 }
 
 private def endAction(){
-//	unschedule()
-    scheduleByDate()
+	unschedule()
+     if (datetimeTrigger) {
+        scheduleByDate()
+    }
     state.curInt = 0
     List devices   = (settings?.selectedDevices ?: []) as List
     devices.each { dev ->
