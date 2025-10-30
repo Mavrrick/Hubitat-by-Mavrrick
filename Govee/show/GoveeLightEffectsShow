@@ -33,6 +33,7 @@ import java.time.format.DateTimeFormatter
 preferences {
     page(name: "setupPage")
     page(name: "intervalConfigPage")
+    page(name: "deviceConfigPage")
 }
 
 // ======== Page 1 – Setup ========
@@ -64,10 +65,18 @@ def setupPage() {
                  description: "${settings?.numIntervals ?: 'Choose a number'} intervals",
                  page: "intervalConfigPage",
                  submitOnChange: true
+            href name: "deviceConfigPage",
+                 title: "Configure multiple Scenes per device at once",
+                 description: "${settings?.numIntervals ?: 'Choose a number'} intervals",
+                 page: "deviceConfigPage",
+                 submitOnChange: true
         }
+        section ("<b>Overrides</b>"){
+            paragraph "Use these buttons to Activate or stop the Effect processing at any time."
+            input "startcycle" , "button",  title: "Override - Activate effects Now"
+            input "stopcycle" , "button",  title: "Override - Stop effects Now"
+        }        
         section("<b>Triggers</b>") {
-            input "startcycle" , "button",  title: "Start effects"
-            input "stopcycle" , "button",  title: "Stop effects"
             // Pick any device that has the "switch" capability (you can change to the cap you need)
             paragraph "What do you want to use to trigger Light Effect Cycle"
             input 'switchTrigger', 'bool', 
@@ -128,24 +137,29 @@ def intervalConfigPage() {
     int nIntervals = (settings?.numIntervals?.toInteger() ?: 1)
     List devices   = (settings?.selectedDevices ?: []) as List
 
-//    sceneOpts = ['0':'None']
-
     dynamicPage(name: "intervalConfigPage", uninstall: false, install: false, nextPage: "setupPage") {
-        section("Interval Scene Selection Page") {
-            // Loop over intervals
-            (1..nIntervals).each { i ->
-                paragraph "<b>Interval ${i}</b>"
-                // Loop over devices
+        
+        section("What type of selection do you want to do") {
+            input 'selectionType', 'enum', 
+            title: 'Selection type configuration', 
+                options: ['0':'Simple - Random Scenes from selected list', '1':'Advanced - Specify Scenes per device and interval'],
+            required: true, 
+            submitOnChange: true
+        }
+        if(debugEnable) log.debug "Selection type is  ${selectionType}"
+        if (selectionType == '0') {
+            section("Scene Selection Page") {
                 devices.each { dev ->
                     if(debugEnable) log.debug "Scenes for device are ${dev.currentValue("lightEffects")}"
                     def jsonSlurper = new JsonSlurper()
-                    def lightEffects = jsonSlurper.parseText(dev.currentValue("lightEffects"))
+                    def lightEffects = jsonSlurper.parseText(dev.currentValue("lightEffects")).sort { it.value }
                     if(debugEnable) log.debug "Scenes for device are ${lightEffects}"
                     // Scene selection
                     input "scene_${dev.id}_interval_${i}",
                         "enum",
                         title: "${dev.displayName} – Scene",
                         options: lightEffects,
+                        multiple: true,
                         required: false,
                         defaultValue: '0'          // “None”
                 }
@@ -156,21 +170,40 @@ def intervalConfigPage() {
                         required: false,
                         defaultValue: 10,
                         range: "1..3600"          // 1‑60 min
-//                }
+
+            }
+        } else if (selectionType == '1') {
+            section("Interval Scene Selection Page") {
+                // Loop over intervals
+                (1..nIntervals).each { i ->
+                    paragraph "<b>Interval ${i}</b>"
+                    // Loop over devices
+                    devices.each { dev ->
+                        if(debugEnable) log.debug "Scenes for device are ${dev.currentValue("lightEffects")}"
+                        def jsonSlurper = new JsonSlurper()
+                        def lightEffects = jsonSlurper.parseText(dev.currentValue("lightEffects")).sort { it.value }
+                        if(debugEnable) log.debug "Scenes for device are ${lightEffects}"
+                        // Scene selection
+                        input "scene_${dev.id}_interval_${i}",
+                            "enum",
+                            title: "${dev.displayName} – Scene",
+                            options: lightEffects,
+                            required: false,
+                            defaultValue: '0'          // “None”
+                    }
+                        // Duration (seconds)
+                         input "duration_interval_${i}",
+                            "number",
+                            title: "Interval ${i} – Duration (seconds)",
+                            required: false,
+                            defaultValue: 10,
+                            range: "1..3600"          // 1‑60 min
+                }
             }
         }
     }
 }
 
-/*
-// ======== Page 3 – Confirmation / Install ========
-def savePage() {
-    dynamicPage(name: "savePage", title: "Schedule Saved", uninstall: true, install: true) {
-        section {
-            paragraph "Your schedule has been saved. Click *Done* to finish installing."
-        }
-    }
-} */
 
 // ======== SmartApp Lifecycle ========
 def installed() {
