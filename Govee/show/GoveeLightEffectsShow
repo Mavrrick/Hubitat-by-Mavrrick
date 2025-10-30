@@ -267,7 +267,7 @@ def startSequence() {
      if (selectionType == '0') {
          startSequenceSmp()
      } else if (selectionType == '1') {
-         startSequenceSmp()
+         startSequenceAdv()
      }
 }
 
