@@ -46,6 +46,14 @@ def setupPage() {
             required: true,
             multiple: false)
 	    }
+        section("What type of LightEffect app to create") {
+            input 'selectionType', 'enum', 
+            title: 'Selection type configuration', 
+                options: ['0':'Simple - Random Scenes from selected list',
+                          '1':'Advanced - Specify Scenes per device and interval'],
+            required: true, 
+            submitOnChange: true
+        }
         section("Pick Devices to set Light Effects") {
             // Pick any device that has the "switch" capability (you can change to the cap you need)
             input "selectedDevices", "capability.lightEffects",
@@ -54,14 +62,14 @@ def setupPage() {
                 required: true,
                 submitOnChange: true
         }
-        section("Number of different Effect intervals") {
+        section("Number of different Effect intervals/groups") {
             input "numIntervals", "number",
-                title: "Number of intervals",
+                title: "Number of intervals/groups",
                 required: true,
                 defaultValue: 2,
                 submitOnChange: true
             input 'cycleRepeat', 'bool', 
-                title: 'Repeat intervals until stoped', 
+                title: 'Repeat intervals/groups until stoped', 
                 required: false, 
                 defaultValue: false
         }
@@ -73,11 +81,7 @@ def setupPage() {
                  page: "intervalConfigPage",
                  submitOnChange: true
         }
-        section ("<b>Overrides</b>"){
-            paragraph "Use these buttons to Activate or stop the Effect processing at any time."
-            input "startcycle" , "button",  title: "Override - Activate effects Now"
-            input "stopcycle" , "button",  title: "Override - Stop effects Now"
-        }        
+                
         section("<b>Triggers</b>") {
             // Pick any device that has the "switch" capability (you can change to the cap you need)
             paragraph "What do you want to use to trigger Light Effect Cycle"
@@ -99,32 +103,75 @@ def setupPage() {
                 required: false, 
                 defaultValue: false,
                 submitOnChange: true
-            if (datetimeTrigger){
-                paragraph "Enter Date which effects will start to work"
-                input "startDate", "date",
-                    title: "Choose starting date",
-                    multiple: false,
-                    required: false,
-                    submitOnChange: true
-                paragraph "Enter Date which effects will start to work"
-                input "endDate", "date",
-                    title: "Choose ending date",
-                    multiple: false,
-                    required: false,
-                    submitOnChange: true
-                paragraph "Enter time which effects will be activated on valid days between valid Dates."
+            if (datetimeTrigger) {
+            input 'datetimeTriggerType', 'enum', 
+            title: 'Date/Time trigger type', 
+                options: ['0':'No Enabled',
+                          '1':'Specific date with On/Off time',
+                          '2':'Between dates with On/Off times',
+                          '3':'Days of week with On/Off times'],
+            required: true, 
+            submitOnChange: true
+/*            input 'datetimeTrigger', 'bool', 
+                title: 'Use Date and Time to activate Effect cycle', 
+                required: false, 
+                defaultValue: false,
+                submitOnChange: true */
+            if (datetimeTriggerType == '1' || datetimeTriggerType == '2' || datetimeTriggerType == '3' ){
+                if (datetimeTriggerType == '1'){
+                    paragraph "Enter Date which effects routine will activate"
+                    input "startDate", "date",
+                        title: "Choose activation date",
+                        multiple: false,
+                        required: false,
+                        submitOnChange: true                
+                } else if (datetimeTriggerType == '2'){
+                    paragraph "Enter Date which effects routine will start"
+                    input "startDate", "date",
+                        title: "Choose starting date",
+                        multiple: false,
+                        required: false,
+                        submitOnChange: true
+                    paragraph "Enter Date which effects routine will end"
+                    input "endDate", "date",
+                        title: "Choose ending date",
+                        multiple: false,
+                        required: false,
+                        submitOnChange: true
+                } else if (datetimeTriggerType == '3') {
+                    input 'datetimeTrigger', 'enum', 
+                    title: 'Date/Time trigger type', 
+                        options: ['0':'Sundy',
+                            1:'Monday',
+                            2:'Tuesday',
+                            3:'Wednesday',
+                            4:'Thursday',
+                            5:'Friday',
+                            6:'Saturday',
+                            7:'Sunday' ],
+                        multiple: true,
+                        required: true, 
+                        submitOnChange: true
+                } 
+                paragraph "Enter time which effects will be activated"
                 input "startTime", "time",
                     title: "Enter starting time of day",
                     multiple: false,
                     required: false,
                     submitOnChange: true
-                paragraph "Enter time which effects will be activated on valid days between valid Dates."
+                paragraph "Enter time which effects will be de-activated"
                 input "endTime", "time",
                     title: "Enter ending time of day",
                     multiple: false,
                     required: false,
                     submitOnChange: true
-            }	               
+            }
+            }
+        }
+        section ("<b>Overrides</b>"){
+            paragraph "Use these buttons to Activate or stop the Effect processing at any time."
+            input "startcycle" , "button",  title: "Override - Activate effects Now"
+            input "stopcycle" , "button",  title: "Override - Stop effects Now"
         }
         section {
             // Next button – goes to the second page
@@ -141,13 +188,13 @@ def intervalConfigPage() {
 
     dynamicPage(name: "intervalConfigPage", uninstall: false, install: false, nextPage: "setupPage") {
         
-        section("What type of selection do you want to do") {
+/*        section("What type of selection do you want to do") {
             input 'selectionType', 'enum', 
             title: 'Selection type configuration', 
                 options: ['0':'Simple - Random Scenes from selected list', '1':'Advanced - Specify Scenes per device and interval'],
             required: true, 
             submitOnChange: true
-        }
+        } */
         if(debugEnable) log.debug "Selection type is  ${selectionType}"
         if (selectionType == '0') {
             section("Scene Selection Page") {
@@ -202,6 +249,13 @@ def intervalConfigPage() {
                             range: "1..3600"          // 1‑60 min
                 }
             }
+            section("How should the scene intervals/groups be executed.") {
+                input 'selectionOrder', 'enum', 
+                title: 'Selection type configuration', 
+                    options: ['0':'In Order', '1':'Randomized'],
+                required: true, 
+                submitOnChange: true
+            }
         }
     }
 }
@@ -224,34 +278,63 @@ def initialize() {
     if (triggerSwitch) {
         subscribe(triggerSwitch, "switch", switchAction)
     }
-    if (datetimeTrigger) {
+    if (datetimeTriggerType != '0') {
+        unschedule()
         scheduleByDate()
     }
 }
 
 void scheduleByDate(){
 //    unschedule()
-    if(LocalDate.parse(endDate) < LocalDate.now())
+    if (datetimeTriggerType == '1') {
+        if(LocalDate.parse(startDate) != LocalDate.now())
+    	return    
+    } else if (datetimeTriggerType == '2') {
+        if(LocalDate.parse(endDate) < LocalDate.now())
     	return
-	if(LocalDate.parse(startDate) <= LocalDate.now()){
+    } else if (datetimeTriggerType == '3') {
+        log.debug "scheduleByDate() ${LocalDate.now().getDayOfWeek().getValue()}"
+        List selectedDays   = (settings?.datetimeTrigger ?: []) as List
+        log.debug "scheduleByDate() Selected days of the week are ${selectedDays} Day of week is ${LocalDate.now().getDayOfWeek().getValue()}"
+        if(selectedDays.contains(LocalDate.now().getDayOfWeek().getValue().toString())) {
+            log.debug "scheduleByDate() The Day of week is ${LocalDate.now().getDayOfWeek()} and matches "
+        } else {
+    	    return
+        }
+    }
+    if (datetimeTriggerType == '1' || datetimeTriggerType == '2') {
+	    if(LocalDate.parse(startDate) <= LocalDate.now()){
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
+            sTime = LocalTime.parse(startTime, formatter)
+            eTime = LocalTime.parse(endTime, formatter)
+		    if(sTime > LocalTime.now())
+			    tDate = LocalDate.now()
+		    else
+			    tDate = LocalDate.now().plusDays(1)
+		    if(debugEnable)
+			    log.debug "${tDate.getYear()} ${tDate.getMonthValue()} ${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"
+		    runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
+            runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
+	    } else {
+		    tDate = LocalDate.ofEpochDay(startDate.toLong())
+		    if(debugEnable)
+			    log.debug "${tDate.getYear()} ${tDate.getMonthValue()}<br>${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"		
+            runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
+            runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
+        }
+    } else if (datetimeTriggerType == '3') {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
         sTime = LocalTime.parse(startTime, formatter)
         eTime = LocalTime.parse(endTime, formatter)
-		if(sTime > LocalTime.now())
-			tDate = LocalDate.now()
+        if(sTime > LocalTime.now())
+	        tDate = LocalDate.now()
 		else
-			tDate = LocalDate.now().plusDays(1)
-		if(debugEnable)
-			log.debug "${tDate.getYear()} ${tDate.getMonthValue()} ${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"
-		runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
-        runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
-	} else {
-		tDate = LocalDate.ofEpochDay(startDate.toLong())
-		if(debugEnable)
-			log.debug "${tDate.getYear()} ${tDate.getMonthValue()}<br>${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"		
-        runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
-        runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
-    }  
+	        tDate = LocalDate.now().plusDays(1)
+		    if(debugEnable)
+			    log.debug "${tDate.getYear()} ${tDate.getMonthValue()}<br>${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"		
+            runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
+            runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
+    }
 }
 
 
@@ -287,26 +370,34 @@ def startSequenceSmp() {
             Random random = new Random()
             scenePos = random.nextInt(sceneCount) // see explanation below
             if(debugEnable) log.debug "startSequenceSmp(): Processing effect for ${dev} with ${sceneCount} ${scenes}scenes selected. scene number ${scenes.get(scenePos)}."
-//            def sKey = "scene_${dev.id}_interval_${state.curInt}"
-//            def sceneId  = (settings[sKey]?.toInteger() ?: 0)
             dev.setEffect(scenes.get(scenePos))
         }
-//    def dKey = "duration_interval"
     def duration = settings.duration_interval
     
     runIn(duration, "runNextActionSmp")
 }
 
 def startSequenceAdv() {    
-		state.curInt = state.curInt + 1
-        List devices   = (settings?.selectedDevices ?: []) as List
-        if(debugEnable) log.debug "startSequenceAdv(): Processing Interval 1."
-        devices.each { dev ->
+    state.curInt = state.curInt + 1
+    scenePos = 0	
+    List devices   = (settings?.selectedDevices ?: []) as List
+    if(debugEnable) log.debug "startSequenceAdv(): Processing Interval 1."
+    if (selectionOrder == '1') {
+        Random random = new Random()
+        scenePos = random.nextInt(settings.numIntervals.toInteger()) +1 // see explanation below        
+    }
+    devices.each { dev ->
+        def sKey = "scene"
+        if (selectionOrder == '1') {
+            sKey = "scene_${dev.id}_interval_${scenePos}"    
             if(debugEnable) log.debug "startSequenceAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
-            def sKey = "scene_${dev.id}_interval_${state.curInt}"
-            def sceneId  = (settings[sKey]?.toInteger() ?: 0)
-            dev.setEffect(sceneId)
+        } else if (selectionOrder == '0') {
+            sKey = "scene_${dev.id}_interval_${state.curInt}"    
+            if(debugEnable) log.debug "startSequenceAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
         }
+        def sceneId  = (settings[sKey]?.toInteger() ?: 0)
+        dev.setEffect(sceneId)
+    }
     def dKey = "duration_interval_${i}"
     def duration = (settings[dKey]?.toInteger() ?: 0)
     
@@ -355,9 +446,19 @@ def runNextActionAdv() {
     state.curInt = state.curInt + 1
     List devices   = (settings?.selectedDevices ?: []) as List
     if(debugEnable) log.debug "runNextActionAdv(): Processing Interval ${state.curInt}."
+    if (selectionOrder == '1') {
+        Random random = new Random()
+        scenePos = random.nextInt(settings.numIntervals.toInteger()) +1 // see explanation below        
+    }
     devices.each { dev ->
-        if(debugEnable) log.debug "runNextActionAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
-        def sKey = "scene_${dev.id}_interval_${state.curInt}"
+        def sKey = "scene"
+        if (selectionOrder == '1') {
+            sKey = "scene_${dev.id}_interval_${scenePos}"    
+            if(debugEnable) log.debug "startSequenceAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+        } else if (selectionOrder == '0') {
+            sKey = "scene_${dev.id}_interval_${state.curInt}"    
+            if(debugEnable) log.debug "startSequenceAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+        }
         def sceneId  = (settings[sKey]?.toInteger() ?: 0)
         dev.setEffect(sceneId)
     }
