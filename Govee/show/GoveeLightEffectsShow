@@ -61,6 +61,13 @@ def setupPage() {
                 multiple: true,
                 required: true,
                 submitOnChange: true
+
+        input "standardBrightness", "number",
+                title: "Enter brightness level to be used across all selected Devices",
+                defaultValue: 80, 
+                required: true,
+                range: "1..100",
+                submitOnChange: true
         }
         section("Number of different Effect intervals/groups") {
             input "numIntervals", "number",
@@ -374,6 +381,7 @@ def startSequenceSmp() {
             scenePos = random.nextInt(sceneCount) // see explanation below
             if(debugEnable) log.debug "startSequenceSmp(): Processing effect for ${dev} with ${sceneCount} ${scenes}scenes selected. scene number ${scenes.get(scenePos)}."
             dev.setEffect(scenes.get(scenePos))
+            dev.setLevel(standardBrightness, 0)
         }
     def duration = settings.duration_interval
     
@@ -400,6 +408,7 @@ def startSequenceAdv() {
         }
         def sceneId  = (settings[sKey]?.toInteger() ?: 0)
         dev.setEffect(sceneId)
+        dev.setLevel(standardBrightness, 0)
     }
     def dKey = "duration_interval_${i}"
     def duration = (settings[dKey]?.toInteger() ?: 0)
