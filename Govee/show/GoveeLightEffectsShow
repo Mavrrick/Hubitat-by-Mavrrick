@@ -353,7 +353,7 @@ void scheduleByDate(){
  */
 def startSequence() {    
     if(debugEnable) log.debug "startSequence(): Automation."
-    unschedule()
+//    unschedule()
     if (state.curInt != 0) {
         if(debugEnable) log.debug "startSequence(): Resetting. Interval is not at starting point."
     }
