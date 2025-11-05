@@ -338,8 +338,8 @@ void scheduleByDate(){
 	        tDate = LocalDate.now()
 		else           
 	        tDate = LocalDate.now().plusDays(1)
-            while(!selectedDays.contains(LocalDate.now().getDayOfWeek().getValue().toString())) {
-                tDate = LocalDate.now().plusDays(1)
+            while(!selectedDays.contains(tDate.getDayOfWeek().getValue().toString())) {
+                tDate = tDate.plusDays(1)
             }
 		    if(debugEnable)
 			    log.debug "${tDate.getYear()} ${tDate.getMonthValue()}<br>${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"		
