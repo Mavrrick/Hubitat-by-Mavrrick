@@ -387,11 +387,23 @@ void scheduleByDate(){
 		    runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
             runOnce(new Date(xDate.getYear()-1900,xDate.getMonthValue()-1,xDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
 	    } else {
-		    tDate = LocalDate.ofEpochDay(startDate.toLong())
-		    if(debugEnable)
-			    log.debug "${tDate.getYear()} ${tDate.getMonthValue()}<br>${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"		
-            runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
-            runOnce(new Date(xDate.getYear()-1900,xDate.getMonthValue()-1,xDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
+            log.debug "Start Date is ${startDate}" 
+            tDate = LocalDate.parse(startDate.toString())
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
+            if (startTimeSelection == '0' && endTimeSelection == '0') {
+                sTime = LocalTime.parse(startTime, formatter)
+                eTime = LocalTime.parse(endTime, formatter)
+            
+		        if(debugEnable)
+			        log.debug "${tDate.getYear()} ${tDate.getMonthValue()}<br>${new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0)}"		
+                runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), sTime.getHour(), sTime.getMinute(), 0), "startSequence")
+                runOnce(new Date(xDate.getYear()-1900,xDate.getMonthValue()-1,xDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
+            } else {
+                log.debug "Start Date is ${startDate} and sunset or Sunrise are selected as triggered. Scheduling reschedule day of activity" 
+//                sTime = LocalTime.parse(startTime, formatter)
+                runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), 0, 0, 0), "scheduleByDate")
+                
+            }
         }
     } else if (datetimeTriggerType == '3') {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
