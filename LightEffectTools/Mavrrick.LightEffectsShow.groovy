@@ -21,7 +21,7 @@ definition(
     description: "Easy way to stup Light effect rotation between devices",
     category:    "lighting",
     parent:      "Mavrrick:Light Effects Tools",
-    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/show/GoveeLightEffectsShow",
+    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsShow.groovy",
     iconUrl:     "",
     iconX2Url:   ""
 )
