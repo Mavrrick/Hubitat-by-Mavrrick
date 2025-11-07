@@ -21,7 +21,7 @@ definition(
     description: "Easy way to stup Light effect rotation between devices",
     category:    "lighting",
     parent:      "Mavrrick:Light Effects Tools",
-    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsShow.groovy",
+    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/show/GoveeLightEffectsShow",
     iconUrl:     "",
     iconX2Url:   ""
 )
@@ -229,6 +229,7 @@ def intervalConfigPage() {
         if(debugEnable) log.debug "Selection type is  ${selectionType}"
         if (selectionType == '0') {
             section("Scene Selection Page") {
+                (1..nIntervals).each { i ->
                 devices.each { dev ->
                     if(debugEnable) log.debug "Scenes for device are ${dev.currentValue("lightEffects")}"
                     def jsonSlurper = new JsonSlurper()
@@ -250,7 +251,7 @@ def intervalConfigPage() {
                         required: false,
                         defaultValue: 10,
                         range: "1..3600"          // 1‑60 min
-
+                }
             }
         } else if (selectionType == '1') {
             section("Interval Scene Selection Page") {
