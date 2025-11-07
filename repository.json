@@ -35,7 +35,7 @@
       "id": "fa5676a8-2af7-4d37-95a9-75936bb52850",
       "name": "Light Effects Tools",
       "category": "Convenience",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/UniFi/packageManifest.json",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/packageManifest.json",
       "description": "Tools to help Group and Automoate Lights with the Light Effects Capability",
       "tags": [
         "Lights & Switches"
@@ -83,4 +83,5 @@
     }
   ]
 }
+
 
