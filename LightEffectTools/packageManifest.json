@@ -10,7 +10,7 @@
       "id": "8716e232-2d37-4028-b810-c06242725128",
       "name": "Light Effects Tools",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_HE_integration",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsTools.groovy",
       "required": true,
       "oauth": false,
       "primary": false
@@ -19,7 +19,7 @@
       "id": "1fa07ca7-464f-4c76-80a1-f8a9879b71b3",
       "name": "Light Effects Show",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_HE_integration",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsShow.groovy",
       "required": true,
       "oauth": false,
       "primary": false
