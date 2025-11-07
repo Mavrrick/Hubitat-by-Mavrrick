@@ -229,7 +229,7 @@ def intervalConfigPage() {
         if(debugEnable) log.debug "Selection type is  ${selectionType}"
         if (selectionType == '0') {
             section("Scene Selection Page") {
-                (1..nIntervals).each { i ->
+//                (1..nIntervals).each { i ->
                 devices.each { dev ->
                     if(debugEnable) log.debug "Scenes for device are ${dev.currentValue("lightEffects")}"
                     def jsonSlurper = new JsonSlurper()
@@ -251,7 +251,7 @@ def intervalConfigPage() {
                         required: false,
                         defaultValue: 10,
                         range: "1..3600"          // 1‑60 min
-                }
+//                }
             }
         } else if (selectionType == '1') {
             section("Interval Scene Selection Page") {
