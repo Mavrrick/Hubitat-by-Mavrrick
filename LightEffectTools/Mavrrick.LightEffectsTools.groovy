@@ -27,7 +27,8 @@ definition(
     installOnOpen: "true",
     singleInstance: "true",
     iconUrl: "",
-    iconX2Url: ""
+    iconX2Url: "",
+    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsTools.groovy"
 )
 
 preferences {
