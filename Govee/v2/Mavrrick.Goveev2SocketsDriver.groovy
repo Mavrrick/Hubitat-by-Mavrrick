@@ -66,10 +66,21 @@ def configure() {
     if (debugLog) {log.warn "configure(): Configuration Changed"}
     unschedule()
     if (pollRate > 0) runIn(pollRate,poll)
-    if (outlets != getChildDevices().size() && multiSocketAdd == true) {
-        socketChildAdd()
+    int outlets = device.getDataValue("commands").count("socketToggle")
+    childDNI = getChildDevices().deviceNetworkId
+    if (multiSocketAdd == true && outlets > 0 ) {
+        outlet.times {
+            if (!childDNI.contains("Govee_${deviceID}_Outlet${it+1}")) {  
+                socketChildAdd()
+            } else {
+                if (debugLog) {log.warn "configure(): Outlet already setup"}    
+            }
+        }
     }
-        getDeviceState()
+    if (device.getDataValue("commands").contains("nightlightToggle") && !childDNI.contains("Govee_"+deviceID+"_Nightlight")) {
+        addLightDeviceHelper()
+    }
+    getDeviceState()
     if (debugLog) runIn(1800, logsOff) 
 }
 
@@ -84,9 +95,9 @@ def initialize(){
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
         runIn(offset,poll)
-    }
-//        if (pollRate > 0) runIn(pollRate,poll)
-        getDeviceState()
+    }     
+
+    getDeviceState()
     if (debugLog) runIn(1800, logsOff)
 }
 
@@ -95,11 +106,14 @@ def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
         if (pollRate > 0) runIn(pollRate,poll)
     int outlets = device.getDataValue("commands").count("socketToggle")
-    if (outlets != getChildDevices().size() && multiSocketAdd == true) {
+    if (outlets > 0) {
         socketChildAdd()
     }
-        getDeviceState()
-        retrieveStateData()
+    if (device.getDataValue("commands").contains("nightlightToggle")) {
+        addLightDeviceHelper()
+    }
+    getDeviceState()
+    retrieveStateData()
 }
 
 def logsOff() {
@@ -172,4 +186,43 @@ def childSwitchUpdate(instance, toggle) {
     child = getChildDevice("Govee_${device.getDataValue("deviceID")}_Outlet${outlet}") 
      if (debugLog) {log.debug "childSwitchUpdate(): Update to child switch device. Child $child switch state to $toggle"} 
     child.sendEvent(name: "switch", value: toggle)
+}
+
+
+///////////////////////////////////////////////////
+// Heler routine to create child devices         //
+///////////////////////////////////////////////////
+
+def addLightDeviceHelper() {
+	//Driver Settings
+    driver = "Govee v2 Life Child Light Device"
+    deviceID = device.getDataValue("deviceID")
+    deviceName = device.label+"_Nightlight"
+    deviceModel = device.getDataValue("deviceModel")
+	Map deviceType = [namespace:"Mavrrick", typeName: driver]
+	Map deviceTypeBak = [:]
+	String devModel = deviceModel
+	String dni = "Govee_${deviceID}_Nightlight"
+    APIKey = device.getDataValue("apiKey")
+	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
+//    log.debug "Setup detail '${properties}' driver failed"
+    if (debugLog) { log.debug "Creating Child Device"}
+
+	def childDev
+	try {
+		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+	}
+	catch (e) {
+		log.warn "The '${deviceType}' driver failed"
+		if (deviceTypeBak) {
+			logWarn "Defaulting to '${deviceTypeBak}' instead"
+			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+		}
+	} 
+}
+
+def retNightlightScene(){
+    scenes = state.nightlightScene 
+    if (debugLog) { log.debug "retNightlightScene(): Nightlight Scenes are  " + scenes }
+    return scenes
 }
