@@ -11,7 +11,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
       "required": true,
-      "version": "2.1.20"
+      "version": "2.1.21"
     }
   ],
   "apps": [
@@ -273,7 +273,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2SocketsDriver.groovy",
       "required": false,
-      "version": "2.1.1"
+      "version": "2.1.2"
     },
     {
       "id": "c85850b9-d7ab-4370-9939-5949bf942460",
@@ -416,5 +416,6 @@
     }
   ]
 }
+
 
 
