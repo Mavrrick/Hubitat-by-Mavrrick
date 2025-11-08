@@ -38,7 +38,10 @@ preferences {
 def setupMain() {
     dynamicPage(name: "setupMain", title: " ", install: true, uninstall: true) {
         section("Light Effects Show Apps") {
-            app(name: "Light Effects Tools", appName: "Light Effects Show", namespace: "Mavrrick", title: "Light Effects Show", multiple: true)
+            app(name: "lightEffectShow", appName: "Light Effects Show", namespace: "Mavrrick", title: "Light Effects Show apps", multiple: true)
+        } 
+        section("Light Effects Grouping Apps") {
+            app(name: "lightEffectGrouping", appName: "Light Effects Grouping", namespace: "Mavrrick", title: "Light Effects grouping apps", multiple: true)
         } 
     }
 }
