@@ -21,7 +21,7 @@ definition(
     description: "Group Devices together to Standardize Scenes with a single list",
     category:    "lighting",
     parent:      "Mavrrick:Light Effects Tools",
-    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsGrouping.groovy",
+    importUrl:   "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/Govee/show/GoveeLightEffectsShow",
     iconUrl:     "",
     iconX2Url:   ""
 )
