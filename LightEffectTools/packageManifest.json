@@ -37,9 +37,9 @@
   "drivers": [
     {
       "id": "4ac2cae0-9400-48b1-a0b5-1855c22aa501",
-      "name": "Govee Lights, Plugs, and Switches Driver",
+      "name": "LightEffect Group",
       "namespace": "Mavrrick",
-      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/Govee%20Lights_Plugs_Switches%20Driver",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectGroup.groovy",
       "required": true
     }
   ]
