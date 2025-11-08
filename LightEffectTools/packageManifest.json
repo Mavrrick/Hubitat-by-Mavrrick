@@ -1,16 +1,25 @@
 {
   "packageName": "Light Effects Tools",
   "author": "Mavrrick",
-  "version": "0.2",
+  "version": "0.3",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2025-11-7",
-  "releaseNotes": "0.2 Bug fix for runway condition when a single interval used\n  Bug fix for first interval being ignored\n0.1 Initial Early Access release ",
+  "releaseNotes": "0.3 Added Initial release of Light Effects Grouping tool\n0.2 Bug fix for runway condition when a single interval used\n  Bug fix for first interval being ignored\n0.1 Initial Early Access release ",
   "apps": [
     {
       "id": "8716e232-2d37-4028-b810-c06242725128",
       "name": "Light Effects Tools",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsTools.groovy",
+      "required": true,
+      "oauth": false,
+      "primary": false
+    },
+    {
+      "id": "3553af47-4d3b-4e29-ac2f-6348733356b8",
+      "name": "Light Effects Grouping",
+      "namespace": "Mavrrick",
+      "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/refs/heads/main/LightEffectTools/Mavrrick.LightEffectsGrouping.groovy",
       "required": true,
       "oauth": false,
       "primary": false
