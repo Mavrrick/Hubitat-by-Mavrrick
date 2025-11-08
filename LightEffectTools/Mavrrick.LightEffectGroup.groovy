@@ -9,7 +9,7 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonBuilder
 
 metadata {
-	definition(name: "LightEffect Group ", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "LightEffect Group", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
         capability "ColorControl"
 		capability "Actuator"
