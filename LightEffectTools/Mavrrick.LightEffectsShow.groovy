@@ -400,7 +400,6 @@ void scheduleByDate(){
                 runOnce(new Date(xDate.getYear()-1900,xDate.getMonthValue()-1,xDate.getDayOfMonth(), eTime.getHour(), eTime.getMinute(), 0), "endAction")
             } else {
                 log.debug "Start Date is ${startDate} and sunset or Sunrise are selected as triggered. Scheduling reschedule day of activity" 
-//                sTime = LocalTime.parse(startTime, formatter)
                 runOnce(new Date(tDate.getYear()-1900,tDate.getMonthValue()-1,tDate.getDayOfMonth(), 0, 0, 0), "scheduleByDate")
                 
             }
@@ -507,10 +506,14 @@ def startSequenceAdv() {
         dev.setEffect(sceneId)
         dev.setLevel(standardBrightness, 0)
     }
-    def dKey = "duration_interval_${i}"
+    def dKey = "duration_interval_${state.curInt}"
+//    def dKey = "duration_interval_${i}"
     def duration = (settings[dKey]?.toInteger() ?: 0)
-    
-    runIn(duration, "runNextActionAdv")
+    if (settings.numIntervals == 1) {
+        if(debugEnable) log.debug "startSequenceAdv(): Only 1 interval in enabled. Do not submit repeat actions."
+    } else {
+        runIn(duration, "runNextActionAdv")
+    }
 }
 
 /**
@@ -557,10 +560,10 @@ def runNextActionAdv() {
         def sKey = "scene"
         if (selectionOrder == '1') {
             sKey = "scene_${dev.id}_interval_${scenePos}"    
-            if(debugEnable) log.debug "startSequenceAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+            if(debugEnable) log.debug "runNextActionAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
         } else if (selectionOrder == '0') {
             sKey = "scene_${dev.id}_interval_${state.curInt}"    
-            if(debugEnable) log.debug "startSequenceAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
+            if(debugEnable) log.debug "runNextActionAdv(): Processing effect for ${dev} scene number ${"scene_"+dev.id+"_interval_"+state.curInt}."
         }
         def sceneId  = (settings[sKey]?.toInteger() ?: 0)
         dev.setEffect(sceneId)
