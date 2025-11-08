@@ -286,7 +286,7 @@ private def appButtonHandler(button) {
     } else if (button == "createDevice") {
     	childCount = getChildDevices().size()
         if (childCount > '0') {
-            addChildDevice('Mavrrick', 'LightEffect Group ', app.getLabel()+'_Device' , location.hubs[0].id, [
+            addChildDevice('Mavrrick', 'LightEffect Group', app.getLabel()+'_Device' , location.hubs[0].id, [
                 'name': 'LightEffect Group Device ', 
                 'label': app.getLabel()+'_Device',
                  'data': [                    
