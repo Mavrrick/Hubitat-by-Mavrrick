@@ -1,10 +1,10 @@
 {
   "packageName": "Light Effects Tools",
   "author": "Mavrrick",
-  "version": "0.4",
+  "version": "0.4.1",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2025-11-7",
-  "releaseNotes": "0.4 Added missed Virtual device to control groups\n0.3 Added Initial release of Light Effects Grouping tool\n0.2 Bug fix for runway condition when a single interval used\n  Bug fix for first interval being ignored\n0.1 Initial Early Access release ",
+  "releaseNotes": "0.5 Added Boolean hub Variables as trigger option\n0.4 Added missed Virtual device to control groups\n0.3 Added Initial release of Light Effects Grouping tool\n0.2 Bug fix for runway condition when a single interval used\n  Bug fix for first interval being ignored\n0.1 Initial Early Access release ",
   "apps": [
     {
       "id": "8716e232-2d37-4028-b810-c06242725128",
