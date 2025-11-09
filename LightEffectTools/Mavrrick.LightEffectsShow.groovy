@@ -107,6 +107,22 @@ def setupPage() {
                     required: false,
                     submitOnChange: true
             }
+            input 'hvTrigger', 'bool', 
+                title: 'Use a Hub Variable (boolean) to activate Effect cycle', 
+                required: false, 
+                defaultValue: false,
+                submitOnChange: true
+            if (hvTrigger) {
+                Map hvBol = getGlobalVarsByType("boolean")
+                if(debugEnable) log.debug "hv present ar  ${hvBol}"
+                if(debugEnable) log.debug "hv present ar  ${hvBol.keySet()}"
+                input "hvTriggerVar",
+                        "enum",
+                        title: "Hub Variable",
+                        options: hvBol.keySet(),
+                        multiple: false,
+                        required: true
+            }
             input 'datetimeTrigger', 'bool', 
                 title: 'Use Date and Time to activate Effect cycle', 
                 required: false, 
@@ -311,6 +327,11 @@ def initialize() {
     if (triggerSwitch) {
         subscribe(triggerSwitch, "switch", switchAction)
     }
+    if (hvTrigger) {
+        removeAllInUseGlobalVar()
+        addInUseGlobalVar(hvTriggerVar)
+        subscribe(location, "variable:${hvTriggerVar}", switchAction)
+    }
     if (datetimeTrigger) {
         log.debug " In Initialize routine"
         if (startTimeSelection == '1') {
@@ -321,6 +342,10 @@ def initialize() {
         }
     } 
         scheduleByDate()
+}
+
+def uninstalled() {
+    removeAllInUseGlobalVar()
 }
 
 void scheduleByDate(){
@@ -583,7 +608,7 @@ def runNextActionAdv() {
 
 def switchAction(evt) {
     if(debugEnable) log.debug "switchAction(): Event is ${evt.value}"
-    if (evt.value == "on") {
+    if (evt.value == "on" || evt.value == "true") {
         startSequence()
     } else {
         endAction()
