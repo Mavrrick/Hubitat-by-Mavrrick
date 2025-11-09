@@ -188,7 +188,7 @@ def setupPage() {
                     required: false,
                     submitOnChange: true
                 }
-                else {
+                else if (startTimeSelection == '1' || startTimeSelection == '2') {
                     input "startOffset", "long",
                 title: "Time in Minutes to offset the staring of the Effects",
                 defaultValue: 0, 
@@ -211,7 +211,7 @@ def setupPage() {
                     multiple: false,
                     required: false,
                     submitOnChange: false
-                } else {
+                } else if (endTimeSelection =='1' || endTimeSelection =='2') {
                     input "endOffset", "integer",
                 title: "Time in Minutes to offset the ending of the Effects",
                 defaultValue: 0, 
@@ -321,6 +321,7 @@ def updated() {
 }
 
 def initialize() {
+    settingsCleanup()
     unsubscribe()
     unschedule()
     state.curInt = 0
@@ -639,3 +640,67 @@ private def appButtonHandler(button) {
         endAction()
     }
 }
+
+
+private def settingsCleanup(){
+    
+    int nIntervals = (settings?.numIntervals?.toInteger() ?: 1)
+    List devices   = (settings?.selectedDevices ?: []) as List
+    
+    if(debugEnable) log.debug "settingsCleanup() ${settings}"
+    if(debugEnable) log.debug "settingsCleanup() Current list of settings: ${settings.keySet()}"
+    curSettingList = settings.keySet() // list of settings as currently in app
+    /// Build list of valid settings based on how the app is running
+    validSettingList =  ["selectionType", "cycleRepeat", "standardBrightness", "switchTrigger", "numIntervals", "selectionOrder", "hvTrigger", "debugEnable", "selectedDevices", "datetimeTrigger"]
+    if (switchTrigger) {
+        validSettingList.add("triggerSwitch")
+    }
+    if (hvTrigger) {
+        validSettingList.add("hvTriggerVar")
+    }
+    if (datetimeTrigger){
+        validSettingList.add("datetimeTriggerType")
+        if (datetimeTriggerType == '1' || datetimeTriggerType == '2') {
+            validSettingList.add("startDate")
+            validSettingList.add("startTimeSelection")
+            validSettingList.add("endDate")
+            validSettingList.add("endTimeSelection")
+        } else {
+            validSettingList.add("startTimeSelection")
+            validSettingList.add("endTimeSelection")
+            validSettingList.add("datetimeTriggerDays")
+        }
+        if (startTimeSelection == '0') {
+            validSettingList.add("startTime")
+        } else if (startTimeSelection == '1' || startTimeSelection == '2') {
+            validSettingList.add("startOffset")
+        }
+        if (endtTimeSelection == '0') {
+            validSettingList.add("endTime")
+        } else if (endTimeSelection =='1' || endTimeSelection =='2') {
+            validSettingList.add("endOffset")
+            }
+    }
+    if (selectionType == '0') {
+        validSettingList.add("duration_interval")
+        devices.each { dev ->
+            validSettingList.add("scene_${dev.id}")    
+        } 
+    } else if (selectionType == '1')
+    (1..nIntervals).each { i ->
+        validSettingList.add("duration_interval_${i}")
+        devices.each { dev ->
+            validSettingList.add("scene_${dev.id}_interval_${i}")    
+        }        
+    }
+    if(debugEnable) log.debug "settingsCleanup() Valid settings are: ${validSettingList}"
+    listToRemove = curSettingList - validSettingList
+    if(debugEnable) log.debug "settingsCleanup() List to be removed: ${listToRemove}"
+    listToRemove.each {
+        if(debugEnable) log.debug "settingsCleanup() removing setting: ${it}"
+//        String oldSetting = it.toString()
+        app.removeSetting(it)
+    }
+    
+}    
+
