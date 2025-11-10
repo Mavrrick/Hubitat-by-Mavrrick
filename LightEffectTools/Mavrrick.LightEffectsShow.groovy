@@ -321,6 +321,7 @@ def updated() {
 }
 
 def initialize() {
+    log.debug " In Initialize routine"
     settingsCleanup()
     unsubscribe()
     unschedule()
@@ -334,7 +335,6 @@ def initialize() {
         subscribe(location, "variable:${hvTriggerVar}", switchAction)
     }
     if (datetimeTrigger) {
-        log.debug " In Initialize routine"
         if (startTimeSelection == '1') {
             subscribe(location, "sunriseTime", sunriseSunsetEvent)
         } else if (startTimeSelection == '2') {
@@ -350,13 +350,14 @@ def uninstalled() {
 }
 
 void scheduleByDate(){
-
+    log.debug "scheduleByDate() In schedule routine"
+    
     ZoneId targetZone = ZoneId.of(location.timeZone.getID())
     if (datetimeTriggerType == '1') {
         if(LocalDate.parse(startDate) != LocalDate.now())
     	return    
     } else if (datetimeTriggerType == '2') {
-        if(LocalDate.parse(endDate) < LocalDate.now())
+        if(LocalDate.parse(endDate) < LocalDate.now()) {
             incToNextYear()
 /*            endNextYear = LocalDate.parse(endDate).plusYears(1)
             startNextYear = LocalDate.parse(startDate).plusYears(1)
@@ -364,6 +365,7 @@ void scheduleByDate(){
             app.updateSetting('startDate', [type: "date", value: startNextYear])
             app.updateSetting('endDate', [type: "date", value: endNextYear]) */
         return
+        }
     } else if (datetimeTriggerType == '3') {
         log.debug "scheduleByDate() ${LocalDate.now().getDayOfWeek().getValue()}"
         List selectedDays   = (settings?.datetimeTriggerDays ?: []) as List
@@ -374,6 +376,7 @@ void scheduleByDate(){
         }
     }
     if (datetimeTriggerType == '1' || datetimeTriggerType == '2') {
+        log.debug "scheduleByDate() found Date is used to schedule"
 	    if(LocalDate.parse(startDate) <= LocalDate.now()) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
             if (startTimeSelection == '0') {
@@ -628,7 +631,7 @@ def sunriseSunsetEvent() {
 
 private def endAction(){
 	unschedule()
-	if (datetimeTriggerType == '2' && LocalDate.parse(endDate) == LocalDate.now()) {
+        if (datetimeTriggerType == '2' && LocalDate.parse(endDate) == LocalDate.now()) {
         incToNextYear()
     }
     if (datetimeTrigger) {
@@ -721,4 +724,3 @@ private def settingsCleanup(){
     
 }    
 
-	
