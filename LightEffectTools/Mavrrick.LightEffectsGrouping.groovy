@@ -84,7 +84,6 @@ def setupPage() {
             paragraph "Use these buttons to activate or stop the Effect processing at any time."
             input "startcycle" , "button",  title: "Override - Activate effects Now"
             input "stopcycle" , "button",  title: "Override - Stop effects Now"
-//            input "createDevice" , "button",  title: "Create Virtial control device"
         }
         section {
             // Next button – goes to the second page
@@ -105,7 +104,7 @@ def commandConfigPage() {
             (1..numGroups).each { i ->
             // Pick any device that has the "switch" capability (you can change to the cap you need)
                 input "sceneName_group_${i}", "text",
-                title: "Group scene name",
+                    title: "Group ${i} scene name",
 //                multiple: true,
                 required: true
                 paragraph "<b>Device Command selection in Group ${i}</b>"
@@ -167,6 +166,7 @@ def updated() {
 def initialize() {
     unsubscribe()
     unschedule()
+    settingsCleanup()
     if (triggerSwitch) {
         subscribe(triggerSwitch, "switch", switchAction)
     }
@@ -307,3 +307,38 @@ def buildLightEffectJson () {
     if(debugEnable) log.debug "buildLightEffectJson(): LightEffect map is ${scenes}"
     return scenes
 }
+
+private def settingsCleanup(){
+    
+    int nGroups = (settings?.numGroups?.toInteger() ?: 1)
+    List devices   = (settings?.selectedDevices ?: []) as List
+    
+    if(debugEnable) log.debug "settingsCleanup() ${settings}"
+    if(debugEnable) log.debug "settingsCleanup() Current list of settings: ${settings.keySet()}"
+    curSettingList = settings.keySet() // list of settings as currently in app
+    /// Build list of valid settings based on how the app is running
+    validSettingList =  ["standardBrightness", "numGroups", "debugEnable", "selectedDevices"]
+    
+    (1..nGroups).each { i ->
+        validSettingList.add("sceneName_group_${i}")
+        devices.each { dev ->
+            validSettingList.add("command_${dev.id}_group_${i}")
+            if (settings."command_${dev.id}_group_${i}" == '0') {
+                validSettingList.add("scene_${dev.id}_group_${i}")
+            }
+            if (settings."command_${dev.id}_group_${i}" == '1') {
+                validSettingList.add("colorTemperature_${dev.id}_group_${i}")
+            }
+            if (settings."command_${dev.id}_group_${i}" == '2') {
+                validSettingList.add("color_${dev.id}_group_${i}")
+            }
+        }        
+    }
+    if(debugEnable) log.debug "settingsCleanup() Valid settings are: ${validSettingList}"
+    listToRemove = curSettingList - validSettingList
+    if(debugEnable) log.debug "settingsCleanup() List to be removed: ${listToRemove}"
+    listToRemove.each {
+        if(debugEnable) log.debug "settingsCleanup() removing setting: ${it}"
+        app.removeSetting(it)
+    }    
+}    
