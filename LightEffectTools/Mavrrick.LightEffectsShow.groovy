@@ -357,7 +357,13 @@ void scheduleByDate(){
     	return    
     } else if (datetimeTriggerType == '2') {
         if(LocalDate.parse(endDate) < LocalDate.now())
-    	return
+            incToNextYear()
+/*            endNextYear = LocalDate.parse(endDate).plusYears(1)
+            startNextYear = LocalDate.parse(startDate).plusYears(1)
+            log.debug "scheduleByDate() rotation completed for the year. Incrementing to next year. new Start Date is ${LocalDate.parse(startDate).plusYears(1)}, New End Date is ${LocalDate.parse(endDate).plusYears(1)}"
+            app.updateSetting('startDate', [type: "date", value: startNextYear])
+            app.updateSetting('endDate', [type: "date", value: endNextYear]) */
+        return
     } else if (datetimeTriggerType == '3') {
         log.debug "scheduleByDate() ${LocalDate.now().getDayOfWeek().getValue()}"
         List selectedDays   = (settings?.datetimeTriggerDays ?: []) as List
@@ -622,7 +628,10 @@ def sunriseSunsetEvent() {
 
 private def endAction(){
 	unschedule()
-     if (datetimeTrigger) {
+    if(LocalDate.parse(endDate) == LocalDate.now()) {
+        incToNextYear()
+    }
+    if (datetimeTrigger) {
         scheduleByDate()
     }
     state.curInt = 0
@@ -630,6 +639,15 @@ private def endAction(){
     devices.each { dev ->
         dev.off()
     }
+}
+
+def incToNextYear(){
+    endNextYear = LocalDate.parse(endDate).plusYears(1)
+    startNextYear = LocalDate.parse(startDate).plusYears(1)
+    log.debug "scheduleByDate() rotation completed for the year. Incrementing to next year. new Start Date is ${LocalDate.parse(startDate).plusYears(1)}, New End Date is ${LocalDate.parse(endDate).plusYears(1)}"
+    app.updateSetting('startDate', [type: "date", value: startNextYear])
+    app.updateSetting('endDate', [type: "date", value: endNextYear]) 
+	
 }
 
 private def appButtonHandler(button) {
