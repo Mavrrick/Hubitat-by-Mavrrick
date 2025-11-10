@@ -628,7 +628,7 @@ def sunriseSunsetEvent() {
 
 private def endAction(){
 	unschedule()
-    if(LocalDate.parse(endDate) == LocalDate.now()) {
+        if (datetimeTriggerType == '2' && LocalDate.parse(endDate) == LocalDate.now()) {
         incToNextYear()
     }
     if (datetimeTrigger) {
@@ -721,3 +721,4 @@ private def settingsCleanup(){
     
 }    
 
+	
