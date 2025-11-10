@@ -675,7 +675,7 @@ private def settingsCleanup(){
         } else if (startTimeSelection == '1' || startTimeSelection == '2') {
             validSettingList.add("startOffset")
         }
-        if (endtTimeSelection == '0') {
+        if (endTimeSelection == '0') {
             validSettingList.add("endTime")
         } else if (endTimeSelection =='1' || endTimeSelection =='2') {
             validSettingList.add("endOffset")
@@ -698,7 +698,6 @@ private def settingsCleanup(){
     if(debugEnable) log.debug "settingsCleanup() List to be removed: ${listToRemove}"
     listToRemove.each {
         if(debugEnable) log.debug "settingsCleanup() removing setting: ${it}"
-//        String oldSetting = it.toString()
         app.removeSetting(it)
     }
     
