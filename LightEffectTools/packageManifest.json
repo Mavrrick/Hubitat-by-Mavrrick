@@ -1,10 +1,10 @@
 {
   "packageName": "Light Effects Tools",
   "author": "Mavrrick",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "minimumHEVersion": "2.3.2",
   "dateReleased": "2025-11-7",
-  "releaseNotes": "0.4.4 Completed settings Cleanup routine for Light Effect Groups tool\n0.4.3 Fix Added routine to increment year once cycle has run\n0.4.2 Fix bug in Settings cleanup routine\n0.4.1 Added Boolean hub Variables as trigger option\nAdded cleanup of configured settings to show tool\n0.4 Added missed Virtual device to control groups\n0.3 Added Initial release of Light Effects Grouping tool\n0.2 Bug fix for runway condition when a single interval used\n  Bug fix for first interval being ignored\n0.1 Initial Early Access release ",
+  "releaseNotes": "0.4.5 Numerous improvements to the Light Effects Grooup Driver\n0.4.4 Completed settings Cleanup routine for Light Effect Groups tool\n0.4.3 Fix Added routine to increment year once cycle has run\n0.4.2 Fix bug in Settings cleanup routine\n0.4.1 Added Boolean hub Variables as trigger option\nAdded cleanup of configured settings to show tool\n0.4 Added missed Virtual device to control groups\n0.3 Added Initial release of Light Effects Grouping tool\n0.2 Bug fix for runway condition when a single interval used\n  Bug fix for first interval being ignored\n0.1 Initial Early Access release ",
   "apps": [
     {
       "id": "8716e232-2d37-4028-b810-c06242725128",
