@@ -92,22 +92,28 @@ def logsOff() {
 
 def on() {
     parent.on()
+    sendEvent(name: "effectNum", value: 0)
+    sendEvent(name: "switch", value: "on")
 }
 
 def off() {
     parent.off()
-}
-
-def setLevel(float v,duration = 0) {
-    cloudSetLevel( v, 0)
+    sendEvent(name: "effectNum", value: 0)
+    sendEvent(name: "switch", value: "off")
 }
 
 def setEffect(effectnum) {
     parent.setEffect(effectnum)
+    sendEvent(name: "effectNum", value: effectnum)
+    sendEvent(name: "switch", value: "on")
+    def jsonSlurper = new JsonSlurper()
+    def scenes = jsonSlurper.parseText(device.currentValue("lightEffects"))
+    sendEvent(name: "effectName", value: "${scenes."${effectnum}"}") 
 }
 
 def setLevel(brightness, transitiontime = 0){
     parent.setColor(brightness, 0)
+    sendEvent(name: "level", value: brightness)
 }
 
 def setColor(colorMap){
@@ -116,42 +122,26 @@ def setColor(colorMap){
 
 
 def setNextEffect () {
-        keys = []
-        names = []
-        keys.addAll(state.scenes.keySet())
-        names.addAll(state.scenes.values())
-//        if (debugLog) {log.debug ("setNextEffect(): current Name ${names.get(state.sceneValue)} value ${keys.get(state.sceneValue)}")}
-        if (state.sceneValue == state.sceneMax) state.sceneValue = 0  
-        if (state.sceneValue == 0) {
-            if (debugLog) {log.debug ("setNextEffect(): Current scene value is 0 setting to first scene in list")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneValue + 1
-        } else {
-            if (debugLog) {log.debug ("setNextEffect(): Increment to next scene")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneValue + 1
-        }  
+    if (device.currentValue("effectNum") == '0' || device.currentValue("effectNum") == state.sceneCount) {
+        setEffect(1)
+    } else  {
+        nextEffect = device.currentValue("effectNum").toInteger() + 1
+        setEffect(nextEffect)
+    }
 }
 
 def setPreviousEffect () {
-        keys = []
-        names = []
-        keys.addAll(state.scenes.keySet())
-        names.addAll(state.scenes.values())
-//        if (debugLog) {log.debug ("setPreviousEffect(): current Name ${names.get(state.sceneValue)} value ${keys.get(state.sceneValue)}")}       
-            if (state.sceneValue == 0) {
-            if (debugLog) {log.debug ("setPreviousEffect(): Current scene value is 0 setting to first scene in list")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneMax-1 
-        } else {
-            if (debugLog) {log.debug ("setPreviousEffect(): Increment to next scene")}
-            setEffect(keys.get(state.sceneValue))
-            state.sceneValue = state.sceneValue - 1
-        }          
+    if (device.currentValue("effectNum") == '0' || device.currentValue("effectNum") == '1') {
+        setEffect(21)
+    } else  {
+        nextEffect = device.currentValue("effectNum").toInteger() - 1
+        setEffect(nextEffect)
+    } 
 }
 
 def getlightEffects() {
     scenes = parent.buildLightEffectJson()
-        def le = new groovy.json.JsonBuilder(scenes)
+    def le = new groovy.json.JsonBuilder(scenes)
     sendEvent(name: "lightEffects", value: le)
+    state.sceneCount = scenes.size()
 }
