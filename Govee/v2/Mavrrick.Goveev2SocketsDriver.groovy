@@ -69,7 +69,7 @@ def configure() {
     int outlets = device.getDataValue("commands").count("socketToggle")
     childDNI = getChildDevices().deviceNetworkId
     if (multiSocketAdd == true && outlets > 0 ) {
-        outlet.times {
+        outlets.times {
             if (!childDNI.contains("Govee_${deviceID}_Outlet${it+1}")) {  
                 socketChildAdd()
             } else {
