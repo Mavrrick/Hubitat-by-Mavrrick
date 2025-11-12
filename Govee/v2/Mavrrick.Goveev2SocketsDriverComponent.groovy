@@ -110,4 +110,6 @@ def off() {
     sendEvent(name: "switch", value: "off")
 }
 
-
+def postEvent(evt = 50, value = 50){
+    if (debugLog) {log.error "postEvent(): Recieved light event for ${evt} with value ${value}. Ignoring "}
+}
