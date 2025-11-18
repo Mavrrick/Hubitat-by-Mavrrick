@@ -498,6 +498,7 @@ def retrieveDIYScenes(){
     try {
 			httpPost(params) { resp ->
                 if (debugLog) { log.debug "retrieveDIYScenes():"+resp.data.payload.capabilities}
+				state.remove("diyEffects")
                 state.remove("diyScene")
                 state.diyScene = [:]
                 resp.data.payload.capabilities.parameters.options.get(0).each {
