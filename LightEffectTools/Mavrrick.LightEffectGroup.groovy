@@ -1,4 +1,4 @@
-// Hubitat driver for Govee Appliances Child Light Device
+// Hubitat driver for Light Effect Group Driver
 // Version 2.1.0
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
