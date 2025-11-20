@@ -112,7 +112,7 @@ def setEffect(effectnum) {
 }
 
 def setLevel(brightness, transitiontime = 0){
-    parent.setColor(brightness, 0)
+    parent.setLevel(brightness, 0)
     sendEvent(name: "level", value: brightness)
 }
 
