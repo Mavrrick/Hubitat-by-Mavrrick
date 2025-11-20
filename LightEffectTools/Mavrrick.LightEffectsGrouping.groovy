@@ -55,12 +55,12 @@ def setupPage() {
                 showFilter: true,
                 submitOnChange: true
 
-        input "standardBrightness", "number",
+/*        input "standardBrightness", "number",
                 title: "Enter brightness level to be used across all selected Devices",
                 defaultValue: 80, 
                 required: true,
                 range: "1..100",
-                submitOnChange: true 
+                submitOnChange: true */
         }
         section("<b>Number of different scene effect groups</b>") {
             input "numGroups", "number",
