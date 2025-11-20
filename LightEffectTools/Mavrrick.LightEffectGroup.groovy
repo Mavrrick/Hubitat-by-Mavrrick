@@ -18,7 +18,7 @@ metadata {
         capability "SwitchLevel"
         capability "LightEffects"
         capability "ColorMode" 
-        capability "LightEffects"
+        capability "ColorTemperature"
         
         attribute "online", "string"        
         attribute "cloudAPI", "string"
@@ -114,6 +114,11 @@ def setEffect(effectnum) {
 def setLevel(brightness, transitiontime = 0){
     parent.setLevel(brightness, 0)
     sendEvent(name: "level", value: brightness)
+}
+
+def setColorTemperature(colortemperature, level = 0, transitionTime = 0){
+    parent.setColorTemperature(colortemperature, level, transitionTime)
+    sendEvent(name: "colorTemperature", value: colortemperature)
 }
 
 def setColor(colorMap){
