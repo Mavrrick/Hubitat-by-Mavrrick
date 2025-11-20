@@ -211,7 +211,7 @@ def setColorTemperature(value,level = null,transitionTime = null) {
 }
 
 def setLevel(brightness, transitiontime = 0) {    
-    if(debugEnable) log.debug "setColorTemperature(): Automation."
+    if(debugEnable) log.debug "setLevel(): Automation."
     List devices   = (settings?.selectedDevices ?: []) as List
     
     devices.each { dev ->
