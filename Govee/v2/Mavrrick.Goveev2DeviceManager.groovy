@@ -216,6 +216,7 @@ void parse(String event) {
             if (payloadJson.msg.data.containsKey("account_topic")) {
                 if (debugLog) log.info "parse() LAN API Discovery Message recieved. Return message ${payloadJson.msg.data}, sourceIP: ${fromIp}"
             } else {
+                if (debugLog) log.info "parse() Returned entire Json: ${payloadJson} -- Source ip is ${fromIp}" //added for debug of missing IP 
                 if (debugLog) log.info "parse() Device IP: ${payloadJson.msg.data.ip}, sku: ${payloadJson.msg.data.sku}, deviceId: ${payloadJson.msg.data.device}"
                 if (!state.lanApiDevices) {
                     state.lanApiDevices = [:]
@@ -226,6 +227,10 @@ void parse(String event) {
                 if (state.lanApiDevices.containsKey(payloadJson.msg.data.device)) { 
                     def deviceId = payloadJson.msg.data.device
                     def newIpAddress = payloadJson.msg.data.ip
+                    if (newIpAddress == null) {
+                        if (debugLog) log.info "parse() Ip not pased returned by Govee Device. Using Source of Multicast response"
+                        newIpAddress = fromIp
+                    } 
                     def existingDeviceInfo = state.lanApiDevices[deviceId]
                     if (debugLog) log.info "parse() Device '${deviceId}' Found. Checking for update."
                     def currentTime = new Date().toString()
@@ -248,19 +253,24 @@ void parse(String event) {
                 } else {
                     def msgData = payloadJson.msg.data
                     if (debugLog) log.info "parse() Device not found in current list. Adding to list"
+                    def newIpAddress = payloadJson.msg.data.ip
+                    if (newIpAddress == null) {
+                        if (debugLog) log.info "parse() Ip not pased returned by Govee Device. Using Source of Multicast response"
+                        newIpAddress = fromIp
+                    }
                     def deviceInfo = [
-                        ip: msgData.ip,
+                        ip: newIpAddress,
                         sku: msgData.sku,
                         "last response": new Date().toString()
                     ]
                     if (debugLog) log.info "parse() Device info: ${deviceInfo}"
                     state.lanApiDevices[msgData.device] = deviceInfo
-                    state.ipxdni[msgData.ip] = "Govee_${msgData.device}" 
+                    state.ipxdni[newIpAddress] = "Govee_${msgData.device}" 
                     def deviceNetworkId = "Govee_${msgData.device}" 
                     def childDevice = getChildDevice(deviceNetworkId) 
                     if (childDevice) { 
                         if (debugLog) log.info "parse() Sending call to existing device '${deviceNetworkId}' to update ip: ${childDevice}"
-                        childDevice.updateIPAdd(msgData.ip)
+                        childDevice.updateIPAdd(newIpAddress)
                     } else if (enableLanApiInstall) {
                         runIn(30, installNewDevices)
                     }
