@@ -64,7 +64,11 @@ import hubitat.helper.HexUtils
      "H606A":"04", 
      "H6079":"", 
      "H610A":"", 
-     "H6092":"560b"]
+     "H6092":"560b",
+     "H6093":"560b",
+     "H6094":"560b",
+     "H6095":"560b",
+     "H609D":"560b"]
 
 @Field static final Map deviceTagll = // Final Line code for special device types
 	["H6061":"2d", 
@@ -87,6 +91,10 @@ import hubitat.helper.HexUtils
      "H6078":["start":2, "line1End":28, "offset":0],
      "H6079":["start":0, "line1End":30, "offset":0],
      "H6092":["start":2, "line1End":28, "offset":0],
+     "H6093":["start":2, "line1End":28, "offset":0],
+     "H6094":["start":2, "line1End":28, "offset":0],
+     "H6095":["start":2, "line1End":28, "offset":0],
+     "H609D":["start":2, "line1End":28, "offset":0],
      "H610A":["start":0, "line1End":30, "offset":0]]
 
 @Field static final List goveeDevPtURL = // devices that use ptURL command and may cause extraction process to fail.

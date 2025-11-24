@@ -33,7 +33,7 @@ metadata {
         command "activateDIY", [
             [name: "diyNumber", type: "NUMBER", description: "DIY Number to activate"]
            ]
-		command "sceneLoad"
+        command "sceneLoad"
     }
 
 	preferences {		
@@ -45,6 +45,9 @@ metadata {
             }
             if (lanControl) {
             input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false)         
+            if (lanScenes) {
+                input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("DevType")+".json")    
+                }
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)

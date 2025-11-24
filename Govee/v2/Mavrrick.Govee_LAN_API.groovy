@@ -152,7 +152,11 @@ def lanSetEffect (effectNo) {
         if (debugLog) {log.debug ("setEffect(): command to be sent to ${cmd2}")}
         sendCommandLan(cmd2)
    } else {
-        sendEvent(name: "effectNum", value: effectNumber)
+        if (debugLog) {log.debug ("setEffect(): Effect Number not found for built in scenes. Passing  ${effectNumber}to Activate DIY ")}
+        lanActivateDIY(effectNumber)
+        
+        
+/*        sendEvent(name: "effectNum", value: effectNumber)
         sendEvent(name: "switch", value: "on")
     // Cozy Light Effect (static Scene to very warm light)
     if (effectNo == 6) {
@@ -261,7 +265,7 @@ def lanSetEffect (effectNo) {
         sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
         sendEvent(name: "level", value: 45)
         sendEvent(name: "effectName", value: "Plant Growth")
-    }
+    } */
     } 
 }
 
@@ -391,6 +395,7 @@ void getDevType() {
         "H61A8": "RGBIC_Strip", "H61A9": "RGBIC_Strip", "H61B2": "RGBIC_Strip",
         "H61C2": "RGBIC_Strip", "H61C3": "RGBIC_Strip", "H61C5": "RGBIC_Strip",
         "H61E1": "RGBIC_Strip", "H61E0": "RGBIC_Strip", "H6167": "RGBIC_Strip",
+        "H616C": "RGBIC_Strip", "H616D": "RGBIC_Strip", "H616E": "RGBIC_Strip",
 
         // Hexa_Light
         "H6066": "Hexa_Light", "H606A": "Hexa_Light", "H6061": "Hexa_Light",

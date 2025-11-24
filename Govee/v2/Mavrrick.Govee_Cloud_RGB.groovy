@@ -108,8 +108,15 @@ def gradient(on_off) {
 
 def cloudSetEffect (effectNo) {
     if (debugLog) {log.debug ("setEffect(): Setting effect via cloud api to scene number  ${effectNo}") }
-//                effectNumber = effectNo.toString()
-                sendCommand("lightScene", effectNo,"devices.capabilities.dynamic_scene")
+    effectNumber = effectNo.toString()
+    if (debugLog) {log.debug ("setEffect(): Keyset list  ${state.scenes.keySet()}") }
+    if (state.scenes.containsKey(effectNumber)) {
+        if (debugLog) {log.debug ("setEffect(): Device found in built in scenes. ") }
+        sendCommand("lightScene", effectNo,"devices.capabilities.dynamic_scene")
+    } else {
+        if (debugLog) {log.debug ("setEffect(): Effect Number not found in standard list sending as DIY ") }
+        cloudActivateDIY (effectNo)        
+    }
 }
 
 def cloudSetNextEffect () {
