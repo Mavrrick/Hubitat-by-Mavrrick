@@ -85,7 +85,7 @@ def mainPage() {
                 input 'unifiNetUserID', 'string', title: 'Please enter your controller User ID', required: true, submitOnChange: false
                 input 'unifiNetPassword', 'password', title: 'Please enter your controller password', required: true, submitOnChange: false    
                 input 'unifiNetChild', 'bool', title: 'Please activate to have child devices created for connect unifi devices', required: true, submitOnChange: false, defaultValue: false            
-                input 'unifiNetRefreshRate', 'enum', title: 'Please select the controller type Protect', required: true, submitOnChange: true, options:[ "5 minutes", "10 minutes", "15 minutes", "30 minutes", "1 hour", "3 hours", "Manual" ], defaultValue: "15 minutes"        
+                input 'unifiNetRefreshRate', 'enum', title: 'Please select the desired refresh interval', required: true, submitOnChange: true, options:[ "5 minutes", "10 minutes", "15 minutes", "30 minutes", "1 hour", "3 hours", "Manual" ], defaultValue: "15 minutes"        
             } else if (unifiNetwork == "External"){
                 input name: "unifiNetDevice", type: "device.UnifiNetworkAPI", title: "Choose device"
             }
@@ -99,7 +99,7 @@ def mainPage() {
                 input 'unifiProControllerIP', 'string', title: 'Please enter the IP of your Protect Controllercontroller', required: true, submitOnChange: false
                 input 'unifiProUserID', 'string', title: 'Please enter your controller User ID', required: true, submitOnChange: false
                 input 'unifiProPassword', 'password', title: 'Please enter your controller password', required: true, submitOnChange: false            
-                input 'unifiProRefreshRate', 'enum', title: 'Please select the controller type Protect', required: true, submitOnChange: true, options:[ "5 minutes", "10 minutes", "15 minutes", "30 minutes", "1 hour", "3 hours", "Manual" ], defaultValue: "15 minutes"        
+                input 'unifiProRefreshRate', 'enum', title: 'Please select the desired refresh interval', required: true, submitOnChange: true, options:[ "5 minutes", "10 minutes", "15 minutes", "30 minutes", "1 hour", "3 hours", "Manual" ], defaultValue: "15 minutes"        
             } else if (unifiProtect == "External"){
                 input name: "unifiProDevice", type: "device.UnifiProtectAPI", title: "Choose device"
             }
@@ -113,7 +113,7 @@ def mainPage() {
                 input 'unifiConControllerIP', 'string', title: 'Please enter the IP of your Connect controller', required: true, submitOnChange: false
                 input 'unifiConUserID', 'string', title: 'Please enter your controller User ID', required: true, submitOnChange: false
                 input 'unifiConPassword', 'password', title: 'Please enter your controller password', required: true, submitOnChange: false            
-                input 'unifiConRefreshRate', 'enum', title: 'Please select the controller type Protect', required: true, submitOnChange: true, options:[ "5 minutes", "10 minutes", "15 minutes", "30 minutes", "1 hour", "3 hours", "Manual" ], defaultValue: "15 minutes"        
+                input 'unifiConRefreshRate', 'enum', title: 'Please select the desired refresh interval', required: true, submitOnChange: true, options:[ "5 minutes", "10 minutes", "15 minutes", "30 minutes", "1 hour", "3 hours", "Manual" ], defaultValue: "15 minutes"        
             } else if (unifiConnect == "External"){
                 input name: "unifiConDevice", type: "device.UnifiConnectAPI", title: "Choose device"
             }
