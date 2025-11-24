@@ -217,7 +217,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2H6093StarlightDriver.groovy",
       "required": false,
-      "version": "2.1.1"
+      "version": "2.1.2"
     },
     {
       "id": "2d93d701-0a93-46bc-aa70-ffbc6370c66f",
@@ -416,6 +416,7 @@
     }
   ]
 }
+
 
 
 
