@@ -1533,7 +1533,7 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
             helper: "addLightDeviceHelper"
         ],
         [
-            condition: { dev -> dev.type == "devices.types.light" && (dev.sku == "H6093" || dev.sku == "H6094"|| dev.sku == "H6095") },
+            condition: { dev -> dev.type == "devices.types.light" && (dev.sku == "H6093" || dev.sku == "H6094" || dev.sku == "H6095") },
             driver: "Govee v2 H6093 Starlight Driver",
             helper: "addLightDeviceHelper"
         ],
