@@ -33,6 +33,7 @@ metadata {
         command "activateDIY", [
             [name: "diyNumber", type: "NUMBER", description: "DIY Number to activate"]
            ]
+		command "sceneLoad"
     }
 
 	preferences {		
