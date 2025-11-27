@@ -12,26 +12,86 @@ library (
 //////////////////////////////
 
 def lanOn() {
-    sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-    runInMillis(500, 'devStatus')
-    if (descLog) log.info "${device.label} was turned on."  
-}
+    if (debugLog) log.info "lanOn(): ${device.label} in ${device.currentValue("switch", true)}."
+    if (apiStatus == "ready") {
+        if (debugLog) log.info "lanOn(): ${device.label} apiStatus is ${apiStatus} ."
+        apiStatus = "pendingOn"
+        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
+        runInMillis(250, 'devStatus')
+        pauseExecution(350)
+        while (statusUpd != "ready") {
+            if (debugLog) log.info "lanOn(): Waiting for Device Status to return."
+            pauseExecution(100)
+        }
+        if (device.currentValue("switch", true) == "on") { 
+            if (debugLog) log.info "${device.label} was turned on. No retry needed"
+            apiStatus = "ready"
+        } else {
+            if (descLog) log.info "lanOn(): ${device.label} in ${device.currentValue("switch", true)} failed to turn on. Retrying"
+            apiStatus = "retryOn"
+            lanRetry("on") 
+        }
+    } else {
+        if (descLog) log.info "lanOn(): ${device.label} is unable to turn on. API Busy ${apiStatus}"
+    }
+} 
 
 def lanOff() {
-    sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-    runInMillis(500, 'devStatus')
-    if (descLog) log.info "${device.label} was turned off."
+    if (debugLog) log.info "lanOff(): ${device.label} in ${device.currentValue("switch", true)}."
+    if (apiStatus == "ready") {
+        if (debugLog) log.info "lanOff(): ${device.label} apiStatus is ${apiStatus} ."
+        apiStatus = "pendingOff"
+        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
+        runInMillis(250, 'devStatus')
+        pauseExecution(350)
+        while (statusUpd != "ready") {
+            if (debugLog) log.info "lanOff(): Waiting for Device Status to return."
+            pauseExecution(100)
+        }
+        if (device.currentValue("switch", true) == "off") {
+            if (descLog) log.info "${device.label} was turned off. No retry needed"
+                apiStatus = "ready"
+        } else {
+            if (debugLog) log.info "lanOff(): ${device.label} in ${device.currentValue("switch", true)}."
+            if (descLog) log.info "lanOff(): ${device.label} failed to turn off. Retrying"
+            apiStatus = "retryOff"
+            lanRetry("off")
+        }
+    } else {
+        if (descLog) log.info "lanOff(): ${device.label} is unable to turn off. API Busy ${apiStatus}"
+    }
 } 
 
 def lanCT(value, level, transitionTime) {
     int intvalue = value.toInteger()
-    sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-    if (level != null) lanSetLevel(level,transitionTime);
-    sendEvent(name: "colorMode", value: "CT")
-    runInMillis(500, 'devStatus')   
-    if (effectNum != 0){
-        sendEvent(name: "effectNum", value: 0)
-        sendEvent(name: "effectName", value: "None") 
+    if (apiStatus == "ready" /* || apiStatus == "retryCT" */) {
+        if (debugLog) log.info "lanCT(): ${device.label} apiStatus is ${apiStatus} ."
+        apiStatus = "pendingCT"
+        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+        if (level != null) lanSetLevel(level,transitionTime);
+        sendEvent(name: "colorMode", value: "CT")
+        runInMillis(250, 'devStatus')
+        pauseExecution(350)
+        while (statusUpd != "ready") {
+            if (debugLog) log.info "lanCT(): Waiting for Device Status to return."
+            pauseExecution(100)
+        }
+        if (device.currentValue("colorTemperature", true) == intvalue) {
+            if (descLog) log.info "lanCT(): ${device.label} color temperature was changed to ${intvalue}K."
+                apiStatus = "ready"
+        } else {
+            if (debugLog) log.info "lanCT(): ${device.label} in ${device.currentValue("colorTemperature", true)}."
+            if (descLog) log.info "lanCT(): ${device.label} failed to change Color Temp. Retrying"
+            apiStatus = "retryCT"
+//            lanCT(value, level, transitionTime)
+            lanRetry(intvalue)
+        } 
+        if (effectNum != 0){
+            sendEvent(name: "effectNum", value: 0)
+            sendEvent(name: "effectName", value: "None") 
+        }
+    } else {
+        if (descLog) log.info "lanCT(): ${device.label} is unable to change Color Temp. API Busy ${apiStatus}"
     }
 	setCTColorName(intvalue)
 }
@@ -62,9 +122,24 @@ def lanSetLevel(float v,duration = 0){
 }
 
 def lanSetLevel2(int v){
-    if (descLog) log.info "${device.label} Level was set to ${v}%"      
-    sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-    runInMillis(500, 'devStatus')
+    if (apiStatus == "ready"|| apiStatus == "retryCT") {
+        apiStatus = "pending"
+        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+        runInMillis(250, 'devStatus')
+        pauseExecution(2000)
+        if (device.currentValue("level", true) == v) {
+            if (debugLog) log.info "lanSetLevel2(): ${device.label} was changed to ${v}."
+            if (descLog) log.info "${device.label} Level was set to ${v}%"  
+            apiStatus = "ready"
+        } else {
+            if (debugLog) log.info "lanSetLevel2(): ${device.label} in ${device.currentValue("level", true)}."
+            if (descLog) log.info "lanSetLevel2(): ${device.label} failed to change level. Retrying"
+            apiStatus = "retryLevel"
+            lanSetLevel2(v)
+        }
+    } else {
+        if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${apiStatus}"
+    }
 }
 
 def fade(int v,float duration){
@@ -154,120 +229,99 @@ def lanSetEffect (effectNo) {
    } else {
         if (debugLog) {log.debug ("setEffect(): Effect Number not found for built in scenes. Passing  ${effectNumber}to Activate DIY ")}
         lanActivateDIY(effectNumber)
-        
-        
-/*        sendEvent(name: "effectNum", value: effectNumber)
-        sendEvent(name: "switch", value: "on")
-    // Cozy Light Effect (static Scene to very warm light)
-    if (effectNo == 6) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Cozy Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        sendEvent(name: "colorTemperature", value: 2000)
-	    setCTColorName(2000)
-        sendEvent(name: "effectName", value: "Cozy")
-    }
-    // Sunrise Effect
-    if (effectNo == 9) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",1, "level"))
-        sendEvent(name: "level", value: 1)
-        fade(100,1800)        
-        sendEvent(name: "effectName", value: "Sunrise")
-    }
-    // Sunset Effect
-    if (effectNo == 10) {
-        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        fade(0,1800)
-        sendEvent(name: "effectName", value: "Sunset")
-    }
-    // Warm White Light Effect (static Scene to very warm light)
-    if (effectNo == 11) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Warm White Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",3500, "ct"))
-        sendEvent(name: "colorTemperature", value: 3500)
-	    setCTColorName(3500)
-        sendEvent(name: "effectName", value: "Warm White")
-    } 
-    // Daylight Light Effect    
-    if (effectNo == 12) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Daylight Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",5600, "ct"))
-        sendEvent(name: "colorTemperature", value: 5600)
-	    setCTColorName(5600)
-        sendEvent(name: "effectName", value: "Daylight")
-    }
-    // Cool White Light Effect    
-    if (effectNo == 13) {
-        if (debugLog) {log.debug ("setEffect(): Static Scene Cool White Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",6500, "ct"))
-        sendEvent(name: "colorTemperature", value: 6500)
-	    setCTColorName(6500)
-        sendEvent(name: "effectName", value: "Cool White")
-    }  
-    // Night Light Effect   
-    if (effectNo == 14) {
-        if (debugLog) {log.debug ("setEffect(): Static Night Light Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",2000, "ct"))
-        sendEvent(name: "colorTemperature", value: 2000)
-	    setCTColorName(2000)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",5, "level"))
-        sendEvent(name: "level", value: 5)
-        sendEvent(name: "effectName", value: "Night Light")
-    }
-    // Focus Effect   
-    if (effectNo == 15) {
-        if (debugLog) {log.debug ("setEffect(): Focus Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",4500, "ct"))
-        sendEvent(name: "colorTemperature", value: 4500)
-	    setCTColorName(4500)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        sendEvent(name: "effectName", value: "Focus")
-    } 
-    // Relax Effect   
-    if (effectNo == 16) {
-        if (debugLog) {log.debug ("setEffect(): Static Relax Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:255, g:194, b:194], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "level", value: 100)
-        sendEvent(name: "effectName", value: "Relax")
-    }
-    // True Color Effect   
-    if (effectNo == 17) {
-        if (debugLog) {log.debug ("setEffect(): True Color Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc",3350, "ct"))
-        sendEvent(name: "colorTemperature", value: 3350)
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",100, "level"))
-        sendEvent(name: "effectName", value: "True Color")
-    }
-    // TV Time Effect   
-    if (effectNo == 18) {
-        if (debugLog) {log.debug ("setEffect(): Static TV Time Effect Called. Calling CT Command directly")}        
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:179, g:134, b:254], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
-        sendEvent(name: "level", value: 45)
-        sendEvent(name: "effectName", value: "TV Time")
-    }
-    // Plant Growth Effect   
-    if (effectNo == 19) {
-        if (debugLog) {log.debug ("setEffect(): Static Plant Growth Effect Called. Calling CT Command directly")}
-        sendCommandLan(GoveeCommandBuilder("colorwc", [r:247, g:154, b:254], "rgb"))
-        pauseExecution(750)
-        sendCommandLan(GoveeCommandBuilder("brightness",45, "level"))
-        sendEvent(name: "level", value: 45)
-        sendEvent(name: "effectName", value: "Plant Growth")
-    } */
     } 
 }
+
+def lanRetry(value) {
+    int count = 0
+    while (statusUpd != "ready") {
+        if (debugLog) log.info "lanRetry(): Waiting for device data to be returned before continuing with retry."
+        pauseExecution(100)
+    }
+    if (apiStatus == "retryOn") {
+        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${apiStatus}." 
+        while (device.currentValue("switch", true) != "on") { 
+            if (debugLog) log.info "lanRetry(): Retry attempt ${count} ."
+            sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
+            runInMillis(250, 'devStatus')
+            pauseExecution(350)
+            while (statusUpd != "ready") {
+                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
+                pauseExecution(100)
+            }
+            count++
+           } 
+        if (device.currentValue("switch", true) == "on") {
+            if (descLog) log.info "${device.label} was turned on."
+            apiStatus = "ready"
+        } 
+    } else if (apiStatus == "retryOff") {
+        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${apiStatus}."
+        while (device.currentValue("switch", true) != "off") { 
+            if (debugLog) log.info "lanRetry(): Retry attempt ${count} ."
+            sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
+            runInMillis(250, 'devStatus')
+            pauseExecution(350)
+            while (statusUpd != "ready") {
+                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device status to respond."
+                pauseExecution(100)
+            }
+            count++
+           }
+        if (device.currentValue("switch", true) == "off") {
+            if (descLog) log.info "${device.label} was turned off."
+            apiStatus = "ready"
+        } 
+    } else if (apiStatus == "retryCT") {
+        int intvalue = value.toInteger()
+        if (debugLog) log.info "lanRetryCT(): ${device.label} apiStatus is ${apiStatus}." 
+        while (device.currentValue("colorTemperature", true) != ctValue) { 
+            if (debugLog) log.info "lanRetryCT(): Retry attempt ${count} ."
+            sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+            runInMillis(250, 'devStatus')
+            pauseExecution(350)
+            while (statusUpd != "ready") {
+                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
+                pauseExecution(100)
+            }
+            count++
+           } 
+        if (device.currentValue("colorTemperature", true) == ctValue) {
+            if (descLog) log.info "${device.label} was change to ${ctValue}K."
+            apiStatus = "ready"
+        } 
+    } else {
+        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${apiStatus}. No longer in a retry state ."
+    }
+}
+
+/* def lanRetryCT(String retryType, value) {
+    int count = 0
+    while (statusUpd != "ready") {
+        if (debugLog) log.info "lanRetry(): Waiting for device data to be returned before continuing with retry."
+        pauseExecution(100)
+    }
+    if (apiStatus == "retryCT") {
+        if (debugLog) log.info "lanRetryCT(): ${device.label} apiStatus is ${apiStatus}." 
+        while (device.currentValue("colorTemperature", true) != ctValue) { 
+            if (debugLog) log.info "lanRetryCT(): Retry attempt ${count} ."
+            sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+            runInMillis(250, 'devStatus')
+            pauseExecution(350)
+            while (statusUpd != "ready") {
+                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
+                pauseExecution(100)
+            }
+            count++
+           } 
+        if (device.currentValue("colorTemperature", true) == ctValue) {
+            if (descLog) log.info "${device.label} was change to ${ctValue}K."
+            apiStatus = "ready"
+        } 
+    }  else {
+        if (debugLog) log.info "lanRetryCT(): ${device.label} apiStatus is ${apiStatus}. No longer in a retry state ."
+    }
+} */
 
 def lanSetNextEffect () {
     if (debugLog) {log.debug ("setNextEffect(): Current Color mode ${device.currentValue("colorMode")}")}
@@ -603,9 +657,20 @@ def loadDIYFile() {
     }
 }
 
-void devStatus() {    
-        sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
-        if (debugLog) log.info "${device.label} status was requested."  
+void devStatus() {
+    if (statusUpd == "ready") {
+        statusUpd = "active"
+        count = 0
+        while (statusUpd != "ready") { 
+            if (debugLog) {log.info("devStatus() status reqeusted udpated. Attempt ${count}")}
+            sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
+            pauseExecution(1500)
+            count++
+            if (count == 5) break
+        }
+    } else {
+        if (debugLog) {log.info("devStatus() status reqeusted already requested and waiting on response")}
+    }
 }
 
 def ipLookup() {
@@ -616,6 +681,7 @@ def ipLookup() {
 
 void lanAPIPost(data) {
     if (debugLog) {log.info("lanAPIPost: Processing update from LAN API. Data: ${data}")}
+    statusUpd = "ready"
     if (data.onOff == 1) { onOffSwitch = on}
     if (data.onOff == 0) { onOffSwitch = off}
     
@@ -623,6 +689,9 @@ void lanAPIPost(data) {
             if (onOffSwitch != device.currentValue("switch")) {
                 if (debugLog) {log.info("lanAPIPost: Switch Changed to on.")}
                 sendEvent(name: "switch", value: onOffSwitch)
+                if (apiStatus == "retryOn" || apiStatus == "pendingOn") {
+                    apiStatus = "ready"
+                }
             }
             if (data.brightness != device.currentValue("level")) {
                 sendEvent(name: "level", value: data.brightness)
@@ -631,6 +700,9 @@ void lanAPIPost(data) {
             }
             if (data.colorTemInKelvin != device.currentValue("colorTemperature")) {
                 sendEvent(name: "colorTemperature", value: data.colorTemInKelvin)
+                if (apiStatus == "retryCT" || apiStatus == "pendingCT") {
+                    apiStatus = "ready"
+                }
             } else {
                 if (debugLog) {log.info("lanAPIPost: Color Temperature has not changed. Ignoring")}
             }
@@ -653,6 +725,9 @@ void lanAPIPost(data) {
             if (onOffSwitch != device.currentValue("switch")) {
                 if (debugLog) {log.info("lanAPIPost: Switch Changed to off.")}
                 sendEvent(name: "switch", value: onOffSwitch)
+                if (apiStatus == "retryOff" || apiStatus == "pendingOff") {
+                    apiStatus = "ready"
+                }
             }
         }
 }
