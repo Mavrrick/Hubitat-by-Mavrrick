@@ -41,8 +41,9 @@ metadata {
 	preferences {		
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:30", defaultValue:30, submitOnChange: true, width:4)
-			input(name: "aRngBright", type: "bool", title: "Alternate Brightness Range", description: "For devices that expect a brightness range of 0-254", defaultValue: false)
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
+            input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:2000", defaultValue:2000, range: 750..15000, width:5)
+            input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:5", defaultValue:5, range: 1..10, width:2)            
             input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("deviceModel")+".json")
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
