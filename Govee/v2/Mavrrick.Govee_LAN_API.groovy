@@ -8,82 +8,85 @@ library (
 )
 
 
+@Field static Map<String, String> apiStatus = [:]
+@Field static Map<String, String> statusUpd = [:]
+
 //////////////////////////////
 // Standard device Commands //
 //////////////////////////////
 
 def lanOn() {
     if (debugLog) log.info "lanOn(): ${device.label} in ${device.currentValue("switch", true)}."
-    if (atomicState.apiStatus == "ready") {
-        if (debugLog) log.info "lanOn(): ${device.label} apiStatus is ${atomicState.apiStatus} ."
-        atomicState.apiStatus = "pendingOn"
+    if (getApiStatus() == "ready") {
+        if (debugLog) log.info "lanOn(): ${device.label} apiStatus is ${getApiStatus()} ."
+        apiStatus[device.deviceNetworkId] = "pendingOn"
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
         runInMillis(250, 'devStatus')
         pauseExecution(350)
-        while (atomicState.statusUpd != "ready") {
+        while (getstatusUpd() != "ready") {
             if (debugLog) log.info "lanOn(): Waiting for Device Status to return."
             pauseExecution(100)
         }
         if (device.currentValue("switch", true) == "on") { 
             if (debugLog) log.info "${device.label} was turned on. No retry needed"
-            atomicState.apiStatus = "ready"
+            apiStatus[device.deviceNetworkId] = "ready"
         } else {
             if (descLog) log.info "lanOn(): ${device.label} in ${device.currentValue("switch", true)} failed to turn on. Retrying"
-            atomicState.apiStatus = "retryOn"
+            apiStatus[device.deviceNetworkId] = "retryOn"
             lanRetry("on") 
         }
     } else {
-        if (descLog) log.info "lanOn(): ${device.label} is unable to turn on. API Busy ${apiStatus}"
+        if (descLog) log.info "lanOn(): ${device.label} is unable to turn on. API Busy ${getApiStatus()}"
     }
 } 
 
 def lanOff() {
     if (debugLog) log.info "lanOff(): ${device.label} in ${device.currentValue("switch", true)}."
-    if (atomicState.apiStatus == "ready") {
-        if (debugLog) log.info "lanOff(): ${device.label} apiStatus is ${atomicState.apiStatus} ."
-        atomicState.apiStatus = "pendingOff"
+    if (getApiStatus() == "ready") {
+        if (debugLog) log.info "lanOff(): ${device.label} apiStatus is ${getApiStatus()} ."
+        apiStatus[device.deviceNetworkId] = "pendingOff"
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
         runInMillis(250, 'devStatus')
         pauseExecution(350)
-        while (atomicState.statusUpd != "ready") {
+        while (getstatusUpd() != "ready") {
             if (debugLog) log.info "lanOff(): Waiting for Device Status to return."
             pauseExecution(100)
         }
         if (device.currentValue("switch", true) == "off") {
             if (descLog) log.info "${device.label} was turned off. No retry needed"
-                atomicState.apiStatus = "ready"
+                apiStatus[device.deviceNetworkId] = "ready"
         } else {
             if (debugLog) log.info "lanOff(): ${device.label} in ${device.currentValue("switch", true)}."
             if (descLog) log.info "lanOff(): ${device.label} failed to turn off. Retrying"
-            atomicState.apiStatus = "retryOff"
+            apiStatus[device.deviceNetworkId] = "retryOff"
             lanRetry("off")
         }
     } else {
-        if (descLog) log.info "lanOff(): ${device.label} is unable to turn off. API Busy ${atomicState.apiStatus}"
+        if (descLog) log.info "lanOff(): ${device.label} is unable to turn off. API Busy ${getApiStatus()}"
     }
 } 
 
 def lanCT(value, level, transitionTime) {
     int intvalue = value.toInteger()
-    if (atomicState.apiStatus == "ready" /* || apiStatus == "retryCT" */) {
-        if (debugLog) log.info "lanCT(): ${device.label} apiStatus is ${atomicState.apiStatus} ."
-        atomicState.apiStatus = "pendingCT"
+    if (getApiStatus() == "ready" /* || apiStatus == "retryCT" */) {
+        if (debugLog) log.info "lanCT(): ${device.label} apiStatus is ${getApiStatus()} ."
+        apiStatus[device.deviceNetworkId] = "pendingCT"
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
         if (level != null) lanSetLevel(level,transitionTime);
         sendEvent(name: "colorMode", value: "CT")
         runInMillis(250, 'devStatus')
         pauseExecution(350)
-        while (atomicState.statusUpd != "ready") {
+        while (getstatusUpd() != "ready") {
             if (debugLog) log.info "lanCT(): Waiting for Device Status to return."
             pauseExecution(100)
         }
         if (device.currentValue("colorTemperature", true) == intvalue) {
             if (descLog) log.info "lanCT(): ${device.label} color temperature was changed to ${intvalue}K."
-                atomicState.apiStatus = "ready"
+                apiStatus[device.deviceNetworkId] = "ready"
         } else {
             if (debugLog) log.info "lanCT(): ${device.label} in ${device.currentValue("colorTemperature", true)}."
             if (descLog) log.info "lanCT(): ${device.label} failed to change Color Temp. Retrying"
-            atomicState.apiStatus = "retryCT"
+            apiStatus[device.deviceNetworkId] = "retryCT"
 //            lanCT(value, level, transitionTime)
             lanRetry(intvalue)
         } 
@@ -92,7 +95,7 @@ def lanCT(value, level, transitionTime) {
             sendEvent(name: "effectName", value: "None") 
         }
     } else {
-        if (descLog) log.info "lanCT(): ${device.label} is unable to change Color Temp. API Busy ${atomicState.apiStatus}"
+        if (descLog) log.info "lanCT(): ${device.label} is unable to change Color Temp. API Busy ${getApiStatus()}"
     }
 	setCTColorName(intvalue)
 }
@@ -123,23 +126,23 @@ def lanSetLevel(float v,duration = 0){
 }
 
 def lanSetLevel2(int v){
-    if (atomicState.apiStatus == "ready"|| atomicState.apiStatus == "retryCT") {
-        atomicState.apiStatus = "pending"
+    if (getApiStatus() == "ready"|| getApiStatus() == "retryCT") {
+        apiStatus[device.deviceNetworkId] = "pending"
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
         runInMillis(250, 'devStatus')
         pauseExecution(2000)
         if (device.currentValue("level", true) == v) {
             if (debugLog) log.info "lanSetLevel2(): ${device.label} was changed to ${v}."
             if (descLog) log.info "${device.label} Level was set to ${v}%"  
-            atomicState.apiStatus = "ready"
+            apiStatus[device.deviceNetworkId] = "ready"
         } else {
             if (debugLog) log.info "lanSetLevel2(): ${device.label} in ${device.currentValue("level", true)}."
             if (descLog) log.info "lanSetLevel2(): ${device.label} failed to change level. Retrying"
-            atomicState.apiStatus = "retryLevel"
+            apiStatus[device.deviceNetworkId] = "retryLevel"
             lanSetLevel2(v)
         }
     } else {
-        if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${atomicState.apiStatus}"
+        if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${getApiStatus()}"
     }
 }
 
@@ -235,18 +238,18 @@ def lanSetEffect (effectNo) {
 
 def lanRetry(value) {
     int count = 0
-    while (atomicState.statusUpd != "ready") {
+    while (getstatusUpd() != "ready") {
         if (debugLog) log.info "lanRetry(): Waiting for device data to be returned before continuing with retry."
         pauseExecution(100)
     }
-    if (atomicState.apiStatus == "retryOn") {
-        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${atomicState.apiStatus}." 
+    if (getApiStatus() == "retryOn") {
+        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${getApiStatus()}." 
         while (device.currentValue("switch", true) != "on") { 
             if (debugLog) log.info "lanRetry(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
             runInMillis(250, 'devStatus')
             pauseExecution(350)
-            while (atomicState.statusUpd != "ready") {
+            while (getstatusUpd() != "ready") {
                 if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
                 pauseExecution(100)
             }
@@ -254,16 +257,16 @@ def lanRetry(value) {
            } 
         if (device.currentValue("switch", true) == "on") {
             if (descLog) log.info "${device.label} was turned on."
-            atomicState.apiStatus = "ready"
+            apiStatus[device.deviceNetworkId] = "ready"
         } 
-    } else if (atomicState.apiStatus == "retryOff") {
-        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${atomicState.apiStatus}."
+    } else if (getApiStatus() == "retryOff") {
+        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${getApiStatus()}."
         while (device.currentValue("switch", true) != "off") { 
             if (debugLog) log.info "lanRetry(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
             runInMillis(250, 'devStatus')
             pauseExecution(350)
-            while (atomicState.statusUpd != "ready") {
+            while (getstatusUpd() != "ready") {
                 if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device status to respond."
                 pauseExecution(100)
             }
@@ -271,17 +274,17 @@ def lanRetry(value) {
            }
         if (device.currentValue("switch", true) == "off") {
             if (descLog) log.info "${device.label} was turned off."
-            atomicState.apiStatus = "ready"
+            apiStatus[device.deviceNetworkId] = "ready"
         } 
-    } else if (atomicState.apiStatus == "retryCT") {
+    } else if (getApiStatus() == "retryCT") {
         int intvalue = value.toInteger()
-        if (debugLog) log.info "lanRetryCT(): ${device.label} apiStatus is ${atomicState.apiStatus}." 
+        if (debugLog) log.info "lanRetryCT(): ${device.label} apiStatus is ${getApiStatus()}." 
         while (device.currentValue("colorTemperature", true) != ctValue) { 
             if (debugLog) log.info "lanRetryCT(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
             runInMillis(250, 'devStatus')
             pauseExecution(350)
-            while (atomicState.statusUpd != "ready") {
+            while (getstatusUpd() != "ready") {
                 if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
                 pauseExecution(100)
             }
@@ -289,10 +292,10 @@ def lanRetry(value) {
            } 
         if (device.currentValue("colorTemperature", true) == ctValue) {
             if (descLog) log.info "${device.label} was change to ${ctValue}K."
-            atomicState.apiStatus = "ready"
+            apiStatus[device.deviceNetworkId] = "ready"
         } 
     } else {
-        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${atomicState.apiStatus}. No longer in a retry state ."
+        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${getApiStatus()}. No longer in a retry state ."
     }
 }
 
@@ -658,11 +661,12 @@ def loadDIYFile() {
     }
 }
 
-void devStatus() {
-    if (atomicState.statusUpd == "ready") {
-        atomicState.statusUpd = "active"
+void devStatus() {  
+    if (debugLog) {log.info("devStatus() current statusUpd value is  ${getstatusUpd()}")}
+    if (getstatusUpd() == "ready") {
+        statusUpd[device.deviceNetworkId] = "active"
         count = 0
-        while (atomicState.statusUpd != "ready") { 
+        while (getstatusUpd() != "ready") { 
             if (debugLog) {log.info("devStatus() status reqeusted udpated. Attempt ${count}")}
             sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
             pauseExecution(1500)
@@ -682,7 +686,7 @@ def ipLookup() {
 
 void lanAPIPost(data) {
     if (debugLog) {log.info("lanAPIPost: Processing update from LAN API. Data: ${data}")}
-    atomicState.statusUpd = "ready"
+    statusUpd[device.deviceNetworkId] = "ready"
     if (data.onOff == 1) { onOffSwitch = on}
     if (data.onOff == 0) { onOffSwitch = off}
     
@@ -690,8 +694,8 @@ void lanAPIPost(data) {
             if (onOffSwitch != device.currentValue("switch")) {
                 if (debugLog) {log.info("lanAPIPost: Switch Changed to on.")}
                 sendEvent(name: "switch", value: onOffSwitch)
-                if (atomicState.apiStatus == "retryOn" || atomicState.apiStatus == "pendingOn") {
-                    atomicState.apiStatus = "ready"
+                if (getApiStatus() == "retryOn" || getApiStatus() == "pendingOn") {
+                    apiStatus[device.deviceNetworkId] = "ready"
                 }
             }
             if (data.brightness != device.currentValue("level")) {
@@ -701,8 +705,8 @@ void lanAPIPost(data) {
             }
             if (data.colorTemInKelvin != device.currentValue("colorTemperature")) {
                 sendEvent(name: "colorTemperature", value: data.colorTemInKelvin)
-                if (atomicState.apiStatus == "retryCT" || atomicState.apiStatus == "pendingCT") {
-                    atomicState.apiStatus = "ready"
+                if (getApiStatus() == "retryCT" || getApiStatus() == "pendingCT") {
+                    apiStatus[device.deviceNetworkId] = "ready"
                 }
             } else {
                 if (debugLog) {log.info("lanAPIPost: Color Temperature has not changed. Ignoring")}
@@ -726,8 +730,8 @@ void lanAPIPost(data) {
             if (onOffSwitch != device.currentValue("switch")) {
                 if (debugLog) {log.info("lanAPIPost: Switch Changed to off.")}
                 sendEvent(name: "switch", value: onOffSwitch)
-                if (atomicState.apiStatus == "retryOff" || atomicState.apiStatus == "pendingOff") {
-                    atomicState.apiStatus = "ready"
+                if (getApiStatus() == "retryOff" || getApiStatus() == "pendingOff") {
+                    apiStatus[device.deviceNetworkId] = "ready"
                 }
             }
         }
@@ -758,3 +762,28 @@ void lanInitDefaultValues() {
         sendEvent(name: "level", value: 0)  
         sendEvent(name: "colorTemperature", value: 2000)  
 }
+
+/// Helper methods for lan api status updates
+
+def getApiStatus() {
+    def dId = device.deviceNetworkId;
+    
+    exist
+    if (!apiStatus[dId]) {
+        apiStatus[dId] = "ready"
+    }
+    return apiStatus[dId]
+}
+
+def getstatusUpd() {
+    def dId = device.deviceNetworkId;
+    
+    exist
+    if (!statusUpd[dId]) {
+        statusUpd[dId] = "ready"
+    }
+    return statusUpd[dId]
+}
+
+
+
