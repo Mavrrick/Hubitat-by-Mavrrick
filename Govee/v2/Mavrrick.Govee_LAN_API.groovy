@@ -7,6 +7,10 @@ library (
  documentationLink: "http://www.example.com/"
 )
 
+@Field static String apiStatus = "ready"
+@Field static String statusUpd = "ready"
+
+
 //////////////////////////////
 // Standard device Commands //
 //////////////////////////////
