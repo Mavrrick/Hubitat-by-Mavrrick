@@ -30,15 +30,17 @@ metadata {
 	preferences {		
 		section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
-            input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
+            if (ipLookup() != "N/A") { 
+                input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
+            }            
             input("multiSocketAdd", "bool", title: "Enable Multi-Socket Support", description: "By flipping this switch you tell the driver to enable Child devices for each outlet if possible", defaultValue: true)
             if (lanControl) {
-                input("ip", "text", title: "IP Address", description: "IP address of your Govee light", required: false)}
-                input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-                input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
                 input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:2000", defaultValue:2000, range: 750..15000, width:5)
                 input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:5", defaultValue:5, range: 1..10, width:2)
-		}		
+            }
+            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }		
 	}
 }
 
@@ -92,6 +94,7 @@ def initialize(){
         sendEvent(name: "cloudAPI", value: "Initialized")
     }
         unschedule()
+    retrieveIPAdd()
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
