@@ -9,7 +9,7 @@ library (
 
 // put methods, etc. here
 
-def setColor(value) {
+def cloudSetColor(value) {
     unschedule(fadeUp)
     unschedule(fadeDown)
     if (debugLog) { log.debug "setColor(): HSBColor = "+ value + "${device.currentValue("level")}"}
@@ -33,57 +33,41 @@ def setColor(value) {
         }        
         
         if (b == null) { b = device.currentValue("level") }
-		setHsb(h, s, b)
+		cloudSetHsb(h, s, b)
 	} else {
         if (debugLog) {log.debug "setColor(): Invalid argument for setColor: ${value}"}
     }
 }
 
-def setHsb(h,s,b)
+def cloudSetHsb(h,s,b)
 {
 
 	hsbcmd = [h,s,b]
-    if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
+    if (debugLog) { log.debug "setHsb(): HSB = ${hsbcmd}"}
 
 	rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
-    if (debugLog) { log.debug "setHsb(): Cmd = ${rgb}"}
-	def rgbmap = [:]
-	rgbmap.r = rgb[0]
-	rgbmap.g = rgb[1]
-	rgbmap.b = rgb[2]   
     rgbvalue = ((rgb[0] & 0xFF) << 16) | ((rgb[1] & 0xFF) << 8) | ((rgb[2] & 0xFF) << 0)
     if (debugLog) { log.debug "setHsb(): rgbvalue = ${rgbvalue}"}
-    if (lanControl) {
-        if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
-        sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
-   		sendEvent(name: "colorMode", value: "RGB")
-        runInMillis(500, 'devStatus')
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
-    } else {
         if (device.currentValue("cloudAPI") == "Retry") {
             log.error "setHsb(): CloudAPI already in retry state. Aborting call." 
         } else { 
         sendEvent(name: "cloudAPI", value: "Pending")
         sendCommand("colorRgb", rgbvalue,"devices.capabilities.color_setting")
         }
-    }
     if(100 != device.currentValue("level")?.toInteger()) {
     setLevel(100)
     }
 }
 
-def setHue(h)
+def cloudSetHue(h)
 {
-    setHsb(h,device.currentValue( "saturation" )?:100,device.currentValue("level")?:100)
+    cloudSetHsb(h,device.currentValue( "saturation" )?:100,device.currentValue("level")?:100)
     if (descLog) log.info "${device.label} Hue was set to ${h}"    
 }
 
-def setSaturation(s)
+def cloudSetSaturation(s)
 {
-	setHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
+	cloudSetHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
     if (descLog) log.info "${device.label} Saturation was set to ${s}%"    
 }
 

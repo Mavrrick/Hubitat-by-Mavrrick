@@ -122,11 +122,17 @@ def setColorTemperature(value,level = null,transitionTime = null) {
     lanCT(value, level, transitionTime)    
 }
 
-// {"msg":{"cmd":"devStatus","data":{}}}
-/* def devStatus() {
-        sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
-        if (descLog) log.info "${device.label} status was requested."  
-} */
+def  setColor(value) {
+        lanSetColor (value)
+}
+
+def  setHue(h) {
+        lanSetHue (h)
+}
+
+def setSaturation(s) {
+        lanSetSaturation (s)
+}
 
 ////////////////////
 // Helper Methods //
@@ -151,75 +157,6 @@ def setCTColorName(int value)
 		}
 	
 }
-    
-def setColor(value) {
-    unschedule(fadeUp)
-    unschedule(fadeDown)
-    if (debugLog) { log.debug "setColor(): HSBColor = "+ value + "${device.currentValue("level")}"}
-	if (value instanceof Map) {
-		def h = value.containsKey("hue") ? value.hue : null
-		def s = value.containsKey("saturation") ? value.saturation : null
-		def b = value.containsKey("level") ? value.level : null
-        
-        def theColor = getColor(h,s)
-        if (descLog)
-        {
-            if (theColor == "Unknown")
-            {
-                if (debugLog) log.debug "trying alt. color name method"
-                theColor = convertHueToGenericColorName(h,s)
-                if (debugLog) log.debug "alt. method got back $theColor"
-            }
-            if (theColor != "Unknown") log.info "${device.label} Color is $theColor"
-            else log.info "${device.label} Color is $value"
-            sendEvent(name: "colorName", value: theColor)
-        }
-        
-        if (b == null) { b = device.currentValue("level") }
-		setHsb(h, s, b)
-	} else {
-        if (debugLog) {log.debug "setColor(): Invalid argument for setColor: ${value}"}
-    }
-}
-
-def setHsb(h,s,b)
-{
-
-	hsbcmd = [h,s,b]
-    if (debugLog) { log.debug "setHsb(): Cmd = ${hsbcmd}"}
-
-	rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
-	def rgbmap = [:]
-	rgbmap.r = rgb[0]
-	rgbmap.g = rgb[1]
-	rgbmap.b = rgb[2]   
-     
-        if (debugLog) { log.debug "setHsb(): ${rgbmap}"}
-        sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
-      	sendEvent(name: "hue", value: "${h}")
-        sendEvent(name: "saturation", value: "${s}")
-        sendEvent(name: "switch", value: "on")
-   		sendEvent(name: "colorMode", value: "RGB")
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
-    if(100 != device.currentValue("level")?.toInteger()) {
-    setLevel(100)
-    }
-}
-
-def setHue(h)
-{
-    setHsb(h,device.currentValue( "saturation" )?:100,device.currentValue("level")?:100)
-    if (descLog) log.info "${device.label} Hue was set to ${h}"    
-}
-
-def setSaturation(s)
-{
-	setHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
-    if (descLog) log.info "${device.label} Saturation was set to ${s}%"
-}
 
 def setLevel(float v,duration = 0){
     lanSetLevel(v,duration)
@@ -228,9 +165,6 @@ def setLevel(float v,duration = 0){
 def setLevel2(int v){
     lanSetLevel(v)
 }
-
-
-//Turn Hubitat's 0-100 Brightness range to the 0-254 expected by some devices
 
 
 def  setEffect(effectNo) {

@@ -226,6 +226,30 @@ def setLevel(float v,duration = 0) {
         }
 }
 
+def  setColor(value) {
+    if (lanControl) {
+        lanSetColor (value)
+    } else { 
+        cloudSetColor (value)
+    }
+}
+
+def  setHue(h) {
+    if (lanControl) {
+        lanSetHue (h)
+    } else { 
+        cloudSetHue (h)
+    }
+}
+
+def setSaturation(s) {
+    if (lanControl) {
+        lanSetSaturation (s)
+    } else { 
+        cloudSetSaturation (s)
+    }
+}
+
 def  setEffect(effectNo) {
     if (lanControl && lanScenes) {
         lanSetEffect (effectNo)

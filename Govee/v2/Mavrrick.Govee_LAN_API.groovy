@@ -72,7 +72,7 @@ def lanCT(value, level, transitionTime) {
         if (debugLog) log.info "lanCT(): ${device.label} apiStatus is ${getApiStatus()} ."
         apiStatus[device.deviceNetworkId] = "pendingCT"
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) lanSetLevel(level,transitionTime);
+//        if (level != null) lanSetLevel(level,transitionTime);
         sendEvent(name: "colorMode", value: "CT")
         runInMillis(250, 'devStatus')
         pauseExecution(350)
@@ -82,13 +82,15 @@ def lanCT(value, level, transitionTime) {
         }
         if (device.currentValue("colorTemperature", true) == intvalue) {
             if (descLog) log.info "lanCT(): ${device.label} color temperature was changed to ${intvalue}K."
-                apiStatus[device.deviceNetworkId] = "ready"
+            apiStatus[device.deviceNetworkId] = "ready"
+            if (level != null) lanSetLevel(level,transitionTime);
         } else {
             if (debugLog) log.info "lanCT(): ${device.label} in ${device.currentValue("colorTemperature", true)}."
             if (descLog) log.info "lanCT(): ${device.label} failed to change Color Temp. Retrying"
             apiStatus[device.deviceNetworkId] = "retryCT"
 //            lanCT(value, level, transitionTime)
             lanRetry(intvalue)
+            if (level != null) lanSetLevel(level,transitionTime);
         } 
         if (effectNum != 0){
             sendEvent(name: "effectNum", value: 0)
@@ -149,6 +151,89 @@ def lanSetLevel2(int v){
     } else {
         if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${getApiStatus()}"
     }
+}
+
+def lanSetColor(value) {
+    unschedule(fadeUp)
+    unschedule(fadeDown)
+    if (debugLog) { log.debug "lanSetColor(): HSBColor = "+ value + "${device.currentValue("level")}"}
+	if (value instanceof Map) {
+		def h = value.containsKey("hue") ? value.hue : null
+		def s = value.containsKey("saturation") ? value.saturation : null
+		def b = value.containsKey("level") ? value.level : null
+        
+        def theColor = getColor(h,s)
+        if (descLog)
+        {
+            if (theColor == "Unknown")
+            {
+                if (debugLog) log.debug "trying alt. color name method"
+                theColor = convertHueToGenericColorName(h,s)
+                if (debugLog) log.debug "alt. method got back $theColor"
+            }
+            if (theColor != "Unknown") log.info "${device.label} Color is $theColor"
+            else log.info "${device.label} Color is $value"
+            sendEvent(name: "colorName", value: theColor)
+        }        
+        
+        if (b == null) { b = device.currentValue("level") }
+		lanSetHsb(h, s, b)
+	} else {
+        if (debugLog) {log.debug "lanSetColor(): Invalid argument for setColor: ${value}"}
+    }
+}
+
+def lanSetHsb(h,s,b) {
+    if (getApiStatus() == "ready") {
+        if (debugLog) log.info "lanSetHsb(): ${device.label} apiStatus is ${getApiStatus()} ."
+        apiStatus[device.deviceNetworkId] = "pendingColor"
+	    hsbcmd = [h,s,b]
+        if (debugLog) { log.debug "lanSetHsb(): HSB = ${hsbcmd}"}
+
+	    rgb = hubitat.helper.ColorUtils.hsvToRGB(hsbcmd)
+	    def rgbmap = [:]
+	    rgbmap.r = rgb[0]
+	    rgbmap.g = rgb[1]
+	    rgbmap.b = rgb[2]   
+
+        if (debugLog) { log.debug "lanSetHsb(): ${rgbmap}"}        
+        sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
+        sendEvent(name: "colorMode", value: "RGB")
+        runInMillis(250, 'devStatus')
+        pauseExecution(350)
+        while (getstatusUpd() != "ready") {
+            if (debugLog) log.info "lanSetHsb(): Waiting for Device Status to return."
+            pauseExecution(100)
+        }
+        if (Math.abs(device.currentValue("hue", true) - h) <= 1  && Math.abs(device.currentValue("saturation", true) - s) <=1 ) {
+            if (descLog) log.info "${device.label} Color was chagned to ${hsbcmd}. No retry needed"
+                apiStatus[device.deviceNetworkId] = "ready"
+        } else {
+            if (debugLog) log.info "lanSetHsb(): ${device.label} in ${device.currentValue("switch", true)}."
+            if (descLog) log.info "lanSetHsb(): ${device.label} failed to change Color. Retrying"
+            apiStatus[device.deviceNetworkId] = "retryColor"
+            lanRetry(hsbcmd)
+        }
+        if (effectNum != 0){
+            sendEvent(name: "effectNum", value: 0)
+            sendEvent(name: "effectName", value: "None") 
+        } 
+        if(100 != device.currentValue("level")?.toInteger()) {
+            setLevel(100)
+        }
+    } else {
+        if (descLog) log.info "lanSetHsb(): ${device.label} is unable to change Colors right now. API Busy ${getApiStatus()}"
+    }
+}
+
+def lanSetHue(h) {
+    lanSetHsb(h,device.currentValue( "saturation" )?:100,device.currentValue("level")?:100)
+    if (descLog) log.info "${device.label} Hue was set to ${h}"    
+}
+
+def lanSetSaturation(s) {
+	lanSetHsb(device.currentValue("hue")?:0,s,device.currentValue("level")?:100)
+    if (descLog) log.info "${device.label} Saturation was set to ${s}%"    
 }
 
 def fade(int v,float duration){
@@ -336,6 +421,40 @@ def lanRetry(value) {
            } 
         if (device.currentValue("level", true) == intvalue) {
             if (descLog) log.info "${device.label} was change to ${intvalue}K."
+            apiStatus[device.deviceNetworkId] = "ready"
+        } 
+    } else if (getApiStatus() == "retryColor") {
+//        int intvalue = value
+        h = value[0]
+        s = value[1]
+        b = value[2]
+        
+        rgb = hubitat.helper.ColorUtils.hsvToRGB(value)
+	    def rgbmap = [:]
+	    rgbmap.r = rgb[0]
+	    rgbmap.g = rgb[1]
+	    rgbmap.b = rgb[2]
+        
+        if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${getApiStatus()}."
+        if (debugLog) log.info "lanRetry(): Hue = ${h} Saturation = ${s}, Brightness = ${b}}." 
+        while (Math.abs(device.currentValue("hue", true) - h) > 1  && Math.abs(device.currentValue("saturation", true) - s) > 1 ) { 
+            if (debugLog) log.info "lanRetryCT(): Retry attempt ${count} ."
+            sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
+            runInMillis(250, 'devStatus')
+            pauseExecution(350)
+            while (getstatusUpd() != "ready") {
+                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
+                pauseExecution(100)
+            }
+            count++
+            if (count == retryLimit) {
+                    if (debugLog) log.info "lanRetry(): Max retry reached, resetting API state."
+                    apiStatus[device.deviceNetworkId] = "ready"
+                    break
+                }
+           } 
+        if (Math.abs(device.currentValue("hue", true) - h) <= 1  && Math.abs(device.currentValue("saturation", true) - s) <=1 ) {
+            if (descLog) log.info "${device.label} Color was changed to Hue ${h}, Saturation ${s}."
             apiStatus[device.deviceNetworkId] = "ready"
         } 
     } else {
