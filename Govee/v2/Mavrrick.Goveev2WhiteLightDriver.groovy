@@ -37,8 +37,8 @@ metadata {
             input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
             }
             if (lanControl) {
-                input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:2000", defaultValue:2000, range: 750..15000, width:5)
-                input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:5", defaultValue:5, range: 1..10, width:2)
+                input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:2000", defaultValue:3000, range: 750..30000, width:5)
+                input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:5", defaultValue:2, range: 0..10, width:2)
                 input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)

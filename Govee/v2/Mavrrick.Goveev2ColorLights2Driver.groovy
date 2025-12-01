@@ -74,8 +74,8 @@ metadata {
             }            
             if (lanControl) {
             input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false)
-                input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:2000", defaultValue:2000, range: 750..15000, width:5)
-                input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:5", defaultValue:5, range: 1..10, width:2)
+                input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:2000", defaultValue:3000, range: 750..30000, width:5)
+                input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:5", defaultValue:2, range: 0..10, width:2)
             if (lanScenes) {
                 input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("DevType")+".json")    
                 }
