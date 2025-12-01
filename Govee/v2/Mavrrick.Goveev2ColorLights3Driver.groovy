@@ -205,8 +205,8 @@ def setColorTemperature(value,level = null,transitionTime = null) {
     unschedule(fadeUp)
     unschedule(fadeDown)
     if (debugLog) { log.debug "setColorTemperature(): ${value}"}
-    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin")}
-    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax")}
+    if (value < device.getDataValue("ctMin").toInteger()) { value = device.getDataValue("ctMin").toInteger()}
+    if (value > device.getDataValue("ctMax").toInteger()) { value = device.getDataValue("ctMax").toInteger()}
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
     if (lanControl) {
         lanCT(value, level, transitionTime)
