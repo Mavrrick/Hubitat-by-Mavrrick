@@ -169,7 +169,7 @@
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2ColorLightsDreamviewSync.groovy",
       "required": false,
-      "version": "2.1.13"
+      "version": "2.1.14"
     },
     {
       "id": "efaf7c44-052b-4fb9-a0d9-a1989646c8e4",
@@ -416,6 +416,7 @@
     }
   ]
 }
+
 
 
 
