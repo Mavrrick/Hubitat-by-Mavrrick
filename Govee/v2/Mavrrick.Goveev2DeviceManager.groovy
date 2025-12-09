@@ -471,11 +471,15 @@ def retrieveGoveeAPI(deviceid) {
 
 ///////////////////////////////////////////////////////////////////////////
 def retrieveApiDevices () {
+    deviceReturn = [:]
     if (!state.lanApiDevices) {
-        state.lanApiDevices = [:]    
+        deviceReturn = ["dummy":"dummy"]    
+    } else {
+        deviceReturn = state.lanApiDevices 
     }
-    lanApiDevices = state.lanApiDevices
-    return  lanApiDevices
+//    lanApiDevices = state.lanApiDevices
+//    return  lanApiDevices
+    return deviceReturn
 }
 
 
