@@ -114,6 +114,7 @@ def installed(){
     if (pollRate > 0) runIn(pollRate,poll)
     retrieveScenes2()
     retrieveStateData()
+	retrieveDIYScenes()
     getDevType()
 }
 
