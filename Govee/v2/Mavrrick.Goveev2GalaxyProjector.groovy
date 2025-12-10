@@ -132,7 +132,7 @@ def sceneLoad() {
     if (lanControl && lanScenes) { 
         getDevType()
         retrieveScenes()   
-    } else if ((lanControl == false) || (lanControl && lanScenes == false)) { 
+    } else if ((lanControl == false) || (lanControl && lanScenes == false) || (lanControl == null)) { 
         retrieveScenes2()
         retrieveStateData()
         if (state.diyScene.isEmpty()) {
