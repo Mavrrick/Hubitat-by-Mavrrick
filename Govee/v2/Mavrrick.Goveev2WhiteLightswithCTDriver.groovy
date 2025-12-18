@@ -109,6 +109,7 @@ def initialize(){
         }
     if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
     unschedule()
+    resetApiStatus()
     retrieveIPAdd()
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()

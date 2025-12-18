@@ -47,20 +47,22 @@ def cloudCT(value, level, transitionTime){
 /////////////////////////////////////////////////////
 
 private def sendCommand(String command, payload2, type) {
-     requestID = randomUUID()
-     String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
-     def params = [
-            uri   : "https://openapi.api.govee.com",
-            path  : '/router/api/v1/device/control',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-            contentType: "application/json",   
-            body: bodyParm
+    requestID = randomUUID()    
+    String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
+    def params = [
+        uri   : "https://openapi.api.govee.com",
+        path  : '/router/api/v1/device/control',
+        headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+        contentType: "application/json",   
+        body: bodyParm,
+        timeout: 60
             ]  
     if (debugLog) { log.debug "sendCommand(): ${command}, ${type}, ${params}"}
-try {
-
+    long startTime = now()
+    long respTime = now()
+    try {
 	    httpPost(params) { resp ->
-				
+			respTime = now()	
             if (debugLog) { log.debug "sendCommand(): Response data is "+resp.data}
             code = resp.data.code
                 
@@ -124,9 +126,9 @@ try {
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "EFFECTS")
-                    sendEvent(name: "effectNum", value: payload2)
-                    sendEvent(name: "effectName", value: state.scenes."${payload2}")
-                    if (descLog) { log.info "${device.label} scene was set to ${payload2}"}
+                    sendEvent(name: "effectNum", value: resp.data.capability.value.id)
+                    sendEvent(name: "effectName", value: state.scenes."${resp.data.capability.value.id}".name)
+                    if (descLog) { log.info "${device.label} scene was set to ${resp.data.capability.value.id}"}
                     break
                 case (code == 200 && command == "diyScene"):
                     sendEvent(name: "cloudAPI", value: "Success")
@@ -237,23 +239,37 @@ try {
         }    
 		return 'unknown'
 	}
+    long endTime = now()
+    long duration = endTime - startTime
+    long respDuration = respTime - startTime
+    def formattedDuration = formatDuration(duration)
+    def formattedRespDuration = formatDuration(duration)
+    if (descLog) {
+        if (respDuration > 10000) {
+            log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+        } else {
+            log.info "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+        }
+    }
 }
 
 def getDeviceState(){
     requestID = randomUUID()
-//    if (debugLog) { log.debug "getDeviceState(): ${requestID}"}
     String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'"}}'    
         def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/state',
 			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-            body: bodyParm
+            body: bodyParm,
+            timeout: 60
         ]
+    long startTime = now()
+    long respTime = now()
 
-try {
+    try {
 
 			httpPost(params) { resp ->
-
+                respTime = now()
                 if (debugLog) { log.debug "getDeviceState():"+resp.data.payload.capabilities}
                 resp.data.payload.capabilities.each {
 //                    type = it.type
@@ -445,6 +461,18 @@ try {
 		log.error "${e}"
 		return 'unknown'
 	}
+    long endTime = now()
+    long duration = endTime - startTime
+    long respDuration = respTime - startTime
+    def formattedDuration = formatDuration(duration)
+    def formattedRespDuration = formatDuration(respDuration)
+    if (descLog) {
+        if (respDuration > 10000) {
+            log.warn 'getDeviceState() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+        } else {
+            log.info "getDeviceState() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+        }
+    }
 }
 
 
@@ -456,16 +484,23 @@ def retrieveScenes2(){
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/scenes',
 			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-            body: bodyParm
+            body: bodyParm,
+            timeout: 60
         ]
-    
+    long startTime = now()
+    long respTime = now()
+
     try {
 			httpPost(params) { resp ->
-
+                respTime = now()  
                 if (debugLog) { log.debug "retrieveScenes2():"+resp.data.payload.capabilities}
                 state.scenes = [:]
-                resp.data.payload.capabilities.parameters.options.get(0).each { 
-                    state.scenes[it.value.id] = it.name
+                resp.data.payload.capabilities.parameters.options.get(0).each {
+                    tmp = [:]
+                    tmp["name"] = it.name
+                    tmp["paramId"] = it.value.paramId
+                    if (debugLog) { log.debug "retrieveScenes2():"+tmp}
+                    state.scenes[it.value.id] = tmp
                 }
                 state.sceneMax = state.scenes.size()
                 state.sceneValue = 0 
@@ -482,6 +517,19 @@ def retrieveScenes2(){
 		log.error "${e}"
 		return 'unknown'
 	}
+    long endTime = now()
+    long duration = endTime - startTime
+    long respDuration = respTime - startTime
+    def formattedDuration = formatDuration(duration)
+    def formattedRespDuration = formatDuration(duration)
+    if (descLog) {
+        if (respDuration > 10000) {
+            log.warn 'retrieveScenes2() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+        } else {
+            log.info "retrieveScenes2() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+        }
+    }
+
 }
 
 def retrieveDIYScenes(){
@@ -492,11 +540,15 @@ def retrieveDIYScenes(){
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/diy-scenes',
 			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
-            body: bodyParm
+            body: bodyParm,
+            timeout: 60
         ]
+    long startTime = now()
+    long respTime = now()
     
     try {
 			httpPost(params) { resp ->
+                respTime = now()
                 if (debugLog) { log.debug "retrieveDIYScenes():"+resp.data.payload.capabilities}
                 state.remove("diyEffects")
                 state.remove("diyScene")
@@ -517,8 +569,28 @@ def retrieveDIYScenes(){
 		log.error "${e}"
 		return 'unknown'
 	}
-    def le = new groovy.json.JsonBuilder(state.scenes + state.diyScene)
+    gvscenes = [:]
+    state.scenes.each { id, value ->
+        if (debugLog) { log.debug "retrieveDIYScenes():Govee Scene details ${id} value is ${value.name}"}
+        gvscenes[id] = value.name
+    }
+    if (debugLog) { log.debug "retrieveDIYScenes():Govee Scene list for lighteffect attribute is :"+gvscenes}
+//    def le = new groovy.json.JsonBuilder(state.scenes + state.diyScene)
+    def le = new groovy.json.JsonBuilder(gvscenes + state.diyScene)
     sendEvent(name: "lightEffects", value: le)
+    long endTime = now()
+    long duration = endTime - startTime
+    long respDuration = respTime - startTime
+    def formattedDuration = formatDuration(duration)
+    def formattedRespDuration = formatDuration(duration)
+    if (descLog) {
+        if (respDuration > 10000) {
+            log.warn 'retrieveDIYScenes() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+        } else {
+            log.info "retrieveDIYScenes() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+        }
+    }
+
 }
 
 def retrieveStateData(){
@@ -619,6 +691,23 @@ def cloudInitDefaultValues() {
 ///////////////////////////////////////////
 // Helper Methods /////////////////////////
 ///////////////////////////////////////////
+
+def formatDuration(long milliseconds) {
+    if (milliseconds < 1000) {
+        return "${milliseconds} ms"
+    }
+    long seconds = milliseconds / 1000
+    if (seconds < 60) {
+        return "${seconds} s ${milliseconds % 1000} ms"
+    }
+    long minutes = seconds / 60
+    if (minutes < 60) {
+        return "${minutes} min ${seconds % 60} s ${milliseconds % 1000} ms"
+    }
+    long hours = minutes / 60
+    return "${hours} h ${minutes % 60} min ${seconds % 60} s ${milliseconds % 1000} ms"
+}
+
 
 def randomOffset(int pollRateInt){
     if (debugLog) {log.debug "randomOffset(): Entered random offset Calc with ${pollRateInt}"} 

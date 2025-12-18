@@ -77,7 +77,7 @@ metadata {
                 input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:3000", defaultValue:3000, range: 750..30000, width:5)
                 input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:2", defaultValue:2, range: 0..10, width:2)
             if (lanScenes) {
-            input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("DevType")+".json")    
+            input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("deviceModel")+".json")    
                 } 
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
@@ -156,15 +156,12 @@ def sceneLoad() {
     
     if (lanControl && lanScenes) { 
         getDevType()
-        retrieveScenes() 
-        retrieveSnapshot()
-    } else if ((lanControl == false) || (lanControl && lanScenes == false) || (lanControl == null)) { 
-        retrieveScenes2()
-        retrieveStateData()
-//        if (state.diyScene.isEmpty()) {
-//            if (debugLog) {log.warn "configure(): retrieveScenes2() returned empty diyScenes list. Running retrieveDIYScenes() to get list from API"}
-            retrieveDIYScenes()
-//        }
+        retrieveScenes() //govee_lan_apilibrary file
+        retrieveSnapshot() //Govee_Coud_API Retrieve Cloud snapshots
+    } else { 
+        retrieveScenes2() //Govee_Coud_API Retrieve cloud Scenes
+        retrieveStateData() //Govee_Coud_API Retrieve State Values  Includes Snapshots.
+        retrieveDIYScenes() //Govee_Coud_API Get Cloud DIY Scenes
     }
 }
 
