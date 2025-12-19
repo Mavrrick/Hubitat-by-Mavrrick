@@ -4,6 +4,7 @@
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
   "releaseNotes": "",
+  "betaReleaseNotes": "",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
@@ -454,6 +455,7 @@
     }
   ]
 }
+
 
 
 
