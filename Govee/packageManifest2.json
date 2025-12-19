@@ -11,7 +11,8 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/bundle/Govee_Integration_v2.zip",
       "required": true,
-      "version": "2.1.29"
+      "version": "2.1.29",
+      "betaVersion": "2.1.30"
     }
   ],
   "apps": [
@@ -452,5 +453,6 @@
     }
   ]
 }
+
 
 
