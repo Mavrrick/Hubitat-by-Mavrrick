@@ -14,7 +14,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/bundle/Govee_Integration_v2.zip",
       "required": true,
       "version": "2.1.29",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.1.49"
     }
   ],
   "apps": [
@@ -28,7 +28,7 @@
       "oauth": false,
       "primary": false,
       "version": "2.1.48",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.1.49"
     }
   ],
   "drivers": [
@@ -468,6 +468,7 @@
     }
   ]
 }
+
 
 
 
