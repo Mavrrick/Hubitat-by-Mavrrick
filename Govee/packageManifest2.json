@@ -3,7 +3,6 @@
   "author": "Mavrrick",
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
-  "version": "2.1.47",
   "releaseNotes": "**Beta**\n[Version 2.2]\n- ONLY Installed  if you have pre-release versions enabled in HPM\n- Check Community thread for details\n- This early release includes retry logic for LAN API devices\n\nStable Release\n[version 2.1.x]\n\n",
   "bundles": [
     {
@@ -468,6 +467,7 @@
     }
   ]
 }
+
 
 
 
