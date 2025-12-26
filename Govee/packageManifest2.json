@@ -4,6 +4,7 @@
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
   "releaseNotes": "**Beta**\n[Version 2.2]\n- ONLY Installed  if you have pre-release versions enabled in HPM\n- Check Community thread for details\n- This early release includes retry logic for LAN API devices\n\nStable Release\n[version 2.1.x]\n\n",
+  "version": "2.1.47",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
@@ -467,6 +468,7 @@
     }
   ]
 }
+
 
 
 
