@@ -127,6 +127,18 @@ def setLevel(float v,duration = 0) {
     cloudSetLevel( v, 0)
 }
 
+def  setColor(value) {
+    cloudSetColor (value)
+}
+
+def  setHue(h) {
+    cloudSetHue (h)
+}
+
+def setSaturation(s) {
+    cloudSetSaturation (s)
+}
+
 def nightLighton_off(evt) {
     log.debug "nightLighton_off(): Processing Night Light command. ${evt}"
         if (device.currentValue("cloudAPI") == "Retry") {
