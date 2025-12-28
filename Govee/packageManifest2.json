@@ -3,7 +3,7 @@
   "author": "Mavrrick",
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
-  "releaseNotes": "**Beta**\n[Version 2.1.49]\n- ONLY Installed  if you have pre-release versions enabled in HPM\n- Check Community thread for details\n- This early release includes retry logic for LAN API devices\n\nStable Release\n[version 2.1.48]\n\n",
+  "releaseNotes": "**Beta**\n[Version 2.2.0]\n- ONLY Installed  if you have pre-release versions enabled in HPM\n- Check Community thread for more details\n- Current same as stable release\n\nStable Release\n[version 2.2.0]\n- Includes retry logic for LAN API devices\n- Adjustments to to the UI for Scene retrieval",
   "version": "2.2.0",
   "bundles": [
     {
@@ -374,3 +374,4 @@
     }
   ]
 }
+
