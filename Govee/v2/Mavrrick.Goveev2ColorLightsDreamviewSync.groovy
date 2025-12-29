@@ -123,6 +123,7 @@ def initialize(){
         }
     initDefaultValues()
     unschedule()
+    if (lanControl) resetApiStatus()
     retrieveIPAdd()
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
