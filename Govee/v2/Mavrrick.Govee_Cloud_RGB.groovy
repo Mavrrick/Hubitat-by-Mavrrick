@@ -95,8 +95,9 @@ def cloudSetEffect (effectNo) {
     effectNumber = effectNo.toString()
     if (debugLog) {log.debug ("setEffect(): Keyset list  ${state.scenes.keySet()}") }
     if (state.scenes.containsKey(effectNumber)) {
-        if (debugLog) {log.debug ("setEffect(): Device found in built in scenes. ") }
-        sendCommand("lightScene", effectNo,"devices.capabilities.dynamic_scene")
+        if (debugLog) {log.debug ("setEffect(): Device found in built in scenes. Building command") }
+        parms = '{"paramId": '+state.scenes[effectNumber].paramId+', "id": '+effectNumber+'}'
+        sendCommand("lightScene", parms,"devices.capabilities.dynamic_scene")
     } else {
         if (debugLog) {log.debug ("setEffect(): Effect Number not found in standard list sending as DIY ") }
         cloudActivateDIY (effectNo)        

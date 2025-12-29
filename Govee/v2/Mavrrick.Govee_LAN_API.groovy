@@ -6,7 +6,7 @@ library (
  namespace: "Mavrrick",
  documentationLink: "http://www.example.com/"
 )
-
+ 
 
 @Field static Map<String, String> apiStatus = [:]
 //@Field static Map<String, String> statusUpd = [:]
@@ -21,18 +21,15 @@ def lanOn() {
         if (debugLog) log.info "lanOn(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
         apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingOn"
         sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-        runInMillis(250, 'devStatus')
-        runInMillis(350, 'lanOnVal')
+        runInMillis(250, 'devStatus', [misfire:"ignore"])
+        runInMillis(350, 'lanOnVal', [misfire:"ignore"])
     } else {
         if (descLog) log.info "lanOn(): ${device.label} is unable to turn on. API Busy ${getApiStatus("apistatus")}"
     }
 }
 
 def lanOnVal() {
-        while (getApiStatus("statusUpd") != "ready") {
-            if (debugLog) log.info "lanOnVal(): Waiting for Device Status to return."
-            pauseExecution(100)
-        }
+        devStatusWait()
         pauseExecution(250)
         if (device.currentValue("switch", true) == "on") { 
             if (descLog) log.info "${device.label} was turned on. No retry needed"
@@ -56,18 +53,15 @@ def lanOff() {
         if (debugLog) log.info "lanOff(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
         apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingOff"
         sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-        runInMillis(250, 'devStatus')
-        runInMillis(350, 'lanOffVal')
+        runInMillis(250, 'devStatus', [misfire:"ignore"])
+        runInMillis(350, 'lanOffVal', [misfire:"ignore"])
     } else {
         if (descLog) log.info "lanOff(): ${device.label} is unable to turn off. API Busy ${getApiStatus("apistatus")}"
     }
 } 
 
 def lanOffVal() {
-        while (getApiStatus("statusUpd") != "ready") {
-            if (debugLog) log.info "lanOffVal(): Waiting for Device Status to return."
-            pauseExecution(100)
-        }
+        devStatusWait()
         pauseExecution(250)
         if (device.currentValue("switch", true) == "off") {
             if (descLog) log.info "${device.label} was turned off. No retry needed"
@@ -83,18 +77,17 @@ def lanOffVal() {
             }
         }
 }
-
+ 
 def lanCT(value, level, transitionTime) {
     int intvalue = value.toInteger()
     if (getApiStatus("apistatus") == "ready") {
         if (debugLog) log.info "lanCT(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
         apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingCT"
         sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null) lanSetLevel(level,transitionTime);
+        if (level != null && level >= 1) lanSetLevel(level,transitionTime);
         sendEvent(name: "colorMode", value: "CT")
-        runInMillis(250, 'devStatus')
-        
-        runInMillis(350, 'lanCTVal', [data: intvalue])
+        runInMillis(250, 'devStatus', [misfire:"ignore"])        
+        runInMillis(350, 'lanCTVal', [data: intvalue, misfire:"ignore"])
         if (effectNum != 0){
             sendEvent(name: "effectNum", value: 0)
             sendEvent(name: "effectName", value: "None") 
@@ -107,10 +100,7 @@ def lanCT(value, level, transitionTime) {
 
 def lanCTVal(intvalue) {
     if (descLog) log.info "lanCTVal(): Validating CT  was changed to ${intvalue}K."
-    while (getApiStatus("statusUpd") != "ready") {
-            if (debugLog) log.info "lanCT(): Waiting for Device Status to return."
-            pauseExecution(100)
-        }
+        devStatusWait()
         pauseExecution(250)
         if (device.currentValue("colorTemperature", true) == intvalue) {
             if (descLog) log.info "lanCTVal(): ${device.label} color temperature was changed to ${intvalue}K."
@@ -146,10 +136,12 @@ def lanSetLevel(float v,duration = 0){
     } 
     if (duration>0){
         int intduration = duration.toInteger()
-    runInMillis(500, 'devStatus')
+        runInMillis(500, 'devStatus', [misfire:"ignore"])
         fade(intv,intduration)
     }
-    else {
+    else if (intv == 0 && duration == 0) {
+        lanOff()
+    } else {
         lanSetLevel2(intv)
     }
 }
@@ -159,18 +151,15 @@ def lanSetLevel2(int v){
     if (getApiStatus("apistatusLevel") == "ready") {
         apiStatus."${device.deviceNetworkId}"["apistatusLevel"] = "pendingLevel"
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        runInMillis(250, 'devStatus')
-        runInMillis(350, 'lanSetLevel2Val', [data: v])
+        runInMillis(250, 'devStatus', [misfire:"ignore"])
+        runInMillis(350, 'lanSetLevel2Val', [data: v, misfire:"ignore"])
     } else {
-        if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${getApiStatus("apistatus")}"
+        if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${getApiStatus("apistatusLevel")}"
     }
 }
 
 def lanSetLevel2Val(int v) {
-    while (getApiStatus("statusUpd") != "ready") {
-            if (debugLog) log.info "lanSetLevel2Val(): Waiting for Device Status to return."
-            pauseExecution(100)
-        }
+        devStatusWait()
         pauseExecution(250)
         if (device.currentValue("level", true) == v) {
             if (debugLog) log.info "lanSetLevel2Val(): ${device.label} was changed to ${v}."
@@ -224,8 +213,8 @@ def lanSetHsb(h,s,b) {
             lanSetLevel2(100)
         }
         sendEvent(name: "colorMode", value: "RGB")
-        runInMillis(250, 'devStatus')
-        runInMillis(350, 'lanSetHsbVal', [data: hsbcmd])
+        runInMillis(250, 'devStatus', [misfire:"ignore"])
+        runInMillis(350, 'lanSetHsbVal', [data: hsbcmd, misfire:"ignore"])
         if (effectNum != 0){
             sendEvent(name: "effectNum", value: 0)
             sendEvent(name: "effectName", value: "None") 
@@ -238,10 +227,7 @@ def lanSetHsb(h,s,b) {
 def lanSetHsbVal(h, s, b) {
     hsbcmd = [h,s,b]
     if (debugLog) log.info "lanSetHsbVal():New Hue = ${h} Saturation = ${s}, Brightness = ${b}: Curent Hue ${device.currentValue("hue", true)} Saturation ${device.currentValue("saturation", true)} }."
-    while (getApiStatus("statusUpd") != "ready") {
-        if (debugLog) log.info "lanSetHsbVal(): Waiting for Device Status to return."
-            pauseExecution(100)
-        }
+        devStatusWait()
         pauseExecution(250)
         if (debugLog) log.info "lanSetHsbVal():New Hue = ${h} Saturation = ${s}, Brightness = ${b}: Curent Hue ${device.currentValue("hue", true)} Saturation ${device.currentValue("saturation", true)} }."
         if (Math.abs(device.currentValue("hue", true) - h) <= 1  && Math.abs(device.currentValue("saturation", true) - s) <= 1 ) {
@@ -305,7 +291,7 @@ def fadeDown( int curLevel, int level, fadeInt, fadeRep) {
     } else {
         log.debug "fadeDown(): Fade to ${v}"
             sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-            runInMillis(500, 'devStatus')
+//            runInMillis(500, 'devStatus')
             def int delay = fadeRep
             if (debugLog) {log.debug "fadeDown(): delay ia ${delay}"}
             if (debugLog) {log.debug "fadeDown(): executing loop to fadedown() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
@@ -327,7 +313,7 @@ def fadeUp( int curLevel, int level, fadeInt, fadeRep) {
         if (debugLog) {log.debug "fadeUp(): delay ia ${delay}"}
         if (debugLog) {log.debug "fadeUp(): executing loop to fadeup() with values curLevel ${v}, level ${level}, fadeInt ${fadeInt}, fadeRep ${fadeRep}"}
         sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        runInMillis(500, 'devStatus')
+//        runInMillis(500, 'devStatus')
         runInMillis(delay, fadeUp, [data:[v ,level, fadeInt,fadeRep]])
     }
 } 
@@ -370,12 +356,9 @@ def lanRetryLevel(value) {
         while (device.currentValue("level", true) != intvalue) { 
             if (debugLog) log.info "lanRetryLevel(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("brightness",intvalue, "level"))
-            runInMillis(250, 'devStatus')
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
             pauseExecution(350)
-            while (getApiStatus("statusUpd") != "ready") {
-                if (debugLog) log.info "lanRetryLevel(): Attempting retry, Waiting for Device to respond."
-                pauseExecution(100)
-            }
+            devStatusWait()
             count++
             if (count == retryLimit) {
                     if (descLog) log.info "lanRetryLevel(): Max retry reached, resetting API state."
@@ -393,22 +376,15 @@ def lanRetryLevel(value) {
 def lanRetry(value) {
     int count = 0
     retryLimit = maxRetry ?: 2
-/*    while (getApiStatus("statusUpd") != "ready") {
-        if (debugLog) log.info "lanRetry(): Waiting for device data to be returned before continuing with retry."
-        pauseExecution(100)
-    } */
     if (getApiStatus("apistatus") == "retryOn") {
         if (descLog) log.info "Starting retry for ${getApiStatus("apistatus")}."
         if (debugLog) log.info "lanRetry(): ${device.label} apiStatus is ${getApiStatus("apistatus")}." 
         while (device.currentValue("switch", true) != "on") { 
             if (debugLog) log.info "lanRetry(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-            runInMillis(250, 'devStatus')
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
             pauseExecution(350)
-            while (getApiStatus("statusUpd") != "ready") {
-                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
-                pauseExecution(100)
-            }
+            devStatusWait()
             count++
                 if (count == retryLimit) {
                     if (descLog) log.info "lanRetry(): Max retry reached, resetting API state."
@@ -426,12 +402,9 @@ def lanRetry(value) {
         while (device.currentValue("switch", true) != "off") { 
             if (debugLog) log.info "lanRetry(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-            runInMillis(250, 'devStatus')
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
             pauseExecution(350)
-            while (getApiStatus("statusUpd") != "ready") {
-                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device status to respond."
-                pauseExecution(100)
-            }
+            devStatusWait()
             count++
             if (count == retryLimit) {
                     if (descLog) log.info "lanRetry(): Max retry reached, resetting API state."
@@ -450,12 +423,9 @@ def lanRetry(value) {
         while (device.currentValue("colorTemperature", true) != intvalue) { 
             if (debugLog) log.info "lanRetryCT(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("colorwc",intvalue, "ct"))
-            runInMillis(250, 'devStatus')
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
             pauseExecution(350)
-            while (getApiStatus("statusUpd") != "ready") {
-                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
-                pauseExecution(100)
-            }
+            devStatusWait()
             count++
             if (count == retryLimit) {
                     if (descLog) log.info "lanRetry(): Max retry reached, resetting API state."
@@ -484,12 +454,9 @@ def lanRetry(value) {
         while (Math.abs(device.currentValue("hue", true) - h) > 1 || Math.abs(device.currentValue("saturation", true) - s) > 1 ) { 
             if (debugLog) log.info "lanRetry(): Retry attempt ${count} ."
             sendCommandLan(GoveeCommandBuilder("colorwc",rgbmap,"rgb"))
-            runInMillis(250, 'devStatus')
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
             pauseExecution(350)
-            while (getApiStatus("statusUpd") != "ready") {
-                if (debugLog) log.info "lanRetry(): Attempting retry, Waiting for Device to respond."
-                pauseExecution(100)
-            }
+            devStatusWait()
             count++
             if (count == retryLimit) {
                     if (descLog) log.info "lanRetry(): Max retry reached, resetting API state."
@@ -845,27 +812,41 @@ def loadDIYFile() {
 def devStatus() {
     retryLimit = maxRetry ?: 2
     timeout = retryInt ?: 3000
-    if (debugLog) {log.info("devStatus() current statusUpd value is  ${getApiStatus("statusUpd")}, retry interval is ${timeout}, Max Retries are ${retryLimit}")}
+    if (debugLog) {log.info("devStatus(): Retrieving  current device status.")}
     if (getApiStatus("statusUpd") == "ready") {
         apiStatus."${device.deviceNetworkId}"["statusUpd"] = "active"
         apiStatus."${device.deviceNetworkId}"["statusUpdCount"] = 0
         sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
         if (retryLimit > 0) {
-         runInMillis(timeout, 'devStatusRetry') 
+         runInMillis(timeout, 'devStatusRetry', [misfire:"ignore"]) 
         }
     }  else {
         if (debugLog) {log.info("devStatus() status reqeusted already requested and waiting on response")}
     }  
 }
 
+void devStatusWait() {
+    int count = 0
+    while (getApiStatus("statusUpd") != "ready" && count < 31) {
+        if (debugLog) log.info "devStatusWait(): Waiting for Device Status to return."
+        pauseExecution(100)
+        count++
+        if (count == 30) {
+            if (descLog) log.info "devStatusWait(): Max wait for Device status reached. Resetting Device Status state to ready"
+            apiStatus."${device.deviceNetworkId}"["statusUpd"] = "ready"
+            break           
+       }
+    }
+}
+
 def devStatusRetry() {
     retryLimit = maxRetry ?: 2
     timeout = retryInt ?: 3000
     apiStatus."${device.deviceNetworkId}"["statusUpdCount"] = getApiStatus("statusUpdCount").toInteger() + 1
-    if (debugLog) {log.info("devStatusRetry() current statusUpd value is  ${getApiStatus("statusUpd")}, retry interval is ${timeout}, Max Retries are ${retryLimit}, Current Attempt is ${getApiStatus("statusUpdCount")}")}
+    if (debugLog) {log.info("devStatusRetry(): Entering Device status Retry, The retry interval is ${timeout}, Max Retries are ${retryLimit}, Current Attempt is ${getApiStatus("statusUpdCount")}")}
     if (getApiStatus("statusUpd") == "active" && getApiStatus("statusUpdCount").toInteger() <= retryLimit ) {
         sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
-        runInMillis(timeout, 'devStatusRetry')        
+        runInMillis(timeout, 'devStatusRetry', [misfire:"ignore"])        
     }  else { 
         if (debugLog) {log.info("devStatusRetry() Max Retries reached. ")}
         apiStatus."${device.deviceNetworkId}"["statusUpd"] = "ready"
@@ -980,4 +961,17 @@ def getApiStatus(value) {
         apiStatus[dId] = tmp
     }
     return apiStatus."${dId}"[value]
+}
+
+void resetApiStatus() {
+    if (debugLog) {log.info("resetApiStatus(): Reseting API status")}
+    def dId = device.deviceNetworkId;
+    
+    tmp = [:]
+    tmp["apistatus"] = "ready"
+    tmp["statusUpd"] = "ready"
+    tmp["apistatusLevel"] = "ready"
+    tmp["statusUpdCount"] = 0
+    apiStatus[dId] = tmp
+    
 }

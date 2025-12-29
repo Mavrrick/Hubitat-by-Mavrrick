@@ -88,6 +88,7 @@ def initialize(){
     if(device.getDataValue("retrievable") =='true'){
         if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
         unschedule()
+        resetApiStatus()
         if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
