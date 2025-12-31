@@ -77,7 +77,7 @@ def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
     lanInitDefaultValues()
     unschedule()
-	resetApiStatus()
+	if (lanControl) resetApiStatus()
     if (debugLog) runIn(1800, logsOff)
 //    if (pollRate > 0) runIn(pollRate,poll)
     if (pollRate > 0) {
