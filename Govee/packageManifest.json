@@ -26,7 +26,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/Govee%20Lights_Plugs_Switches%20Driver",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "e222310a-5f06-4ab7-865a-de901df4c17c",
@@ -35,7 +35,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_Driver",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "82da81d1-097a-4b64-ba3f-e8773fc69959",
@@ -44,7 +44,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_plug_switch_driver",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "d03d22f5-5c4b-4b46-8db8-8e94abd6cafd",
@@ -53,7 +53,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_white_light_driver",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "3ecd724a-2248-4ae4-87a7-8b349737bd26",
@@ -62,7 +62,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_heating_app_driver",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "f1a59218-a6ea-4403-9119-54243ae01a98",
@@ -71,7 +71,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_light",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "c5661c46-80b5-4273-afce-e2e6a054289b",
@@ -80,7 +80,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_light_whiteNoise",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "80423110-a9f5-4292-9689-e7500e8b691f",
@@ -89,7 +89,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_manual_lan_driver",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     },
     {
       "id": "cdfa06fa-0956-48f7-aa32-e42c368fe8c7",
@@ -98,7 +98,7 @@
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_galaxy_projector",
       "required": true
       "version": "1.0.52",
-      "betaVersion": "1.0.53",
+      "betaVersion": "1.0.53"
     }
   ]
 }
