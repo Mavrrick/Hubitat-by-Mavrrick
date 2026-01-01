@@ -1205,20 +1205,10 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
             helper: "addMQTTDeviceHelper"
         ],
 
-        // Heater Devices
+        // Humidifier Devices
         [
-            condition: { dev -> dev.type == "devices.types.heater" && (dev.sku == "H7131" || dev.sku == "H7134") },
-            driver: "Govee v2 H7131 Space Heater",
-            helper: "addMQTTDeviceHelper"
-        ],
-        [
-            condition: { dev -> dev.type == "devices.types.heater" && dev.sku == "H7133" },
-            driver: "Govee v2 H7133 Space Heater Pro",
-            helper: "addMQTTDeviceHelper"
-        ],
-        [
-            condition: { dev -> dev.type == "devices.types.heater" },
-            driver: "Govee v2 Heating Appliance Driver",
+            condition: { dev -> dev.type == "devices.types.humidifier" },
+            driver: "Govee v2 Humidifier Driver",
             helper: "addMQTTDeviceHelper"
         ],
 

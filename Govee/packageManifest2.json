@@ -3,7 +3,7 @@
   "author": "Mavrrick",
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
-  "releaseNotes": "**Beta**\n[Version 2.2.2]\n- ONLY Installed  if you have pre-release versions enabled in HPM\n- Check Community thread for more details\n- Removed ability to install Govee Space Heaters\n- Fixed code to properly install Humidifier devices\n\nStable Release\n[version 2.2.1]\n- Includes retry logic for LAN API devices.\n- Adjustments to to the UI for Scene retrieval.\n- Adjusted default value for Lan Scne file to use device model instead of Device Type.\n- Removed Curranted Lan Scenes files from default download.\n- Adjust light Device drivers to default to Cloud API under all circumstances were LAN API was not expicitly set.\n- Added Logging to indicate Cloud API Processing repsonse time.\n- Added Timeout value of 60 Seconds for Cloud API to prevent hub failures.\n- Fixed EffectNum and EffectName Values populating properly after fixing SetEffect command",
+  "releaseNotes": "**Beta**\n[Version 2.2.2]\n- ONLY Installed  if you have pre-release versions enabled in HPM\n- Check Community thread for more details\n- Current same as stable release\n\nStable Release\n[version 2.2.2]\n- Removed ability to install Govee Space Heaters\n- Fixed code to properly install Humidifier devices",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
@@ -26,7 +26,7 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.2.1",
+      "version": "2.2.2",
       "betaVersion": "2.2.2"
     }
   ],
