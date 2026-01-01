@@ -11,6 +11,7 @@
       "name": "Govee Integration v1",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_HE_integration",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_HE_integration",
       "required": true,
       "version": "1.0.52",
       "betaVersion": "1.0.53",
@@ -24,6 +25,7 @@
       "name": "Govee Lights, Plugs, and Switches Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/Govee%20Lights_Plugs_Switches%20Driver",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/Govee%20Lights_Plugs_Switches%20Driver",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -33,6 +35,7 @@
       "name": "Govee Appliance Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_Driver",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_appliance_Driver",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -42,6 +45,7 @@
       "name": "Govee Plugs and Switches Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_plug_switch_driver",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_plug_switch_driver",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -51,6 +55,7 @@
       "name": "Govee White Light Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_white_light_driver",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_white_light_driver",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -60,6 +65,7 @@
       "name": "Govee Heating Appliance Driver",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_heating_app_driver",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_heating_app_driver",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -69,6 +75,7 @@
       "name": "Govee Appliance Driver with Lights",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_light",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_appliance_light",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -78,6 +85,7 @@
       "name": "Govee Appliance Driver with Lights and WhitenNoise",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_appliance_light_whiteNoise",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_appliance_light_whiteNoise",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -87,6 +95,7 @@
       "name": "Govee Manual LAN API Device",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_manual_lan_driver",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_manual_lan_driver",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
@@ -96,6 +105,7 @@
       "name": "Govee Galaxy Projector",
       "namespace": "Mavrrick",
       "location": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/main/Govee/v1/govee_galaxy_projector",
+      "betaLocation": "https://raw.githubusercontent.com/Mavrrick/Hubitat-by-Mavrrick/beta/Govee/v1/govee_galaxy_projector",
       "required": true
       "version": "1.0.52",
       "betaVersion": "1.0.53"
