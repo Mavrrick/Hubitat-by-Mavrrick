@@ -8,7 +8,7 @@
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
-      "name": "Govee_Integration_v2.zip",
+      "name": "Govee_Integration_v2",
       "namespace": "Mavrrick",
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/bundle/Govee_Integration_v2.zip",
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/bundle/Govee_Integration_v2.zip",
@@ -374,6 +374,7 @@
     }
   ]
 }
+
 
 
 
