@@ -14,7 +14,8 @@ metadata {
 	definition(name: "Govee v2 Device Manager", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize" 
         attribute "connectionState", "string"
-        attribute "msgCount", "integer" 
+        attribute "msgCount", "integer"
+		attribute "avgTime", "number"
         command "allSceneReload"
         command "LookupLanAPIDevices"
         command "installNewDevices"
