@@ -3,7 +3,7 @@
   "author": "Mavrrick",
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
-  "releaseNotes": "Stable Release\n[version 2.2.2]\n- Addition of Retry Logic",
+  "releaseNotes": "Stable Release\n[version 2.2.4]\n- Improvements in Retry Logic for Device Status to enable full use of the number of retry attempts configured",
   "betaReleaseNotes": "**Beta**\n[Version 2.2.4]\n- Check Community thread for more details\n- Improvements in Retry Logic for Device Status to enable full use of the number of retry attempts configured",
   "bundles": [
     {
@@ -374,4 +374,5 @@
     }
   ]
 }
+
 
