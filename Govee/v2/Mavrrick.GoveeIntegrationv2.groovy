@@ -151,6 +151,14 @@ def mainPage() {
         }
         child = getChildDevices() + mqttDevice.getChildDevices()
         childDNI = child.deviceNetworkId
+        childList = [] as List
+        child.forEach {
+            if (!it.label) {
+                childList.add(it.deviceName)
+            } else {
+                childList.add(it.label)
+            }
+        }
     }
 
     def int childCount = child.size()
@@ -176,7 +184,8 @@ def mainPage() {
         }
         section('<b>Current Integrated Device Information</b>') {
             paragraph "There are <mark>${childCount}</mark> devices integrated"
-            paragraph "Your current integrated devices are ${child.label}"
+//            paragraph "Your current integrated devices are ${child.label}"
+            paragraph "Your current integrated devices are ${childList}"
             if (settings.APIKey != null) {
                 if (childCount > 0) { def maxPoll = 86400 / ((10000 - (50 * childCount)) / childCount).toDouble()
                 maxPoll = maxPoll.round(1)
