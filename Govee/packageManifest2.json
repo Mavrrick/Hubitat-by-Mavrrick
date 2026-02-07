@@ -4,7 +4,7 @@
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
   "releaseNotes": "Stable Release\n[version 2.2.4]\n- Improvements in Retry Logic for Device Status to enable full use of the number of retry attempts configured",
-  "betaReleaseNotes": "**Beta**\n[Version 2.2.4]\n- Check Community thread for more details\n- Improvements in Retry Logic for Device Status to enable full use of the number of retry attempts configured",
+  "betaReleaseNotes": "**Beta**\n[Govee Integration v2 App Ver 2.2.3]\n- Check Community thread for more details\n- Cleaned up some incorrect logging",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
@@ -28,7 +28,7 @@
       "oauth": false,
       "primary": false,
       "version": "2.2.2",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     }
   ],
   "drivers": [
@@ -374,5 +374,6 @@
     }
   ]
 }
+
 
 
