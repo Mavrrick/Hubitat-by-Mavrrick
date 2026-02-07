@@ -138,7 +138,7 @@ def mainPage() {
     if (state.isInstalled == true) {     
         mqttDevice = getChildDevice('Govee_v2_Device_Manager')
         if (mqttDevice == null) {
-            logger("goveeDevAdd()  configuring Govee_v2_Device_Manager", 'info')
+            logger("mainPage()  configuring Govee_v2_Device_Manager", 'info')
             addChildDevice('Mavrrick', 'Govee v2 Device Manager', "Govee_v2_Device_Manager" , location.hubs[0].id, [
                 'name': 'Govee v2 Device Manager',
                 'label': 'Govee v2 Device Manager',
@@ -153,11 +153,7 @@ def mainPage() {
         childDNI = child.deviceNetworkId
         childList = [] as List
         child.forEach {
-            if (!it.label) {
-                childList.add(it.deviceName)
-            } else {
-                childList.add(it.label)
-            }
+            childList.add(it)
         }
     }
 
