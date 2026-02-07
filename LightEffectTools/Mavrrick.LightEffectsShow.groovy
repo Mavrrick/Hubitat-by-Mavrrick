@@ -334,14 +334,14 @@ def initialize() {
         addInUseGlobalVar(hvTriggerVar)
         subscribe(location, "variable:${hvTriggerVar}", switchAction)
     }
-    if (datetimeTrigger) {
+/*    if (datetimeTrigger) {
         if (startTimeSelection == '1') {
             subscribe(location, "sunriseTime", sunriseSunsetEvent)
         } else if (startTimeSelection == '2') {
             subscribe(location, "sunsetTime", sunriseSunsetEvent)
         } else {
         }
-    } 
+    } */
         scheduleByDate()
 }
 
