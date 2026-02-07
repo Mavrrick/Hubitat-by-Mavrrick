@@ -1100,7 +1100,7 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
     def mqttDevice = getChildDevice('Govee_v2_Device_Manager')
 
     logger("goveeDevAdd() drivers detected are ${drivers}", 'debug')
-    logger("goveeDevAdd() Children DNI  ${childDNI} MQTT device DNI ${mqttChildredDNI}", 'debug') // Fix mqttChildredDNI if it's undefined
+    logger("goveeDevAdd() Children DNI  ${childDNI}", 'debug') // Fix mqttChildredDNI if it's undefined
     logger("goveeDevAdd() $devices are selected to be integrated", 'info')
     logger('goveeDevAdd() DEVICE INFORMATION', 'info')
 
