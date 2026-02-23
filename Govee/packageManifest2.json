@@ -27,7 +27,7 @@
       "required": true,
       "oauth": false,
       "primary": false,
-      "version": "2.2.2",
+      "version": "2.2.3",
       "betaVersion": "2.2.3"
     }
   ],
@@ -374,6 +374,7 @@
     }
   ]
 }
+
 
 
 
