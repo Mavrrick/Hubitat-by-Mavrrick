@@ -138,7 +138,7 @@ def mainPage() {
     if (state.isInstalled == true) {     
         mqttDevice = getChildDevice('Govee_v2_Device_Manager')
         if (mqttDevice == null) {
-            logger("goveeDevAdd()  configuring Govee_v2_Device_Manager", 'info')
+            logger("mainPage()  configuring Govee_v2_Device_Manager", 'info')
             addChildDevice('Mavrrick', 'Govee v2 Device Manager', "Govee_v2_Device_Manager" , location.hubs[0].id, [
                 'name': 'Govee v2 Device Manager',
                 'label': 'Govee v2 Device Manager',
@@ -151,6 +151,10 @@ def mainPage() {
         }
         child = getChildDevices() + mqttDevice.getChildDevices()
         childDNI = child.deviceNetworkId
+        childList = [] as List
+        child.forEach {
+            childList.add(it)
+        }
     }
 
     def int childCount = child.size()
@@ -176,7 +180,8 @@ def mainPage() {
         }
         section('<b>Current Integrated Device Information</b>') {
             paragraph "There are <mark>${childCount}</mark> devices integrated"
-            paragraph "Your current integrated devices are ${child.label}"
+//            paragraph "Your current integrated devices are ${child.label}"
+            paragraph "Your current integrated devices are ${childList}"
             if (settings.APIKey != null) {
                 if (childCount > 0) { def maxPoll = 86400 / ((10000 - (50 * childCount)) / childCount).toDouble()
                 maxPoll = maxPoll.round(1)
@@ -1100,7 +1105,7 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
     def mqttDevice = getChildDevice('Govee_v2_Device_Manager')
 
     logger("goveeDevAdd() drivers detected are ${drivers}", 'debug')
-    logger("goveeDevAdd() Children DNI  ${childDNI} MQTT device DNI ${mqttChildredDNI}", 'debug') // Fix mqttChildredDNI if it's undefined
+    logger("goveeDevAdd() Children DNI  ${childDNI}", 'debug') // Fix mqttChildredDNI if it's undefined
     logger("goveeDevAdd() $devices are selected to be integrated", 'info')
     logger('goveeDevAdd() DEVICE INFORMATION', 'info')
 
