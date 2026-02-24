@@ -13,7 +13,7 @@ import groovy.json.JsonSlurper
 import java.util.Random 
 
 metadata {
-	definition(name: "Govee v2 Humidifier Driver", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "Govee v2 Dehumidifier Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		capability "Actuator"
         capability "Initialize"
@@ -28,7 +28,7 @@ metadata {
         attribute "pollInterval", "number"        
         attribute "cloudAPI", "string"
         attribute "online", "string"        
-        attribute "lackWaterEvent", "string"
+        attribute "waterFullEvent", "string"
         
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'Manual',      'Custom',       'Auto'], description: "Mode of device"],
                           [name: "gearMode", type: "NUMBER", description: "When Mode is Manual sets hudifier speed. When set to Auto sets desired Humidity"]]
@@ -148,8 +148,7 @@ def off() {
 }
 
 def desiredHumidity(value) {
-    sendCommand("humidity", value, "devices.capabilities.range")
-        
+    sendCommand("humidity", value, "devices.capabilities.range")        
 }
 
 def workingMode(mode, gear=0){

@@ -362,7 +362,7 @@ def lanRetryLevel(value) {
             count++
             if (count == retryLimit) {
                     if (descLog) log.info "lanRetryLevel(): Max retry reached, resetting API state."
-                    apiStatus."${device.deviceNetworkId}"["apistatus"] = "ready"
+                    apiStatus."${device.deviceNetworkId}"["apistatusLevel"] = "ready"
                     break
                 }
            } 
@@ -827,11 +827,14 @@ def devStatus() {
 
 void devStatusWait() {
     int count = 0
-    while (getApiStatus("statusUpd") != "ready" && count < 31) {
+    retryLimit = maxRetry ?: 2
+    timeout = retryInt ?: 3000
+    int maxWaitInt = ((timeout*retryLimit)/100)
+    while (getApiStatus("statusUpd") != "ready" && count < (maxWaitInt+1)) {
         if (debugLog) log.info "devStatusWait(): Waiting for Device Status to return."
         pauseExecution(100)
         count++
-        if (count == 30) {
+        if (count == maxWaitInt) {
             if (descLog) log.info "devStatusWait(): Max wait for Device status reached. Resetting Device Status state to ready"
             apiStatus."${device.deviceNetworkId}"["statusUpd"] = "ready"
             break           

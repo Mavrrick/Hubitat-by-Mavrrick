@@ -1216,6 +1216,13 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
             driver: "Govee v2 Humidifier Driver",
             helper: "addMQTTDeviceHelper"
         ],
+        
+        // Dehumidifier Devices
+        [
+            condition: { dev -> dev.type == "devices.types.dehumidifier" },
+            driver: "Govee v2 Dehumidifier Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
 
         // Fan Devices
         [

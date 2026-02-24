@@ -95,6 +95,12 @@ private def sendCommand(String command, payload2, type) {
                     sendEvent(name: "level", value: payload2)
                     if (descLog) { log.info "${device.label} Level was set to ${payload2}"}
                     break
+                case (code == 200 && command == "humidity"): 
+                    sendEvent(name: "cloudAPI", value: "Success")
+//                    sendEvent(name: "switch", value: "on")
+                    sendEvent(name: "desiredHumidity", value: payload2)
+                    if (descLog) { log.info "${device.label} desired humidity was set to ${payload2}"}
+                    break
                 case (code == 200 && command == "colorTemperatureK"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
