@@ -289,7 +289,8 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2DehumidifierDriver.groovy",
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2DehumidifierDriver.groovy",
       "required": false,
-      "betaVersion": "2.2.0"
+      "version": "2.2.1",
+      "betaVersion": "2.2.1"
     },
     {
       "id": "df243cc0-09b1-4354-b42d-d246eafd4f59",
@@ -383,6 +384,7 @@
     }
   ]
 }
+
 
 
 
