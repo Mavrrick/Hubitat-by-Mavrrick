@@ -30,8 +30,8 @@ metadata {
         attribute "online", "string"        
         attribute "waterFullEvent", "string"
         
-        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'Manual',      'Custom',       'Auto'], description: "Mode of device"],
-                          [name: "gearMode", type: "NUMBER", description: "When Mode is Manual sets hudifier speed. When set to Auto sets desired Humidity"]]
+        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'Manual',      'Dryer',       'Auto'], description: "Mode of device"],
+                          [name: "gearMode", type: "NUMBER", description: "When Mode is Manual sets hudifier speed 1-3. When set to Auto sets desired Humidity 40-80"]]
         command "desiredHumidity", [[name: desiredHumidityValue, type: 'NUMBER', description: "Set the desired Humidity the device will try to maintain", range: 40-80]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         
@@ -158,8 +158,8 @@ def workingMode(mode, gear=0){
         case "Manual":
             modenum = 1;        
         break;
-        case "Custom":
-            modenum = 2;
+        case "Dryer":
+            modenum = 8;
             gear = 0;
         break;
         case "Auto":
