@@ -303,6 +303,16 @@
       "betaVersion": "2.2.0"
     },
     {
+      "id": "d7308773-0131-49a3-a7eb-ff1db104ba05",
+      "name": "Govee v2 Ice Maker Pro",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2IceMakerPro.groovy",
+      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2IceMakerPro.groovy",
+      "required": false,
+      "version": "2.2.0",
+      "betaVersion": "2.2.0"
+    },
+    {
       "id": "eb413449-f27d-428d-b8c8-a493f2e20bd6",
       "name": "Govee v2 Kettle Driver",
       "namespace": "Mavrrick",
