@@ -1,4 +1,4 @@
-// Hubitat driver for Govee H7122 Air Purifier
+// Hubitat driver for Govee H7129 Air Purifier
 // Version 2.0.0
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
@@ -14,16 +14,16 @@ import groovy.transform.Field
 @Field Map getFanLevel = [
     "off": 0
     ,"on": 1
+    ,"sleep": 10
 	,"low": 25
-    ,"medium-low": 35
 	,"medium": 50
-    ,"medium-high": 75
 	,"high": 100
+    ,"turbo": 125
     ,"auto": 150
 ]
 
 metadata {
-	definition(name: "Govee v2 H7122 Air Purifier", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "Govee v2 H7129 Air Purifier", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
 		capability "Actuator"
         capability "Initialize"
@@ -41,11 +41,10 @@ metadata {
         attribute "airQuality", "number"
         
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
-//        command "setFanSpeed", [[name: "gearMode", type: "ENUM", constraints: [ 'Low',      'Medium',       'High'], description: "Default speed of Fan using GearMode"]]
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
-        command "customSpeed", [[name: "gearMode", type: "NUMBER",  description: "Customized speed between 1 and 13", range: 1-13, required: true]]
         command "autoMode"
         command "sleepMode"
+        command "turboMode"
     }
 
 	preferences {		
@@ -70,15 +69,21 @@ def updated() {
     poll()
 }
 
-Installed // linital setup when device is installed.
+// linital setup when device is installed.
 def installed(){
-    retrieveStateData()
+    if (getChildDevices().size() == 0) {
+        if (device.getDataValue("commands").contains("nightlightToggle")) {
+            runIn(10, addLightDeviceHelper)
+        }
+    }
     sendEvent(name: "speed", value: "off")
-    poll()
+    retrieveStateData()
+    poll ()
 }
 
 Initialize // initialize devices upon install and reboot.
 def initialize() {
+    sendEvent(name: "supportedFanSpeeds", value: groovy.json.JsonOutput.toJson(getFanLevel.collect {k,v -> k}))
      if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
@@ -154,6 +159,13 @@ def sleepMode() {
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
+def turboMode() {
+    log.debug "sleep(): Processing Working Mode command 'turboMode' "
+    sendEvent(name: "cloudAPI", value: "Pending")
+    values = '{"workMode":7,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
+    sendCommand("workMode", values, "devices.capabilities.work_mode")
+}
+
 def setSpeed(fanspeed) {
     log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "
     sendEvent(name: "cloudAPI", value: "Pending")
@@ -162,17 +174,9 @@ def setSpeed(fanspeed) {
             gearmode = 1;
             gear = 1;
         break;
-        case "medium-low":
-            gearmode = 2;
-            gear = 3;
-        break;
         case "medium":
             gearmode = 1;
             gear = 2;
-        break;
-        case "medium-high":
-            gearmode = 2;
-            gear = 10;
         break;
         case "high":
             gearmode = 1;
@@ -181,7 +185,15 @@ def setSpeed(fanspeed) {
         case "auto":
             gearmode = 3;
             gear = 0;
-        break;       
+        break;
+        case "turbo":
+            gearmode = 7;
+            gear = 0;
+        break;
+        case "sleep":
+            gearmode = 5;
+            gear = 0;
+        break;
     }
     if (fanspeed == "on") {
         cloudOn()
@@ -189,6 +201,8 @@ def setSpeed(fanspeed) {
     } else if (fanspeed == "off") {
         cloudOff()
         sendEvent(name: "speed", value: fanspeed)
+    } else if (fanspeed == "auto") {
+        autoMode()
     } else {
         values = '{"workMode":'+gearmode+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
         sendCommand("workMode", values, "devices.capabilities.work_mode")
@@ -196,9 +210,17 @@ def setSpeed(fanspeed) {
     }
 }
 
-def customSpeed(gear) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'Custom' speed with a value of ${gear} "
-    sendEvent(name: "cloudAPI", value: "Pending")
-    values = '{"workMode":2,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
-    sendCommand("workMode", values, "devices.capabilities.work_mode")
+void cycleSpeed() {
+    cycleChange()
+}
+
+void cycleChange() {
+    Integer randomSpeed = Math.abs(new Random().nextInt() % 3) + 1
+//    String newSpeed = "speed "+randomSpeed
+        values = '{"workMode":1,"modeValue":'+randomSpeed+'}'  // This is the string that will need to be modified based on the potential values
+        sendCommand("workMode", values, "devices.capabilities.work_mode")
+        sendEvent(name: "speed", value: "cycle")    
+//    setSpeed(newSpeed)
+    runIn(cycleInterval, cycleChange)
+    
 }

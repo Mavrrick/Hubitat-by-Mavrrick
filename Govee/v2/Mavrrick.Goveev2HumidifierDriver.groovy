@@ -20,7 +20,8 @@ metadata {
         capability "Refresh"
         capability "Configuration"        
         
-		attribute "gear", "number"
+		attribute "desiredHumidity", "number"
+        attribute "gear", "number"
         attribute "mode", "number"
         attribute "modeValue", "number"
         attribute "modeDescription", "string"
@@ -31,7 +32,7 @@ metadata {
         
         command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'Manual',      'Custom',       'Auto'], description: "Mode of device"],
                           [name: "gearMode", type: "NUMBER", description: "When Mode is Manual sets hudifier speed. When set to Auto sets desired Humidity"]]
-        command "desiredHumidity", [[name: desiredHumidityValue, type: 'NUMBER', description: "Set the desired Humidity the device will try to maintain"]]
+        command "desiredHumidity", [[name: desiredHumidityValue, type: 'NUMBER', description: "Set the desired Humidity the device will try to maintain", range: 40-80]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         
     }
@@ -144,6 +145,11 @@ def on() {
 
 def off() {
         cloudOff()
+}
+
+def desiredHumidity(value) {
+    sendCommand("humidity", value, "devices.capabilities.range")
+        
 }
 
 def workingMode(mode, gear=0){
