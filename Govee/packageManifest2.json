@@ -4,7 +4,7 @@
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
   "releaseNotes": "Stable Release\n[Govee Integration v2 App Ver 2.2.3]\n- Modified way device list is created for main page to revert to Device Name if Device Label is blank\n- Cleaned up some incorrect logging\n[Govee Integration v2 Bundle Ver 2.2.5]\n- Improvements in Retry Logic for Device Status to enable full use of the number of retry attempts configured",
-  "betaReleaseNotes": "**Beta**\n- Check Community thread for more details\n[Govee Integration v2 Bundle Ver 2.2.5]\n- Incremented for HPM notification",
+  "betaReleaseNotes": "**Beta**\n[Govee Integration v2 App Ver 2.2.4]\n- Added support for Govee Dehumidifer Max H7151 device\n[Govee Bundle Library 2.2.6]\n- Enhancment to make Device Status routine nullsafe\n[Govee Humidifier Driver Ver 2.2.1]\n- Fixed ability to set desired Humidity\n[Govee Air Purifier drivers 2.2.1]\n- Fixed bug related to Auto in set speed command",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
@@ -14,7 +14,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/bundle/Govee_Integration_v2.zip",
       "required": true,
       "version": "2.2.4",
-      "betaVersion": "2.2.5"
+      "betaVersion": "2.2.6"
     }
   ],
   "apps": [
@@ -28,7 +28,7 @@
       "oauth": false,
       "primary": false,
       "version": "2.2.3",
-      "betaVersion": "2.2.3"
+      "betaVersion": "2.2.4"
     }
   ],
   "drivers": [
@@ -80,7 +80,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2AirPurifierDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "1ec7b9e2-3a61-47ba-9aec-81bce9ef582c",
@@ -90,7 +90,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7120AirPurifier.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "03b06646-b332-4fef-a3b7-5f61e6d40253",
@@ -100,7 +100,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7122AirPurifier.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "777845e7-13e4-451a-845d-978c67ac6097",
@@ -110,7 +110,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7123AirPurifier.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "0f6d06ea-87d5-4863-b030-c8e3b7a0f85e",
@@ -120,7 +120,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7126AirPurifier.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "ff35a8e6-d5a4-4cee-9456-f27c32459336",
@@ -130,7 +130,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H712CAirPurifier.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "c4272d50-779e-4568-ae33-624dc57d1cff",
@@ -280,7 +280,17 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2HumidifierDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
+    },
+    {
+      "id": "5f0dbb22-07e5-42d5-be13-09728fe68d33",
+      "name": "Govee v2 Dehumidifier Driver",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2DehumidifierDriver.groovy",
+      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2DehumidifierDriver.groovy",
+      "required": false,
+      "version": "2.2.1",
+      "betaVersion": "2.2.1"
     },
     {
       "id": "df243cc0-09b1-4354-b42d-d246eafd4f59",
@@ -374,6 +384,8 @@
     }
   ]
 }
+
+
 
 
 
