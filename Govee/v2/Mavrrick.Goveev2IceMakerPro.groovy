@@ -29,6 +29,12 @@ metadata {
         attribute "cleaningCompleteEvent", "string" 
         attribute "runInterruptEvent", "string" 
         
+        command "iceMakingToggle", [
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Start Making Ice"],           
+           ]
+        command "precoolToggle", [
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on Precool"],           
+           ]
         command "workingMode", [[name: "workMode", type: "ENUM", constraints: [ 'Large Ice',      'Medium Ice',       'Small Ice'], description: "Mode of device"]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         
@@ -171,4 +177,32 @@ def workingMode(mode){
     }
     values = '{"workMode":'+modenum+',"modeValue":0}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}    
+}  
+
+def iceMakingToggle(on_off) {
+    switch(on_off) {
+        case "on":
+        sendCommand("iceMakingToggle", 1 ,"devices.capabilities.toggle");
+        break; 
+        case "off":
+        sendCommand("iceMakingToggle", 0 ,"devices.capabilities.toggle");
+        break;
+        default: 
+            if (debugLog) {log.debug ("iceMakingToggle(): Unknown toggle value}")}; 
+        break;
+    }
+}
+
+def precoolToggle(on_off) {
+    switch(on_off) {
+        case "on":
+        sendCommand("precoolToggle", 1 ,"devices.capabilities.toggle");
+        break; 
+        case "off":
+        sendCommand("precoolToggle", 0 ,"devices.capabilities.toggle");
+        break;
+        default: 
+            if (debugLog) {log.debug ("precoolToggle(): Unknown toggle value}")}; 
+        break;
+    }
+}
