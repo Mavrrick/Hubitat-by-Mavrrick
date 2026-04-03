@@ -1240,11 +1240,11 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
             driver: "Govee v2 Fan Driver",
             helper: "addMQTTDeviceHelper"
         ],
-
-        // Single-driver Types
+        
+        // Ice-Maker Devices Govee v2 Ice Maker Pro
         [
-            condition: { dev -> dev.type == "devices.types.socket" },
-            driver: "Govee v2 Sockets Driver",
+            condition: { dev -> dev.type == "devices.types.ice_maker" && (dev.sku == "H8120" || dev.sku == "H8121") },
+            driver: "Govee v2 Ice Maker Pro",
             helper: "addMQTTDeviceHelper"
         ],
         [
@@ -1252,6 +1252,14 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
             driver: "Govee v2 Ice Maker",
             helper: "addMQTTDeviceHelper"
         ],
+
+        // Single-driver Types
+        [
+            condition: { dev -> dev.type == "devices.types.socket" },
+            driver: "Govee v2 Sockets Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+        
         [
             condition: { dev -> dev.type == "devices.types.kettle" },
             driver: "Govee v2 Kettle Driver",
