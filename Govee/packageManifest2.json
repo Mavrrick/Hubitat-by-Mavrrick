@@ -4,7 +4,7 @@
   "minimumHEVersion": "2.4.1",
   "dateReleased": "2023-12-09",
   "releaseNotes": "Stable Release\n[Govee Integration v2 App Ver 2.2.5]\n- Added support for Govee Ice Maker Pro\n[Govee Bundle Library 2.2.7]\n- Improvements for Cloud and MQTT Library files to account to new events for new device\n[Govee Ice Maker Pro Driver Ver 2.2.0]\n- Initial Release\n[Govee Humidifier Driver Ver 2.2.1]\n- Fixed ability to set desired Humidity\n[Govee Air Purifier drivers 2.2.1]\n- Fixed bug related to Auto in set speed command",
-  "betaReleaseNotes": "Beta\nRequires firmware 2.5.0.x\n[Govee Integration v2 App Ver 2.2.6]\n- Update definition for new menu system\n[Govee Bundle Library 2.2.8]\n- Modification to restrict log entries for Cloud API Call process time\n[Govee Ice Maker Pro Driver Ver 2.2.0]\n- Initial Release",
+  "betaReleaseNotes": "Beta\nRequires firmware 2.5.0.x\n[Govee Integration v2 App Ver 2.2.6]\n- Update definition for new menu system\n[Govee Bundle Library 2.2.8]\n- Modification to restrict log entries for Cloud API Call process time\n- Modification to make polling more reliable\n[Govee Ice Maker Pro Driver Ver 2.2.0]\n- Initial Release",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
