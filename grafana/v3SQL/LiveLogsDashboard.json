@@ -1,0 +1,834 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB3_SQL",
+      "label": "influxdb3_SQL",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.4.2"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Telegraf / InfluxDB / Grafana as syslog receiver",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB3_SQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "alias": "Info",
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB3_SQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "groupBy": [
+            {
+              "params": [
+                "1m"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "syslog",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n  date_bin($__interval, \"time\") AS _time, \r\n  \"severity\", \r\n  COUNT(\"severity_code\") AS \"info\"\r\nFROM \"syslog\"\r\nWHERE \r\n  $__timeFilter(\"time\")\r\n  AND \"severity\" = 'info'\r\n  AND \"hostname\" ~ '^(${hostname:pipe})$'\r\n  AND \"appname\" ~ '^(${appname:pipe})$'\r\n  AND \"severity\" ~ '^(${severity:pipe})$'\r\n  AND \"message\" ~ '${Query:raw}'\r\nGROUP BY 1, 2\r\nORDER BY 1 ASC",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "severity_code"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "count"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": [
+            {
+              "key": "severity",
+              "operator": "=",
+              "value": "info"
+            },
+            {
+              "condition": "AND",
+              "key": "hostname",
+              "operator": "=~",
+              "value": "/^$hostname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "severity",
+              "operator": "=~",
+              "value": "/^$severity$/"
+            },
+            {
+              "condition": "AND",
+              "key": "appname",
+              "operator": "=~",
+              "value": "/^$appname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "message",
+              "operator": "=~",
+              "value": "/$Query/"
+            }
+          ]
+        },
+        {
+          "alias": "Notice",
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB3_SQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "groupBy": [
+            {
+              "params": [
+                "1m"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "syslog",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n  date_bin($__interval, \"time\") AS _time, \r\n  \"severity\", \r\n  COUNT(\"severity_code\") AS \"debug\"\r\nFROM \"syslog\"\r\nWHERE \r\n  $__timeFilter(\"time\")\r\n  AND \"severity\" = 'debug'\r\n  AND \"hostname\" ~ '^(${hostname:pipe})$'\r\n  AND \"appname\" ~ '^(${appname:pipe})$'\r\n  AND \"severity\" ~ '^(${severity:pipe})$'\r\n  AND \"message\" ~ '${Query:raw}'\r\nGROUP BY 1, 2\r\nORDER BY 1 ASC",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "severity_code"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "count"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": [
+            {
+              "key": "severity",
+              "operator": "=",
+              "value": "notice"
+            },
+            {
+              "condition": "AND",
+              "key": "hostname",
+              "operator": "=~",
+              "value": "/^$hostname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "severity",
+              "operator": "=~",
+              "value": "/^$severity$/"
+            },
+            {
+              "condition": "AND",
+              "key": "appname",
+              "operator": "=~",
+              "value": "/^$appname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "message",
+              "operator": "=~",
+              "value": "/$Query/"
+            }
+          ]
+        },
+        {
+          "alias": "Error",
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB3_SQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "groupBy": [
+            {
+              "params": [
+                "1m"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "syslog",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n  date_bin($__interval, \"time\") AS _time, \r\n  \"severity\", \r\n  COUNT(\"severity_code\") AS \"warn\"\r\nFROM \"syslog\"\r\nWHERE \r\n  $__timeFilter(\"time\")\r\n  AND \"severity\" = 'warning'\r\n  AND \"hostname\" ~ '^(${hostname:pipe})$'\r\n  AND \"appname\" ~ '^(${appname:pipe})$'\r\n  AND \"severity\" ~ '^(${severity:pipe})$'\r\n  AND \"message\" ~ '${Query:raw}'\r\nGROUP BY 1, 2\r\nORDER BY 1 ASC",
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "severity_code"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "count"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": [
+            {
+              "key": "severity",
+              "operator": "=",
+              "value": "err"
+            },
+            {
+              "condition": "AND",
+              "key": "hostname",
+              "operator": "=~",
+              "value": "/^$hostname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "severity",
+              "operator": "=~",
+              "value": "/^$severity$/"
+            },
+            {
+              "condition": "AND",
+              "key": "appname",
+              "operator": "=~",
+              "value": "/^$appname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "message",
+              "operator": "=~",
+              "value": "/$Query/"
+            }
+          ]
+        },
+        {
+          "alias": "Warning",
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB3_SQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "groupBy": [
+            {
+              "params": [
+                "1m"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "syslog",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n  date_bin($__interval, \"time\") AS _time, \r\n  \"severity\", \r\n  COUNT(\"severity_code\") AS \"error\"\r\nFROM \"syslog\"\r\nWHERE \r\n  $__timeFilter(\"time\")\r\n  AND \"severity\" = 'err'\r\n  AND \"hostname\" ~ '^(${hostname:pipe})$'\r\n  AND \"appname\" ~ '^(${appname:pipe})$'\r\n  AND \"severity\" ~ '^(${severity:pipe})$'\r\n  AND \"message\" ~ '${Query:raw}'\r\nGROUP BY 1, 2\r\nORDER BY 1 ASC",
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "severity_code"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "count"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": [
+            {
+              "key": "severity",
+              "operator": "=",
+              "value": "warning"
+            },
+            {
+              "condition": "AND",
+              "key": "hostname",
+              "operator": "=~",
+              "value": "/^$hostname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "severity",
+              "operator": "=~",
+              "value": "/^$severity$/"
+            },
+            {
+              "condition": "AND",
+              "key": "appname",
+              "operator": "=~",
+              "value": "/^$appname$/"
+            },
+            {
+              "condition": "AND",
+              "key": "message",
+              "operator": "=~",
+              "value": "/$Query/"
+            }
+          ]
+        }
+      ],
+      "title": "syslog count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_INFLUXDB3_SQL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-purple",
+                "value": 0
+              },
+              {
+                "color": "dark-red",
+                "value": 2
+              },
+              {
+                "color": "dark-orange",
+                "value": 3
+              },
+              {
+                "color": "dark-yellow",
+                "value": 4
+              },
+              {
+                "color": "rgb(150, 150, 150)",
+                "value": 5
+              },
+              {
+                "color": "rgb(51, 51, 51)",
+                "value": 6
+              },
+              {
+                "color": "rgb(5, 5, 5)",
+                "value": 7
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "severity_code"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "text": "Emergency"
+                      },
+                      "1": {
+                        "text": "Alert"
+                      },
+                      "2": {
+                        "text": "Critical"
+                      },
+                      "3": {
+                        "text": "Error"
+                      },
+                      "4": {
+                        "text": "Warning"
+                      },
+                      "5": {
+                        "text": "Notice"
+                      },
+                      "6": {
+                        "text": "Info"
+                      },
+                      "7": {
+                        "text": "Debug"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 119
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 163
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 194
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "appname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 330
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 24,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "time"
+          }
+        ]
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_INFLUXDB3_SQL}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \r\n time, hostname, appname, severity_code, message\r\nFROM \"syslog\"\r\nWHERE \r\n  $__timeFilter(\"time\")\r\n  AND \"hostname\" ~ '^(${hostname:pipe})$'\r\n  AND \"appname\" ~ '^(${appname:pipe})$'\r\n  AND \"severity\" ~ '^(${severity:pipe})$'\r\n  AND \"message\" ~ '${Query:raw}'\r\nORDER BY time desc",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Syslog Messages",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": "^((.*))$",
+        "current": {},
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS_INFLUXDB3_SQL}"
+        },
+        "definition": "SELECT DISTINCT \"appname\" \nFROM \"syslog\"\nWHERE \"time\" > now() - INTERVAL '24 hours'\nORDER BY \"appname\" ASC",
+        "includeAll": true,
+        "label": "Appname",
+        "multi": true,
+        "name": "appname",
+        "options": [],
+        "query": {
+          "query": "SELECT DISTINCT \"appname\" \nFROM \"syslog\"\nWHERE \"time\" > now() - INTERVAL '24 hours'\nORDER BY \"appname\" ASC",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "regexApplyTo": "value",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "^((.*))$",
+        "current": {},
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS_INFLUXDB3_SQL}"
+        },
+        "definition": "SELECT DISTINCT \"hostname\" \nFROM \"syslog\"\nWHERE \"time\" > now() - INTERVAL '24 hours'\nORDER BY \"hostname\" ASC",
+        "includeAll": true,
+        "label": "Hostname",
+        "multi": true,
+        "name": "hostname",
+        "options": [],
+        "query": {
+          "query": "SELECT DISTINCT \"hostname\" \nFROM \"syslog\"\nWHERE \"time\" > now() - INTERVAL '24 hours'\nORDER BY \"hostname\" ASC",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/(?:<[^>]*>)?([^<]+)(?:<[^>]*>)?/",
+        "regexApplyTo": "value",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "^((.*))$",
+        "current": {},
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${DS_INFLUXDB3_SQL}"
+        },
+        "definition": "SELECT DISTINCT \"severity\" \nFROM \"syslog\"\nWHERE \"time\" > now() - INTERVAL '24 hours'\nORDER BY \"severity\" ASC",
+        "includeAll": true,
+        "label": "Severity",
+        "multi": true,
+        "name": "severity",
+        "options": [],
+        "query": {
+          "query": "SELECT DISTINCT \"severity\" \nFROM \"syslog\"\nWHERE \"time\" > now() - INTERVAL '24 hours'\nORDER BY \"severity\" ASC",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/(?:<[^>]*>)?([^<]+)(?:<[^>]*>)?/",
+        "regexApplyTo": "value",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "description": "Querystring",
+        "label": "MessageQuery",
+        "name": "Query",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Syslog for SQL",
+  "uid": "adhpp4k",
+  "version": 21,
+  "weekStart": ""
+}

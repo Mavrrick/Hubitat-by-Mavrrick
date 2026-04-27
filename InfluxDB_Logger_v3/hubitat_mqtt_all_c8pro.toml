@@ -1,0 +1,151 @@
+# =============================================================================
+# MQTT Subscriber Plugin - Configuration Examples
+# =============================================================================
+# This file contains three separate configuration examples for different
+# message formats: JSON, Line Protocol, and Text (regex-based).
+#
+# To use one of these examples:
+# 1. Copy this file to your PLUGIN_DIR directory
+# 2. Keep only the [mqtt] and [mapping.*] sections you need
+# 3. Adjust the settings to match your MQTT broker and message format
+#
+# File path resolution:
+# - Absolute paths (e.g., /etc/mqtt/ca.crt) are used as-is
+# - Relative paths (e.g., certs/ca.crt) are resolved from PLUGIN_DIR
+# =============================================================================
+
+
+# #############################################################################
+# EXAMPLE 1: JSON Format - IoT Sensor Data
+# #############################################################################
+# Use this configuration for structured JSON messages from IoT devices.
+#
+# Example MQTT message:
+# {
+#   "device_id": "sensor_001",
+#   "location": "warehouse_a",
+#   "readings": {
+#     "temperature": 22.5,
+#     "humidity": 65.2
+#   },
+#   "battery_level": 87,
+#   "online": true,
+#   "timestamp": 1704067200000
+# }
+# #############################################################################
+
+[mqtt]
+broker_host = "XXX.XXX.XXX.XXX"
+broker_port = 1883
+topics = ["hubitat/+/devices/+"]
+qos = 1
+client_id = "influxdb3_iot_collector_all_prod"
+format = "json"
+
+# Optional authentication (uncomment if needed)
+[mqtt.auth]
+username = "hubitat"
+password = "xxxx"
+
+# Optional TLS configuration (uncomment if needed)
+# [mqtt.tls]
+# ca_cert = "certs/ca.crt"
+# client_cert = "certs/client.crt"
+# client_key = "certs/client.key"
+
+[mapping.json]
+# table_name = "sensor_data"
+#table_name_field = "$.attributes[*].name"
+
+# The path to the name of the attribute (e.g., "temperature", "humidity")
+attribute_name_path = "$.attributes[*].name"
+
+
+# Only process these attributes. If this list is empty or missing, it processes everything.
+included_attributes = [
+    "alarm",
+    "amperage",
+    "battery",
+    "carbonDioxide",
+    "color",
+    "contact",
+    "coolingSetpoint",
+    "cpu15Min",
+    "cpu5Min",
+    "cpuPct",
+    "dbSize",
+    "doubleTapped",
+    "energy",
+    "firmwareVersionString",
+    "freeMemory",
+    "heatingSetpoint",
+    "held",
+    "hue",
+    "humidity",
+    "illuminance",
+    "jvmFree",
+    "jvmSize",
+    "level",
+    "lock",
+    "motion",
+    "pm01",
+    "pm10",
+    "pm25",
+    "pmCount",
+    "power",
+    "powerSource",
+    "presence",
+    "pushed",
+    "released",
+    "saturation",
+    "switch",
+    "tamper",
+    "temperature",
+    "thermostatFanMode",
+    "thermostatMode",
+    "thermostatOperatingState",
+    "thermostatSetpoint",
+    "tvoc",
+    "uptime",
+    "voltage",
+    "water"
+]
+
+# table_name = "sensor_data"
+table_name_field = "$.attributes[*].name"
+
+
+# Timestamp from message (milliseconds since epoch)
+timestamp_field = "$.lastActivity:datetime"
+
+# Tags: indexed fields for efficient filtering
+[mapping.json.tags]
+deviceId = "$.id"
+deviceName = "$.name"
+hubName = "Home"
+unit = "$.attributes[*].unit"
+
+# Fields: measurement values with type specification
+# Supported types: int, uint, float, string, bool
+[mapping.json.fields]
+# 1. The 'value' field uses the new dictionary format for dynamic typing
+[mapping.json.fields.value]
+path = "$.attributes[*].value"
+type = "string" # Default fallback
+type_path = "$.attributes[*].dataType"
+
+  [mapping.json.fields.value.type_mapping]
+  "NUMBER" = "float"
+  "INTEGER" = "int"
+  "FLOAT" = "float"
+  "STRING" = "string"
+  "BOOLEAN" = "bool"
+  "DATE" = "string"
+  "ENUM" = "string"
+
+# 2. The 'unit' field can stay as a simple list
+# unit = ["$.attributes[*].unit", "string"]
+
+#[mapping.json.fields.unit]
+#path = "$.attributes[*].unit"
+#type = "string"

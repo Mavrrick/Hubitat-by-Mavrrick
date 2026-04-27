@@ -1,0 +1,1862 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 16,
+      "panels": [],
+      "title": "Current Values",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "super-light-blue",
+                "value": 0
+              },
+              {
+                "color": "blue",
+                "value": 32
+              },
+              {
+                "color": "green",
+                "value": 60
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "fahrenheit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 11,
+        "x": 0,
+        "y": 1
+      },
+      "id": 12,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "hide": true,
+          "query": "from(bucket: \"${bucket}\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"temperature\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\r\n  |> filter(fn: (r) => r[\"${tagName}\"] =~ /^${tempSensors:regex}$/)\r\n  |> map(fn: (r) => ({_value:r._value, _time:r._time, _measurement:r[\"${tagName}\"]}))\r\n  |> last()\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n    \"time\" AS \"_time\", \n    \"value\" AS \"_value\", \n    \"${tagName}\" AS \"_measurement\"\nFROM \"temperature\"\nWHERE \n    $__timeFilter(time)\n    AND temperature.\"${tagName}\" ~ '^${tempSensors:regex}$'\nORDER BY \"time\" DESC\nLIMIT 1",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        },
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"temperature\"\nWHERE\n  $__timeFilter(time)\n  AND temperature.\"${tagName}\" ~ '^${tempSensors:regex}$'\n ORDER by time ASC",
+          "refId": "B",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Temperature",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "fahrenheit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 11,
+        "y": 1
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"temperature\"\nWHERE\n  $__timeFilter(time)\n  AND temperature.\"${tagName}\" ~ '^${tempSensors:regex}$'\n ORDER by time ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Temperature",
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "metric"
+            ],
+            "keepFields": false
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "light-red",
+                "value": 35
+              },
+              {
+                "color": "green",
+                "value": 40
+              },
+              {
+                "color": "dark-green",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 65
+              },
+              {
+                "color": "light-red",
+                "value": 70
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 11,
+        "x": 0,
+        "y": 9
+      },
+      "id": 13,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"humidity\"\nWHERE\n  $__timeFilter(time)\n  AND humidity.\"${tagName}\" ~ '^${tempSensors:regex}$'\n ORDER by time ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Humidity",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0,
+          "displayName": "${__field.labels.displayName}",
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 11,
+        "y": 9
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": true,
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"humidity\"\nWHERE\n  $__timeFilter(time)\n  AND humidity.\"${tagName}\" ~ '^${tempSensors:regex}$'\n ORDER by time ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        },
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"humidity\"\nWHERE\n  $__timeFilter(time)\n  AND humidity.\"${tagName}\" ~ '^${tempSensors:regex}$'\n ORDER by time ASC",
+          "refId": "B",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Humidity",
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "metric"
+            ],
+            "keepFields": false
+          }
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 10,
+        "x": 0,
+        "y": 16
+      },
+      "id": 14,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "displayName"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": true,
+          "measurement": "battery",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  date_bin(interval '1 day', \"time\") AS \"time\", \n  \"${tagName}\" AS \"name\", \n  \"value\" as \"\"\nFROM (\n  SELECT \n    *,\n    ROW_NUMBER() OVER (PARTITION BY \"${tagName}\" ORDER BY \"time\" DESC) as row_num\n  FROM \"battery\"\n  WHERE \n    time >= now() - interval '1 day'\n    AND \"${tagName}\" ~* '^${battery:regex}$'\n)\nWHERE row_num = 1\nORDER BY time asc, \"value\" ASC",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": []
+        },
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "displayName"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "battery",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  date_bin(interval '1 day', \"time\") AS \"time\", \n  \"${tagName}\" AS \"name\", \n  \"value\" as \"\"\nFROM (\n  SELECT \n    *,\n    ROW_NUMBER() OVER (PARTITION BY \"${tagName}\" ORDER BY \"time\" DESC) as row_num\n  FROM \"battery\"\n  WHERE \n    \"time\" >= now() - interval '1 day'\n    -- FIX: Use = with :sqlstring instead of regex\n    AND \"${tagName}\" in (${battery:sqlstring})\n)\nWHERE row_num = 1\nORDER BY \"time\" ASC, \"value\" ASC\n",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": []
+        }
+      ],
+      "title": "Batteries",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 13,
+        "x": 10,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "displayName"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": true,
+          "measurement": "battery",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "\r\n  ",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"battery\"\nWHERE\n  $__timeFilter(time)\n  AND battery.\"${tagName}\" ~ '^${battery:regex}$'\n ORDER by time ASC",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": []
+        },
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "displayName"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "battery",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "\r\n  ",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"battery\"\nWHERE\n  $__timeFilter(time)\n  AND \"${tagName}\" IN (${battery:sqlstring})\n ORDER by time ASC",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": []
+        }
+      ],
+      "title": "Batteries",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "fahrenheit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 23,
+        "x": 0,
+        "y": 25
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "query": "  from(bucket: \"${bucket}\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"temperature\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\r\n  |> filter(fn: (r) => r._value < 160)\r\n  |> filter(fn: (r) => r[\"${tagName}\"] =~ /^${tempSensors:regex}$/)\r\n  |> map(fn: (r) => ({_value:r._value, _time:r._time, _measurement:r[\"${tagName}\"]}))\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"temperature\"\nWHERE\n  $__timeFilter(time)\n ORDER by time ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Temperature",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 17,
+      "panels": [],
+      "title": "Historical M/C/P",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 75,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "active": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "Active"
+                },
+                "closed": {
+                  "color": "#f2495c3d",
+                  "index": 5,
+                  "text": "Closed"
+                },
+                "inactive": {
+                  "color": "#f2495c3d",
+                  "index": 1,
+                  "text": "Inactive"
+                },
+                "not present": {
+                  "color": "#f2495c3d",
+                  "index": 3,
+                  "text": "Not-Present"
+                },
+                "open": {
+                  "color": "green",
+                  "index": 4,
+                  "text": "Open"
+                },
+                "present": {
+                  "color": "green",
+                  "index": 2,
+                  "text": "Present"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "string"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 23,
+        "x": 0,
+        "y": 38
+      },
+      "id": 6,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.86,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "query": "\r\n",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  \"time\",\n  \"${tagName}\" AS \"device\", \n  \"value\" as \"\"\nFROM (\n  SELECT \"time\", \"${tagName}\", \"value\" FROM \"motion\"\n  UNION ALL\n  SELECT \"time\", \"${tagName}\", \"value\" FROM \"presence\"\n  UNION ALL\n  SELECT \"time\", \"${tagName}\", \"value\" FROM \"contact\"\n)\nWHERE \n  \"time\" >= $__timeFrom\n  AND \"time\" <= $__timeTo\n  AND \"${tagName}\" ~ '^${onOffSensors:regex}$'\nORDER BY \"device\" asc, \"time\" ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        },
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "hide": true,
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"contact\"\nWHERE\n  $__timeFilter(time)\n  AND contact.\"${tagName}\" ~ '^${onOffSensors:regex}$'\n ORDER by time ASC",
+          "refId": "B",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        },
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "hide": true,
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"presence\"\nWHERE\n  $__timeFilter(time)\n  AND presence.\"${tagName}\" ~ '^${onOffSensors:regex}$'\n ORDER by time ASC",
+          "refId": "C",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Motion | Contact | Presence",
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "device"
+            ],
+            "keepFields": false,
+            "naming": {
+              "asLabels": true
+            }
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "id": 4,
+      "panels": [],
+      "title": "Historical Charts",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 23,
+        "x": 0,
+        "y": 52
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"humidity\"\nWHERE\n  $__timeFilter(time)\n  AND humidity.\"${tagName}\" ~ '^${tempSensors:regex}$'\n ORDER by time ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Humidity",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "dffg8542tplvkd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 23,
+        "x": 0,
+        "y": 68
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "displayName"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": true,
+          "measurement": "battery",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"battery\"\nWHERE\n  $__timeFilter(time)\n  AND battery.\"${tagName}\" ~ '^${battery:regex}$'\n ORDER by time ASC",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": []
+        },
+        {
+          "dataset": "iox",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "dffg8542tplvkd"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "displayName"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "none"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "battery",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time,\n  value as \"\",\n  \"${tagName}\" AS metric\nFROM \"battery\"\nWHERE\n  $__timeFilter(time)\n  AND \"${tagName}\" IN (${battery:sqlstring})\n ORDER by time ASC",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ]
+          },
+          "tags": []
+        }
+      ],
+      "title": "Batteries",
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "deviceName",
+          "value": "deviceName"
+        },
+        "description": "The database \"tag\" where the device names are saved",
+        "includeAll": false,
+        "label": "Tag Name",
+        "name": "tagName",
+        "options": [],
+        "query": "deviceName, displayName",
+        "type": "custom",
+        "valuesFormat": "csv"
+      },
+      {
+        "current": {
+          "text": [
+            "Aeotec aerQ Sensor",
+            "Aqara FP300",
+            "EcobeeSensor: Master Bedroom (GKT2)",
+            "EcobeeSensor: Second Bedroom (BNZ9)",
+            "EcobeeSensor: Study (GK3Q)",
+            "EcobeeSensor: Thermostat (Thermostat)",
+            "EcobeeTherm: Thermostat",
+            "Guest Bathroom Water Sensor",
+            "Kitchen Motion Sensor",
+            "Kitchen Sink Water Sensor",
+            "Laundry Room Water Sensor",
+            "Master Bathroom Sink Water Sensor",
+            "Master Bathroom Toilet Water Sensor",
+            "Master Bedroom Multisensor",
+            "Pantry Door",
+            "Study Air Gradient",
+            "Outdoor Motion Sensor",
+            "Outdoor Air Gradient Sensor",
+            "Zooz 4 in 1 Sensor",
+            "Air Quality Monitor"
+          ],
+          "value": [
+            "Aeotec aerQ Sensor",
+            "Aqara FP300",
+            "EcobeeSensor: Master Bedroom (GKT2)",
+            "EcobeeSensor: Second Bedroom (BNZ9)",
+            "EcobeeSensor: Study (GK3Q)",
+            "EcobeeSensor: Thermostat (Thermostat)",
+            "EcobeeTherm: Thermostat",
+            "Guest Bathroom Water Sensor",
+            "Kitchen Motion Sensor",
+            "Kitchen Sink Water Sensor",
+            "Laundry Room Water Sensor",
+            "Master Bathroom Sink Water Sensor",
+            "Master Bathroom Toilet Water Sensor",
+            "Master Bedroom Multisensor",
+            "Pantry Door",
+            "Study Air Gradient",
+            "Outdoor Motion Sensor",
+            "Outdoor Air Gradient Sensor",
+            "Zooz 4 in 1 Sensor",
+            "Air Quality Monitor"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "dffg8542tplvkd"
+        },
+        "definition": "SELECT DISTINCT \"${tagName}\" FROM \"temperature\" \n WHERE time >= $__timeFrom() \nUNION\nSELECT DISTINCT \"${tagName}\" FROM \"humidity\" \nWHERE \"time\" >= '${__from:date:iso}' AND \"time\" <= '${__to:date:iso}'\nORDER BY 1 ASC\n",
+        "includeAll": true,
+        "label": "Temperature",
+        "multi": true,
+        "name": "tempSensors",
+        "options": [],
+        "query": {
+          "query": "SELECT DISTINCT \"${tagName}\" FROM \"temperature\" \n WHERE time >= $__timeFrom() \nUNION\nSELECT DISTINCT \"${tagName}\" FROM \"humidity\" \nWHERE \"time\" >= '${__from:date:iso}' AND \"time\" <= '${__to:date:iso}'\nORDER BY 1 ASC\n",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "regexApplyTo": "value",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": [
+            "Aeotec aerQ Sensor",
+            "Aqara FP300",
+            "Breakfast Room Motion Sensor",
+            "Craig Bedside Remote Switch",
+            "Dining Room Window 1",
+            "Dining Room Window 3",
+            "Dining Room Window 2",
+            "Freezer Sensor",
+            "Front Door",
+            "Front Door Lock",
+            "Garage Door",
+            "Great Room Window 1",
+            "Great Room Window 2",
+            "Guest Bathroom Water Sensor",
+            "Guest Bedroom Window ",
+            "Guest Room Remote Switch",
+            "House Siren",
+            "Kitchen Keypad",
+            "Kitchen Door",
+            "Kitchen Motion Sensor",
+            "Kitchen Sink Water Sensor",
+            "Laundry Room Water Sensor",
+            "Laundry Window Sensor",
+            "Master Bathroom Toilet Water Sensor",
+            "Master Bathroom Sink Water Sensor",
+            "Breakfast Room Window 2",
+            "Master Bedroom Patio Door Sensor",
+            "Master Bedroom Window 1",
+            "Master Bedroom Multisensor",
+            "Master Bedroom Window 3",
+            "Outdoor Motion Sensor",
+            "Pantry Door",
+            "Study Remote Switch",
+            "Study Window 1",
+            "Study Window 2",
+            "Zooz 4 in 1 Sensor",
+            "Great Room Patio Door",
+            "Master Bedroom Motion Sensor",
+            "Master Bedroom Window 2",
+            "Rachael's remote switch",
+            "Breakfast Room Window 1"
+          ],
+          "value": [
+            "Aeotec aerQ Sensor",
+            "Aqara FP300",
+            "Breakfast Room Motion Sensor",
+            "Craig Bedside Remote Switch",
+            "Dining Room Window 1",
+            "Dining Room Window 3",
+            "Dining Room Window 2",
+            "Freezer Sensor",
+            "Front Door",
+            "Front Door Lock",
+            "Garage Door",
+            "Great Room Window 1",
+            "Great Room Window 2",
+            "Guest Bathroom Water Sensor",
+            "Guest Bedroom Window ",
+            "Guest Room Remote Switch",
+            "House Siren",
+            "Kitchen Keypad",
+            "Kitchen Door",
+            "Kitchen Motion Sensor",
+            "Kitchen Sink Water Sensor",
+            "Laundry Room Water Sensor",
+            "Laundry Window Sensor",
+            "Master Bathroom Toilet Water Sensor",
+            "Master Bathroom Sink Water Sensor",
+            "Breakfast Room Window 2",
+            "Master Bedroom Patio Door Sensor",
+            "Master Bedroom Window 1",
+            "Master Bedroom Multisensor",
+            "Master Bedroom Window 3",
+            "Outdoor Motion Sensor",
+            "Pantry Door",
+            "Study Remote Switch",
+            "Study Window 1",
+            "Study Window 2",
+            "Zooz 4 in 1 Sensor",
+            "Great Room Patio Door",
+            "Master Bedroom Motion Sensor",
+            "Master Bedroom Window 2",
+            "Rachael's remote switch",
+            "Breakfast Room Window 1"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "dffg8542tplvkd"
+        },
+        "definition": "SELECT DISTINCT \"deviceName\" FROM 'battery'  WHERE time >= $__timeFrom() ",
+        "includeAll": true,
+        "label": "Battery",
+        "multi": true,
+        "name": "battery",
+        "options": [],
+        "query": {
+          "query": "SELECT DISTINCT \"deviceName\" FROM 'battery'  WHERE time >= $__timeFrom() ",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "regexApplyTo": "value",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "dffg8542tplvkd"
+        },
+        "definition": "SELECT \"deviceName\" FROM motion WHERE time >= $__timeFrom() \nUNION\nSELECT \"deviceName\" FROM contact WHERE time >= $__timeFrom() \nUNION\nSELECT \"deviceName\" FROM presence WHERE time >= $__timeFrom() ",
+        "includeAll": true,
+        "label": "Motion | Contact | Presence",
+        "multi": true,
+        "name": "onOffSensors",
+        "options": [],
+        "query": {
+          "query": "SELECT \"deviceName\" FROM motion WHERE time >= $__timeFrom() \nUNION\nSELECT \"deviceName\" FROM contact WHERE time >= $__timeFrom() \nUNION\nSELECT \"deviceName\" FROM presence WHERE time >= $__timeFrom() ",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "regexApplyTo": "value",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Sensors SQL",
+  "uid": "x9UXGCZ7kd",
+  "version": 78,
+  "weekStart": ""
+}
