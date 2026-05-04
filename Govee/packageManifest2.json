@@ -180,7 +180,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights3Driver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "a77b9238-c7dd-4449-8163-1dd87721dc8b",
