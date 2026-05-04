@@ -80,11 +80,6 @@ def setupPage() {
         section("<b>Select Button Below to create Control device</b>") {
             input "createDevice" , "button",  title: "Create Virtial control device"
         }
-        section ("<b>Overrides</b>"){
-            paragraph "Use these buttons to activate or stop the Effect processing at any time."
-            input "startcycle" , "button",  title: "Override - Activate effects Now"
-            input "stopcycle" , "button",  title: "Override - Stop effects Now"
-        }
         section {
             // Next button – goes to the second page
             input("debugEnable", "bool",title:"Enable Debug Logging",width:4,submitOnChange:true)
@@ -167,9 +162,23 @@ def initialize() {
     unsubscribe()
     unschedule()
     settingsCleanup()
-    if (triggerSwitch) {
-        subscribe(triggerSwitch, "switch", switchAction)
-    }
+    state.active = false
+    unsubscribe()
+    
+    selectedDevices.each{
+        if(it.hasCapability("Switch"))
+            subscribe(it, "switch", "usageHandler")
+        if(it.hasCapability("ColorTemperature"))
+            subscribe(it, "colorTemperature", "usageHandler")
+        if(it.hasCapability("SwitchLevel"))
+            subscribe(it, "level", "usageHandler")
+        if(it.hasCapability("ColorControl"))
+            subscribe(it, "saturation", "usageHandler")
+            subscribe(it, "hue", "usageHandler")
+            subscribe(it, "color", "usageHandler")
+        if(it.hasCapability("LightEffects"))
+            subscribe(it, "effectName", "usageHandler")        
+        }    
 }
 
 
@@ -299,6 +308,26 @@ private def appButtonHandler(button) {
         }
     }
 }
+
+private def usageHandler(evt) {
+    if(debugEnable) log.debug "usageHandler() Event for ${evt.displayName} for event type ${evt.name}"
+    if(debugEnable) log.debug "usageHandler() Time difference is ${now() - state.lastGrpAction}"
+    
+    if (state.active == false) {
+        if(debugEnable) log.debug "usageHandler() Current group is inactive. No adjustments neeeded"        
+    } else if (state.active == true && ((now() - state.lastGrpAction) < 10000)) {
+        if(debugEnable) log.debug "usageHandler() Current group is active and submited in less then 10 seconds."
+    } else if (state.active == true && ((now() - state.lastGrpAction) >= 10000)) {
+        if(debugEnable) log.debug "usageHandler() Current group is active but last command submited over 10 seconds ago. Resetting back to inactive"
+        state.active = false        
+    }
+}
+
+def lastGroupAction(){
+    if (state.active == false) state.active = true
+    state.lastGrpAction = now()   
+}
+
 
 def buildLightEffectJson () {
     scenes = [:]

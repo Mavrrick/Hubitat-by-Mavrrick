@@ -91,18 +91,21 @@ def logsOff() {
 /////////////////////
 
 def on() {
+    parent.lastGroupAction()
     parent.on()
     sendEvent(name: "effectNum", value: 0)
     sendEvent(name: "switch", value: "on")
 }
 
 def off() {
+    parent.lastGroupAction()
     parent.off()
     sendEvent(name: "effectNum", value: 0)
     sendEvent(name: "switch", value: "off")
 }
 
 def setEffect(effectnum) {
+    parent.lastGroupAction()
     parent.setEffect(effectnum)
     sendEvent(name: "effectNum", value: effectnum)
     sendEvent(name: "switch", value: "on")
@@ -112,36 +115,51 @@ def setEffect(effectnum) {
 }
 
 def setLevel(brightness, transitiontime = 0){
+    parent.lastGroupAction()
     parent.setLevel(brightness, 0)
     sendEvent(name: "level", value: brightness)
 }
 
 def setColorTemperature(colortemperature, level = 0, transitionTime = 0){
+    parent.lastGroupAction()
     parent.setColorTemperature(colortemperature, level, transitionTime)
     sendEvent(name: "colorTemperature", value: colortemperature)
 }
 
 def setColor(colorMap){
+    parent.lastGroupAction()
     parent.setColor(colorMap)
 }
 
 
 def setNextEffect () {
-    if (device.currentValue("effectNum") == '0' || device.currentValue("effectNum") == state.sceneCount) {
+    if ( parent.active == false) {
+        parent.lastGroupAction()
         setEffect(1)
-    } else  {
-        nextEffect = device.currentValue("effectNum").toInteger() + 1
-        setEffect(nextEffect)
-    }
+    } else {
+        parent.lastGroupAction()
+        if (device.currentValue("effectNum") == '0' || device.currentValue("effectNum") == state.sceneCount.toString()) {
+            setEffect(1)
+        } else  {
+            nextEffect = device.currentValue("effectNum").toInteger() + 1
+            setEffect(nextEffect)
+        }
+    }    
 }
 
 def setPreviousEffect () {
-    if (device.currentValue("effectNum") == '0' || device.currentValue("effectNum") == '1') {
-        setEffect(21)
-    } else  {
-        nextEffect = device.currentValue("effectNum").toInteger() - 1
-        setEffect(nextEffect)
-    } 
+    if ( parent.active == false) {
+        parent.lastGroupAction()
+        setEffect(state.sceneCount)
+    } else {    
+        parent.lastGroupAction()
+        if (device.currentValue("effectNum") == '0' || device.currentValue("effectNum") == '1') {
+            setEffect(state.sceneCount)
+        } else  {
+            nextEffect = device.currentValue("effectNum").toInteger() - 1
+            setEffect(nextEffect)
+        }
+    }    
 }
 
 def getlightEffects() {
