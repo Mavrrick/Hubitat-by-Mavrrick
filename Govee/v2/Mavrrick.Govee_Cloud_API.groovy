@@ -90,9 +90,16 @@ private def sendCommand(String command, payload2, type) {
                     }
                     break
                 case (code == 200 && command == "brightness"): 
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: "on")
-                    sendEvent(name: "level", value: payload2)
+                    if (device.currentValue("colorMode") == "RGB") {
+                        sendEvent(name: "cloudAPI", value: "Success")
+                        sendEvent(name: "switch", value: "on")
+                        sendEvent(name: "goveeBrightness", value: payload2)
+                    } else { 
+                        sendEvent(name: "cloudAPI", value: "Success")
+                        sendEvent(name: "switch", value: "on")
+                        sendEvent(name: "level", value: payload2)
+                        sendEvent(name: "goveeBrightness", value: payload2)
+                    }
                     if (descLog) { log.info "${device.label} Level was set to ${payload2}"}
                     break
                 case (code == 200 && command == "humidity"): 
@@ -106,6 +113,9 @@ private def sendCommand(String command, payload2, type) {
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "CT")
                     sendEvent(name: "colorTemperature", value: payload2)
+                    if (device.currentValue("level") != device.currentValue("goveeBrightness")) {
+                        sendEvent(name: "level", value: device.currentValue("goveeBrightness"))
+                    }
                     setCTColorName(payload2)
                     if (descLog) log.info "${device.label} Color Temp was set to. ${payload2}"
                     break
@@ -218,12 +228,14 @@ private def sendCommand(String command, payload2, type) {
 		            HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
 				    hue=HSVlst[0].toInteger()
 	   			    sat=HSVlst[1].toInteger()
+                    lvl=HSVlst[2].toInteger()
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "RGB")
                     sendEvent(name: "colorRGBNum", value: payload2)
 					sendEvent(name: "hue", value: hue)
 					sendEvent(name: "saturation", value: sat)
+                    sendEvent(name: "level", value: lvl)
                     if (descLog) { log.info "${device.label} Color was set to ${payload2}"}
                     break
                 default:

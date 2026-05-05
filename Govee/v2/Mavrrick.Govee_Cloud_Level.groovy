@@ -36,3 +36,7 @@ def cloudsetLevel2(int v){
 		sendCommand("brightness", v,"devices.capabilities.range")    
 }
 
+def cloudSetGoveeBrightness(v) {
+    sendCommand("brightness", v,"devices.capabilities.range") 
+}
+
