@@ -28,6 +28,10 @@ metadata {
 		attribute "colorName", "string"
         attribute "colorRGBNum", "number"
         attribute "effectNum", "integer" 
+        attribute "goveeBrightness", "integer"
+        command "setGoveeBrightness", [
+            [name: "goveeBritghtness", type: "NUMBER", description: "Set Govee Brightness value between 0 and 100. Compound dimming when in RGB mode"]
+           ]
         
     }
 
@@ -125,6 +129,11 @@ def off() {
 
 def setLevel(float v,duration = 0) {
     cloudSetLevel( v, 0)
+}
+
+def setGoveeBrightness(float v) {
+    cloudSetGoveeBrightness(v)
+
 }
 
 def  setColor(value) {

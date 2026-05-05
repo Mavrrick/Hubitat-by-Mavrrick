@@ -203,8 +203,12 @@ def setSpeed(fanspeed) {
         sendEvent(name: "speed", value: fanspeed)
     } else if (fanspeed == "auto") {
         autoMode()
+    } else if (fanspeed == "sleeep") {
+        sleepMode()
+    } else if (fanspeed == "turbo") {
+        turboMode()
     } else {
-        values = '{"workMode":'+gearmode+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
+        values = '{"workMode":1,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
         sendCommand("workMode", values, "devices.capabilities.work_mode")
         sendEvent(name: "speed", value: fanspeed)
     }

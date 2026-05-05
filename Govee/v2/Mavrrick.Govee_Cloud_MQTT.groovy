@@ -99,12 +99,12 @@ def disconnect() {
 def disconnected() {
 	log.info "In disconnected: Disconnected from broker"
 	sendEvent (name: "connectionState", value: "disconnected")
-}
+} 
 
 /////////////////////////////////////////////////////////////////////
 // Parse
 /////////////////////////////////////////////////////////////////////
-
+/*
 def parse(String event) {
     def jsonSlurper = new JsonSlurper()     
     if (debugLog) log.debug "In parse, received a message"
@@ -125,15 +125,12 @@ def parse(String event) {
         mqttPost(payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)         
     
     //    parent.mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
-/*    } else {
-        if (debugLog) log.debug "Event is not for this device. Ignoring message"
-    } */
-}
+} */
 
 def mqttPost(String instance, String state){
     if (debugLog) { log.debug "mqttPost(): posting MQTT Update"}
-    if (instance == 'lackWaterEvent') {
-        if (descLog) { log.debug "mqttPost(): lackWaterEvent found"}
+    if (instance == 'lackWaterEvent' || instance == 'iceFull' || instance == 'cleaningCompletedEvent' || instance == 'runInterruptEvent' ) {
+        if (descLog) { log.debug "mqttPost(): ${instance} found"}
             time = new Date().format("MM/dd/yyyy HH:mm:ss")
             sendEvent(name: instance, value: time, displayed: true)
     } 

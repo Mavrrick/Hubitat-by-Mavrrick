@@ -230,18 +230,18 @@ private def sendCommand(String command, payload2, type) {
                     if (descLog) { log.info "command failed"}
             }   
 		}
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
         if (e.statusCode == 429) {
-            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
-                       sendEvent(name: "cloudAPI", value: "Retry")
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Check your activity to reduce load."
+/*                       sendEvent(name: "cloudAPI", value: "Retry")
                        pauseExecution(60000)
-                       sendCommand(command, payload)                    
+                       sendCommand(command, payload2) */                    
         } 
         else {
           log.error "sendCommand():Unknwon Error. Attempting again in one min." 
-            sendEvent(name: "cloudAPI", value: "Retry")
+//            sendEvent(name: "cloudAPI", value: "Retry")
         }    
 		return 'unknown'
 	}
@@ -250,11 +250,11 @@ private def sendCommand(String command, payload2, type) {
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
     def formattedRespDuration = formatDuration(duration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
 }
@@ -462,7 +462,7 @@ def getDeviceState(){
 				return resp.data
 			}
 			
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
 		return 'unknown'
@@ -472,11 +472,11 @@ def getDeviceState(){
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
     def formattedRespDuration = formatDuration(respDuration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'getDeviceState() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "getDeviceState() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
 }
@@ -518,7 +518,7 @@ def retrieveScenes2(){
 				return resp.data
 			}
 			
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
 		return 'unknown'
@@ -528,14 +528,13 @@ def retrieveScenes2(){
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
     def formattedRespDuration = formatDuration(duration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'retrieveScenes2() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "retrieveScenes2() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
-
 }
 
 def retrieveDIYScenes(){
@@ -570,7 +569,7 @@ def retrieveDIYScenes(){
 				return resp.data
 			}
 			
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
 		return 'unknown'
@@ -589,14 +588,13 @@ def retrieveDIYScenes(){
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
     def formattedRespDuration = formatDuration(duration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'retrieveDIYScenes() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "retrieveDIYScenes() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
-
 }
 
 def retrieveStateData(){

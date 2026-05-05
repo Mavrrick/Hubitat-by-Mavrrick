@@ -31,8 +31,12 @@ metadata {
 		attribute "colorName", "string"
         attribute "cloudAPI", "string"
         attribute "effectNum", "integer" 
+        attribute "goveeBrightness", "integer"
         command "activateDIY", [
             [name: "diyName", type: "STRING", description: "DIY Number to activate"]
+           ]
+        command "setGoveeBrightness", [
+            [name: "goveeBritghtness", type: "NUMBER", description: "Set Govee Brightness value between 0 and 100. Compound dimming when in RGB mode"]
            ]
         command "sceneLoad" 
 
@@ -163,8 +167,8 @@ def setLevel(float v,duration = 0){
     lanSetLevel(v,duration)
 }
 
-def setLevel2(int v){
-    lanSetLevel(v)
+def setGoveeBrightness(float v) {
+        lanSetGoveeBrightness(v) 
 }
 
 
