@@ -50,7 +50,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2LifeChildLightDevice.groovy",
       "required": true,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "58b52301-4351-4bf2-afdb-8397089de0d8",
@@ -60,7 +60,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "c388d20f-109f-4f90-bae5-14f428aa0242",
@@ -170,7 +170,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights2Driver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "7dfdfe3b-4f47-4bdf-a1ca-8f28e014d9d0",
@@ -190,7 +190,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights4Driver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "e63fcfa8-b18d-470b-8727-c2ec1593e05f",
@@ -200,7 +200,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights4DreamviewSync.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "9cd9d2ce-587c-4735-ae4f-7efca97e52be",
@@ -220,7 +220,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLightsDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "497811ca-7c8c-4d6e-8241-2e835f4b66df",
@@ -260,7 +260,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2GalaxyProjector.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "5717d67f-fec8-4ede-937c-77c25dde9ce8",
