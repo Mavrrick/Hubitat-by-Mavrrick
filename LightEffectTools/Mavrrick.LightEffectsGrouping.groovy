@@ -164,7 +164,23 @@ def initialize() {
     settingsCleanup()
     state.active = false
     unsubscribe()
-    
+/*    selectedDevices.each{
+        if(it.hasCapability("Switch"))
+            subscribe(it, "switch", "usageHandler")
+        if(it.hasCapability("ColorTemperature"))
+            subscribe(it, "colorTemperature", "usageHandler")
+        if(it.hasCapability("SwitchLevel"))
+            subscribe(it, "level", "usageHandler")
+        if(it.hasCapability("ColorControl"))
+            subscribe(it, "saturation", "usageHandler")
+            subscribe(it, "hue", "usageHandler")
+            subscribe(it, "color", "usageHandler")
+        if(it.hasCapability("LightEffects"))
+            subscribe(it, "effectName", "usageHandler")        
+        } */   
+}
+
+def subscribeToDevices() {
     selectedDevices.each{
         if(it.hasCapability("Switch"))
             subscribe(it, "switch", "usageHandler")
@@ -178,7 +194,7 @@ def initialize() {
             subscribe(it, "color", "usageHandler")
         if(it.hasCapability("LightEffects"))
             subscribe(it, "effectName", "usageHandler")        
-        }    
+        }
 }
 
 
@@ -195,6 +211,7 @@ def on() {
             if(debugEnable) log.debug "on(): Processing on for ${dev}."
             dev.on()            
         }
+    if (state.active == false) subscribeToDevices() 
 }
 
 def off() {    
@@ -206,6 +223,7 @@ def off() {
             if(debugEnable) log.debug "off(): Processing off for ${dev}."
             dev.off()            
         }
+    if (state.active == false) subscribeToDevices()
 }
 
 def setColorTemperature(value,level = null,transitionTime = null) {    
@@ -217,6 +235,7 @@ def setColorTemperature(value,level = null,transitionTime = null) {
 //            if(debugEnable) log.debug "setColorTemperature(): Processing effect for ${dev} with ${sceneCount} ${scenes}scenes selected. scene number ${scenes.get(scenePos)}."
             dev.setColorTemperature(value, level, transitionTime)            
         }
+    if (state.active == false) subscribeToDevices()
 }
 
 def setLevel(brightness, transitiontime = 0) {    
@@ -228,6 +247,7 @@ def setLevel(brightness, transitiontime = 0) {
 //            if(debugEnable) log.debug "setColorTemperature(): Processing effect for ${dev} with ${sceneCount} ${scenes}scenes selected. scene number ${scenes.get(scenePos)}."
             dev.setLevel(brightness, 0)          
         }
+    if (state.active == false) subscribeToDevices()
 }
 
 def setColor(colorMap) {    
@@ -239,6 +259,7 @@ def setColor(colorMap) {
 //            if(debugEnable) log.debug "setColorTemperature(): Processing effect for ${dev} with ${sceneCount} ${scenes}scenes selected. scene number ${scenes.get(scenePos)}."
             dev.setColor(colorMap)          
         }
+    if (state.active == false) subscribeToDevices()
 }
 
 
@@ -274,6 +295,7 @@ def setEffect(effectNo) {
             dev.setColor(hslmap)
         }
     }
+    if (state.active == false) subscribeToDevices()
 }
 
 
@@ -288,7 +310,7 @@ def switchAction(evt) {
 
 private def appButtonHandler(button) {
     if(debugEnable) log.debug "appButtonHandler() ${button}"
-    if (button == "startcycle") {
+    if (button == "startcycle") {	
         startSequence()
     }  else if (button == "stopcycle") {
         endAction()
@@ -319,7 +341,8 @@ private def usageHandler(evt) {
         if(debugEnable) log.debug "usageHandler() Current group is active and submited in less then 10 seconds."
     } else if (state.active == true && ((now() - state.lastGrpAction) >= 10000)) {
         if(debugEnable) log.debug "usageHandler() Current group is active but last command submited over 10 seconds ago. Resetting back to inactive"
-        state.active = false        
+        state.active = false
+        unsubscribe()
     }
 }
 
