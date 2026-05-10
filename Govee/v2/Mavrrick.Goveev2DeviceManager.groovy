@@ -16,6 +16,7 @@ metadata {
         attribute "connectionState", "string"
         attribute "msgCount", "integer"
 		attribute "avgTime", "number"
+        attribute "cloudReponseTime", "number"
         command "allSceneReload"
         command "LookupLanAPIDevices"
         command "installNewDevices"
@@ -322,6 +323,10 @@ def getHubId() {
     def hubNameNormalized = normalize(hub.name)
     hubNameNormalized = hubNameNormalized.toLowerCase()
     return hubNameNormalized
+}
+
+def goveeReponseTime(resp) {
+    sendEvent(name: "cloudReponseTime", value: resp)
 }
 
 def heartbeat() {

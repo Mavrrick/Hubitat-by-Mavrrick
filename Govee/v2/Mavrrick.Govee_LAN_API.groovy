@@ -934,6 +934,7 @@ def lanAPIPost(data) {
                         else log.info "${device.label} Color is $value"
                         sendEvent(name: "colorName", value: theColor)
                     }
+                    sendEvent(name: "RGB", value: rgb)
                 }                
             } else {
                 if (data.brightness != device.currentValue("level")) {

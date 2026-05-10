@@ -81,7 +81,8 @@ def refresh() {
 }
 
 def updated() {
-    configure() 
+    configure()    
+    if (debugLog) runIn(1800, logsOff)
 }
 
 def configure() {

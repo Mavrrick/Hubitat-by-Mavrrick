@@ -225,6 +225,7 @@ private def sendCommand(String command, payload2, type) {
                     int r = (payload2 >> 16) & 0xFF;
                     int g = (payload2 >> 8) & 0xFF;
                     int b = payload2 & 0xFF;
+                    rgb = [r,g,b]
 		            HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
 				    hue=HSVlst[0].toInteger()
 	   			    sat=HSVlst[1].toInteger()
@@ -235,6 +236,7 @@ private def sendCommand(String command, payload2, type) {
                     sendEvent(name: "colorRGBNum", value: payload2)
 					sendEvent(name: "hue", value: hue)
 					sendEvent(name: "saturation", value: sat)
+                    sendEvent(name: "RGB", value: rgb)
                     sendEvent(name: "level", value: lvl)
                     if (descLog) { log.info "${device.label} Color was set to ${payload2}"}
                     break
@@ -261,7 +263,8 @@ private def sendCommand(String command, payload2, type) {
     long duration = endTime - startTime
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
-    def formattedRespDuration = formatDuration(duration)
+    def formattedRespDuration = formatDuration(respDuration)
+    parent.goveeReponseTime(respDuration)
     if (respDuration > 10000) {
         log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
      } else {
@@ -484,6 +487,7 @@ def getDeviceState(){
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
     def formattedRespDuration = formatDuration(respDuration)
+    parent.goveeReponseTime(respDuration)
     if (respDuration > 10000) {
         log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
      } else {
@@ -539,7 +543,8 @@ def retrieveScenes2(){
     long duration = endTime - startTime
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
-    def formattedRespDuration = formatDuration(duration)
+    def formattedRespDuration = formatDuration(respDuration)
+    parent.goveeReponseTime(respDuration)
     if (respDuration > 10000) {
         log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
      } else {
@@ -599,7 +604,8 @@ def retrieveDIYScenes(){
     long duration = endTime - startTime
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
-    def formattedRespDuration = formatDuration(duration)
+    def formattedRespDuration = formatDuration(respDuration)
+    parent.goveeReponseTime(respDuration)
     if (respDuration > 10000) {
         log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
      } else {
