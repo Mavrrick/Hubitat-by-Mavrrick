@@ -78,6 +78,50 @@ private def sendCommand(String command, payload2, type) {
                         if (descLog) { log.info "${device.label} was turned off"}
                     }
                     break
+                case (code == 200 && command == "mainLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "mainLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "mainLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "backgroundLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "backgroundLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "backgroundLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "fanToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "fanToggle", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "fanToggle", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "reverseAirflowToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "reverseAirflowToggle", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "reverseAirflowToggle", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
                 case (code == 200 && command.contains("socketToggle")):
                     sendEvent(name: "cloudAPI", value: "Success")
                     if (payload2 == 1) {
