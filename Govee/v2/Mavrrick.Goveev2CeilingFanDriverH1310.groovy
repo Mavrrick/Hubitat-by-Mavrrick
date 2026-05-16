@@ -18,14 +18,14 @@ import groovy.json.JsonBuilder
 @Field Map getFanLevel = [
     "off": 0
     ,"on": 1
-    ,"ultra-low": 12
-	,"low": 25
-    ,"medium-low": 35
-	,"medium": 50
-    ,"medium-high": 75
-	,"high": 100
-    ,"turbo": 100
-    ,"auto": 150
+    ,"ultra-low": 2
+	,"low": 3
+    ,"medium-low": 4
+	,"medium": 5
+    ,"medium-high": 6
+	,"high": 7
+    ,"turbo": 8
+    ,"auto": 9
 ]
 
 /*** Static Lists and Settings ***/
@@ -429,6 +429,12 @@ def reverseAirflowToggle(on_off) {
             if (debugLog) {log.debug ("reverseAirflowToggle(): Unknown toggle value}")}; 
         break;
     }
+}
+
+def  fanSpeedMode(modeNum) {
+                log.debug ("setEffect(): Setting fanspeed via cloud api to speed  ${modeNum}")
+                sendCommand("fanSpeedMode", modeNum,"devices.capabilities.mode")
+                   
 }
 
 ////////////////////
