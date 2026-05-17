@@ -183,6 +183,16 @@
       "betaVersion": "2.2.3"
     },
     {
+      "id": "47688ef7-feed-4130-ac88-450e9912903e",
+      "name": "Govee v2 Ceiling Fan Driver H1310",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2CeilingFanDriverH1310.groovy",
+      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2CeilingFanDriverH1310.groovy",
+      "required": false,
+      "version": "2.2.0",
+      "betaVersion": "2.2.0"
+    },
+    {
       "id": "a77b9238-c7dd-4449-8163-1dd87721dc8b",
       "name": "Govee v2 Color Lights 4 Driver",
       "namespace": "Mavrrick",
@@ -211,6 +221,16 @@
       "required": false,
       "version": "2.2.1",
       "betaVersion": "2.2.3"
+    },
+    {
+      "id": "da9ed05c-468a-4029-b898-3a667e1fe0ed",
+      "name": "Govee v2 Multi Light Floor Lamp",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2MultiLightFloorLamp.groovy",
+      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2MultiLightFloorLamp.groovy",
+      "required": false,
+      "version": "2.2.0",
+      "betaVersion": "2.2.0"
     },
     {
       "id": "efaf7c44-052b-4fb9-a0d9-a1989646c8e4",
