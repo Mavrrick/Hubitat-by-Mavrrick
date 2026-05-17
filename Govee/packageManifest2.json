@@ -4,7 +4,7 @@
   "minimumHEVersion": "2.5.0",
   "dateReleased": "2023-12-09",
   "releaseNotes": "Stable Release\n[Govee Integration v2 App Ver 2.2.6]\n- Update definition for new menu system\n- Added support for Govee Ice Maker Pro\n[Govee Bundle Library 2.2.8]\n- Modification to restrict log entries for Cloud API Call process time\n- Improvements for Cloud and MQTT Library files to account to new events for new device\n[Govee Ice Maker Pro Driver Ver 2.2.0]\n- Initial Release\n[Govee Humidifier Driver Ver 2.2.1]\n- Fixed ability to set desired Humidity\n[Govee Air Purifier drivers 2.2.1]\n- Fixed bug related to Auto in set speed command",
-  "betaReleaseNotes": "Beta\n[Govee Bundle Library 2.2.9]\n- Modification to Lan API and Cloud API Library code to more accurately represent level",
+  "betaReleaseNotes": "Beta\n[Govee Bundle Library 2.2.10]\n- Added new Ceiling fan and Lamp driver to packages\n- Modification to Lan API and Cloud API Library code to more accurately represent level",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
@@ -28,7 +28,7 @@
       "oauth": false,
       "primary": false,
       "version": "2.2.6",
-      "betaVersion": "2.2.6"
+      "betaVersion": "2.2.7"
     }
   ],
   "drivers": [
@@ -40,7 +40,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
@@ -50,7 +50,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2LifeChildLightDevice.groovy",
       "required": true,
       "version": "2.2.0",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "58b52301-4351-4bf2-afdb-8397089de0d8",
@@ -60,7 +60,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.GoveeManualLANAPIDevice.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "c388d20f-109f-4f90-bae5-14f428aa0242",
@@ -70,7 +70,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2GroupLightDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "f18436f0-07fb-4325-abf7-7a44b8c9de12",
@@ -80,7 +80,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2AirPurifierDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "1ec7b9e2-3a61-47ba-9aec-81bce9ef582c",
@@ -90,7 +90,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7120AirPurifier.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "03b06646-b332-4fef-a3b7-5f61e6d40253",
@@ -100,7 +100,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7122AirPurifier.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "777845e7-13e4-451a-845d-978c67ac6097",
@@ -110,7 +110,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7123AirPurifier.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "0f6d06ea-87d5-4863-b030-c8e3b7a0f85e",
@@ -120,7 +120,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7126AirPurifier.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "ff35a8e6-d5a4-4cee-9456-f27c32459336",
@@ -130,7 +130,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H712CAirPurifier.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "c4272d50-779e-4568-ae33-624dc57d1cff",
@@ -140,7 +140,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2AirQualitySensorwithCO2.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "78500f3c-9f4f-4c66-81b7-58b91486706e",
@@ -150,7 +150,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2AromaDiffuserDriverwithLights.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "2950090f-d700-46fc-8c55-59d4a8629f21",
@@ -160,7 +160,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2AromaDiffuserDriverwithLightsandWhitenNoise.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "8eeef823-5b51-4017-8052-e581e9bee14a",
@@ -170,7 +170,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights2Driver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "7dfdfe3b-4f47-4bdf-a1ca-8f28e014d9d0",
@@ -180,7 +180,17 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights3Driver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
+    },
+    {
+      "id": "47688ef7-feed-4130-ac88-450e9912903e",
+      "name": "Govee v2 Ceiling Fan Driver H1310",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2CeilingFanDriverH1310.groovy",
+      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2CeilingFanDriverH1310.groovy",
+      "required": false,
+      "version": "2.2.0",
+      "betaVersion": "2.2.0"
     },
     {
       "id": "a77b9238-c7dd-4449-8163-1dd87721dc8b",
@@ -190,7 +200,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights4Driver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "e63fcfa8-b18d-470b-8727-c2ec1593e05f",
@@ -200,7 +210,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLights4DreamviewSync.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "9cd9d2ce-587c-4735-ae4f-7efca97e52be",
@@ -210,7 +220,17 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLightsDreamviewSync.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
+    },
+    {
+      "id": "da9ed05c-468a-4029-b898-3a667e1fe0ed",
+      "name": "Govee v2 Multi Light Floor Lamp",
+      "namespace": "Mavrrick",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2MultiLightFloorLamp.groovy",
+      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2MultiLightFloorLamp.groovy",
+      "required": false,
+      "version": "2.2.0",
+      "betaVersion": "2.2.0"
     },
     {
       "id": "efaf7c44-052b-4fb9-a0d9-a1989646c8e4",
@@ -220,7 +240,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ColorLightsDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "497811ca-7c8c-4d6e-8241-2e835f4b66df",
@@ -230,7 +250,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7102TowerFan.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "803d373c-93d2-4ada-a4f3-33d02da4d4fa",
@@ -240,7 +260,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H7106TowerFan.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "94c74cc7-19a2-42b9-aebf-16d8c83fc04d",
@@ -250,7 +270,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2FanDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "d5c0b8b9-22f2-4f8e-9b4c-fb8cff0029be",
@@ -260,7 +280,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2GalaxyProjector.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "5717d67f-fec8-4ede-937c-77c25dde9ce8",
@@ -270,7 +290,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2H6093StarlightDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "26a68cdd-041e-4418-8f18-8467dc9f36f0",
@@ -280,7 +300,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2HumidifierDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "5f0dbb22-07e5-42d5-be13-09728fe68d33",
@@ -290,7 +310,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2DehumidifierDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "df243cc0-09b1-4354-b42d-d246eafd4f59",
@@ -300,7 +320,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2IceMaker.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "d7308773-0131-49a3-a7eb-ff1db104ba05",
@@ -310,7 +330,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2IceMakerPro.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "eb413449-f27d-428d-b8c8-a493f2e20bd6",
@@ -320,7 +340,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2KettleDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "3698fb85-bf10-4c31-9999-a43c1eeb1f69",
@@ -330,7 +350,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2PresenceSensor.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "1ff1d7d2-9f9b-4651-ba9c-9de9088760b9",
@@ -340,7 +360,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ResearchDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "d0452601-8131-43af-9ea2-ce2a620b05e3",
@@ -350,7 +370,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2SocketsDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "c85850b9-d7ab-4370-9939-5949bf942460",
@@ -360,7 +380,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2SocketsDriverComponent.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "0ac2c376-535d-4208-b266-d42915a235ea",
@@ -370,7 +390,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2ThermoHygrometerDriver.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "58de954b-bf1b-4a33-838c-4642fe2676d7",
@@ -380,7 +400,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2WhiteLightDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     },
     {
       "id": "a07c6c35-bcc2-4065-b856-79e012fb2dc8",
@@ -390,7 +410,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2WhiteLightswithCTDriver.groovy",
       "required": false,
       "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "betaVersion": "2.2.2"
     }
   ]
 }
