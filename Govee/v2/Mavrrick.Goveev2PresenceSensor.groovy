@@ -43,6 +43,7 @@ def installed(){
 }
 
 def initialize() {
+    checkDevData()
 /*    disconnect()
 	pauseExecution(1000)
     mqttConnectionAttempt() */

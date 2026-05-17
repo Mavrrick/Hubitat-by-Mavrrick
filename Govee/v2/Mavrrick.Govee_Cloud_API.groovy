@@ -100,6 +100,28 @@ private def sendCommand(String command, payload2, type) {
                         if (descLog) { log.info "${device.label} was turned off"}
                     }
                     break
+                case (code == 200 && command == "pillarLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "pillarLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} Pillar light was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "pillarLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} Pillar light was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "baseLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "baseLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} Base light was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "baseLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} Base light was turned off"}
+                    }
+                    break
                 case (code == 200 && command == "fanToggle"):
                     sendEvent(name: "cloudAPI", value: "Success")
                     if (payload2 == 1) {
@@ -663,8 +685,8 @@ def retrieveStateData(){
     def device = device.getDataValue("deviceID")
     def goveeAppAPI = parent.retrieveGoveeAPI(device)
     def scenesCommands = ["nightlightScene","diyScene","presetScene"]
-    def devCommands = ["workMode","targetTemperature","segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"]
-    goveeAppAPI.capabilities.each {        
+    def devCommands = ["workMode","targetTemperature","segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"]    
+    goveeAppAPI.capabilities.each {
         switch (true) {
             case (it.get("instance") == "snapshot") :
                 state."${it.get("instance")}" = [:]
@@ -695,7 +717,7 @@ def retrieveStateData(){
     if (debugLog) { log.debug "retrieveSnapshot(): Retrieving Snapshots for device"}
     def type = "snapshot"
     def device = device.getDataValue("deviceID")
-    def goveeAppAPI = parent.retrieveGoveeAPI(device)
+    def goveeAppAPI = parent.retrieveGoveeAPI(device) 
     state.snapshot = [:]
      
     def matchedCapability = goveeAppAPI.capabilities.find { capability ->
@@ -727,6 +749,53 @@ def apiKeyUpdate() {
     else if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
+    }
+}
+
+def checkDevData() {
+    def device = device.getDataValue("deviceID")
+    def goveeAppAPI = parent.retrieveGoveeAPI(device)
+    def commands = []
+    def capType = []
+    def int ctMin = 0
+    def int ctMax = 0
+    goveeAppAPI.capabilities.each {
+        commands.add(it.instance)
+        capType.add(it.type)
+        if (it.instance == "colorTemperatureK") {
+//            logger ("retrieveStateData(): ${cap} instance is ${cap.instance} Parms is ${cap.parameters} range is ${cap.parameters.range} min is ${cap.parameters.range.min}",'trace')
+            ctMin = it.parameters.range.min
+            ctMax = it.parameters.range.max
+            if (debugLog) { log.debug "checkDevData(): Min is ${ctMin} Max is ${ctMax}"}
+        }
+    }
+    if (ctMin == 0 && ctMax == 0) {
+        if (debugLog) { log.debug "checkDevData(): Device does not use CT" }
+    } else {
+        if (ctMax == getDataValue("ctMax").toInteger()) {
+            if (debugLog) { log.debug "checkDevData(): ctMax Values match" }
+        } else {
+            if (debugLog) { log.debug "checkDevData(): ctMax Values do not match" }
+                device.updateDataValue("ctMax", ctMax)
+        }
+        if (ctMin == getDataValue("ctMin").toInteger()) {
+            if (debugLog) { log.debug "checkDevData(): ctMin Values match" }
+        } else {
+            if (debugLog) { log.debug "checkDevData(): ctMin Values do not match" }
+            device.updateDataValue("ctMin", ctMin)
+        }
+    }
+    if (commands.toString() == getDataValue("commands")) {
+        if (debugLog) { log.debug "checkDevData(): commands Values match" }
+    } else {
+        if (debugLog) { log.debug "retrieveStateData(): commands Values do not match" }
+        device.updateDataValue("commands", commands)
+    }
+    if (capType.toString() == getDataValue("capTypes")) {
+        if (debugLog) { log.debug "checkDevData(): capTypes Values match" }
+    } else {
+        if (debugLog) { log.debug "checkDevData(): capTypes Values do not match" }
+        device.updateDataValue("capTypes", capType)
     }
 }
 

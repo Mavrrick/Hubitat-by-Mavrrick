@@ -103,6 +103,7 @@ def initialize(){
 
     getDeviceState()
     if (debugLog) runIn(1800, logsOff)
+    checkDevData()
 }
 
 

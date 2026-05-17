@@ -131,7 +131,7 @@ def initialize(){
     }
 
     if (debugLog) runIn(1800, logsOff)
-    
+    checkDevData()
 }
 
 def installed(){

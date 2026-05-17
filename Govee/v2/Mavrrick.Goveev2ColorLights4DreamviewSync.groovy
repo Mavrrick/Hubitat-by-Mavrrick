@@ -133,7 +133,7 @@ def initialize(){
         runIn(offset,poll)
     }    
     if (debugLog) runIn(1800, logsOff)
-    
+    checkDevData()
 }
 
 def installed(){

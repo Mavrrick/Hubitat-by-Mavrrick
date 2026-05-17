@@ -98,6 +98,7 @@ def initialize(){
     }
     retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
+    checkDevData()
 }
 
 

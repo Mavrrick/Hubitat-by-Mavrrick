@@ -1120,8 +1120,18 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
     def driverRules = [
         // Light Devices (more specific capability combinations first)
         [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb", "dreamViewToggle", "pillarLightToggle", "baseLightToggle"]) },
+            driver: "Govee v2 Multi Light Floor Lamp",
+            helper: "addLightDeviceHelper"
+        ],
+        [
             condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb", "dreamViewToggle"]) },
             driver: "Govee v2 Color Lights Dreamview Sync",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb", "fanToggle"]) },
+            driver: "Govee v2 Ceiling Fan Driver H1310",
             helper: "addLightDeviceHelper"
         ],
         [
