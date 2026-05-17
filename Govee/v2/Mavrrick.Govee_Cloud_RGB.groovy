@@ -55,8 +55,8 @@ def cloudSetHsb(h,s,b)
         sendCommand("colorRgb", rgbvalue,"devices.capabilities.color_setting")
         }
     if(100 != device.currentValue("level")?.toInteger()) {
-    setLevel(100)
-    }
+    cloudSetGoveeBrightness(100)
+    } 
 }
 
 def cloudSetHue(h)

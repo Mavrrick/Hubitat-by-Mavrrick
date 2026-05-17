@@ -97,6 +97,7 @@ def initialize() {
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
+    checkDevData()
 //    poll()
 /*    disconnect()
 	pauseExecution(1000)

@@ -96,6 +96,7 @@ def initialize() {
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
+    checkDevData()
 //    poll()
 }
 

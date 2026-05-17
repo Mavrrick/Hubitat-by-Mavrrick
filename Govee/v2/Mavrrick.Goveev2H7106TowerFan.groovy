@@ -102,8 +102,9 @@ def initialize() {
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
-//    if (debugLog) runIn(1800, logsOff)
+    if (debugLog) runIn(1800, logsOff)
     poll()
+    checkDevData()
 }
 
 Refresh // update data for the device
