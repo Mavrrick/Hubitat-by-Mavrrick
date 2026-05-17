@@ -4,7 +4,7 @@
   "minimumHEVersion": "2.5.0",
   "dateReleased": "2023-12-09",
   "releaseNotes": "Stable Release\n[Govee Integration v2 App Ver 2.2.6]\n- Update definition for new menu system\n- Added support for Govee Ice Maker Pro\n[Govee Bundle Library 2.2.8]\n- Modification to restrict log entries for Cloud API Call process time\n- Improvements for Cloud and MQTT Library files to account to new events for new device\n[Govee Ice Maker Pro Driver Ver 2.2.0]\n- Initial Release\n[Govee Humidifier Driver Ver 2.2.1]\n- Fixed ability to set desired Humidity\n[Govee Air Purifier drivers 2.2.1]\n- Fixed bug related to Auto in set speed command",
-  "betaReleaseNotes": "Beta\n[Govee Bundle Library 2.2.9]\n- Modification to Lan API and Cloud API Library code to more accurately represent level",
+  "betaReleaseNotes": "Beta\n[Govee Bundle Library 2.2.10]\n- Added new Ceiling fan and Lamp driver to packages\n- Modification to Lan API and Cloud API Library code to more accurately represent level",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
