@@ -16,16 +16,12 @@ import groovy.json.JsonBuilder
 #include Mavrrick.Govee_LAN_API
 
 @Field Map getFanLevel = [
-    "off": 0
-    ,"on": 1
-    ,"ultra-low": 2
-	,"low": 3
-    ,"medium-low": 4
-	,"medium": 5
-    ,"medium-high": 6
-	,"high": 7
-    ,"turbo": 8
-    ,"auto": 9
+    "Speed 1": 1
+    ,"Speed 2": 2
+	,"Speed 3": 3
+    ,"Speed 4": 4
+	,"Speed 5": 5
+    ,"Speed 6": 6
 ]
 
 /*** Static Lists and Settings ***/
@@ -46,6 +42,7 @@ metadata {
 		capability "Refresh"
         capability "Initialize"
         capability "LightEffects"
+        capability "FanControl"
 
         attribute "online", "string"
 		attribute "colorName", "string"
@@ -87,13 +84,14 @@ metadata {
            ]
          command "fanToggle", [
             [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
-           ]
+           ] 
+         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
          command "reverseAirflowToggle", [
             [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
            ]  
-        command "fanSpeedMode", [
+/*        command "fanSpeedMode", [
             [name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}],           
-           ]
+           ] */
         command "sceneLoad" 
         command "recState"
         command "loadState" 
@@ -113,6 +111,7 @@ metadata {
                 } 
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
+            input(name:"cycleInterval", type:"number", title:"Number of seconds between cycles", defaultValue:60)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
 		}
@@ -152,6 +151,7 @@ def initialize(){
         sendEvent(name: "cloudAPI", value: "Initialized")
         }
     initDefaultValues()
+    sendEvent(name: "supportedFanSpeeds", value: groovy.json.JsonOutput.toJson(getFanLevel.collect {k,v -> k})) 
     unschedule()
     if (lanControl) resetApiStatus()
     retrieveIPAdd()
@@ -168,6 +168,7 @@ def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
     initDefaultValues()
     if (pollRate > 0) runIn(pollRate,poll)
+    sendEvent(name: "supportedFanSpeeds", value: groovy.json.JsonOutput.toJson(getFanLevel.collect {k,v -> k})) 
     retrieveScenes2()
     retrieveStateData()
 	retrieveDIYScenes()
@@ -431,10 +432,29 @@ def reverseAirflowToggle(on_off) {
     }
 }
 
+/*
 def  fanSpeedMode(modeNum) {
                 log.debug ("setEffect(): Setting fanspeed via cloud api to speed  ${modeNum}")
                 sendCommand("fanSpeedMode", modeNum,"devices.capabilities.mode")
                    
+} */
+
+def setSpeed(fanspeed) {
+    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} with value ${getFanLevel[fanspeed]}"
+    sendEvent(name: "cloudAPI", value: "Pending")
+    sendCommand("fanSpeedMode", getFanLevel[fanspeed],"devices.capabilities.mode")
+}
+
+void cycleSpeed() {
+    cycleChange()
+}
+
+void cycleChange() {
+    Integer randomSpeed = Random.newInstance().nextInt(1..6)
+    String newSpeed = "speed "+randomSpeed
+    setSpeed(newSpeed)
+    runIn(cycleInterval, cycleChange)
+    
 }
 
 ////////////////////
