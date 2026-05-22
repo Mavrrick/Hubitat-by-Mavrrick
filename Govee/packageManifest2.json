@@ -190,7 +190,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2CeilingFanDriverH1310.groovy",
       "required": false,
       "version": "2.2.0",
-      "betaVersion": "2.2.0"
+      "betaVersion": "2.2.1"
     },
     {
       "id": "a77b9238-c7dd-4449-8163-1dd87721dc8b",
