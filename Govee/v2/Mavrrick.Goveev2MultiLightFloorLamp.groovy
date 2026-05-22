@@ -58,7 +58,7 @@ metadata {
         command "musicMode", [
             [name: "musicMode", type: "NUMBER", description: "Music Mode Value"],
             [name: "sensitivity ", type: "NUMBER", description: "% sensativity"],
-            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off Gradient fading"],
+            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off automatic color selection"],
 //            [name: "color ", type: "COLOR_MAP", description: "color to set"]            
            ]
         command "gradient", [
