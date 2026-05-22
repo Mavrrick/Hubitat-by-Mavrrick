@@ -763,7 +763,6 @@ def checkDevData() {
         commands.add(it.instance)
         capType.add(it.type)
         if (it.instance == "colorTemperatureK") {
-//            logger ("retrieveStateData(): ${cap} instance is ${cap.instance} Parms is ${cap.parameters} range is ${cap.parameters.range} min is ${cap.parameters.range.min}",'trace')
             ctMin = it.parameters.range.min
             ctMax = it.parameters.range.max
             if (debugLog) { log.debug "checkDevData(): Min is ${ctMin} Max is ${ctMax}"}
@@ -776,26 +775,26 @@ def checkDevData() {
             if (debugLog) { log.debug "checkDevData(): ctMax Values match" }
         } else {
             if (debugLog) { log.debug "checkDevData(): ctMax Values do not match" }
-                device.updateDataValue("ctMax", ctMax)
+            updateDataValue("ctMax", ctMax.toString())
         }
         if (ctMin == getDataValue("ctMin").toInteger()) {
             if (debugLog) { log.debug "checkDevData(): ctMin Values match" }
         } else {
             if (debugLog) { log.debug "checkDevData(): ctMin Values do not match" }
-            device.updateDataValue("ctMin", ctMin)
+            updateDataValue("ctMin", ctMin.toString())
         }
     }
     if (commands.toString() == getDataValue("commands")) {
         if (debugLog) { log.debug "checkDevData(): commands Values match" }
     } else {
         if (debugLog) { log.debug "retrieveStateData(): commands Values do not match" }
-        device.updateDataValue("commands", commands)
+        updateDataValue("commands", commands.toString())
     }
     if (capType.toString() == getDataValue("capTypes")) {
         if (debugLog) { log.debug "checkDevData(): capTypes Values match" }
     } else {
         if (debugLog) { log.debug "checkDevData(): capTypes Values do not match" }
-        device.updateDataValue("capTypes", capType)
+        updateDataValue("capTypes", capType.toString())
     }
 }
 

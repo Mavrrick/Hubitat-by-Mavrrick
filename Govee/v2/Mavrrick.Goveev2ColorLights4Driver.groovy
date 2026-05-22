@@ -60,11 +60,11 @@ metadata {
         command "musicMode", [
             [name: "musicMode", type: "NUMBER", description: "Music Mode Value"],
             [name: "sensitivity ", type: "NUMBER", description: "% sensativity"],
-            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],
+            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off automatic color selection"],
 //            [name: "color ", type: "COLOR_MAP", description: "color to set"]            
            ]
         command "gradient", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off Gradient fading"],           
            ]
         command "sceneLoad"
         command "recState"
