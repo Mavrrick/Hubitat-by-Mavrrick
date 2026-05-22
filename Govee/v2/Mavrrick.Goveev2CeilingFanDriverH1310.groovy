@@ -74,24 +74,21 @@ metadata {
 //            [name: "color ", type: "COLOR_MAP", description: "color to set"]            
            ]
         command "gradient", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off Gradient function"],           
            ]
          command "mainLightToggle", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off main downlight"],           
            ]
          command "backGroundLightToggle", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off ambient uplight"],           
            ]
          command "fanToggle", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off the Fan"],           
            ] 
          command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
          command "reverseAirflowToggle", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"down", 1:"up"], description: "Change Direction of the air flow"],           
            ]  
-/*        command "fanSpeedMode", [
-            [name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}],           
-           ] */
         command "sceneLoad" 
         command "recState"
         command "loadState" 
