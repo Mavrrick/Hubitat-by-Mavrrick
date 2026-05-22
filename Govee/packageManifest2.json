@@ -184,10 +184,10 @@
     },
     {
       "id": "47688ef7-feed-4130-ac88-450e9912903e",
-      "name": "Govee v2 Ceiling Fan Driver H1310",
+      "name": "Govee v2 Ceiling Fan Driver",
       "namespace": "Mavrrick",
-      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2CeilingFanDriverH1310.groovy",
-      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2CeilingFanDriverH1310.groovy",
+      "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2CeilingFanDriver.groovy",
+      "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2CeilingFanDriver.groovy",
       "required": false,
       "version": "2.2.0",
       "betaVersion": "2.2.1"
