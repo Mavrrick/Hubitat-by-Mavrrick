@@ -31,7 +31,7 @@ import groovy.json.JsonBuilder
 def commandPort() { "4003" } 
 
 metadata {
-	definition(name: "Govee v2 Ceiling Fan Driver H1310", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "Govee v2 Ceiling Fan Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
         capability "Actuator"
 		capability "ColorControl"
@@ -390,10 +390,10 @@ def mainLightToggle(on_off) {
 def backGroundLightToggle(on_off) {
     switch(on_off) {
         case "on":
-        sendCommand("backGroundLightToggle", 1 ,"devices.capabilities.toggle");
+        sendCommand("backgroundLightToggle", 1 ,"devices.capabilities.toggle");
         break; 
         case "off":
-        sendCommand("backGroundLightToggle", 0 ,"devices.capabilities.toggle");
+        sendCommand("backgroundLightToggle", 0 ,"devices.capabilities.toggle");
         break;
         default: 
             if (debugLog) {log.debug ("backGroundLightToggle(): Unknown toggle value}")}; 
