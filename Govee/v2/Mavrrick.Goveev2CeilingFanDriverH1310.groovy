@@ -31,7 +31,7 @@ import groovy.json.JsonBuilder
 def commandPort() { "4003" } 
 
 metadata {
-	definition(name: "Govee v2 Ceiling Fan Driver H1310", namespace: "Mavrrick", author: "Mavrrick") {
+	definition(name: "Govee v2 Ceiling Fan Driver", namespace: "Mavrrick", author: "Mavrrick") {
 		capability "Switch"
         capability "Actuator"
 		capability "ColorControl"
@@ -70,11 +70,11 @@ metadata {
         command "musicMode", [
             [name: "musicMode", type: "NUMBER", description: "Music Mode Value"],
             [name: "sensitivity ", type: "NUMBER", description: "% sensativity"],
-            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],
+            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off automatic color selection"],
 //            [name: "color ", type: "COLOR_MAP", description: "color to set"]            
            ]
         command "gradient", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off Gradient function"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off Gradient fading"],           
            ]
          command "mainLightToggle", [
             [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off main downlight"],           
@@ -390,10 +390,10 @@ def mainLightToggle(on_off) {
 def backGroundLightToggle(on_off) {
     switch(on_off) {
         case "on":
-        sendCommand("backGroundLightToggle", 1 ,"devices.capabilities.toggle");
+        sendCommand("backgroundLightToggle", 1 ,"devices.capabilities.toggle");
         break; 
         case "off":
-        sendCommand("backGroundLightToggle", 0 ,"devices.capabilities.toggle");
+        sendCommand("backgroundLightToggle", 0 ,"devices.capabilities.toggle");
         break;
         default: 
             if (debugLog) {log.debug ("backGroundLightToggle(): Unknown toggle value}")}; 
