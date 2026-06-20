@@ -137,10 +137,12 @@ private def sendCommand(String command, payload2, type) {
                     sendEvent(name: "cloudAPI", value: "Success")
                     if (payload2 == 1) {
                         sendEvent(name: "reverseAirflowToggle", value: "on")
+                        sendEvent(name: "switch", value: "on")
                         if (descLog) { log.info "${device.label} was turned on"}
                     }
                     if (payload2 == 0) {
                         sendEvent(name: "reverseAirflowToggle", value: "off")
+                        sendEvent(name: "switch", value: "on")
                         if (descLog) { log.info "${device.label} was turned off"}
                     }
                     break
@@ -263,6 +265,12 @@ private def sendCommand(String command, payload2, type) {
                    }
                    setModeDescription(payloadJson.workMode)
                    if (descLog) { log.info "${device.label} workMode was set to ${payload2}"}
+                   break
+                case (code == 200 && command == "fanSpeedMode"):
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   sendEvent(name: "switch", value: "on")
+                   sendEvent(name: "speed", value: payload2)
+                   if (descLog) { log.info "${device.label} fan speed set to ${payload2}"}
                    break
                case (code == 200 && command == "sliderTemperature"):
                    def jsonSlurper = new JsonSlurper()

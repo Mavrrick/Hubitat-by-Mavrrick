@@ -9,7 +9,8 @@ library (
  
 
 @Field static Map<String, String> apiStatus = [:]
-//@Field static Map<String, String> statusUpd = [:]
+//@Field Map<String, String> apiStatus = [:]
+
 
 //////////////////////////////
 // Standard device Commands //
@@ -881,127 +882,99 @@ def ipLookup() {
     ipAddress = getDataValue("IP")
     return ipAddress
 }
+
 def lanAPIPost(data) {
-    if (debugLog) {log.info("lanAPIPost: Processing update from LAN API. Data: ${data}")}
-    if (data.onOff == 1) { onOffSwitch = on}
-    if (data.onOff == 0) { onOffSwitch = off}
-    
-        if (onOffSwitch == "on") {
-            if (onOffSwitch != device.currentValue("switch")) {
-                if (debugLog) {log.info("lanAPIPost: Switch Changed to on.")}
-                sendEvent(name: "switch", value: onOffSwitch)
+    if (debugLog) log.info("lanAPIPost: Processing update from LAN API. Data: ${data}")
+
+    // Set switch state
+    def onOffSwitch = data.onOff == 1 ? on : off
+    // Only send switch event if changed
+    if (onOffSwitch != device.currentValue("switch", true)) {
+        if (debugLog) log.info("lanAPIPost: Switch Changed to ${onOffSwitch}.")
+        sendEvent(name: "switch", value: onOffSwitch)
+    }
+
+    // Handle light update only when ON
+    if (onOffSwitch == "on") {
+        def currentHue = device.currentValue("hue", true)
+        def currentSaturation = device.currentValue("saturation", true)
+        def currentLevel = device.currentValue("level", true)
+
+        // If color temperature is 0, use RGB mode
+        if (data.colorTemInKelvin == 0) {
+            if (debugLog) log.info("lanAPIPost: CT is zero. Device in Color Mode only deriving brightness from RGB")
+
+            def rgb = [data.color.r, data.color.g, data.color.b]
+            def hsv = hubitat.helper.ColorUtils.rgbToHSV(rgb)
+
+            if (debugLog) log.info("lanAPIPost: hsv value is ${hsv}")
+
+            // Update hue, saturation, and level only if changed
+            if (hsv[0] != currentHue) {
+                sendEvent(name: "hue", value: hsv[0])
+            } else if (debugLog) {
+                if (debugLog) log.info("lanAPIPost: Color Hue has not changed. Ignoring")
             }
-            if (data.colorTemInKelvin == 0){
-                if (debugLog) {log.info("lanAPIPost: CT is zero. Device in Color Mode only deriving brightness from RGB")}
-                rgb = []
-                rgb = [data.color.r,data.color.g, data.color.b]
-                hsv = hubitat.helper.ColorUtils.rgbToHSV(rgb)
-                if (debugLog) {log.info("lanAPIPost: hsv value is ${hsv}")}
-                if (hsv.get(0) != device.currentValue("hue") || hsv.get(1) != device.currentValue("saturation") || hsv.get(1) != device.currentValue("level")) {
-                    if (debugLog) {log.info("lanAPIPost: Hue is ${hsv.get(0)}.")}
-                    if (hsv.get(0) != device.currentValue("hue")) {
-                        sendEvent(name: "hue", value: hsv.get(0))
-                    } else {
-                        if (debugLog) {log.info("lanAPIPost: Color Hue has not changed. Ignoring")}
-                    } 
-                    if (debugLog) {log.info("lanAPIPost: Saturation is ${hsv.get(1)}.")}
-                    if (hsv.get(1) != device.currentValue("saturation")) {
-                    sendEvent(name: "saturation", value: hsv.get(1))
-                    } else {
-                        if (debugLog) {log.info("lanAPIPost: Color Saturation has not changed. Ignoring")}
-                    }
-                    if (debugLog) {log.info("lanAPIPost: Brightnes is ${hsv.get(2)}.")}
-                    if (hsv.get(1) != device.currentValue("level")) {
-                    sendEvent(name: "level", value: hsv.get(2))
-                    } else {
-                        if (debugLog) {log.info("lanAPIPost: Color Saturation has not changed. Ignoring")}
-                    }
-                    if (data.brightness != device.currentValue("goveeBrightness")) {
-                        sendEvent(name: "goveeBrightness", value: data.brightness)
-                    } else {
-                        if (debugLog) {log.info("lanAPIPost: Govee Brightness has not changed. Ignoring")}
-                    }
-                    def theColor = getColor(hsv.get(0),hsv.get(1))
-                    if (descLog)
-                    {
-                        if (theColor == "Unknown")
-                        {
-                            if (descLog) log.debug "trying alt. color name method"
-                            theColor = convertHueToGenericColorName(hsv.get(0),hsv.get(1))
-                            if (descLog) log.debug "alt. method got back $theColor"
-                        }
-                        if (theColor != "Unknown") log.info "${device.label} Color is $theColor"
-                        else log.info "${device.label} Color is $value"
-                        sendEvent(name: "colorName", value: theColor)
-                    }
-                    sendEvent(name: "RGB", value: rgb)
-                }                
-            } else {
-                if (data.brightness != device.currentValue("level")) {
-                    sendEvent(name: "level", value: data.brightness)
-                    sendEvent(name: "goveeBrightness", value: data.brightness)
-                } else {
-                    if (debugLog) {log.info("lanAPIPost: Brightness has not changed. Ignoring")}
-                }
-                if (debugLog) {log.info("lanAPIPost: CT has a valid value.")}
-                if (data.colorTemInKelvin != device.currentValue("colorTemperature")) {
-                    sendEvent(name: "colorTemperature", value: data.colorTemInKelvin)
-                } else {
-                    if (debugLog) {log.info("lanAPIPost: Color Temperature has not changed. Ignoring")}
-                }
+
+            if (hsv[1] != currentSaturation) {
+                sendEvent(name: "saturation", value: hsv[1])
+            } else if (debugLog) {
+                if (debugLog) log.info("lanAPIPost: Color Saturation has not changed. Ignoring")
             }
-           
-                
-                
-/*            if (data.brightness != device.currentValue("level")) {
-                sendEvent(name: "level", value: data.brightness)
-            } else {
-                if (debugLog) {log.info("lanAPIPost: Brightness has not changed. Ignoring")}
+
+            if (hsv[2] != currentLevel) {
+                sendEvent(name: "level", value: hsv[2])
+            } else if (debugLog) {
+                if (debugLog) log.info("lanAPIPost: Brightness has not changed. Ignoring")
             }
-            if (data.colorTemInKelvin != device.currentValue("colorTemperature")) {
-                sendEvent(name: "colorTemperature", value: data.colorTemInKelvin)
-            } else {
-                if (debugLog) {log.info("lanAPIPost: Color Temperature has not changed. Ignoring")}
+
+            // Update Govee brightness
+            if (data.brightness != device.currentValue("goveeBrightness", true)) {
+                sendEvent(name: "goveeBrightness", value: data.brightness)
+            } else if (debugLog) {
+                if (debugLog) log.info("lanAPIPost: Govee Brightness has not changed. Ignoring")
             }
-            rgb = []
-            rgb = [data.color.r,data.color.g, data.color.b]
-            hsv = hubitat.helper.ColorUtils.rgbToHSV(rgb)
-            if (hsv.get(0) != device.currentValue("hue") || hsv.get(1) != device.currentValue("saturation")) {
-                if (debugLog) {log.info("lanAPIPost: Hue is ${hsv.get(0)}.")}
-                if (hsv.get(0) != device.currentValue("hue")) {
-                    sendEvent(name: "hue", value: hsv.get(0))
-                } else {
-                    if (debugLog) {log.info("lanAPIPost: Color Hue has not changed. Ignoring")}
-                } 
-                if (debugLog) {log.info("lanAPIPost: Saturation is  is ${hsv.get(1)}.")}
-                if (hsv.get(1) != device.currentValue("saturation")) {
-                sendEvent(name: "saturation", value: hsv.get(1))
-                } else {
-                    if (debugLog) {log.info("lanAPIPost: Color Saturation has not changed. Ignoring")}
-                }
-                def theColor = getColor(hsv.get(0),hsv.get(1))
-                if (descLog)
-                {
-                    if (theColor == "Unknown")
-                    {
-                        if (descLog) log.debug "trying alt. color name method"
-                        theColor = convertHueToGenericColorName(hsv.get(0),hsv.get(1))
-                        if (descLog) log.debug "alt. method got back $theColor"
-                    }
-                    if (theColor != "Unknown") log.info "${device.label} Color is $theColor"
-                    else log.info "${device.label} Color is $value"
-                    sendEvent(name: "colorName", value: theColor)
-                }
-            } */
+
+            // Determine color name
+            def theColor = getColor(hsv[0], hsv[1])
+            if (descLog && theColor == "Unknown") {
+                if (debugLog) log.debug "trying alt. color name method"
+                theColor = convertHueToGenericColorName(hsv[0], hsv[1])
+                if (debugLog) log.debug "alt. method got back $theColor"
+            }
+
+            if (descLog && theColor != "Unknown") {
+                if (debugLog) log.info "${device.label} Color is $theColor"
+            } else if (descLog) {
+                if (debugLog) log.info "${device.label} Color is $value"
+            }
+
+            sendEvent(name: "colorName", value: theColor)
+            sendEvent(name: "RGB", value: rgb)
+
         } else {
-            if (onOffSwitch != device.currentValue("switch")) {
-                if (debugLog) {log.info("lanAPIPost: Switch Changed to off.")}
-                sendEvent(name: "switch", value: onOffSwitch)
+            // Handle color temperature mode
+            if (data.brightness != device.currentValue("level", true)) {
+                sendEvent(name: "level", value: data.brightness)
+                sendEvent(name: "goveeBrightness", value: data.brightness)
+            } else if (debugLog) {
+                if (debugLog) log.info("lanAPIPost: Brightness has not changed. Ignoring")
+            }
+
+            if (debugLog) log.info("lanAPIPost: CT has a valid value.")
+
+            if (data.colorTemInKelvin != device.currentValue("colorTemperature", true)) {
+                sendEvent(name: "colorTemperature", value: data.colorTemInKelvin)
+            } else if (debugLog) {
+                if (debugLog) log.info("lanAPIPost: Color Temperature has not changed. Ignoring")
             }
         }
+    }
+
+    // Clear retry scheduler
     unschedule(devStatusRetry)
     apiStatus."${device.deviceNetworkId}"["statusUpd"] = "ready"
-}
+} 
 
 void updateIPAdd(ipAddress) {
     if (debugLog) {log.info("updateIPAdd: New Ip Address fund for Device, Updating with ${ipAddress}")}
