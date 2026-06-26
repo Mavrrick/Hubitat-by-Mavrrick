@@ -12,7 +12,8 @@ import groovy.transform.Field
 @Field static def jsonSlurper = new JsonSlurper()
 @Field static def childDeviceCache = [:]    
 @Field static final String GOVEE_PREFIX = "Govee_"    
-@Field static def ipx = [:]    
+@Field static def ipx = [:]
+@Field static def goveeAppAPIFull = [:]    
 
 
 metadata {
@@ -55,6 +56,7 @@ def installed(){
 
 def initialize() {
     disconnect()
+    updateGoveeAPI()
     pauseExecution(1000)
     if (disableMQTT == true) {
         mqttConnectionAttempt()
@@ -474,9 +476,18 @@ private def mqttEventCreate(deviceId, instance, state) {
 // Method to return the Govee API Data for specific device from Prent App //
 ///////////////////////////////////////////////////////////////////////////
 
+def updateGoveeAPI() {
+        goveeAppAPIFull = parent.state.goveeAppAPI
+}
+
 def retrieveGoveeAPI(deviceid) {
+    if (!goveeAppAPIFull) {
+        updateGoveeAPI() 
+    } else if (goveeAppAPIFull.find{it.device==deviceid} == null) {
+        updateGoveeAPI() 
+    }        
     if (debugLog) "retrieveGoveeAPI(): ${deviceid}"
-    def goveeAppAPI = parent.state.goveeAppAPI.find{it.device==deviceid}
+    def goveeAppAPI = goveeAppAPIFull.find{it.device==deviceid}
     return goveeAppAPI
 }
 
