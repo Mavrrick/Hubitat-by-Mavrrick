@@ -14,7 +14,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/bundle/Govee_Integration_v2.zip",
       "required": true,
       "version": "2.2.8",
-      "betaVersion": "2.2.11"
+      "betaVersion": "2.2.12"
     }
   ],
   "apps": [
@@ -28,7 +28,7 @@
       "oauth": false,
       "primary": false,
       "version": "2.2.6",
-      "betaVersion": "2.2.7"
+      "betaVersion": "2.2.8"
     }
   ],
   "drivers": [
@@ -40,7 +40,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
       "version": "2.2.1",
-      "betaVersion": "2.2.4"
+      "betaVersion": "2.2.5"
     },
     {
       "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
