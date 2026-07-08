@@ -138,17 +138,29 @@ def mqttPost(String instance, String state){
             sendEvent(name: instance, value: time, displayed: true)
     } 
     else if (instance == 'bodyAppearedEvent') {
-        if (state == "Presence") {
-            if (descLog) { log.info "mqttPost(): bodyAppearedEvent Present found"}
-            sendEvent(name: "presence", value: "present", displayed: true)
-            sendEvent(name: "motion", value: "active", displayed: true)
-        } else if (state == "Absence") {
-            if (descLog) { log.info "mqttPost(): bodyAppearedEvent Not Present found"}
-            sendEvent(name: "presence", value: "not present", displayed: true)
-            sendEvent(name: "motion", value: "inactive", displayed: true)            
+            String stateStr = ""
+            if (state instanceof List && !state.isEmpty()) {
+                stateStr = state[0]?.message?.toString() ?: state.toString()
+            } else {
+                stateStr = state.toString()
+            }
+            
+            if (debugLog) log.debug "mqttPost(): Evaluated bodyAppearedEvent state target text: ${stateStr}"
+
+            // Match "Leaked" or value:1
+            if (stateStr.equalsIgnoreCase("Presence") || stateStr.equalsIgnoreCase("Leaked") || stateStr.contains("value:1")) {
+                if (descLog) { log.info "mqttPost(): bodyAppearedEvent Active/Leak state matched."}
+                sendEvent(name: "presence", value: "present", isStateChange: true, displayed: true)
+                sendEvent(name: "motion", value: "active", isStateChange: true, displayed: true)
+            
+            // Match "Clear", "Absence", or value:0
+            } else if (stateStr.equalsIgnoreCase("Absence") || stateStr.equalsIgnoreCase("Clear") || stateStr.contains("cleared") || stateStr.contains("value:0")) {
+                if (descLog) { log.info "mqttPost(): bodyAppearedEvent Inactive/Clear state matched."}
+                sendEvent(name: "presence", value: "not present", isStateChange: true, displayed: true)
+                sendEvent(name: "motion", value: "inactive", isStateChange: true, displayed: true)            
+            }
         }
     }
-}
 
 
 /////////////////////////////////////////////////////////////////////
