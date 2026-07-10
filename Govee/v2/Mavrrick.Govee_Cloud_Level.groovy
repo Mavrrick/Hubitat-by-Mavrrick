@@ -30,9 +30,17 @@ def cloudSetLevel(float v,duration = 0){
 }
 
 def cloudsetLevel2(int v){
-        sendEvent(name: "cloudAPI", value: "Pending")
-		if  (aRngBright) {v=incBrightnessRange(v)}
-        if (debugLog) { log.debug "cloudsetLevel2(): Sent Brightness = ${v}"}
-		sendCommand("brightness", v,"devices.capabilities.range")    
+    
+        if (device.currentValue("colorMode") == "RGB") {
+            if (debugLog) log.info "cloudSetLevel2(): Setting level for ${device.label} in RGB mode current level is ${device.currentValue("level", true)}."           
+            cloudSetHsb(device.currentValue("hue"),device.currentValue("saturation"),v)
+        } else {
+            sendEvent(name: "cloudAPI", value: "Pending")
+            sendCommand("brightness", v,"devices.capabilities.range")
+        }
+}
+
+def cloudSetGoveeBrightness(v) {
+    sendCommand("brightness", v,"devices.capabilities.range") 
 }
 

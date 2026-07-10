@@ -116,8 +116,9 @@ def initialize(){
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
-//    if (pollRate > 0) runIn(pollRate,poll)
+
     if (debugLog) runIn(1800, logsOff)
+    checkDevData()
 }
 
 

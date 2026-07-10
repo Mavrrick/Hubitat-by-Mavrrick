@@ -32,11 +32,16 @@ metadata {
 
         attribute "online", "string"
 		attribute "colorName", "string"
+        attribute "sceneName", "string"
         attribute "colorRGBNum", "number"
         attribute "cloudAPI", "string"
-        attribute "effectNum", "integer" 
+        attribute "effectNum", "integer"
+        attribute "goveeBrightness", "integer"
         command "activateDIY", [
             [name: "diyNumber", type: "NUMBER", description: "DIY Number to activate"]
+           ]
+        command "setGoveeBrightness", [
+            [name: "goveeBritghtness", type: "NUMBER", description: "Set Govee Brightness value between 0 and 100. Compound dimming when in RGB mode"]
            ]
         command "snapshot", [
             [name: "snapshotNum", type: "STRING", description: "Activate Snapshot"]
@@ -52,16 +57,16 @@ metadata {
         command "musicMode", [
             [name: "musicMode", type: "NUMBER", description: "Music Mode Value"],
             [name: "sensitivity ", type: "NUMBER", description: "% sensativity"],
-            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],
+            [name: "autoColor", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off automatic color selection"],
 //            [name: "color ", type: "COLOR_MAP", description: "color to set"]            
            ]
         command "gradient", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "which segment to change exp [1,4,6,7,8,9]"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off Gradient fading"],           
            ]
         command "recState"
         command "loadState"    
         command "dreamview", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on Dreamview"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on/off Dreamview"],           
            ]
         command "sceneLoad"
         
@@ -131,7 +136,7 @@ def initialize(){
         runIn(offset,poll)
     }
     if (debugLog) runIn(1800, logsOff)
-    
+    checkDevData()
 }
 
 def installed(){
@@ -222,6 +227,14 @@ def setLevel(float v,duration = 0) {
         lanSetLevel(v,duration) 
     } else {
         cloudSetLevel( v, 0)
+        }
+}
+
+def setGoveeBrightness(float v) {
+    if (lanControl) {
+        lanSetGoveeBrightness(v) 
+    } else {
+        cloudSetGoveeBrightness(v)
         }
 }
 

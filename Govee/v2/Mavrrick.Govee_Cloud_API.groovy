@@ -78,6 +78,74 @@ private def sendCommand(String command, payload2, type) {
                         if (descLog) { log.info "${device.label} was turned off"}
                     }
                     break
+                case (code == 200 && command == "mainLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "mainLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "mainLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "backgroundLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "backgroundLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "backgroundLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "pillarLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "pillarLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} Pillar light was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "pillarLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} Pillar light was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "baseLightToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "baseLightToggle", value: "on")
+                        if (descLog) { log.info "${device.label} Base light was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "baseLightToggle", value: "off")
+                        if (descLog) { log.info "${device.label} Base light was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "fanToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "fanToggle", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "fanToggle", value: "off")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
+                case (code == 200 && command == "reverseAirflowToggle"):
+                    sendEvent(name: "cloudAPI", value: "Success")
+                    if (payload2 == 1) {
+                        sendEvent(name: "reverseAirflowToggle", value: "on")
+                        sendEvent(name: "switch", value: "on")
+                        if (descLog) { log.info "${device.label} was turned on"}
+                    }
+                    if (payload2 == 0) {
+                        sendEvent(name: "reverseAirflowToggle", value: "off")
+                        sendEvent(name: "switch", value: "on")
+                        if (descLog) { log.info "${device.label} was turned off"}
+                    }
+                    break
                 case (code == 200 && command.contains("socketToggle")):
                     sendEvent(name: "cloudAPI", value: "Success")
                     if (payload2 == 1) {
@@ -90,9 +158,16 @@ private def sendCommand(String command, payload2, type) {
                     }
                     break
                 case (code == 200 && command == "brightness"): 
-                    sendEvent(name: "cloudAPI", value: "Success")
-                    sendEvent(name: "switch", value: "on")
-                    sendEvent(name: "level", value: payload2)
+                    if (device.currentValue("colorMode") == "RGB") {
+                        sendEvent(name: "cloudAPI", value: "Success")
+                        sendEvent(name: "switch", value: "on")
+                        sendEvent(name: "goveeBrightness", value: payload2)
+                    } else { 
+                        sendEvent(name: "cloudAPI", value: "Success")
+                        sendEvent(name: "switch", value: "on")
+                        sendEvent(name: "level", value: payload2)
+                        sendEvent(name: "goveeBrightness", value: payload2)
+                    }
                     if (descLog) { log.info "${device.label} Level was set to ${payload2}"}
                     break
                 case (code == 200 && command == "humidity"): 
@@ -106,6 +181,9 @@ private def sendCommand(String command, payload2, type) {
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "CT")
                     sendEvent(name: "colorTemperature", value: payload2)
+                    if (device.currentValue("level") != device.currentValue("goveeBrightness")) {
+                        sendEvent(name: "level", value: device.currentValue("goveeBrightness"))
+                    }
                     setCTColorName(payload2)
                     if (descLog) log.info "${device.label} Color Temp was set to. ${payload2}"
                     break
@@ -188,6 +266,12 @@ private def sendCommand(String command, payload2, type) {
                    setModeDescription(payloadJson.workMode)
                    if (descLog) { log.info "${device.label} workMode was set to ${payload2}"}
                    break
+                case (code == 200 && command == "fanSpeedMode"):
+                   sendEvent(name: "cloudAPI", value: "Success")
+                   sendEvent(name: "switch", value: "on")
+                   sendEvent(name: "speed", value: payload2)
+                   if (descLog) { log.info "${device.label} fan speed set to ${payload2}"}
+                   break
                case (code == 200 && command == "sliderTemperature"):
                    def jsonSlurper = new JsonSlurper()
                    def payloadJson = jsonSlurper.parseText(payload2)
@@ -215,33 +299,37 @@ private def sendCommand(String command, payload2, type) {
                     int r = (payload2 >> 16) & 0xFF;
                     int g = (payload2 >> 8) & 0xFF;
                     int b = payload2 & 0xFF;
+                    rgb = [r,g,b]
 		            HSVlst=hubitat.helper.ColorUtils.rgbToHSV([r,g,b])
 				    hue=HSVlst[0].toInteger()
 	   			    sat=HSVlst[1].toInteger()
+                    lvl=HSVlst[2].toInteger()
                     sendEvent(name: "cloudAPI", value: "Success")
                     sendEvent(name: "switch", value: "on")
                     sendEvent(name: "colorMode", value: "RGB")
                     sendEvent(name: "colorRGBNum", value: payload2)
 					sendEvent(name: "hue", value: hue)
 					sendEvent(name: "saturation", value: sat)
+                    sendEvent(name: "RGB", value: rgb)
+                    sendEvent(name: "level", value: lvl)
                     if (descLog) { log.info "${device.label} Color was set to ${payload2}"}
                     break
                 default:
                     if (descLog) { log.info "command failed"}
             }   
 		}
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
         if (e.statusCode == 429) {
-            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Attempting again in one min."
-                       sendEvent(name: "cloudAPI", value: "Retry")
+            log.error "sendCommand():Cloud API Returned code 429, Rate Limit exceeded. Check your activity to reduce load."
+/*                       sendEvent(name: "cloudAPI", value: "Retry")
                        pauseExecution(60000)
-                       sendCommand(command, payload)                    
+                       sendCommand(command, payload2) */                    
         } 
         else {
           log.error "sendCommand():Unknwon Error. Attempting again in one min." 
-            sendEvent(name: "cloudAPI", value: "Retry")
+//            sendEvent(name: "cloudAPI", value: "Retry")
         }    
 		return 'unknown'
 	}
@@ -249,12 +337,13 @@ private def sendCommand(String command, payload2, type) {
     long duration = endTime - startTime
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
-    def formattedRespDuration = formatDuration(duration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    def formattedRespDuration = formatDuration(respDuration)
+    parent.goveeReponseTime(respDuration)
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
 }
@@ -462,7 +551,7 @@ def getDeviceState(){
 				return resp.data
 			}
 			
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
 		return 'unknown'
@@ -472,11 +561,12 @@ def getDeviceState(){
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
     def formattedRespDuration = formatDuration(respDuration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'getDeviceState() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "getDeviceState() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    parent.goveeReponseTime(respDuration)
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
 }
@@ -518,7 +608,7 @@ def retrieveScenes2(){
 				return resp.data
 			}
 			
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
 		return 'unknown'
@@ -527,15 +617,15 @@ def retrieveScenes2(){
     long duration = endTime - startTime
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
-    def formattedRespDuration = formatDuration(duration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'retrieveScenes2() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "retrieveScenes2() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    def formattedRespDuration = formatDuration(respDuration)
+    parent.goveeReponseTime(respDuration)
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
-
 }
 
 def retrieveDIYScenes(){
@@ -570,7 +660,7 @@ def retrieveDIYScenes(){
 				return resp.data
 			}
 			
-	} catch (groovyx.net.http.HttpResponseException e) {
+	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
 		log.error "${e}"
 		return 'unknown'
@@ -588,23 +678,23 @@ def retrieveDIYScenes(){
     long duration = endTime - startTime
     long respDuration = respTime - startTime
     def formattedDuration = formatDuration(duration)
-    def formattedRespDuration = formatDuration(duration)
-    if (descLog) {
-        if (respDuration > 10000) {
-            log.warn 'retrieveDIYScenes() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
-        } else {
-            log.info "retrieveDIYScenes() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
+    def formattedRespDuration = formatDuration(respDuration)
+    parent.goveeReponseTime(respDuration)
+    if (respDuration > 10000) {
+        log.warn 'sendCommand() Cloud API call time <b style="color:red;">'+ formattedRespDuration+"</b>. Full Command Process time ${formattedDuration}"
+     } else {
+        if (debugLog) {
+            log.debug "sendCommand() Cloud API call time ${formattedRespDuration}. Full Command Process time ${formattedDuration}"
         }
     }
-
 }
 
 def retrieveStateData(){
     def device = device.getDataValue("deviceID")
     def goveeAppAPI = parent.retrieveGoveeAPI(device)
     def scenesCommands = ["nightlightScene","diyScene","presetScene"]
-    def devCommands = ["workMode","targetTemperature","segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"]
-    goveeAppAPI.capabilities.each {        
+    def devCommands = ["workMode","targetTemperature","segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"]    
+    goveeAppAPI.capabilities.each {
         switch (true) {
             case (it.get("instance") == "snapshot") :
                 state."${it.get("instance")}" = [:]
@@ -635,7 +725,7 @@ def retrieveStateData(){
     if (debugLog) { log.debug "retrieveSnapshot(): Retrieving Snapshots for device"}
     def type = "snapshot"
     def device = device.getDataValue("deviceID")
-    def goveeAppAPI = parent.retrieveGoveeAPI(device)
+    def goveeAppAPI = parent.retrieveGoveeAPI(device) 
     state.snapshot = [:]
      
     def matchedCapability = goveeAppAPI.capabilities.find { capability ->
@@ -667,6 +757,52 @@ def apiKeyUpdate() {
     else if (device.getDataValue("apiKey") != parent?.APIKey) {
         if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
         device.updateDataValue("apiKey", parent?.APIKey)
+    }
+}
+
+def checkDevData() {
+    def device = device.getDataValue("deviceID")
+    def goveeAppAPI = parent.retrieveGoveeAPI(device)
+    def commands = []
+    def capType = []
+    def int ctMin = 0
+    def int ctMax = 0
+    goveeAppAPI.capabilities.each {
+        commands.add(it.instance)
+        capType.add(it.type)
+        if (it.instance == "colorTemperatureK") {
+            ctMin = it.parameters.range.min
+            ctMax = it.parameters.range.max
+            if (debugLog) { log.debug "checkDevData(): Min is ${ctMin} Max is ${ctMax}"}
+        }
+    }
+    if (ctMin == 0 && ctMax == 0) {
+        if (debugLog) { log.debug "checkDevData(): Device does not use CT" }
+    } else {
+        if (ctMax == getDataValue("ctMax").toInteger()) {
+            if (debugLog) { log.debug "checkDevData(): ctMax Values match" }
+        } else {
+            if (debugLog) { log.debug "checkDevData(): ctMax Values do not match" }
+            updateDataValue("ctMax", ctMax.toString())
+        }
+        if (ctMin == getDataValue("ctMin").toInteger()) {
+            if (debugLog) { log.debug "checkDevData(): ctMin Values match" }
+        } else {
+            if (debugLog) { log.debug "checkDevData(): ctMin Values do not match" }
+            updateDataValue("ctMin", ctMin.toString())
+        }
+    }
+    if (commands.toString() == getDataValue("commands")) {
+        if (debugLog) { log.debug "checkDevData(): commands Values match" }
+    } else {
+        if (debugLog) { log.debug "retrieveStateData(): commands Values do not match" }
+        updateDataValue("commands", commands.toString())
+    }
+    if (capType.toString() == getDataValue("capTypes")) {
+        if (debugLog) { log.debug "checkDevData(): capTypes Values match" }
+    } else {
+        if (debugLog) { log.debug "checkDevData(): capTypes Values do not match" }
+        updateDataValue("capTypes", capType.toString())
     }
 }
 

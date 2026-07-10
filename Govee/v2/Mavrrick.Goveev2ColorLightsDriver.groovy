@@ -39,20 +39,16 @@ metadata {
         attribute "colorRGBNum", "number"        
         attribute "cloudAPI", "string"
         attribute "effectNum", "integer" 
+        attribute "goveeBrightness", "integer"
         command "activateDIY", [
             [name: "diyNumber", type: "NUMBER", description: "DIY Number to activate"]
+           ]
+        command "setGoveeBrightness", [
+            [name: "goveeBritghtness", type: "NUMBER", description: "Set Govee Brightness value between 0 and 100. Compound dimming when in RGB mode"]
            ]
         command "snapshot", [
             [name: "snapshotNum", type: "STRING", description: "Activate Snapshot"]
            ]
-/*        command "segmentedColorRgb", [
-            [name: "segment", type: "STRING", description: "which segment to change exp [1,4,6,7,8,9]"],
-            [name: "color", type: "COLOR_MAP", description: "color to set between 0 and 16777215"]
-           ]
-        command "segmentedBrightness", [
-            [name: "segment", type: "STRING", description: "which segment to change exp [1,4,6,7,8,9]"],
-            [name: "brightness", type: "NUMBER", description: "color to set between 0 and 100"]
-           ] */
         command "musicMode", [
             [name: "musicMode", type: "NUMBER", description: "Music Mode Value"],
             [name: "sensitivity ", type: "NUMBER", description: "% sensativity"],
@@ -219,6 +215,14 @@ def setLevel(float v,duration = 0) {
         lanSetLevel(v,duration) 
     } else {
         cloudSetLevel( v, 0)
+        }
+}
+
+def setGoveeBrightness(float v) {
+    if (lanControl) {
+        lanSetGoveeBrightness(v) 
+    } else {
+        cloudSetGoveeBrightness(v)
         }
 }
 
