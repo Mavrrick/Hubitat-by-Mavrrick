@@ -196,7 +196,7 @@ void parse(String event) {
         int mqttMsgCount = device.currentValue("msgCount").toInteger() + 1
         sendEvent(name: "msgCount", value: mqttMsgCount)
     
-        if (debugLog) log.debug "In parse, received message: ${payloadJson} for deviceid is ${payloadJson.device} capability is ${payloadJson.capabilities}"
+        if (debugLog) log.debug "In parse, received message: '${payloadJson}' for deviceid is '${payloadJson.device}' capability is '${payloadJson.capabilities}'"
 
         mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
         
