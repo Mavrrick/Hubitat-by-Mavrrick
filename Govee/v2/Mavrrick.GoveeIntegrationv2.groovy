@@ -1579,7 +1579,7 @@ def retrieveGoveeAPIData() {
     }
     def mqttDevice = getChildDevice('Govee_v2_Device_Manager')
     if (mqttDevice) {
-    updateGoveeAPI()
+    mqttDevice.updateGoveeAPI()
     }
 }
 
