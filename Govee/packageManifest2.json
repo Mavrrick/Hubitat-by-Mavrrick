@@ -3,7 +3,7 @@
   "author": "Mavrrick",
   "minimumHEVersion": "2.5.0",
   "dateReleased": "2023-12-09",
-  "releaseNotes": "",
+  "releaseNotes": "Stable Release\nGovee Integration v2 7/10/2026\n Added new driver for Multi Light Floor Lamp\n Enabled detection of Multi light Floor Lamp\n Added Govee Fan Driver with proper detection and controlls \n Added Govee Brightness Attribute\n Added command on many drivers to set Govee Brightness\n Enabled proper recognition of various toggle states from the Govee Cloud API\n Adjusted various brightness attribute handling to account for new Govee Brightness value\n Added color attribute processing to handle the distinction between HSL Brightness and Govee Brightnes\n Minor logging adjustment for Govee API Response time\n Added routine to validate and update a devices Capabilities and Commands occassionally\n Update MQTT Message handeling for lackwater event for Govee Ice Maker Pro\n Significant changes to how LAN API Devices post state updates \n Updated some text on driver commands to apply to there use case.\n Significant changes to the GoveeV2 Device manager device to make it more efficient",
   "betaReleaseNotes": "Beta Release",
   "bundles": [
     {
