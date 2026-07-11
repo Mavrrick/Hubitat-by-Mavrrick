@@ -40,7 +40,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
       "version": "2.2.5",
-      "betaVersion": "2.2.5"
+      "betaVersion": "2.2.6"
     },
     {
       "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
