@@ -61,6 +61,7 @@ def initialize() {
     if (disableMQTT == true) {
         mqttConnectionAttempt()
     }
+    String scanCron = ''
     sendEvent(name: "msgCount", value: 0)
     state.remove("ipxdni")
     state.childCount = getChildDevices().size()
@@ -76,11 +77,15 @@ def initialize() {
         unschedule()
     } else if (scanRate <= 59) {
         unschedule()
-        String scanCron = '0 */'+scanRate+' * ? * *' 
+        scanCron = '0 */'+scanRate+' * ? * *' 
         schedule(scanCron, LookupLanAPIDevices)
     } else {
         log.warn "ScanRate is invalid it will be ignored until fixed."    
     }
+    scanCron = '0 */1 * ? * *' 
+    schedule(scanCron, heartbeat)
+    scanCron = '20 * * ? * *' 
+	schedule(scanCron, periodicReconnect)
     RetrievechildDeviceInfo()
     if (debugLog) runIn(1800, logsOff)
 }
@@ -132,13 +137,14 @@ def subscribe() {
     interfaces.mqtt.subscribe(mqttTopic)
 }
 
-def unsubscribe(topic) {
+def unsubscribe() {
+    mqttTopic = 'GA/'+device.getDataValue("apiKey")
     if (!interfaces.mqtt.isConnected()) {
         connect()
     }
     
-    if (debugLog) log.debug "Unsubscribe from: hubitat/${getHubId()}/${topic}"
-    interfaces.mqtt.unsubscribe("hubitat/${getHubId()}/${topic}")
+    if (debugLog) log.debug "Unsubscribe from: ${mqttTopic}"
+    interfaces.mqtt.unsubscribe(mqttTopic)
 }
 
 def connect() {
@@ -189,17 +195,17 @@ void parse(String event) {
     
     long startTime = now()
     if (debugLog) log.info "parse() Parse call started at ${startTime}"
-//    if (event.matches("(.*)topic(.*)")) {
     if (event.contains("topic")) {
         if (debugLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
         def payloadJson = jsonSlurper.parseText(interfaces.mqtt.parseMessage(event).payload)
         int mqttMsgCount = device.currentValue("msgCount").toInteger() + 1
         sendEvent(name: "msgCount", value: mqttMsgCount)
-    
-        if (debugLog) log.debug "In parse, received message: '${payloadJson}' for deviceid is '${payloadJson.device}' capability is '${payloadJson.capabilities}'"
-
-        mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
-        
+        if (payloadJson instanceof Map) {
+            if (debugLog) log.debug "In parse, received message: '${payloadJson}' for deviceid is '${payloadJson.device}' capability is '${payloadJson.capabilities}'"
+            mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
+        } else {
+            if (debugLog) log.info "parse() Payload is heartbeat ${payloadJson}"
+        }        
     } else {
         def parsedEvent = jsonSlurper.parseText(event)
         fromIp = jsonSlurper.parseText(event).fromIp
@@ -331,6 +337,21 @@ def heartbeat() {
 	}				
 }
 
+def publishMqtt(topic, payload, qos = 0, retained = true) {
+    if (!interfaces.mqtt.isConnected()) {
+        mqttConnectionAttempt()
+    }
+    
+    mqttTopic = 'GA/'+device.getDataValue("apiKey")
+    
+    try {
+        interfaces.mqtt.publish(mqttTopic, payload, qos, retained) //'GA/'+device.getDataValue("apiKey")
+        if (debugLog) log.debug "[publishMqtt] topic: ${mqttTopic} payload: ${payload}"
+    } catch (Exception e) {
+        log.error "In publishMqtt: Unable to publish message."
+    }
+}
+
 def mqttClientStatus(status) {
 	if (debugLog) log.debug "In mqttClientStatus: ${status}"
     
@@ -339,6 +360,14 @@ def mqttClientStatus(status) {
     } else {
         if (debugLog) log.debug "In mqttClientStatus: Success."    
     }
+}
+
+def periodicReconnect() {
+	if (settings?.periodicConnectionRetry) {
+		if (!interfaces.mqtt.isConnected()) {
+			connect()
+		}
+	}
 }
 
 def getCachedChildDevice(deviceNetworkId) {

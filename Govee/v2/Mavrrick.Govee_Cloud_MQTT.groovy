@@ -102,30 +102,8 @@ def disconnected() {
 } 
 
 /////////////////////////////////////////////////////////////////////
-// Parse
+// MQTT Post
 /////////////////////////////////////////////////////////////////////
-/*
-def parse(String event) {
-    def jsonSlurper = new JsonSlurper()     
-    if (debugLog) log.debug "In parse, received a message"
-    def message = interfaces.mqtt.parseMessage(event)
-//    def messageJson = interfaces.mqtt.parseMessage(event.json)
-//    def payloadJson = jsonSlurper.parseText(message.payload)
-
-//    if ('Govee_'+payloadJson.device == device.getDeviceNetworkId()) {
-    
-        if (debugLog) log.debug "In parse, received message: ${message}"
-//        if (debugLog) log.debug "In parse, messageJson is ${messageJson}"
-        if (debugLog) log.debug "In parse, payloadJson is ${payloadJson}"
-        if (debugLog) log.debug "In parse, deviceid is ${payloadJson.device} capability is ${payloadJson.capabilities} "
-        if (debugLog) log.debug "In parse, instance is ${payloadJson.capabilities.get(0).instance}" 
-        if (debugLog) log.debug "In parse, state is ${payloadJson.capabilities.get(0).state.get(0).name}"
-        if (descLog) log.info "Event type ${payloadJson.capabilities.get(0).instance}was recieved for status ${payloadJson.capabilities.get(0).state.get(0).name}"
-        
-        mqttPost(payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)         
-    
-    //    parent.mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
-} */
 
 def mqttPost(String instance, String state){
     if (debugLog) { log.debug "mqttPost(): posting MQTT Update"}
@@ -169,18 +147,3 @@ def getHubId() {
     return hubNameNormalized
 }
 
-def heartbeat() {
-	if (interfaces.mqtt.isConnected()) {
-		publishMqtt("heartbeat", now().toString())
-	}				
-}
-
-def mqttClientStatus(status) {
-	if (debugLog) log.debug "In mqttClientStatus: ${status}"
-    
-    if (status.substring(0,6) != "Status") {
-        if (debugLog) log.debug "In mqttClientStatus: Error."
-    } else {
-        if (debugLog) log.debug "In mqttClientStatus: Success."    
-    }
-}
