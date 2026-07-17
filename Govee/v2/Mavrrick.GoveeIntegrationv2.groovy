@@ -1266,7 +1266,7 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
 
         // Sensor Devices
         [
-            condition: { dev -> dev.type == "devices.types.sensor" && dev.sku == "H5059" },
+            condition: { dev -> dev.type == "devices.types.sensor" && (dev.sku == "H5059" || dev.sku == "H5830") },
             driver: "Govee v2 Leak Sensor",
             helper: "addMQTTDeviceHelper"
         ],
