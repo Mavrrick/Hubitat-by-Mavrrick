@@ -1276,6 +1276,18 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
             helper: "addMQTTDeviceHelper"
         ],
         
+        // Thermometor Devices
+        [
+            condition: { dev -> dev.type == "devices.types.thermometer" && dev.sku == "H5106" },
+            driver: "Govee v2 Air Quality Sensor with PM",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.thermometer" },
+            driver: "Govee v2 Thermo/Hygrometer Driver",
+            helper: "addMQTTDeviceHelper"
+        ],
+        
         // Single-driver Types
         [
             condition: { dev -> dev.type == "devices.types.socket" },
@@ -1286,11 +1298,6 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
         [
             condition: { dev -> dev.type == "devices.types.kettle" },
             driver: "Govee v2 Kettle Driver",
-            helper: "addMQTTDeviceHelper"
-        ],
-        [
-            condition: { dev -> dev.type == "devices.types.thermometer" },
-            driver: "Govee v2 Thermo/Hygrometer Driver",
             helper: "addMQTTDeviceHelper"
         ],
         [
@@ -1677,8 +1684,6 @@ def hexToBase64(String hexString) {
         return null
     }
 }
-
-
 
 private String base64Encode(byte[] data) {
     StringBuilder sb = new StringBuilder();
