@@ -30,6 +30,7 @@ metadata {
 		capability "Refresh"
         capability "Configuration"
         capability "FanControl"
+        capability "AirQuality"
         
         attribute "online", "string"
         attribute "mode", "number"
@@ -38,7 +39,6 @@ metadata {
         attribute "pollInterval", "number"
         attribute "cloudAPI", "string"
         attribute "filterLifeTime", "number"        
-        attribute "airQuality", "number"
         
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
@@ -95,6 +95,7 @@ def initialize() {
         randomOffset(pollRateInt)
         runIn(offset,poll)
     }
+    checkDevData()
 //    poll()
 }
 
@@ -203,6 +204,10 @@ def setSpeed(fanspeed) {
         sendEvent(name: "speed", value: fanspeed)
     } else if (fanspeed == "auto") {
         autoMode()
+    } else if (fanspeed == "sleeep") {
+        sleepMode()
+    } else if (fanspeed == "turbo") {
+        turboMode()
     } else {
         values = '{"workMode":'+gearmode+',"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
         sendCommand("workMode", values, "devices.capabilities.work_mode")
