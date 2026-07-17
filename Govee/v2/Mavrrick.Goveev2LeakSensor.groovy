@@ -12,7 +12,9 @@ metadata {
 	definition(name: "Govee v2 Leak Sensor", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
         capability "Refresh"
-        capability "WaterSensor"         
+        capability "WaterSensor"
+        attribute "probeTop", "string"
+        attribute "probeBottom", "string"
     }
 
 	preferences {		
@@ -39,12 +41,15 @@ def installed(){
 
 def initialize() {
     checkDevData()
+    sendEvent(name: "water", value: "dry", displayed: true)
+    sendEvent(name: "probeBottom", value: "dry", displayed: true)
+    sendEvent(name: "probeTop", value: "dry", displayed: true)
 
 }
 
 def logsOff() {
     log.warn "debug logging disabled..."
-    device.updateSetting("debugLog", [value: "false", type: "bool"])
+//    device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 def refresh() {

@@ -1264,6 +1264,18 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
             helper: "addMQTTDeviceHelper"
         ],
 
+        // Sensor Devices
+        [
+            condition: { dev -> dev.type == "devices.types.sensor" && dev.sku == "H5059" },
+            driver: "Govee v2 Leak Sensor",
+            helper: "addMQTTDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.sensor" && dev.sku == "H5127" },
+            driver: "Govee v2 Presence Sensor",
+            helper: "addMQTTDeviceHelper"
+        ],
+        
         // Single-driver Types
         [
             condition: { dev -> dev.type == "devices.types.socket" },
@@ -1279,11 +1291,6 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
         [
             condition: { dev -> dev.type == "devices.types.thermometer" },
             driver: "Govee v2 Thermo/Hygrometer Driver",
-            helper: "addMQTTDeviceHelper"
-        ],
-        [
-            condition: { dev -> dev.type == "devices.types.sensor" },
-            driver: "Govee v2 Presence Sensor",
             helper: "addMQTTDeviceHelper"
         ],
         [

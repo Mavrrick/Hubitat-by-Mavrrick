@@ -154,6 +154,7 @@ def connect() {
 def connected() {
 	log.info "In connected: Connected to broker"
     sendEvent (name: "connectionState", value: "connected")
+    unsubscribe()
     subscribe()
 }
 
@@ -161,6 +162,7 @@ def disconnect() {
 	unschedule(heartbeat)
 
 	if (interfaces.mqtt.isConnected()) {
+        unsubscribe()
 		pauseExecution(1000)
 		try {
 			interfaces.mqtt.disconnect()
@@ -203,6 +205,11 @@ void parse(String event) {
         if (payloadJson instanceof Map) {
             if (debugLog) log.debug "In parse, received message: '${payloadJson}' for deviceid is '${payloadJson.device}' capability is '${payloadJson.capabilities}'"
             mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
+            if (payloadJson.capabilities.get(0).state.get(0).containsKey("probesState")) {
+                if (debugLog) log.debug "In parse, mqtt message is for Leak device. Probrobestate top:'${payloadJson.capabilities.get(0).state.get(0).probesState.top}' Probrobestate bot:'${payloadJson.capabilities.get(0).state.get(0).probesState.bot}'"
+                mqttEventCreate(payloadJson.device, "bot", payloadJson.capabilities.get(0).state.get(0).probesState.bot.toString())
+                mqttEventCreate(payloadJson.device, "top", payloadJson.capabilities.get(0).state.get(0).probesState.top.toString())
+            }
         } else {
             if (debugLog) log.info "parse() Payload is heartbeat ${payloadJson}"
         }        

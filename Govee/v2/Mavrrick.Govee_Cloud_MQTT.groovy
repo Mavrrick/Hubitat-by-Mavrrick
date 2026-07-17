@@ -102,17 +102,40 @@ def disconnected() {
 } 
 
 /////////////////////////////////////////////////////////////////////
-// MQTT Post
+// Parse
 /////////////////////////////////////////////////////////////////////
+/*
+def parse(String event) {
+    def jsonSlurper = new JsonSlurper()     
+    if (debugLog) log.debug "In parse, received a message"
+    def message = interfaces.mqtt.parseMessage(event)
+//    def messageJson = interfaces.mqtt.parseMessage(event.json)
+//    def payloadJson = jsonSlurper.parseText(message.payload)
+
+//    if ('Govee_'+payloadJson.device == device.getDeviceNetworkId()) {
+    
+        if (debugLog) log.debug "In parse, received message: ${message}"
+//        if (debugLog) log.debug "In parse, messageJson is ${messageJson}"
+        if (debugLog) log.debug "In parse, payloadJson is ${payloadJson}"
+        if (debugLog) log.debug "In parse, deviceid is ${payloadJson.device} capability is ${payloadJson.capabilities} "
+        if (debugLog) log.debug "In parse, instance is ${payloadJson.capabilities.get(0).instance}" 
+        if (debugLog) log.debug "In parse, state is ${payloadJson.capabilities.get(0).state.get(0).name}"
+        if (descLog) log.info "Event type ${payloadJson.capabilities.get(0).instance}was recieved for status ${payloadJson.capabilities.get(0).state.get(0).name}"
+        
+        mqttPost(payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)         
+    
+    //    parent.mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
+} */
 
 def mqttPost(String instance, String state){
-    if (debugLog) { log.debug "mqttPost(): posting MQTT Update"}
+    if (debugLog) { log.debug "mqttPost(): posting MQTT Update for ${instance} of ${state}"}
     if (instance == 'lackWaterEvent' || instance == 'iceFull' || instance == 'cleaningCompletedEvent' || instance == 'runInterruptEvent' ) {
         if (descLog) { log.debug "mqttPost(): ${instance} found"}
             time = new Date().format("MM/dd/yyyy HH:mm:ss")
             sendEvent(name: instance, value: time, displayed: true)
     } 
     else if (instance == 'bodyAppearedEvent') {
+        if (descLog) { log.debug "mqttPost(): ${instance} found"}
         if (state == "Presence") {
             if (descLog) { log.info "mqttPost(): bodyAppearedEvent Present found"}
             sendEvent(name: "presence", value: "present", displayed: true)
@@ -127,6 +150,24 @@ def mqttPost(String instance, String state){
         } else if (state == "UN_LEAKED") {
             if (descLog) { log.info "mqttPost(): bodyAppearedEvent Not Present found"}
             sendEvent(name: "water", value: "dry", displayed: true)                    
+        }
+    } else if (instance == 'bot') {
+        if (descLog) { log.debug "mqttPost(): ${instance} found"}
+        if (state == "1") {
+            if (descLog) { log.info "mqttPost(): Bottom probesState event 1 Wet"}
+            sendEvent(name: "probeBottom", value: "wet", displayed: true)                    
+        } else if (state == "0") {
+            if (descLog) { log.info "mqttPost(): Bottom probesState event 0 Dry"}
+            sendEvent(name: "probeBottom", value: "dry", displayed: true)                    
+        }
+    } else if (instance == 'top') {
+        if (descLog) { log.debug "mqttPost(): ${instance} found"}
+        if (state == "1") {
+            if (descLog) { log.info "mqttPost(): Top probesState event 1 Wet"}
+            sendEvent(name: "probeTop", value: "wet", displayed: true)                    
+        } else if (state == "0") {
+            if (descLog) { log.info "mqttPost(): Top probesState event 0 Dry"}
+            sendEvent(name: "probeTop", value: "dry", displayed: true)                    
         }
     }
 }
@@ -147,3 +188,18 @@ def getHubId() {
     return hubNameNormalized
 }
 
+def heartbeat() {
+	if (interfaces.mqtt.isConnected()) {
+		publishMqtt("heartbeat", now().toString())
+	}				
+}
+
+def mqttClientStatus(status) {
+	if (debugLog) log.debug "In mqttClientStatus: ${status}"
+    
+    if (status.substring(0,6) != "Status") {
+        if (debugLog) log.debug "In mqttClientStatus: Error."
+    } else {
+        if (debugLog) log.debug "In mqttClientStatus: Success."    
+    }
+}
