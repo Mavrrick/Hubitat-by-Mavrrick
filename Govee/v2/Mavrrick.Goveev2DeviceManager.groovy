@@ -32,6 +32,7 @@ metadata {
 		section("Device Info") {  
             input(name: "disableMQTT", type: "bool", title: "Enable/Disable MQTT communication", defaultValue: true)
             input(name: "enableLanApiInstall", type: "bool", title: "Enable/Disable Automatic install of LAN API Devices", defaultValue: false)
+            input(name: "collectStats", type: "bool", title: "Collect performance statistics", defaultValue: false)
             input(name: "scanRate", type: "number", title: "Scan rate in minutes(0-59) for new LAN API Devices", defaultValue:1, range: 0..59, submitOnChange: true, width:2)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
@@ -195,7 +196,9 @@ def disconnected() {
 
 void parse(String event) {
     
-    long startTime = now()
+//    if (collectStats) long startTime = now()
+    if (collectStats ?: false) long startTime = now()
+
     if (debugLog) log.info "parse() Parse call started at ${startTime}"
     if (event.contains("topic")) {
         if (debugLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
@@ -289,14 +292,15 @@ void parse(String event) {
             }
         }    
     }
+    if (collectStats ?: false) {
+        long duration = now() - startTime
+        procTime += duration
+        callCount++
+        sendEvent(name: "avgTime", value: procTime/callCount)    
     
-    long duration = now() - startTime
-    procTime += duration
-    callCount++
-    sendEvent(name: "avgTime", value: procTime/callCount)    
-    
-    def formattedDuration = formatDuration(duration)
-    if (debugLog) log.info "parse() Elapse time ${formattedDuration}."
+        def formattedDuration = formatDuration(duration)
+        if (debugLog) log.info "parse() Elapse time ${formattedDuration}."
+    }
 } 
 
 def formatDuration(long milliseconds) {
@@ -335,7 +339,7 @@ def getHubId() {
 }
 
 def goveeReponseTime(resp) {
-    sendEvent(name: "cloudReponseTime", value: resp)
+    if (collectStats ?: false) sendEvent(name: "cloudReponseTime", value: resp)
 }
 
 def heartbeat() {
