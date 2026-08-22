@@ -104,7 +104,7 @@ import hubitat.helper.HexUtils
     ]
 
 @Field static final List goveeDevPtURL = // devices that use ptURL command and may cause extraction process to fail.
-	["H6800","H6810","H6811","H6840","H70B1","H70B3","H70B4","H70BC"]
+	["H1270","H6800","H6810","H6811","H6840","H70B1","H70B3","H70B4","H70BC"]
 
 preferences
 {
@@ -445,7 +445,7 @@ def sceneManualAdd() {
 
 def sceneGoveeExtract() {
     goveeScene = [:]
-    dynamicPage(name: 'sceneGoveeCreate', title: 'Extract All Govee Scenes from Govee API', uninstall: false, install: false, submitOnChange: false, nextPage: "sceneExtract3")
+    dynamicPage(name: 'sceneGoveeExtract', title: 'Extract All Govee Scenes from Govee API', uninstall: false, install: false, submitOnChange: false, nextPage: "sceneExtract3")
     {
         section('<b>Govee Scene Retrieval</b>')
         {
@@ -1131,7 +1131,12 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
         ],
         [
             condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb", "fanToggle"]) },
-            driver: "Govee v2 Ceiling Fan Driver",
+            driver: "Govee v2 Ceiling Fan Driver H1310",
+            helper: "addLightDeviceHelper"
+        ],
+        [
+            condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb", "mainLightToggle", "backgroundLightToggle"]) },
+            driver: "Govee v2 Color Lights 5 Driver",
             helper: "addLightDeviceHelper"
         ],
         [
