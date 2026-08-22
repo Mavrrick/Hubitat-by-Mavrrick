@@ -659,10 +659,11 @@ def retrieveDIYScenes(){
                     }				
 				return resp.data
 			}
-			
+	} catch (IndexOutOfBoundsException e) {
+		log.debug "retrieveDIYScenes(): No DIY Scenes to process"
 	} catch (Exception e) {
 		log.error "Error: e.statusCode ${e.statusCode}"
-		log.error "${e}"
+		log.error "retrieveDIYScenes(): Error ${e}"
 		return 'unknown'
 	}
     gvscenes = [:]
@@ -693,7 +694,7 @@ def retrieveStateData(){
     def device = device.getDataValue("deviceID")
     def goveeAppAPI = parent.retrieveGoveeAPI(device)
     def scenesCommands = ["nightlightScene","diyScene","presetScene"]
-    def devCommands = ["workMode","targetTemperature","segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"]    
+    def devCommands = ["workMode","targetTemperature","segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"]    // take out ,"segmentedBrightness","segmentedColorRgb","segmentedColorRgb","musicMode"
     goveeAppAPI.capabilities.each {
         switch (true) {
             case (it.get("instance") == "snapshot") :
@@ -712,7 +713,7 @@ def retrieveStateData(){
             break
             case (devCommands.contains(it.get("instance"))):
                 state."${it.get("instance")}" = []
-                state."${it.get("instance")}" = it.parameters.fields
+                state."${it.get("instance")}" = it.parameters.get("fields")
                 if (debugLog) { log.debug "retrieveStateData(): Successfully added options for type '${it.get("instance")}': ${state."${it.get("instance")}"}" }
             break
             default:
