@@ -20,21 +20,21 @@ import groovy.transform.Field
     "off": 0
     ,"on": 1
     ,"ultra-low": 12
-	,"low": 25
+    ,"low": 25
     ,"medium-low": 35
-	,"medium": 50
+    ,"medium": 50
     ,"medium-high": 75
-	,"high": 100
+    ,"high": 100
     ,"turbo": 100
     ,"auto": 150
 ]
 
 metadata {
-	definition(name: "Govee v2 H7106 Tower Fan", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Actuator"
+    definition(name: "Govee v2 H7106 Tower Fan", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Actuator"
         capability "Initialize"
-		capability "Refresh" 
+        capability "Refresh"
         capability "TemperatureMeasurement"
         capability "Configuration"
         capability "FanControl"
@@ -48,7 +48,7 @@ metadata {
         attribute "online", "string"
         attribute "oscillation", "string"
 
-//        command "airDeflectoron_off", [[name: "Oscillation", type: "ENUM", constraints: ['On',      'Off'] ] ]
+        //        command "airDeflectoron_off", [[name: "Oscillation", type: "ENUM", constraints: ['On',      'Off'] ] ]
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
 /*        command "workingMode", [[name: "mode", type: "ENUM", constraints: [ 'FanSpeed',      'Custom',       'Auto',    'Sleep',    'Nature'], description: "Mode of device"],
                           [name: "gearMode", type: "NUMBER", description: "Only used when mode is FanSpeed"]] */
@@ -60,14 +60,14 @@ metadata {
         command "oscillationOff"
     }
 
-	preferences {		
-		section("Device Info") {
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
+    preferences {
+        section("Device Info") {
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 //////////////////////////////////////
@@ -95,7 +95,7 @@ def initialize() {
      if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-    }
+     }
     unschedule()
     if (pollRate > 0) {
         pollRateInt = pollRate.toInteger()
@@ -120,9 +120,9 @@ Configure // retrieve setup values and initialize polling and logging
 def configure() {
     if (debugLog) {log.info "configure(): Driver Updated"}
     unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)     
-    retrieveStateData()    
-    if (debugLog) runIn(1800, logsOff) 
+    if (pollRate > 0) runIn(pollRate,poll)
+    retrieveStateData()
+    if (debugLog) runIn(1800, logsOff)
 }
 
 ////////////////////
@@ -131,19 +131,19 @@ def configure() {
 
 logsOff  // turn off logging for the device
 def logsOff() {
-    log.info "debug logging disabled..."
+    if (debugLog) {log.info "debug logging disabled..."}
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-	getDeviceState()
+    getDeviceState()
     if (pollRate > 0) runIn(pollRate,poll)
-}	
+}
 
 //////////////////////
-// Driver Commands // 
+// Driver Commands //
 /////////////////////
 
 def on() {
@@ -151,7 +151,7 @@ def on() {
         lanOn() }
     else {
         cloudOn()
-        }
+    }
 }
 
 def off() {
@@ -159,7 +159,7 @@ def off() {
         lanOff() }
     else {
         cloudOff()
-        }
+    }
 }
 
 def oscillationOn(){
@@ -173,7 +173,7 @@ def oscillationOff(){
 /* def airDeflectoron_off(evt) {
     log.debug "airDeflectoron_off(): Processing Air Deflector command. ${evt}"
         if (device.currentValue("cloudAPI") == "Retry") {
-             log.error "airDeflectoron_off(): CloudAPI already in retry state. Aborting call." 
+             log.error "airDeflectoron_off(): CloudAPI already in retry state. Aborting call."
          } else {
         sendEvent(name: "cloudAPI", value: "Pending")
             if (device.getDataValue("commands").contains("airDeflectorToggle")) {
@@ -187,7 +187,7 @@ def oscillationOff(){
 } */
 
 def setSpeed(fanspeed) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "
+    if (debugLog) {log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed}"}
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(fanspeed){
         case "ultra-low":
@@ -221,7 +221,7 @@ def setSpeed(fanspeed) {
         case "auto":
             gearmode = 2;
             gear = 0;
-        break;        
+        break;
     }
     if (fanspeed == "on") {
         cloudOn()
@@ -234,21 +234,21 @@ def setSpeed(fanspeed) {
 }
 
 def natureMode(gear) {
-    log.debug "natureMode(): Processing Working Mode command 'natureMode' to ${gear} "
+    if (debugLog) {log.debug "natureMode(): Processing Working Mode command 'natureMode' to ${gear} "}
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":4,"modeValue":'+gear+'}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
 def autoMode() {
-    log.debug "autoMode(): Processing Working Mode command 'Auto' "
+    if (debugLog) {log.debug "autoMode(): Processing Working Mode command 'Auto' "}
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":2,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
 def sleepMode(gear) {
-    log.debug "sleep(): Processing Working Mode command 'sleepMode' "
+    if (debugLog) {log.debug "sleep(): Processing Working Mode command 'sleepMode' "}
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":3,"modeValue":'+gear+'}' // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")

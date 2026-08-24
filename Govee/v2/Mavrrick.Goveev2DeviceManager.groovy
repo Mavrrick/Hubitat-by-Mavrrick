@@ -10,35 +10,33 @@ import groovy.transform.Field
 @Field static Number procTime = 0
 @Field static Number callCount = 0
 @Field static def jsonSlurper = new JsonSlurper()
-@Field static def childDeviceCache = [:]    
-@Field static final String GOVEE_PREFIX = "Govee_"    
+@Field static def childDeviceCache = [:]
+@Field static final String GOVEE_PREFIX = 'Govee_'
 @Field static def ipx = [:]
-@Field static def goveeAppAPIFull = [:]    
-
+@Field static def goveeAppAPIFull = [:]
 
 metadata {
-	definition(name: "Govee v2 Device Manager", namespace: "Mavrrick", author: "Mavrrick") {
-        capability "Initialize" 
-        attribute "connectionState", "string"
-        attribute "msgCount", "integer"
-		attribute "avgTime", "number"
-        attribute "cloudReponseTime", "number"
-        command "allSceneReload"
-        command "LookupLanAPIDevices"
-        command "installNewDevices"
+    definition(name: 'Govee v2 Device Manager', namespace: 'Mavrrick', author: 'Mavrrick') {
+        capability 'Initialize'
+        attribute 'connectionState', 'string'
+        attribute 'msgCount', 'integer'
+        attribute 'avgTime', 'number'
+        attribute 'cloudReponseTime', 'number'
+        command 'allSceneReload'
+        command 'LookupLanAPIDevices'
+        command 'installNewDevices'
     }
 
-	preferences {		
-		section("Device Info") {  
-            input(name: "disableMQTT", type: "bool", title: "Enable/Disable MQTT communication", defaultValue: true)
-            input(name: "enableLanApiInstall", type: "bool", title: "Enable/Disable Automatic install of LAN API Devices", defaultValue: false)
-            input(name: "collectStats", type: "bool", title: "Collect performance statistics", defaultValue: false)
-            input(name: "scanRate", type: "number", title: "Scan rate in minutes(0-59) for new LAN API Devices", defaultValue:1, range: 0..59, submitOnChange: true, width:2)
-            input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+    preferences {
+        section('Device Info') {
+            input(name: 'disableMQTT', type: 'bool', title: 'Enable/Disable MQTT communication', defaultValue: true)
+            input(name: 'enableLanApiInstall', type: 'bool', title: 'Enable/Disable Automatic install of LAN API Devices', defaultValue: false)
+            input(name: 'collectStats', type: 'bool', title: 'Collect performance statistics', defaultValue: false)
+            input(name: 'scanRate', type: 'number', title: 'Scan rate in minutes(0-59) for new LAN API Devices', defaultValue:1, range: 0..59, submitOnChange: true, width:2)
+            input(name: 'debugLog', type: 'bool', title: 'Debug Logging', defaultValue: false)
+            input('descLog', 'bool', title: 'Enable descriptionText logging', required: true, defaultValue: true)
+        }
+    }
 }
 
 //////////////////////////////////////
@@ -49,8 +47,7 @@ def updated() {
     initialize()
 }
 
-
-def installed(){
+def installed() {
     state.lanApiDevices = [:]
     initialize()
 }
@@ -63,13 +60,13 @@ def initialize() {
         mqttConnectionAttempt()
     }
     String scanCron = ''
-    sendEvent(name: "msgCount", value: 0)
-    state.remove("ipxdni")
+    sendEvent(name: 'msgCount', value: 0)
+    state.remove('ipxdni')
     state.childCount = getChildDevices().size()
     if (state.lanApiDevices) {
         state.lanApiDevicesCount = state.lanApiDevices.size()
     }
-//    allSceneReload()    
+    //    allSceneReload()
     multicastCloseSocket(4001)
     multicastCloseSocket(4002)
     multicastListenerSocket(4001)
@@ -78,58 +75,57 @@ def initialize() {
         unschedule()
     } else if (scanRate <= 59) {
         unschedule()
-        scanCron = '0 */'+scanRate+' * ? * *' 
+        scanCron = '0 */' + scanRate + ' * ? * *'
         schedule(scanCron, LookupLanAPIDevices)
     } else {
-        log.warn "ScanRate is invalid it will be ignored until fixed."    
+        log.warn 'ScanRate is invalid it will be ignored until fixed.'
     }
-    scanCron = '0 */1 * ? * *' 
+    scanCron = '0 */1 * ? * *'
     schedule(scanCron, heartbeat)
-    scanCron = '20 * * ? * *' 
-	schedule(scanCron, periodicReconnect)
+    scanCron = '20 * * ? * *'
+    schedule(scanCron, periodicReconnect)
     RetrievechildDeviceInfo()
     if (debugLog) runIn(1800, logsOff)
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
-    device.updateSetting("debugLog", [value: "false", type: "bool"])
+    log.warn 'debug logging disabled...'
+    device.updateSetting('debugLog', [value: 'false', type: 'bool'])
 }
 
 // put methods, etc. here
 
 def mqttConnectionAttempt() {
-	if (debugLog) log.debug "In mqttConnectionAttempt"
- 
-	if (!interfaces.mqtt.isConnected()) {
-		try {   
-			interfaces.mqtt.connect("ssl://mqtt.openapi.govee.com:8883",
-							   "hubitat_${getHubId()}", 
-                               device.getDataValue("apiKey"), 
-							   device.getDataValue("apiKey"),
-                               cleanSession: true)    
+    if (debugLog) log.debug 'In mqttConnectionAttempt'
 
-			// delay for connection
-			pauseExecution(1000)
-            
-		} catch(Exception e) {
+    if (!interfaces.mqtt.isConnected()) {
+        try {
+            interfaces.mqtt.connect('ssl://mqtt.openapi.govee.com:8883',
+                               "hubitat_${getHubId()}",
+                               device.getDataValue('apiKey'),
+                               device.getDataValue('apiKey'),
+                               cleanSession: true)
+
+            // delay for connection
+            pauseExecution(1000)
+        } catch (Exception e) {
             log.error "In mqttConnectionAttempt: Error initializing. ${e}"
-			if (!interfaces.mqtt.isConnected()) disconnected()
-		}
-	}
-    
-	if (interfaces.mqtt.isConnected()) {
-        if (debugLog) log.debug "In mqttConnectionAttempt: Success connecting."
-		unschedule(connect)
-		connected()
+            if (!interfaces.mqtt.isConnected()) disconnected()
+        }
+    }
+
+    if (interfaces.mqtt.isConnected()) {
+        if (debugLog) log.debug 'In mqttConnectionAttempt: Success connecting.'
+        unschedule(connect)
+        connected()
     } else {
-        if (debugLog) log.debug "In mqttConnectionAttempt: Failure connecting."
+        if (debugLog) log.debug 'In mqttConnectionAttempt: Failure connecting.'
         disconnected()
     }
 }
 
 def subscribe() {
-    mqttTopic = 'GA/'+device.getDataValue("apiKey")
+    mqttTopic = 'GA/' + device.getDataValue('apiKey')
     if (!interfaces.mqtt.isConnected()) {
         connect()
     }
@@ -139,11 +135,11 @@ def subscribe() {
 }
 
 def unsubscribe() {
-    mqttTopic = 'GA/'+device.getDataValue("apiKey")
+    mqttTopic = 'GA/' + device.getDataValue('apiKey')
     if (!interfaces.mqtt.isConnected()) {
         connect()
     }
-    
+
     if (debugLog) log.debug "Unsubscribe from: ${mqttTopic}"
     interfaces.mqtt.unsubscribe(mqttTopic)
 }
@@ -153,41 +149,41 @@ def connect() {
 }
 
 def connected() {
-	log.info "In connected: Connected to broker"
-    sendEvent (name: "connectionState", value: "connected")
+    log.info 'In connected: Connected to broker'
+    sendEvent(name: 'connectionState', value: 'connected')
     unsubscribe()
     subscribe()
 }
 
 def disconnect() {
-	unschedule(heartbeat)
+    unschedule(heartbeat)
 
-	if (interfaces.mqtt.isConnected()) {
+    if (interfaces.mqtt.isConnected()) {
         unsubscribe()
-		pauseExecution(1000)
-		try {
-			interfaces.mqtt.disconnect()
-			pauseExecution(500)
-			disconnected()
-		} catch(e) {
-			log.warn "Disconnection from broker failed."
-			if (interfaces.mqtt.isConnected()) {
-				connected()
-			}
-			else {
-				disconnected()
-			}
-			return;
-		}
-	} 
-	else {
-		disconnected()
-	}
+        pauseExecution(1000)
+        try {
+            interfaces.mqtt.disconnect()
+            pauseExecution(500)
+            disconnected()
+        } catch (e) {
+            log.warn 'Disconnection from broker failed.'
+            if (interfaces.mqtt.isConnected()) {
+                connected()
+            }
+            else {
+                disconnected()
+            }
+            return
+        }
+    }
+    else {
+        disconnected()
+    }
 }
 
 def disconnected() {
-	log.info "In disconnected: Disconnected from broker"
-	sendEvent (name: "connectionState", value: "disconnected")
+    log.info 'In disconnected: Disconnected from broker'
+    sendEvent(name: 'connectionState', value: 'disconnected')
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -195,47 +191,46 @@ def disconnected() {
 /////////////////////////////////////////////////////////////////////
 
 void parse(String event) {
-    
-//    if (collectStats) long startTime = now()
+    //    if (collectStats) long startTime = now()
     if (collectStats ?: false) long startTime = now()
 
     if (debugLog) log.info "parse() Parse call started at ${startTime}"
-    if (event.contains("topic")) {
-        if (debugLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
+    if (event.contains('topic')) {
+        if (debugLog) log.info 'parse() MQTT message recieved. Parsing and sending to device'
         def payloadJson = jsonSlurper.parseText(interfaces.mqtt.parseMessage(event).payload)
-        int mqttMsgCount = device.currentValue("msgCount").toInteger() + 1
-        sendEvent(name: "msgCount", value: mqttMsgCount)
+        int mqttMsgCount = device.currentValue('msgCount').toInteger() + 1
+        sendEvent(name: 'msgCount', value: mqttMsgCount)
         if (payloadJson instanceof Map) {
             if (debugLog) log.debug "In parse, received message: '${payloadJson}' for deviceid is '${payloadJson.device}' capability is '${payloadJson.capabilities}'"
             mqttEventCreate(payloadJson.device, payloadJson.capabilities.get(0).instance, payloadJson.capabilities.get(0).state.get(0).name)
-            if (payloadJson.capabilities.get(0).state.get(0).containsKey("probesState")) {
+            if (payloadJson.capabilities.get(0).state.get(0).containsKey('probesState')) {
                 if (debugLog) log.debug "In parse, mqtt message is for Leak device. Probrobestate top:'${payloadJson.capabilities.get(0).state.get(0).probesState.top}' Probrobestate bot:'${payloadJson.capabilities.get(0).state.get(0).probesState.bot}'"
-                mqttEventCreate(payloadJson.device, "bot", payloadJson.capabilities.get(0).state.get(0).probesState.bot.toString())
-                mqttEventCreate(payloadJson.device, "top", payloadJson.capabilities.get(0).state.get(0).probesState.top.toString())
+                mqttEventCreate(payloadJson.device, 'bot', payloadJson.capabilities.get(0).state.get(0).probesState.bot.toString())
+                mqttEventCreate(payloadJson.device, 'top', payloadJson.capabilities.get(0).state.get(0).probesState.top.toString())
             }
         } else {
             if (debugLog) log.info "parse() Payload is heartbeat ${payloadJson}"
-        }        
+        }
     } else {
         def parsedEvent = jsonSlurper.parseText(event)
         fromIp = jsonSlurper.parseText(event).fromIp
         def payloadJson = jsonSlurper.parse(HexUtils.hexStringToByteArray(parsedEvent.payload))
-        
+
         def lanApiDevices = state.lanApiDevices ?: [:]
 
-        if (payloadJson.msg.cmd == "devStatus") {  
+        if (payloadJson.msg.cmd == 'devStatus') {
             if (!ipx ) {
-                if (debugLog) log.info "parse() ipxdni is null. LAN API Device StatusMessage recieved but ignored. Calling for device Scan"  
+                if (debugLog) log.info 'parse() ipxdni is null. LAN API Device StatusMessage recieved but ignored. Calling for device Scan'
                 RetrievechildDeviceInfo()
             } else {
-                if (debugLog) log.info "parse() LAN API Device StatusMessage received. Parsing and sending to device."
+                if (debugLog) log.info 'parse() LAN API Device StatusMessage received. Parsing and sending to device.'
                 if (debugLog) log.info "received: sourceIP: ${fromIp}, cmd: ${payloadJson.msg.cmd}, data: ${payloadJson.msg.data}"
                 def deviceNetworkId = ipx[fromIp]
-                if (deviceNetworkId) { 
+                if (deviceNetworkId) {
                     def childDevice = getCachedChildDevice(deviceNetworkId)
                     if (childDevice) {
                         if (debugLog) log.info "received: Device '${childDevice.deviceNetworkId}' is configured. Sending LAN API Post."
-                        childDevice.lanAPIPost(payloadJson.msg.data) 
+                        childDevice.lanAPIPost(payloadJson.msg.data)
                     } else {
                         log.warn "parse() Child device with DNI '${deviceNetworkId}' found in state.ipxdni for IP '${fromIp}' but not found as an actual child device. Cannot send LAN API Post."
                     }
@@ -243,21 +238,21 @@ void parse(String event) {
                     if (debugLog) log.info "parse() No child device configured for IP: '${fromIp}' in state.ipxdni. Skipping LAN API Post."
                 }
             }
-        } else if (payloadJson.msg.cmd == "scan") {
-            if (payloadJson.msg.data.containsKey("account_topic")) {
+        } else if (payloadJson.msg.cmd == 'scan') {
+            if (payloadJson.msg.data.containsKey('account_topic')) {
                 if (debugLog) log.info "parse() LAN API Discovery Message recieved. Return message ${payloadJson.msg.data}, sourceIP: ${fromIp}"
             } else {
-                if (debugLog) log.info "parse() Returned entire Json: ${payloadJson} -- Source ip is ${fromIp}" //added for debug of missing IP 
+                if (debugLog) log.info "parse() Returned entire Json: ${payloadJson} -- Source ip is ${fromIp}" //added for debug of missing IP
                 def deviceId = payloadJson.msg.data.device
                 def newIpAddress = payloadJson.msg.data.ip ?: fromIp
                 def currentTime = new Date().toString()
-                if (lanApiDevices.containsKey(deviceId)) {                     
+                if (lanApiDevices.containsKey(deviceId)) {
                     def existingDeviceInfo = lanApiDevices[deviceId]
                     if (debugLog) log.info "parse() Device '${deviceId}' Found. Checking for update."
                     if (existingDeviceInfo.ip != newIpAddress) {
                         if (debugLog) log.info "parse() IP address for '${deviceId}' changed from ${existingDeviceInfo.ip} to ${newIpAddress}. Processing update."
                         existingDeviceInfo.ip = newIpAddress
-                        existingDeviceInfo."last response" = currentTime
+                        existingDeviceInfo.'last response' = currentTime
                         def childDevice = getCachedChildDevice(GOVEE_PREFIX + deviceId)
                         if (childDevice) {
                             if (debugLog) log.info "parse() Found child device '${childDevice.deviceNetworkId}'. Calling updateIPAdd."
@@ -268,21 +263,21 @@ void parse(String event) {
                         }
                     } else {
                         if (debugLog) log.info "parse() No IP change for device '${deviceId}'. Updating last response timestamp only."
-                        existingDeviceInfo."last response" = currentTime
+                        existingDeviceInfo.'last response' = currentTime
                     }
                 } else {
                     def msgData = payloadJson.msg.data
-                    if (debugLog) log.info "parse() Device not found in current list. Adding to list"
+                    if (debugLog) log.info 'parse() Device not found in current list. Adding to list'
                     def deviceInfo = [
                         ip: newIpAddress,
                         sku: payloadJson.msg.data.sku,
-                        "last response": currentTime
+                        'last response': currentTime
                     ]
                     if (debugLog) log.info "parse() Device info: ${deviceInfo}"
                     state.lanApiDevices[deviceId] = deviceInfo
                     ipx[newIpAddress] = GOVEE_PREFIX + deviceId
                     def childDevice = getCachedChildDevice(GOVEE_PREFIX + deviceId)
-                    if (childDevice) { 
+                    if (childDevice) {
                         if (debugLog) log.info "parse() Sending call to existing device '${deviceNetworkId}' to update ip: ${childDevice}"
                         childDevice.updateIPAdd(newIpAddress)
                     } else if (enableLanApiInstall) {
@@ -290,18 +285,18 @@ void parse(String event) {
                     }
                 }
             }
-        }    
+        }
     }
     if (collectStats ?: false) {
         long duration = now() - startTime
         procTime += duration
         callCount++
-        sendEvent(name: "avgTime", value: procTime/callCount)    
-    
+        sendEvent(name: 'avgTime', value: procTime / callCount)
+
         def formattedDuration = formatDuration(duration)
         if (debugLog) log.info "parse() Elapse time ${formattedDuration}."
     }
-} 
+}
 
 def formatDuration(long milliseconds) {
     if (milliseconds < 1000) {
@@ -321,14 +316,13 @@ def formatDuration(long milliseconds) {
     long hours = minutes / 60
     return "${hours} h ${minutes % 60} min ${seconds % 60} s ${milliseconds % 1000} ms"
 }
-    
 
 /////////////////////////////////////////////////////////////////////
 // Helper Functions
 /////////////////////////////////////////////////////////////////////
 
 def normalize(name) {
-    return name.replaceAll("[^a-zA-Z0-9]+","-").toLowerCase()
+    return name.replaceAll('[^a-zA-Z0-9]+', '-').toLowerCase()
 }
 
 def getHubId() {
@@ -339,46 +333,46 @@ def getHubId() {
 }
 
 def goveeReponseTime(resp) {
-    if (collectStats ?: false) sendEvent(name: "cloudReponseTime", value: resp)
+    if (collectStats ?: false) sendEvent(name: 'cloudReponseTime', value: resp)
 }
 
 def heartbeat() {
-	if (interfaces.mqtt.isConnected()) {
-		publishMqtt("heartbeat", now().toString())
-	}				
+    if (interfaces.mqtt.isConnected()) {
+        publishMqtt('heartbeat', now().toString())
+    }
 }
 
 def publishMqtt(topic, payload, qos = 0, retained = true) {
     if (!interfaces.mqtt.isConnected()) {
         mqttConnectionAttempt()
     }
-    
-    mqttTopic = 'GA/'+device.getDataValue("apiKey")
-    
+
+    mqttTopic = 'GA/' + device.getDataValue('apiKey')
+
     try {
         interfaces.mqtt.publish(mqttTopic, payload, qos, retained) //'GA/'+device.getDataValue("apiKey")
         if (debugLog) log.debug "[publishMqtt] topic: ${mqttTopic} payload: ${payload}"
     } catch (Exception e) {
-        log.error "In publishMqtt: Unable to publish message."
+        log.error 'In publishMqtt: Unable to publish message.'
     }
 }
 
 def mqttClientStatus(status) {
-	if (debugLog) log.debug "In mqttClientStatus: ${status}"
-    
-    if (status.substring(0,6) != "Status") {
-        if (debugLog) log.debug "In mqttClientStatus: Error."
+    if (debugLog) log.debug "In mqttClientStatus: ${status}"
+
+    if (status.substring(0, 6) != 'Status') {
+        if (debugLog) log.debug 'In mqttClientStatus: Error.'
     } else {
-        if (debugLog) log.debug "In mqttClientStatus: Success."    
+        if (debugLog) log.debug 'In mqttClientStatus: Success.'
     }
 }
 
 def periodicReconnect() {
-	if (settings?.periodicConnectionRetry) {
-		if (!interfaces.mqtt.isConnected()) {
-			connect()
-		}
-	}
+    if (settings?.periodicConnectionRetry) {
+        if (!interfaces.mqtt.isConnected()) {
+            connect()
+        }
+    }
 }
 
 def getCachedChildDevice(deviceNetworkId) {
@@ -388,127 +382,125 @@ def getCachedChildDevice(deviceNetworkId) {
     return childDeviceCache[deviceNetworkId]
 }
 
-
 ///////////////////////////////////////////
-// MQTT child device add                 // 
+// MQTT child device add                 //
 ///////////////////////////////////////////
 
 def addMQTTDeviceHelper(String driver, String deviceId, String deviceName, String deviceModel, List commands, List capType) {
-	//Driver Settings
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
+    //Driver Settings
+    Map deviceType = [namespace:'Mavrrick', typeName: driver]
+    Map deviceTypeBak = [:]
+    String devModel = deviceModel
     String dni = GOVEE_PREFIX + deviceId
-	Map properties = [name: driver, label: deviceName, deviceID: deviceId, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, capTypes: capType]
-	if (debugLog) "Creating Child Device"
+    Map properties = [name: driver, label: deviceName, deviceID: deviceId, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, capTypes: capType]
+    if (debugLog) 'Creating Child Device'
 
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	}
+    def childDev
+    try {
+        childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+    }
+    catch (e) {
+        log.warn "The '${deviceType}' driver failed"
+        if (deviceTypeBak) {
+            logWarn "Defaulting to '${deviceTypeBak}' instead"
+            childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+        }
+    }
 }
 
-
 def addLightDeviceHelper(String driver, String deviceId, String deviceName, String deviceModel, List commands, ctMin, ctMax, List capType) {
-	//Driver Settings
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
+    //Driver Settings
+    Map deviceType = [namespace:'Mavrrick', typeName: driver]
+    Map deviceTypeBak = [:]
+    String devModel = deviceModel
     String dni = GOVEE_PREFIX + deviceId
-    String ip = "N/A"
+    String ip = 'N/A'
     if (!state.lanApiDevices) {
-        if (debugLog) "addLightDeviceHelper(): No LAN API Device found/present on network. Leaving default value of N/A"
+        if (debugLog) 'addLightDeviceHelper(): No LAN API Device found/present on network. Leaving default value of N/A'
     } else if (state.lanApiDevices.containsKey(deviceId)) {
         ip = state.lanApiDevices."${deviceId}".ip
     }
-	Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: ctMin, ctMax: ctMax, capTypes: capType]
-	if (debugLog) "Creating Child Device"
+    Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: ctMin, ctMax: ctMax, capTypes: capType]
+    if (debugLog) 'Creating Child Device'
 
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	}
+    def childDev
+    try {
+        childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+    }
+    catch (e) {
+        log.warn "The '${deviceType}' driver failed"
+        if (deviceTypeBak) {
+            logWarn "Defaulting to '${deviceTypeBak}' instead"
+            childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+        }
+    }
 }
 
 def addLightDeviceHelper(String driver, String deviceId, String deviceName, String deviceModel, List commands, List capType) {
-	//Driver Settings
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
+    //Driver Settings
+    Map deviceType = [namespace:'Mavrrick', typeName: driver]
+    Map deviceTypeBak = [:]
+    String devModel = deviceModel
     String dni = GOVEE_PREFIX + deviceId
-    String ip = "N/A"
+    String ip = 'N/A'
     if (!state.lanApiDevices) {
-        if (debugLog) "addLightDeviceHelper(): No LAN API Device found/present on network. Leaving default value of N/A"
+        if (debugLog) 'addLightDeviceHelper(): No LAN API Device found/present on network. Leaving default value of N/A'
     } else if (state.lanApiDevices.containsKey(deviceId)) {
         ip = state.lanApiDevices."${deviceId}".ip
     }
-	Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: 2000, ctMax: 9000, capTypes: capType]
-	if (debugLog) "Creating Child Device"
+    Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: 2000, ctMax: 9000, capTypes: capType]
+    if (debugLog) 'Creating Child Device'
 
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	}
+    def childDev
+    try {
+        childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+    }
+    catch (e) {
+        log.warn "The '${deviceType}' driver failed"
+        if (deviceTypeBak) {
+            logWarn "Defaulting to '${deviceTypeBak}' instead"
+            childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+        }
+    }
 }
 
 def addManLightDeviceHelper(String driver, String deviceId, String ip, String deviceName, String deviceModel) {
-	//Driver Settings
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
+    //Driver Settings
+    Map deviceType = [namespace:'Mavrrick', typeName: driver]
+    Map deviceTypeBak = [:]
+    String devModel = deviceModel
     String dni = GOVEE_PREFIX + deviceId
-	Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, ctMin: 2000, ctMax: 9000]
-	if (debugLog) "Creating Child Device"
+    Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, ctMin: 2000, ctMax: 9000]
+    if (debugLog) 'Creating Child Device'
 
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	}
+    def childDev
+    try {
+        childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+    }
+    catch (e) {
+        log.warn "The '${deviceType}' driver failed"
+        if (deviceTypeBak) {
+            logWarn "Defaulting to '${deviceTypeBak}' instead"
+            childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+        }
+    }
 }
 
 ///////////////////////////////////////////
-// MQTT Helper to route events to device // 
+// MQTT Helper to route events to device //
 ///////////////////////////////////////////
 
 // In mqttEventCreate(), cache the device lookup:
 private def mqttEventCreate(deviceId, instance, state) {
     if (debugLog) log.debug "mqttEventCreate(): ${deviceId} ${instance} ${state}"
-    
+
     // Cache the child device lookup
     def device = getCachedChildDevice(GOVEE_PREFIX + deviceId)
     if (device == null) {
-        if (debugLog) log.debug "The MQTT event is for a device that is not setup"
+        if (debugLog) log.debug 'The MQTT event is for a device that is not setup'
         return
     }
-    
+
     device.mqttPost(instance, state)
 }
 
@@ -517,17 +509,17 @@ private def mqttEventCreate(deviceId, instance, state) {
 ///////////////////////////////////////////////////////////////////////////
 
 def updateGoveeAPI() {
-        goveeAppAPIFull = parent.state.goveeAppAPI
+    goveeAppAPIFull = parent.state.goveeAppAPI
 }
 
 def retrieveGoveeAPI(deviceid) {
     if (!goveeAppAPIFull) {
-        updateGoveeAPI() 
-    } else if (goveeAppAPIFull.find{it.device==deviceid} == null) {
-        updateGoveeAPI() 
-    }        
+        updateGoveeAPI()
+    } else if (goveeAppAPIFull.find { it.device == deviceid } == null) {
+        updateGoveeAPI()
+    }
     if (debugLog) "retrieveGoveeAPI(): ${deviceid}"
-    def goveeAppAPI = goveeAppAPIFull.find{it.device==deviceid}
+    def goveeAppAPI = goveeAppAPIFull.find { it.device == deviceid }
     return goveeAppAPI
 }
 
@@ -535,13 +527,12 @@ def retrieveGoveeAPI(deviceid) {
 def retrieveApiDevices () {
     deviceReturn = [:]
     if (!state.lanApiDevices) {
-        deviceReturn = ["dummy":"dummy"]    
+        deviceReturn = ['dummy':'dummy']
     } else {
-        deviceReturn = state.lanApiDevices 
+        deviceReturn = state.lanApiDevices
     }
     return deviceReturn
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////
 // Method to return the Govee DIY Scene Data for specific device from Prent App //
@@ -550,32 +541,32 @@ def retrieveApiDevices () {
 def allSceneReload() {
     long startTime = now()
     def childDevices = getChildDevices()
-    
+
     if (debugLog) {
         log.debug("allSceneReload(): Child Devices: ${childDevices}")
     }
-    
+
     // Process in batches to avoid blocking
     childDevices.eachWithIndex { device, index ->
         def commands = device?.data?.commands
-        
+
         if (debugLog) {
             log.debug("allSceneReload(): Device ${device.displayName} commands: ${commands}")
         }
-        
+
         if (!commands) {
             if (debugLog) {
                 log.debug("allSceneReload(): Ignoring device '${device.displayName}' (likely manually added/no commands data).")
             }
             return
         }
-        
-        if (commands.contains("lightScene")) {
+
+        if (commands.contains('lightScene')) {
             if (debugLog) {
                 log.debug("allSceneReload(): Light Device '${device.displayName}' has 'lightScene' command. Calling sceneLoad().")
             }
             device.sceneLoad()
-        } else if (commands.contains("nightlightScene")) {
+        } else if (commands.contains('nightlightScene')) {
             if (debugLog) {
                 log.debug("allSceneReload(): Light Device '${device.displayName}' has 'nightlightScene' command. Calling retrieveStateData().")
             }
@@ -585,27 +576,26 @@ def allSceneReload() {
                 log.debug("allSceneReload(): Device '${device.displayName}' does not have relevant Scene effects.")
             }
         }
-        
+
         // Optional yield to prevent blocking
         if (index % 10 == 0) {
             pauseExecution(10)
         }
     }
-    
+
     long endTime = now()
     long duration = endTime - startTime
     def formattedDuration = formatDuration(duration)
     if (debugLog) log.info "allSceneReload() Elapse time ${formattedDuration}."
 }
 
-
 def apiKeyUpdate() {
-    if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
+    if (device.getDataValue('apiKey') != parent?.APIKey) {
+        if (debugLog) { log.debug 'apiKeyUpdate(): Detected new API Key. Applying' }
+        device.updateDataValue('apiKey', parent?.APIKey)
         child = getChildDevices()
         child.each {
-            if (debugLog) {log.debug ("apiKeyUpdate(): ${it.label} is being updated with new APIKey")}
+            if (debugLog) { log.debug("apiKeyUpdate(): ${it.label } is being updated with new APIKey") }
             it.apiKeyUpdate()
         }
     }
@@ -617,30 +607,29 @@ def apiKeyUpdate() {
 
 void multicastListenerSocket(int port) {
     log.info("received: initializeing Multicast Listening port on ${port}")
-    def socket = interfaces.getMulticastSocket("239.255.255.250", port)
-    if (!socket.connected) socket.connect()    
+    def socket = interfaces.getMulticastSocket('239.255.255.250', port)
+    if (!socket.connected) socket.connect()
 }
 
 void multicastCloseSocket(int port) {
     log.info("received: Closing Multicast Listening porton ${port}")
-    def socket = interfaces.getMulticastSocket("239.255.255.250", port)
-    if (socket.connected) socket.close()   
+    def socket = interfaces.getMulticastSocket('239.255.255.250', port)
+    if (socket.connected) socket.close()
 }
 
 void socketStatus(message) {
-	log.warn("socket status is: ${message}")
+    log.warn("socket status is: ${message}")
 }
 
 void LookupLanAPIDevices() {
-    if (debugLog) {log.info("LookupLanAPIDevices: Placing device scan call to Multicast Listening port")}
-    def socket = interfaces.getMulticastSocket("239.255.255.250", 4001)
+    if (debugLog) { log.info('LookupLanAPIDevices: Placing device scan call to Multicast Listening port') }
+    def socket = interfaces.getMulticastSocket('239.255.255.250', 4001)
     if (!socket.connected) socket.connect()
     socket.sendMessage(HexUtils.byteArrayToHexString('{"msg":{"cmd":"scan","data":{"account_topic":"reserve"}}}'.getBytes()))
 }
 
-
 def RetrievechildDeviceInfo() {
-    if (debugLog) {log.info("RetrievechildDeviceInfo: Retrieving Child device ID Information")}
+    if (debugLog) { log.info('RetrievechildDeviceInfo: Retrieving Child device ID Information') }
     ipx = [:]
     state.lanApiDevices?.each { deviceId, deviceInfo ->
         if (debugLog) {
@@ -653,7 +642,7 @@ def RetrievechildDeviceInfo() {
         log.debug("RetrievechildDeviceInfo(): ${ipx} crossReference")
     }
     state.childCount = getChildDevices().size()
-} 
+}
 
 void installNewDevices() {
     List childDNI = getChildDevices().deviceNetworkId
@@ -661,19 +650,19 @@ void installNewDevices() {
     childDNI.each {
         dni.add(it.minus(GOVEE_PREFIX))
     }
-    
+
     foundDevices = state.lanApiDevices.keySet()
     installList = foundDevices - dni
-    if (debugLog) {log.info("installNewDevicess: existing devices: ${dni} Found Devices:${foundDevices} Devices to be installed ${installList}")}
+    if (debugLog) { log.info("installNewDevicess: existing devices: ${dni } Found Devices:${foundDevices } Devices to be installed ${installList }") }
     installList.each {
         goveeDevName = state.lanApiDevices."${it}".sku
         try {
-        goveeDevName = retrieveGoveeAPI(it).deviceName
-        } catch(Exception e) {
-            log.error "In installNewDevices: Govee Data not avaliable Using Default value"
-		}
+            goveeDevName = retrieveGoveeAPI(it).deviceName
+        } catch (Exception e) {
+            log.error 'In installNewDevices: Govee Data not avaliable Using Default value'
+        }
         log.info("installNewDevicess: Device Name:${goveeDevName} Device ID:${it} IP:${state.lanApiDevices."${it}".ip} sku:${state.lanApiDevices."${it}".sku}")
-        String driver = "Govee Manual LAN API Device"
+        String driver = 'Govee Manual LAN API Device'
         addManLightDeviceHelper( driver, it, state.lanApiDevices."${it}".ip, goveeDevName, state.lanApiDevices."${it}".sku)
     }
 }

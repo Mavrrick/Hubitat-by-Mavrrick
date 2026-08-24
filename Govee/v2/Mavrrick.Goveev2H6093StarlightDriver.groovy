@@ -3,7 +3,6 @@
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
-
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
 import groovy.transform.Field
@@ -19,43 +18,43 @@ import groovy.json.JsonBuilder
 def commandPort() { "4003" }
 
 metadata {
-	definition(name: "Govee v2 H6093 Starlight Driver", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Light"
-		capability "SwitchLevel"
-		capability "Refresh"
+    definition(name: "Govee v2 H6093 Starlight Driver", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Light"
+        capability "SwitchLevel"
+        capability "Refresh"
         capability "Initialize"
         capability "LightEffects"
-        
+
         attribute "cloudAPI", "string"
-        attribute "online", "string"        
-        
+        attribute "online", "string"
+
         command "activateDIY", [
             [name: "diyNumber", type: "NUMBER", description: "DIY Number to activate"]
            ]
         command "sceneLoad"
     }
 
-	preferences {		
-		section("Device Info") {
+    preferences {
+        section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
-            if (ipLookup() != "N/A") { 
+            if (ipLookup() != "N/A") {
             input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
             }
             if (lanControl) {
-                input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false)         
+                input(name: "lanScenes", type: "bool", title: "Enable Local LAN Scene Control", description: "If this is active your device will use Local Scenes control. Leave off to use Scenes/DIY's/Snapshots from the cloud API", defaultValue: false)
                 input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:3000", defaultValue:3000, range: 750..30000, width:5)
                 input("maxRetry", "number", title: "Max number of Retries", description: "Max number of time the command will be resubmited. Default:2", defaultValue:2, range: 0..10, width:2)
             if (lanScenes) {
-                input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("deviceModel")+".json")    
-                }
+                input(name: "lanScenesFile", type: "string", title: "LAN Scene File", description: "Please enter the file name with the Scenes for this device", defaultValue: "GoveeLanScenes_"+getDataValue("deviceModel")+".json")
+            }
             input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 ///////////////////////////////////////////////
@@ -64,15 +63,15 @@ metadata {
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
+    refresh()
 }
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
     unschedule(poll)
     if (pollRate > 0) runIn(pollRate,poll)
-    if (lanControl) { 
-        devStatus() 
+    if (lanControl) {
+        devStatus()
     } else {
         getDeviceState()
     }
@@ -84,11 +83,11 @@ def updated() {
 }
 
 def initialize(){
-    if (debugLog) {log.warn "initialize(): Driver Initializing"}    
+    if (debugLog) {log.warn "initialize(): Driver Initializing"}
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-        }
+    }
     initDefaultValues()
     unschedule()
     if (lanControl) resetApiStatus()
@@ -108,27 +107,27 @@ def installed(){
     if (pollRate > 0) runIn(pollRate,poll)
     retrieveScenes2()
     retrieveStateData()
-	retrieveDIYScenes()
+    retrieveDIYScenes()
     getDevType()
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
+    if (debugLog) {log.warn "debug logging disabled..."}
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 def sceneLoad() {
-    
+
     if (lanScenes == null) {
     if (debugLog) {log.debug "sceneLoad(): lanScenes not set"}
         device.updateSetting('lanScenes', [type: "bool", value: true])
     }
-    
-    if (lanControl && lanScenes) { 
+
+    if (lanControl && lanScenes) {
         getDevType()
         retrieveScenes() //govee_lan_apilibrary file
         retrieveSnapshot() //Govee_Coud_API Retrieve Cloud snapshots
-    } else { 
+    } else {
         retrieveScenes2() //Govee_Coud_API Retrieve cloud Scenes
         retrieveStateData() //Govee_Coud_API Retrieve State Values  Includes Snapshots.
         retrieveDIYScenes() //Govee_Coud_API Get Cloud DIY Scenes
@@ -136,13 +135,13 @@ def sceneLoad() {
 }
 
 def initDefaultValues() {
-    if (lanControl) { 
-        lanInitDefaultValues() 
+    if (lanControl) {
+        lanInitDefaultValues()
     } else {
         cloudInitDefaultValues()
     }
-    if (lanControl) { 
-        devStatus() 
+    if (lanControl) {
+        devStatus()
     } else {
         getDeviceState()
     }
@@ -157,7 +156,7 @@ def on() {
         lanOn() }
     else {
         cloudOn()
-        }
+    }
 }
 
 def off() {
@@ -165,21 +164,21 @@ def off() {
         lanOff() }
     else {
         cloudOff()
-        }
+    }
 }
 
 def setLevel(float v,duration = 0) {
     if (lanControl) {
-        lanSetLevel(v,duration) 
+        lanSetLevel(v,duration)
     } else {
         cloudSetLevel( v, 0)
-        }
+    }
 }
 
 def  setEffect(effectNo) {
     if (lanControl) {
         lanSetEffect (effectNo)
-    } else { 
+    } else {
         cloudSetEffect (effectNo)
     }
 }
@@ -190,16 +189,15 @@ def setNextEffect() {
     } else {
         cloudSetNextEffect ()
     }
-} 
-      
+}
+
 def setPreviousEffect() {
     if (lanControl) {
         lanSetPreviousEffect ()
     } else {
-        cloudSetPreviousEffect ()         
+        cloudSetPreviousEffect ()
     }
 }
-
 
 def activateDIY(diyActivate) {
     if (lanControl) {

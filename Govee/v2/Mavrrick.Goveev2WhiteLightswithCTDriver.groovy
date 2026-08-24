@@ -14,29 +14,27 @@ import groovy.json.JsonBuilder
 #include Mavrrick.Govee_Cloud_Level
 #include Mavrrick.Govee_LAN_API
 
-
 def commandPort() { "4003" }
 
 metadata {
-	definition(name: "Govee v2 White Lights with CT Driver", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
+    definition(name: "Govee v2 White Lights with CT Driver", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
         capability "Actuator"
-		capability "ColorTemperature"
-		capability "Light"
-		capability "SwitchLevel"
+        capability "ColorTemperature"
+        capability "Light"
+        capability "SwitchLevel"
         capability "Configuration"
-		capability "Refresh"
+        capability "Refresh"
         capability "Initialize"
 
         attribute "online", "string"
         attribute "cloudAPI", "string"
 
-
     }
-	preferences {		
-		section("Device Info") {
+    preferences {
+        section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
-            if (ipLookup() != "N/A") { 
+            if (ipLookup() != "N/A") {
                  input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
             }
             if (lanControl) {
@@ -45,12 +43,11 @@ metadata {
                 input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
-}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
 
+    }
+}
 
 ///////////////////////////////////////////////
 // Methods to setup manage device properties //
@@ -58,22 +55,22 @@ metadata {
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
+    refresh()
 }
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
     unschedule(poll)
     if (pollRate > 0) runIn(pollRate,poll)
-    if (lanControl) { 
-        devStatus() 
+    if (lanControl) {
+        devStatus()
     } else {
         getDeviceState()
     }
 }
 
 def updated() {
-    configure() 
+    configure()
 }
 
 def configure() {
@@ -84,7 +81,7 @@ def configure() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
-    if (lanControl && ip) { 
+    if (lanControl && ip) {
         getDevType()
         if ( parent.atomicState."${"lightEffect_"+(device.getDataValue("DevType"))}" == null ) {
             if (debugLog) {log.warn "configure(): No Scenes present for device type. Initiate setup in parent app"}
@@ -93,20 +90,20 @@ def configure() {
         } else {
         retrieveScenes()
         }
-    } else if (lanControl == false) { 
+    } else if (lanControl == false) {
         retrieveScenes2()
         retrieveStateData()
     }
 
-    if (debugLog) runIn(1800, logsOff) 
+    if (debugLog) runIn(1800, logsOff)
 }
 
 def initialize(){
-    if (debugLog) {log.warn "initialize(): Driver Initializing"}    
+    if (debugLog) {log.warn "initialize(): Driver Initializing"}
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-        }
+    }
     if (debugLog) {log.warn "initialize(): Device is retrievable. Setting up Polling"}
     unschedule()
     if (lanControl) resetApiStatus()
@@ -120,7 +117,6 @@ def initialize(){
     if (debugLog) runIn(1800, logsOff)
     checkDevData()
 }
-
 
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
@@ -136,7 +132,7 @@ def installed(){
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
+    if (debugLog) { log.warn "debug logging disabled..." }
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
@@ -149,7 +145,7 @@ def on() {
         lanOn() }
     else {
         cloudOn()
-        }
+    }
 }
 
 def off() {
@@ -157,8 +153,8 @@ def off() {
         lanOff() }
     else {
         cloudOff()
-        }
-} 
+    }
+}
 
 def setColorTemperature(value,level = null,transitionTime = null) {
     unschedule(fadeUp)
@@ -169,7 +165,7 @@ def setColorTemperature(value,level = null,transitionTime = null) {
     if (debugLog) { log.debug "setColorTemperate(): ColorTemp = " + value }
     if (lanControl) {
         lanCT(value, level, transitionTime)
-        }
+    }
     else {
         cloudCT(value, level, transitionTime)
     }
@@ -177,10 +173,10 @@ def setColorTemperature(value,level = null,transitionTime = null) {
 
 def setLevel(float v,duration = 0) {
     if (lanControl) {
-        lanSetLevel(v,duration) 
+        lanSetLevel(v,duration)
     } else {
         cloudSetLevel( v, 0)
-        }
+    }
 }
 
 ////////////////////
@@ -189,20 +185,19 @@ def setLevel(float v,duration = 0) {
 
 def setCTColorName(int value)
 {
-		if (value < 2600) {
-			sendEvent(name: "colorName", value: "Warm White")
-		}
-		else if (value < 3500) {
-			sendEvent(name: "colorName", value: "Incandescent")
-		}
-		else if (value < 4500) {
-			sendEvent(name: "colorName", value: "White")
-		}
-		else if (value < 5500) {
-			sendEvent(name: "colorName", value: "Daylight")
-		}
-		else if (value >=  5500) {
-			sendEvent(name: "colorName", value: "Cool White")
-		}	
+        if (value < 2600) {
+            sendEvent(name: "colorName", value: "Warm White")
+        }
+        else if (value < 3500) {
+            sendEvent(name: "colorName", value: "Incandescent")
+        }
+        else if (value < 4500) {
+            sendEvent(name: "colorName", value: "White")
+        }
+        else if (value < 5500) {
+            sendEvent(name: "colorName", value: "Daylight")
+        }
+        else if (value >=  5500) {
+            sendEvent(name: "colorName", value: "Cool White")
+        }
 }
-

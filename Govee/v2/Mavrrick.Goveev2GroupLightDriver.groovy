@@ -3,7 +3,6 @@
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
-
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
 import groovy.transform.Field
@@ -13,26 +12,25 @@ import groovy.json.JsonBuilder
 
 #include Mavrrick.Govee_Cloud_API
 
-
 metadata {
-	definition(name: "Govee v2 Group Light Driver", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Light"
-//		capability "Refresh"
+    definition(name: "Govee v2 Group Light Driver", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Light"
+        //        capability "Refresh"
         capability "Initialize"
-        
+
         attribute "cloudAPI", "string"
-        attribute "online", "string"        
-        
+        attribute "online", "string"
+
     }
 
-	preferences {		
-		section("Device Info") {
+    preferences {
+        section("Device Info") {
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 def updated() {
@@ -41,7 +39,7 @@ def updated() {
 
 def configure() {
     if (debugLog) {log.warn "configure(): Configuration Changed"}
-    if (debugLog) runIn(1800, logsOff) 
+    if (debugLog) runIn(1800, logsOff)
 }
 
 def initialize(){
@@ -53,13 +51,12 @@ def initialize(){
     if (debugLog) runIn(1800, logsOff)
 }
 
-
 def installed(){
     if (debugLog) {log.warn "installed(): Driver installed"}
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
+    if (debugLog) {log.warn "debug logging disabled..."}
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
@@ -69,10 +66,10 @@ def logsOff() {
 
 def on() {
         cloudOn()
-        
+
 }
 
 def off() {
         cloudOff()
-        
+
 }

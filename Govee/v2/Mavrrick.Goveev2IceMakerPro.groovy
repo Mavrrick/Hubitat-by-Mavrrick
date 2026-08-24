@@ -7,47 +7,47 @@
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_MQTT
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
 
 metadata {
-	definition(name: "Govee v2 Ice Maker Pro", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Actuator"
+    definition(name: "Govee v2 Ice Maker Pro", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Actuator"
         capability "Initialize"
-        capability "Refresh"       
-        
-		attribute "gear", "number"
+        capability "Refresh"
+
+        attribute "gear", "number"
         attribute "mode", "number"
         attribute "modeValue", "number"
         attribute "modeDescription", "string"
-        attribute "pollInterval", "number"         
+        attribute "pollInterval", "number"
         attribute "cloudAPI", "string"
-        attribute "online", "string" 
-//      MQTT Events
-        attribute "lackWaterEvent", "string"  
-        attribute "iceFull", "string" 
-        attribute "cleaningCompleteEvent", "string" 
-        attribute "runInterruptEvent", "string" 
-        
+        attribute "online", "string"
+        //      MQTT Events
+        attribute "lackWaterEvent", "string"
+        attribute "iceFull", "string"
+        attribute "cleaningCompleteEvent", "string"
+        attribute "runInterruptEvent", "string"
+
         command "iceMakingToggle", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Start Making Ice"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Start Making Ice"],
            ]
         command "precoolToggle", [
-            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on Precool"],           
+            [name: "Toggle", type: "ENUM", constraints: [0:"off", 1:"on"], description: "Turn on Precool"],
            ]
         command "workingMode", [[name: "workMode", type: "ENUM", constraints: [ 'Large Ice',      'Medium Ice',       'Small Ice'], description: "Mode of device"]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
-        
-    }                                
 
-	preferences {		
-		section("Device Info") {
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4) 
+    }
+
+    preferences {
+        section("Device Info") {
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 //////////////////////////////////////
@@ -75,7 +75,7 @@ def initialize() {
      if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-    }
+     }
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
@@ -102,53 +102,53 @@ def refresh() {
 
 logsOff  // turn off logging for the device
 def logsOff() {
-    log.info "debug logging disabled..."
+    if (debugLog) { log.info "debug logging disabled..." }
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-	getDeviceState()
+    getDeviceState()
     if (pollRate > 0) runIn(pollRate,poll)
 }
 
 def addLightDeviceHelper() {
-	//Driver Settings
+    //Driver Settings
     driver = "Govee v2 Life Child Light Device"
     deviceID = device.getDataValue("deviceID")
     deviceName = device.label+"_Nightlight"
     deviceModel = device.getDataValue("deviceModel")
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
-	String dni = "Govee_${deviceID}_Nightlight"
+    Map deviceType = [namespace:"Mavrrick", typeName: driver]
+    Map deviceTypeBak = [:]
+    String devModel = deviceModel
+    String dni = "Govee_${deviceID}_Nightlight"
     APIKey = device.getDataValue("apiKey")
-	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
-//    log.debug "Setup detail '${properties}' driver failed"
+    Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
+    //    log.debug "Setup detail '${properties}' driver failed"
     if (debugLog) { log.debug "Creating Child Device"}
 
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	} 
+    def childDev
+    try {
+        childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+    }
+    catch (e) {
+        log.warn "The '${deviceType}' driver failed"
+        if (deviceTypeBak) {
+            logWarn "Defaulting to '${deviceTypeBak}' instead"
+            childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+        }
+    }
 }
 
 def retNightlightScene(){
-    scenes = state.nightlightScene 
+    scenes = state.nightlightScene
     if (debugLog) { log.debug "retNightlightScene(): Nightlight Scenes are  " + scenes }
     return scenes
 }
 
 //////////////////////
-// Driver Commands // 
+// Driver Commands //
 /////////////////////
 
 def on() {
@@ -160,11 +160,11 @@ def off() {
 }
 
 def workingMode(mode){
-    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
+    if (debugLog) {log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"}
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "Large Ice":
-            modenum = 1;           
+            modenum = 1;
         break;
         case "Medium Ice":
             modenum = 2;
@@ -173,23 +173,23 @@ def workingMode(mode){
             modenum = 3;
         break;
     default:
-    log.debug "not valid value for mode";
-    break;
+        if (debugLog) {log.debug "not valid value for mode"};
+        break;
     }
     values = '{"workMode":'+modenum+',"modeValue":0}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}  
+}
 
 def iceMakingToggle(on_off) {
     switch(on_off) {
         case "on":
         sendCommand("iceMakingToggle", 1 ,"devices.capabilities.toggle");
-        break; 
+        break;
         case "off":
         sendCommand("iceMakingToggle", 0 ,"devices.capabilities.toggle");
         break;
-        default: 
-            if (debugLog) {log.debug ("iceMakingToggle(): Unknown toggle value}")}; 
+        default:
+            if (debugLog) {log.debug ("iceMakingToggle(): Unknown toggle value}")};
         break;
     }
 }
@@ -198,12 +198,12 @@ def precoolToggle(on_off) {
     switch(on_off) {
         case "on":
         sendCommand("precoolToggle", 1 ,"devices.capabilities.toggle");
-        break; 
+        break;
         case "off":
         sendCommand("precoolToggle", 0 ,"devices.capabilities.toggle");
         break;
-        default: 
-            if (debugLog) {log.debug ("precoolToggle(): Unknown toggle value}")}; 
+        default:
+            if (debugLog) {log.debug ("precoolToggle(): Unknown toggle value}")};
         break;
     }
 }

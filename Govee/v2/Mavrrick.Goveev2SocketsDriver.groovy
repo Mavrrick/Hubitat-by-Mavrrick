@@ -16,23 +16,23 @@ import groovy.json.JsonBuilder
 def commandPort() { "4003" }
 
 metadata {
-	definition(name: "Govee v2 Sockets Driver", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
+    definition(name: "Govee v2 Sockets Driver", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
         capability "Configuration"
-		capability "Refresh"
+        capability "Refresh"
         capability "Initialize"
-        
+
         attribute "cloudAPI", "string"
         attribute "online", "string"
-        
+
     }
 
-	preferences {		
-		section("Device Info") {
+    preferences {
+        section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
-            if (ipLookup() != "N/A") { 
+            if (ipLookup() != "N/A") {
                 input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
-            }            
+            }
             input("multiSocketAdd", "bool", title: "Enable Multi-Socket Support", description: "By flipping this switch you tell the driver to enable Child devices for each outlet if possible", defaultValue: true)
             if (lanControl) {
                 input("retryInt", "number", title: "Retry Interval", description: "Time between command Retries in milliseconds. Default:2000", defaultValue:2000, range: 750..15000, width:5)
@@ -40,8 +40,8 @@ metadata {
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
             input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
-        }		
-	}
+        }
+    }
 }
 
 ///////////////////////////////////////////////
@@ -50,7 +50,7 @@ metadata {
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
+    refresh()
 }
 
 def refresh() {
@@ -73,10 +73,10 @@ def configure() {
     childDNI = getChildDevices().deviceNetworkId
     if (multiSocketAdd == true && outlets > 0 ) {
         outlets.times {
-            if (!childDNI.contains("Govee_${deviceID}_Outlet${it+1}")) {  
+            if (!childDNI.contains("Govee_${deviceID}_Outlet${it+1}")) {
                 socketChildAdd()
             } else {
-                if (debugLog) {log.warn "configure(): Outlet already setup"}    
+                if (debugLog) {log.warn "configure(): Outlet already setup"}
             }
         }
     }
@@ -84,7 +84,7 @@ def configure() {
         addLightDeviceHelper()
     }
     getDeviceState()
-    if (debugLog) runIn(1800, logsOff) 
+    if (debugLog) runIn(1800, logsOff)
 }
 
 def initialize(){
@@ -99,18 +99,17 @@ def initialize(){
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
         runIn(offset,poll)
-    }     
+    }
 
     getDeviceState()
     if (debugLog) runIn(1800, logsOff)
     checkDevData()
 }
 
-
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
     if (pollRate > 0) runIn(pollRate,poll)
-	getDeviceState()
+    getDeviceState()
     int outlets = device.getDataValue("commands").count("socketToggle")
     if (outlets > 0) {
         socketChildAdd()
@@ -122,7 +121,7 @@ def installed(){
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
+    if (debugLog) { log.warn "debug logging disabled..." }
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
@@ -135,7 +134,7 @@ def on() {
         lanOn() }
     else {
         cloudOn()
-        }
+    }
 }
 
 def off() {
@@ -143,7 +142,7 @@ def off() {
         lanOff() }
     else {
         cloudOff()
-        }
+    }
 }
 
 ///////////////////////////
@@ -154,80 +153,79 @@ def socketChildAdd() {
     int sockets = device.getDataValue("commands").count("socketToggle")
     sockets.times{
         outletNum = it+1
-        log.info "socketChildAdd(): creating device for outlet $outletNum"
+        if (descLog) { log.info "socketChildAdd(): creating device for outlet $outletNum" }
         addSocketDeviceHelper(outletNum)
-    }    
+    }
 }
 
 def addSocketDeviceHelper(outletNum) {
-	//Driver Settings
+    //Driver Settings
     driver = "Govee v2 Sockets Driver - Component"
     deviceID = device.getDataValue("deviceID")
     deviceName = device.label+"_Outlet"+outletNum
     deviceModel = device.getDataValue("deviceModel")
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
+    Map deviceType = [namespace:"Mavrrick", typeName: driver]
+    Map deviceTypeBak = [:]
+    String devModel = deviceModel
     String dni = "Govee_${deviceID}_Outlet${outletNum}"
     APIKey = device.getDataValue("apiKey")
-	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, socketNumber: outletNum, apiKey: APIKey]
+    Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, socketNumber: outletNum, apiKey: APIKey]
     if (debugLog) { log.debug "Creating Child Device"}
 
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	} 
+    def childDev
+    try {
+        childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+    }
+    catch (e) {
+        log.warn "The '${deviceType}' driver failed"
+        if (deviceTypeBak) {
+            logWarn "Defaulting to '${deviceTypeBak}' instead"
+            childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+        }
+    }
 }
 
 def childSwitchUpdate(instance, toggle) {
     int outlet = instance.substring(12).toInteger()
-    child = getChildDevice("Govee_${device.getDataValue("deviceID")}_Outlet${outlet}") 
-     if (debugLog) {log.debug "childSwitchUpdate(): Update to child switch device. Child $child switch state to $toggle"} 
+    child = getChildDevice("Govee_${device.getDataValue("deviceID")}_Outlet${outlet}")
+     if (debugLog) {log.debug "childSwitchUpdate(): Update to child switch device. Child $child switch state to $toggle"}
     child.sendEvent(name: "switch", value: toggle)
 }
-
 
 ///////////////////////////////////////////////////
 // Heler routine to create child devices         //
 ///////////////////////////////////////////////////
 
 def addLightDeviceHelper() {
-	//Driver Settings
+    //Driver Settings
     driver = "Govee v2 Life Child Light Device"
     deviceID = device.getDataValue("deviceID")
     deviceName = device.label+"_Nightlight"
     deviceModel = device.getDataValue("deviceModel")
-	Map deviceType = [namespace:"Mavrrick", typeName: driver]
-	Map deviceTypeBak = [:]
-	String devModel = deviceModel
-	String dni = "Govee_${deviceID}_Nightlight"
+    Map deviceType = [namespace:"Mavrrick", typeName: driver]
+    Map deviceTypeBak = [:]
+    String devModel = deviceModel
+    String dni = "Govee_${deviceID}_Nightlight"
     APIKey = device.getDataValue("apiKey")
-	Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
-//    log.debug "Setup detail '${properties}' driver failed"
+    Map properties = [name: driver, label: deviceName, deviceID: deviceID, deviceModel: deviceModel, apiKey: APIKey]
+    //    log.debug "Setup detail '${properties}' driver failed"
     if (debugLog) { log.debug "Creating Child Device"}
 
-	def childDev
-	try {
-		childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
-	}
-	catch (e) {
-		log.warn "The '${deviceType}' driver failed"
-		if (deviceTypeBak) {
-			logWarn "Defaulting to '${deviceTypeBak}' instead"
-			childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
-		}
-	} 
+    def childDev
+    try {
+        childDev = addChildDevice(deviceType.namespace, deviceType.typeName, dni, properties)
+    }
+    catch (e) {
+        log.warn "The '${deviceType}' driver failed"
+        if (deviceTypeBak) {
+            logWarn "Defaulting to '${deviceTypeBak}' instead"
+            childDev = addChildDevice(deviceTypeBak.namespace, deviceTypeBak.typeName, dni, properties)
+        }
+    }
 }
 
 def retNightlightScene(){
-    scenes = state.nightlightScene 
+    scenes = state.nightlightScene
     if (debugLog) { log.debug "retNightlightScene(): Nightlight Scenes are  " + scenes }
     return scenes
 }

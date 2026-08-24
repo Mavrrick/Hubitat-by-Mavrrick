@@ -9,24 +9,24 @@
 import groovy.json.JsonSlurper
 
 metadata {
-	definition(name: "Govee v2 Thermo/Hygrometer Driver", namespace: "Mavrrick", author: "Mavrrick") {
+    definition(name: "Govee v2 Thermo/Hygrometer Driver", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
-		capability "Refresh" 
-        capability "TemperatureMeasurement"         
+        capability "Refresh"
+        capability "TemperatureMeasurement"
         capability "RelativeHumidityMeasurement"
         attribute "online", "string"
         attribute "cloudAPI", "string"
     }
 
-	preferences {		
-		section("Device Info") {  
+    preferences {
+        section("Device Info") {
             input("tempUnit", "enum", title: "Temp Unit Selection", defaultValue: 'Fahrenheit', options: [    "Fahrenheit",     "Celsius"], required: true)
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 //////////////////////////////////////
@@ -71,8 +71,8 @@ def refresh() {
 def configure() {
     if (debugLog) {log.info "configure(): Driver Updated"}
     unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)         
-    if (debugLog) runIn(1800, logsOff) 
+    if (pollRate > 0) runIn(pollRate,poll)
+    if (debugLog) runIn(1800, logsOff)
 }
 
 ////////////////////
@@ -81,14 +81,14 @@ def configure() {
 
 logsOff  // turn off logging for the device
 def logsOff() {
-    log.info "debug logging disabled..."
+    if (debugLog) { log.info "debug logging disabled..." }
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-    getDeviceState()    
-//	getDeviceTempHumid()
+    getDeviceState()
+    //    getDeviceTempHumid()
     if (pollRate > 0) runIn(pollRate,poll)
-}	
+}

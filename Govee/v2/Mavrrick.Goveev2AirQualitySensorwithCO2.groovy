@@ -9,10 +9,10 @@
 import groovy.json.JsonSlurper
 
 metadata {
-	definition(name: "Govee v2 Air Quality Sensor with CO2", namespace: "Mavrrick", author: "Mavrrick") {
+    definition(name: "Govee v2 Air Quality Sensor with CO2", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
-		capability "Refresh" 
-        capability "TemperatureMeasurement"         
+        capability "Refresh"
+        capability "TemperatureMeasurement"
         capability "RelativeHumidityMeasurement"
         capability "CarbonDioxideMeasurement"
         attribute "online", "string"
@@ -21,15 +21,15 @@ metadata {
         attribute "vpd", "number"
     }
 
-	preferences {		
-		section("Device Info") {  
+    preferences {
+        section("Device Info") {
             input("tempUnit", "enum", title: "Temp Unit Selection", defaultValue: 'Fahrenheit', options: [    "Fahrenheit",     "Celsius"], required: true)
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)            
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 //////////////////////////////////////
@@ -74,8 +74,8 @@ def refresh() {
 def configure() {
     if (debugLog) {log.info "configure(): Driver Updated"}
     unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)         
-    if (debugLog) runIn(1800, logsOff) 
+    if (pollRate > 0) runIn(pollRate,poll)
+    if (debugLog) runIn(1800, logsOff)
 }
 
 ////////////////////
@@ -84,14 +84,14 @@ def configure() {
 
 logsOff  // turn off logging for the device
 def logsOff() {
-    log.info "debug logging disabled..."
+    if (debugLog) {log.info "debug logging disabled..."}
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-    getDeviceState()    
+    getDeviceState()
     if (pollRate > 0) runIn(pollRate,poll)
 }
 
@@ -135,7 +135,7 @@ public double calculateDewPointC(double T_c, double RH_percent) {
 
     // Calculate Dew Point (Td_c)
     def Td_c = (c * gamma) / (b - gamma)
-    
+
     return Td_c
 }
 
@@ -168,20 +168,20 @@ private double fToC(double T_f) {
 public double calculateVPD_kPa(double T_c, double RH_percent) {
     // 1. Calculate Saturation Vapor Pressure (SVP) in Pascals (Pa)
     def SVP_Pa = calculateSVP(T_c)
-    
+
     // 2. Calculate Actual Vapor Pressure (AVP) in Pascals (Pa)
     // AVP = SVP * (RH / 100)
     def AVP_Pa = SVP_Pa * (RH_percent / 100.0)
-    
+
     // 3. Calculate VPD in Pascals (Pa)
     // VPD = SVP - AVP
     def VPD_Pa = SVP_Pa - AVP_Pa
-    
+
     // VPD = SVP * (1 - RH / 100) - This is the simplified formula
 
     // 4. Convert VPD to kilopascals (kPa) (1 kPa = 1000 Pa)
     def VPD_kPa = VPD_Pa / 1000.0
-    
+
     return VPD_kPa
 }
 
@@ -189,7 +189,7 @@ void runCalculations() {
     tempUnit = getTemperatureScale()
     tempInput = device.currentValue("temperature")
     rhInput = device.currentValue("humidity")
-    
+
     // Ensure Temp is in Celsius for the calculations
     def T_c = tempUnit.toLowerCase() == "f" ? fToC(tempInput) : tempInput
 
@@ -199,14 +199,13 @@ void runCalculations() {
 
     // 2. Calculate VPD
     def VPD_kPa = calculateVPD_kPa(T_c, rhInput)
-    
+
     if (debugLog) {log.info "Input Temp: ${tempInput}°${tempUnit}, RH: ${rhInput}%"}
     if (debugLog) {log.info "Dew Point: ${Td_c.round(2)}°C / ${Td_f.round(2)}°F"}
     if (debugLog) {log.info "VPD: ${VPD_kPa.round(2)} kPa"}
-    
-    
+
    if (getTemperatureScale() == "C") sendEvent(name: "dewPoint", value: Td_c.round(2), unit: "C");
    if (getTemperatureScale() == "F") sendEvent(name: "dewPoint", value: Td_f.round(2), unit: "F");
-    
+
     sendEvent(name: "vpd", value: VPD_kPa.round(2), unit: "kPa")
 }

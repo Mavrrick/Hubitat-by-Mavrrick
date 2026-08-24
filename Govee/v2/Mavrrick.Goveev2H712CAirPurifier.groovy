@@ -3,41 +3,40 @@
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
-
 // Includes of library objects
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_Life
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
 import groovy.transform.Field
 
 @Field Map getFanLevel = [
     "off": 0
     ,"on": 1
-	,"low": 25
-	,"medium": 50
-	,"high": 100    
+    ,"low": 25
+    ,"medium": 50
+    ,"high": 100
     ,"auto": 150
 ]
 
 metadata {
-	definition(name: "Govee v2 H712C Air Purifier", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Actuator"
+    definition(name: "Govee v2 H712C Air Purifier", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Actuator"
         capability "Initialize"
-		capability "Refresh"
+        capability "Refresh"
         capability "Configuration"
         capability "FanControl"
         capability "AirQuality"
-        
+
         attribute "online", "string"
         attribute "mode", "number"
         attribute "modeValue", "number"
         attribute "modeDescription", "string"
         attribute "pollInterval", "number"
         attribute "cloudAPI", "string"
-        attribute "filterLifeTime", "number"        
-        
+        attribute "filterLifeTime", "number"
+
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
         command "setSpeed", [[name: "Fan speed*",type:"ENUM", description:"Fan speed to set", constraints: getFanLevel.collect {k,v -> k}]]
         command "autoMode"
@@ -45,14 +44,14 @@ metadata {
         command "turboMode"
     }
 
-	preferences {		
-		section("Device Info") {
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4) 
+    preferences {
+        section("Device Info") {
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 //////////////////////////////////////
@@ -85,7 +84,7 @@ def initialize() {
      if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-    }
+     }
     unschedule()
     if (logEnable) runIn(1800, logsOff)
     if (pollRate > 0) {
@@ -110,9 +109,9 @@ Configure // retrieve setup values and initialize polling and logging
 def configure() {
     if (debugLog) {log.info "configure(): Driver Updated"}
     unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)     
-    retrieveStateData()    
-    if (debugLog) runIn(1800, logsOff) 
+    if (pollRate > 0) runIn(pollRate,poll)
+    retrieveStateData()
+    if (debugLog) runIn(1800, logsOff)
 }
 
 ////////////////////
@@ -121,19 +120,19 @@ def configure() {
 
 logsOff  // turn off logging for the device
 def logsOff() {
-    log.info "debug logging disabled..."
+    if (debugLog) {log.info "debug logging disabled..."}
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-	getDeviceState()
+    getDeviceState()
     if (pollRate > 0) runIn(pollRate,poll)
-}	
+}
 
 //////////////////////
-// Driver Commands // 
+// Driver Commands //
 /////////////////////
 
 def on() {
@@ -145,28 +144,28 @@ def off() {
 }
 
 def autoMode() {
-    log.debug "autoMode(): Processing Working Mode command 'Auto' "
+    if (debugLog) {log.debug "autoMode(): Processing Working Mode command 'Auto' "}
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":3,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
 def sleepMode() {
-    log.debug "sleep(): Processing Working Mode command 'sleepMode' "
+    if (debugLog) {log.debug "sleep(): Processing Working Mode command 'sleepMode' "}
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":5,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
 def turboMode() {
-    log.debug "sleep(): Processing Working Mode command 'turboMode' "
+    if (debugLog) {log.debug "sleep(): Processing Working Mode command 'turboMode' "}
     sendEvent(name: "cloudAPI", value: "Pending")
     values = '{"workMode":7,"modeValue":0}'  // This is the string that will need to be modified based on the potential values
     sendCommand("workMode", values, "devices.capabilities.work_mode")
 }
 
 def setSpeed(fanspeed) {
-    log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "
+    if (debugLog) {log.debug "setFanSpeed(): Processing Working Mode command 'setFanSpeed' to ${fanspeed} "}
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(fanspeed){
         case "low":
@@ -184,7 +183,7 @@ def setSpeed(fanspeed) {
         case "auto":
             gearmode = 3;
             gear = 0;
-        break;       
+        break;
     }
     if (fanspeed == "on") {
         cloudOn()
@@ -205,11 +204,11 @@ void cycleSpeed() {
 
 void cycleChange() {
     Integer randomSpeed = Math.abs(new Random().nextInt() % 3) + 1
-//    String newSpeed = "speed "+randomSpeed
+        //    String newSpeed = "speed "+randomSpeed
         values = '{"workMode":1,"modeValue":'+randomSpeed+'}'  // This is the string that will need to be modified based on the potential values
         sendCommand("workMode", values, "devices.capabilities.work_mode")
-        sendEvent(name: "speed", value: "cycle")    
-//    setSpeed(newSpeed)
+        sendEvent(name: "speed", value: "cycle")
+    //    setSpeed(newSpeed)
     runIn(cycleInterval, cycleChange)
-    
+
 }

@@ -16,25 +16,25 @@ import groovy.json.JsonBuilder
 def commandPort() { "4003" }
 
 metadata {
-	definition(name: "Govee v2 Sockets Driver - Component", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
+    definition(name: "Govee v2 Sockets Driver - Component", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
         capability "Outlet"
 //        capability "Configuration"
-//		capability "Refresh"
+//        capability "Refresh"
 //        capability "Initialize"
-        
+
         attribute "cloudAPI", "string"
         attribute "online", "string"
-        
+
     }
 
-	preferences {		
-		section("Device Info") {
+    preferences {
+        section("Device Info") {
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 ///////////////////////////////////////////////
@@ -43,14 +43,14 @@ metadata {
 
 /*def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
+    refresh()
 }
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
-//    unschedule(poll)
- //   if (pollRate > 0) runIn(pollRate,poll)
-//    getDeviceState()
+    //    unschedule(poll)
+    //   if (pollRate > 0) runIn(pollRate,poll)
+    //    getDeviceState()
     if (debugLog) runIn(1800, logsOff)
 } */
 
@@ -63,7 +63,7 @@ def configure() {
 /*        unschedule()
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState() */
-    if (debugLog) runIn(1800, logsOff) 
+    if (debugLog) runIn(1800, logsOff)
 }
 
 def initialize(){
@@ -78,11 +78,10 @@ def initialize(){
         randomOffset(pollRateInt)
         runIn(offset,poll)
     } */
-//        if (pollRate > 0) runIn(pollRate,poll)
-//        getDeviceState()
+    //        if (pollRate > 0) runIn(pollRate,poll)
+    //        getDeviceState()
     if (debugLog) runIn(1800, logsOff)
 }
-
 
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
@@ -92,7 +91,7 @@ def installed(){
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
+    if (debugLog) { log.warn "debug logging disabled..." }
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 

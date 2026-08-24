@@ -3,7 +3,6 @@
 //
 // 05/07/2024 2.1.0 update to support Nested devices under Parent devices
 
-
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
 import groovy.transform.Field
@@ -18,22 +17,22 @@ import groovy.json.JsonBuilder
 def commandPort() { "4003" }
 
 metadata {
-	definition(name: "Govee v2 White Light Driver", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Light"
-		capability "SwitchLevel"
-		capability "Refresh"
+    definition(name: "Govee v2 White Light Driver", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Light"
+        capability "SwitchLevel"
+        capability "Refresh"
         capability "Initialize"
-        
+
         attribute "cloudAPI", "string"
-        attribute "online", "string"        
-        
+        attribute "online", "string"
+
     }
 
-	preferences {		
-		section("Device Info") {
+    preferences {
+        section("Device Info") {
             input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
-            if (ipLookup() != "N/A") { 
+            if (ipLookup() != "N/A") {
             input(name: "lanControl", type: "bool", title: "Enable Local LAN control", description: "This is a advanced feature that only worked with some devices. Do not enable unless you are sure your device supports it", defaultValue: false)
             }
             if (lanControl) {
@@ -42,23 +41,23 @@ metadata {
                 input("fadeInc", "decimal", title: "% Change each Increment of fade", defaultValue: 1)
             }
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 def poll() {
     if (debugLog) {log.warn "poll(): Poll Initated"}
-	refresh()
+    refresh()
 }
 
 def refresh() {
     if (debugLog) {log.warn "refresh(): Performing refresh"}
     unschedule(poll)
     if (pollRate > 0) runIn(pollRate,poll)
-    if (lanControl) { 
-        devStatus() 
+    if (lanControl) {
+        devStatus()
     } else {
         getDeviceState()
     }
@@ -76,7 +75,7 @@ def configure() {
         if (pollRate > 0) runIn(pollRate,poll)
         getDeviceState()
     }
-    if (debugLog) runIn(1800, logsOff) 
+    if (debugLog) runIn(1800, logsOff)
 }
 
 def initialize(){
@@ -93,14 +92,13 @@ def initialize(){
         pollRateInt = pollRate.toInteger()
         randomOffset(pollRateInt)
         runIn(offset,poll)
-    }
+        }
         getDeviceState()
     }
     retrieveIPAdd()
     if (debugLog) runIn(1800, logsOff)
     checkDevData()
 }
-
 
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
@@ -117,7 +115,7 @@ def installed(){
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
+    if (debugLog) { log.warn "debug logging disabled..." }
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
@@ -130,7 +128,7 @@ def on() {
         lanOn() }
     else {
         cloudOn()
-        }
+    }
 }
 
 def off() {
@@ -138,13 +136,13 @@ def off() {
         lanOff() }
     else {
         cloudOff()
-        }
+    }
 }
 
 def setLevel(float v,duration = 0) {
     if (lanControl) {
-        lanSetLevel(v,duration) 
+        lanSetLevel(v,duration)
     } else {
         cloudSetLevel( v, 0)
-        }
+    }
 }

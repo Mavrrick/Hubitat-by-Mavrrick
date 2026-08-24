@@ -7,39 +7,39 @@
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_MQTT
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
 
 metadata {
-	definition(name: "Govee v2 Ice Maker", namespace: "Mavrrick", author: "Mavrrick") {
-		capability "Switch"
-		capability "Actuator"
+    definition(name: "Govee v2 Ice Maker", namespace: "Mavrrick", author: "Mavrrick") {
+        capability "Switch"
+        capability "Actuator"
         capability "Initialize"
         capability "Refresh"
-        capability "Configuration"        
-        
-		attribute "gear", "number"
+        capability "Configuration"
+
+        attribute "gear", "number"
         attribute "mode", "number"
         attribute "modeValue", "number"
         attribute "modeDescription", "string"
-        attribute "pollInterval", "number"         
+        attribute "pollInterval", "number"
         attribute "cloudAPI", "string"
-        attribute "online", "string" 
-//        attribute "connectionState", "string"
-        attribute "lackWaterEvent", "string"        
-        
+        attribute "online", "string"
+        //        attribute "connectionState", "string"
+        attribute "lackWaterEvent", "string"
+
         command "workingMode", [[name: "workMode", type: "ENUM", constraints: [ 'Large Ice',      'Medium Ice',       'Small Ice'], description: "Mode of device"]]
         command "changeInterval", [[name: "changeInterval", type: "NUMBER",  description: "Change Polling interval range from 0-600", range: 0-600, required: true]]
-        
-    }                                
 
-	preferences {		
-		section("Device Info") {
-            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4) 
+    }
+
+    preferences {
+        section("Device Info") {
+            input("pollRate", "number", title: "Polling Rate (seconds)\nDefault:300", defaultValue:300, submitOnChange: true, width:4)
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 //////////////////////////////////////
@@ -54,7 +54,7 @@ def updated() {
     retrieveStateData()
     poll()
 /*    disconnect()
-	pauseExecution(1000)
+    pauseExecution(1000)
     mqttConnectionAttempt() */
 }
 
@@ -63,7 +63,7 @@ def installed(){
     retrieveStateData()
     poll()
 /*    disconnect()
-	pauseExecution(1000)
+    pauseExecution(1000)
     mqttConnectionAttempt() */
 }
 
@@ -72,7 +72,7 @@ def initialize() {
      if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
-    }
+     }
     unschedule()
     if (debugLog) runIn(1800, logsOff)
     retrieveStateData()
@@ -84,7 +84,7 @@ def initialize() {
     checkDevData()
 //    poll()
 /*    disconnect()
-	pauseExecution(1000)
+    pauseExecution(1000)
     mqttConnectionAttempt() */
 }
 
@@ -101,11 +101,11 @@ def refresh() {
 def configure() {
     if (debugLog) {log.info "configure(): Driver Updated"}
     unschedule()
-    if (pollRate > 0) runIn(pollRate,poll)     
-    retrieveStateData()    
+    if (pollRate > 0) runIn(pollRate,poll)
+    retrieveStateData()
     if (debugLog) runIn(1800, logsOff)
 /*    disconnect()
-	pauseExecution(1000)
+    pauseExecution(1000)
     mqttConnectionAttempt() */
 }
 
@@ -115,19 +115,19 @@ def configure() {
 
 logsOff  // turn off logging for the device
 def logsOff() {
-    log.info "debug logging disabled..."
+    if (debugLog) { log.info "debug logging disabled..." }
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-	getDeviceState()
+    getDeviceState()
     if (pollRate > 0) runIn(pollRate,poll)
-}	
+}
 
 //////////////////////
-// Driver Commands // 
+// Driver Commands //
 /////////////////////
 
 def on() {
@@ -139,11 +139,11 @@ def off() {
 }
 
 def workingMode(mode){
-    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
+    if (debugLog) {log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"}
     sendEvent(name: "cloudAPI", value: "Pending")
     switch(mode){
         case "Large Ice":
-            modenum = 1;           
+            modenum = 1;
         break;
         case "Medium Ice":
             modenum = 2;
@@ -152,9 +152,9 @@ def workingMode(mode){
             modenum = 3;
         break;
     default:
-    log.debug "not valid value for mode";
-    break;
+        if (debugLog) {log.debug "not valid value for mode"};
+        break;
     }
     values = '{"workMode":'+modenum+',"modeValue":0}'
     sendCommand("workMode", values, "devices.capabilities.work_mode")
-}    
+}

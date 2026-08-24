@@ -146,7 +146,7 @@ def tempSetPoint(setpoint=185, unit='Farenheit') {
 
 
 def workingMode(mode, gear=0){
-    log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}"
+    if (debugLog) { log.debug "workingMode(): Processing Working Mode command. ${mode} ${gear}" }
     sendEvent(name: "cloudAPI", value: "Pending")
     if (gear == null) { gear = 0 }
     switch(mode){
@@ -167,7 +167,7 @@ def workingMode(mode, gear=0){
             gearNum = gear>0?:1;
         break;
     default:
-    log.debug "not valid value for mode";
+        log.debug "not valid value for mode";
     break;
     }
     values = '{"workMode":'+modenum+',"modeValue":'+gearNum+'}'

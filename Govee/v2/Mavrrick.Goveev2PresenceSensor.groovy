@@ -6,24 +6,24 @@
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_MQTT
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
 
 metadata {
-	definition(name: "Govee v2 Presence Sensor", namespace: "Mavrrick", author: "Mavrrick") {
+    definition(name: "Govee v2 Presence Sensor", namespace: "Mavrrick", author: "Mavrrick") {
         capability "Initialize"
         capability "Refresh"
-        capability "MotionSensor"         
+        capability "MotionSensor"
         capability "PresenceSensor"
-//         attribute "connectionState", "string"
+    //         attribute "connectionState", "string"
     }
 
-	preferences {		
-		section("Device Info") {      
+    preferences {
+        section("Device Info") {
             input(name: "debugLog", type: "bool", title: "Debug Logging", defaultValue: false)
-            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true) 
-		}
-		
-	}
+            input("descLog", "bool", title: "Enable descriptionText logging", required: true, defaultValue: true)
+        }
+
+    }
 }
 
 //////////////////////////////////////
@@ -33,10 +33,9 @@ metadata {
 def updated() {
 if (logEnable) runIn(1800, logsOff)
 /*    disconnect()
-	pauseExecution(1000)
+    pauseExecution(1000)
     mqttConnectionAttempt() */
 }
-
 
 def installed(){
     initialize()
@@ -45,12 +44,12 @@ def installed(){
 def initialize() {
     checkDevData()
 /*    disconnect()
-	pauseExecution(1000)
+    pauseExecution(1000)
     mqttConnectionAttempt() */
 }
 
 def logsOff() {
-    log.warn "debug logging disabled..."
+    if (debugLog) {log.warn "debug logging disabled..."}
     device.updateSetting("debugLog", [value: "false", type: "bool"])
 }
 
@@ -60,7 +59,6 @@ def refresh() {
 }
 
 def configure() {
-    if (debugLog) {log.warn "configure(): Driver Updated"}       
-    if (debugLog) runIn(1800, logsOff) 
+    if (debugLog) {log.warn "configure(): Driver Updated"}
+    if (debugLog) runIn(1800, logsOff)
 }
-
