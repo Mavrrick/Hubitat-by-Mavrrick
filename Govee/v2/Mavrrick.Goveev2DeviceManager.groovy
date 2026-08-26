@@ -196,7 +196,7 @@ def disconnected() {
 
 void parse(String event) {
     
-//    if (collectStats) long startTime = now()
+    long startTime = 0L
     if (collectStats ?: false) long startTime = now()
 
     if (debugLog) log.info "parse() Parse call started at ${startTime}"
