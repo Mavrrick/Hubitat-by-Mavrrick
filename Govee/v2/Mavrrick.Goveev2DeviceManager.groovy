@@ -197,8 +197,10 @@ def disconnected() {
 void parse(String event) {
     
     long startTime = 0L
-    if (collectStats ?: false) long startTime = now()
 
+    if (collectStats ?: false) {
+        startTime = now()
+    }
     if (debugLog) log.info "parse() Parse call started at ${startTime}"
     if (event.contains("topic")) {
         if (debugLog) log.info "parse() MQTT message recieved. Parsing and sending to device"
