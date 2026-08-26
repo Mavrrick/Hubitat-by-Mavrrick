@@ -39,8 +39,8 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2DeviceManager.groovy",
       "required": true,
-      "version": "2.2.8",
-      "betaVersion": "2.2.8"
+      "version": "2.2.9",
+      "betaVersion": "2.2.9"
     },
     {
       "id": "c1623663-d78a-46d7-940f-50b3b31198b3",
@@ -399,8 +399,8 @@
       "location": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/main/Govee/v2/Mavrrick.Goveev2SocketsDriver.groovy",
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2SocketsDriver.groovy",
       "required": false,
-      "version": "2.2.1",
-      "betaVersion": "2.2.1"
+      "version": "2.2.2",
+      "betaVersion": "2.2.2"
     },
     {
       "id": "c85850b9-d7ab-4370-9939-5949bf942460",
