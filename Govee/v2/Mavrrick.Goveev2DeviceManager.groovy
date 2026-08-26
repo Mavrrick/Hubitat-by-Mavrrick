@@ -196,7 +196,6 @@ def disconnected() {
 
 void parse(String event) {
     
-    long startTime = 0L
 //    if (collectStats) long startTime = now()
     if (collectStats ?: false) long startTime = now()
 
