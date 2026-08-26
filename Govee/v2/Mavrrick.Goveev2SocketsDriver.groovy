@@ -110,7 +110,6 @@ def initialize(){
 def installed(){
     if (debugLog) {log.warn "installed(): Driver Installed"}
     if (pollRate > 0) runIn(pollRate,poll)
-	getDeviceState()
     int outlets = device.getDataValue("commands").count("socketToggle")
     if (outlets > 0) {
         socketChildAdd()
@@ -119,6 +118,7 @@ def installed(){
         addLightDeviceHelper()
     }
     retrieveStateData()
+    getDeviceState()
 }
 
 def logsOff() {
