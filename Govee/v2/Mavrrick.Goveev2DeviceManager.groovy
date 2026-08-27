@@ -85,7 +85,7 @@ def initialize() {
     }
     scanCron = '0 */1 * ? * *' 
     schedule(scanCron, heartbeat)
-    scanCron = '20 * * ? * *' 
+    scanCron = '20 0 */3 ? * *' 
 	schedule(scanCron, periodicReconnect)
     RetrievechildDeviceInfo()
     if (debugLog) runIn(1800, logsOff)
@@ -376,11 +376,13 @@ def mqttClientStatus(status) {
 }
 
 def periodicReconnect() {
-	if (settings?.periodicConnectionRetry) {
-		if (!interfaces.mqtt.isConnected()) {
-			connect()
-		}
-	}
+    if (disableMQTT == true) {
+        // Force a fresh reconnect attempt if disconnected OR to keep socket fresh
+        if (!interfaces.mqtt.isConnected()) {
+            if (debugLog) log.warn "periodicReconnect(): MQTT disconnected. Reconnecting to Govee..."
+            connect()
+        }
+    }
 }
 
 def getCachedChildDevice(deviceNetworkId) {
