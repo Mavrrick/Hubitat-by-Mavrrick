@@ -4,7 +4,7 @@
   "minimumHEVersion": "2.5.0",
   "dateReleased": "2023-12-09",
   "releaseNotes": "Stable Release\nGovee Integration v2 7/17/2026\n Offical relese of new Govee Water Leak Driver\n Offical release of Govee Air Quality Monitor withh PM\n Updates to support install of said devices\n Updates to use AirQualtiyIndex standard capability on devices with AQI",
-  "betaReleaseNotes": "Beta Release - No new code at this time",
+  "betaReleaseNotes": "Beta Release - Library code update to better handle level at 0",
   "bundles": [
     {
       "id": "89de07f1-8606-487b-b4b6-dbd93a8a3c6d",
