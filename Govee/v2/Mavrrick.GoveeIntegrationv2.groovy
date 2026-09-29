@@ -1131,7 +1131,7 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
         ],
         [
             condition: { dev -> dev.type == "devices.types.light" && dev.commands.containsAll(["colorRgb", "colorTemperatureK", "segmentedBrightness", "segmentedColorRgb", "fanToggle"]) },
-            driver: "Govee v2 Ceiling Fan Driver H1310",
+            driver: "Govee v2 Ceiling Fan Driver",
             helper: "addLightDeviceHelper"
         ],
         [
