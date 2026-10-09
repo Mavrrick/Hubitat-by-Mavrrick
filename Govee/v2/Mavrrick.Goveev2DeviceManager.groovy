@@ -620,13 +620,13 @@ def apiKeyUpdate() {
 ////////////////////////////////////////////////
 
 void multicastListenerSocket(int port) {
-    log.info("received: initializeing Multicast Listening port on ${port}")
+    log.info("received: initializing Multicast Listening port on ${port}")
     def socket = interfaces.getMulticastSocket("239.255.255.250", port)
     if (!socket.connected) socket.connect()    
 }
 
 void multicastCloseSocket(int port) {
-    log.info("received: Closing Multicast Listening porton ${port}")
+    log.info("received: Closing Multicast Listening port on ${port}")
     def socket = interfaces.getMulticastSocket("239.255.255.250", port)
     if (socket.connected) socket.close()   
 }
