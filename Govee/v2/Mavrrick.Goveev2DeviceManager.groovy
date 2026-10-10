@@ -622,13 +622,13 @@ def apiKeyUpdate() {
 ////////////////////////////////////////////////
 
 void multicastListenerSocket(int port) {
-    log.info("received: initializeing Multicast Listening port on ${port}")
+    log.info("received: initializing Multicast Listening port on ${port}")
     def socket = interfaces.getMulticastSocket("239.255.255.250", port)
     if (!socket.connected) socket.connect()    
 }
 
 void multicastCloseSocket(int port) {
-    log.info("received: Closing Multicast Listening porton ${port}")
+    log.info("received: Closing Multicast Listening port on ${port}")
     def socket = interfaces.getMulticastSocket("239.255.255.250", port)
     if (socket.connected) socket.close()   
 }
@@ -670,7 +670,7 @@ void installNewDevices() {
     
     foundDevices = state.lanApiDevices.keySet()
     installList = foundDevices - dni
-    if (debugLog) {log.info("installNewDevicess: existing devices: ${dni} Found Devices:${foundDevices} Devices to be installed ${installList}")}
+    if (debugLog) {log.info("installNewDevices: existing devices: ${dni} Found Devices:${foundDevices} Devices to be installed ${installList}")}
     installList.each {
         goveeDevName = state.lanApiDevices."${it}".sku
         try {
@@ -678,7 +678,7 @@ void installNewDevices() {
         } catch(Exception e) {
             log.error "In installNewDevices: Govee Data not avaliable Using Default value"
 		}
-        log.info("installNewDevicess: Device Name:${goveeDevName} Device ID:${it} IP:${state.lanApiDevices."${it}".ip} sku:${state.lanApiDevices."${it}".sku}")
+        log.info("installNewDevices: Device Name:${goveeDevName} Device ID:${it} IP:${state.lanApiDevices."${it}".ip} sku:${state.lanApiDevices."${it}".sku}")
         String driver = "Govee Manual LAN API Device"
         addManLightDeviceHelper( driver, it, state.lanApiDevices."${it}".ip, goveeDevName, state.lanApiDevices."${it}".sku)
     }
