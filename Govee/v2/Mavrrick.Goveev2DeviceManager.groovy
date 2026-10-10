@@ -74,11 +74,13 @@ def initialize() {
     multicastCloseSocket(4002)
     multicastListenerSocket(4001)
     multicastListenerSocket(4002)
-    if (scanRate == 0) {
+    // scanRate is null until preferences are saved once (e.g. a device created by the app), so fall back to its defaultValue
+    Integer rate = (scanRate != null) ? scanRate as Integer : 1
+    if (rate == 0) {
         unschedule()
-    } else if (scanRate <= 59) {
+    } else if (rate > 0 && rate <= 59) {
         unschedule()
-        scanCron = '0 */'+scanRate+' * ? * *' 
+        scanCron = '0 */'+rate+' * ? * *' 
         schedule(scanCron, LookupLanAPIDevices)
     } else {
         log.warn "ScanRate is invalid it will be ignored until fixed."    
