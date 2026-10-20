@@ -74,13 +74,11 @@ def initialize() {
     multicastCloseSocket(4002)
     multicastListenerSocket(4001)
     multicastListenerSocket(4002)
-    // scanRate is null until preferences are saved once (e.g. a device created by the app), so fall back to its defaultValue
-    Integer rate = (scanRate != null) ? scanRate as Integer : 1
-    if (rate == 0) {
+    if (scanRate == 0) {
         unschedule()
-    } else if (rate > 0 && rate <= 59) {
+    } else if (scanRate <= 59) {
         unschedule()
-        scanCron = '0 */'+rate+' * ? * *' 
+        scanCron = '0 */'+scanRate+' * ? * *' 
         schedule(scanCron, LookupLanAPIDevices)
     } else {
         log.warn "ScanRate is invalid it will be ignored until fixed."    
@@ -622,13 +620,13 @@ def apiKeyUpdate() {
 ////////////////////////////////////////////////
 
 void multicastListenerSocket(int port) {
-    log.info("received: initializing Multicast Listening port on ${port}")
+    log.info("received: initializeing Multicast Listening port on ${port}")
     def socket = interfaces.getMulticastSocket("239.255.255.250", port)
     if (!socket.connected) socket.connect()    
 }
 
 void multicastCloseSocket(int port) {
-    log.info("received: Closing Multicast Listening port on ${port}")
+    log.info("received: Closing Multicast Listening porton ${port}")
     def socket = interfaces.getMulticastSocket("239.255.255.250", port)
     if (socket.connected) socket.close()   
 }
@@ -670,7 +668,7 @@ void installNewDevices() {
     
     foundDevices = state.lanApiDevices.keySet()
     installList = foundDevices - dni
-    if (debugLog) {log.info("installNewDevices: existing devices: ${dni} Found Devices:${foundDevices} Devices to be installed ${installList}")}
+    if (debugLog) {log.info("installNewDevicess: existing devices: ${dni} Found Devices:${foundDevices} Devices to be installed ${installList}")}
     installList.each {
         goveeDevName = state.lanApiDevices."${it}".sku
         try {
@@ -678,7 +676,7 @@ void installNewDevices() {
         } catch(Exception e) {
             log.error "In installNewDevices: Govee Data not avaliable Using Default value"
 		}
-        log.info("installNewDevices: Device Name:${goveeDevName} Device ID:${it} IP:${state.lanApiDevices."${it}".ip} sku:${state.lanApiDevices."${it}".sku}")
+        log.info("installNewDevicess: Device Name:${goveeDevName} Device ID:${it} IP:${state.lanApiDevices."${it}".ip} sku:${state.lanApiDevices."${it}".sku}")
         String driver = "Govee Manual LAN API Device"
         addManLightDeviceHelper( driver, it, state.lanApiDevices."${it}".ip, goveeDevName, state.lanApiDevices."${it}".sku)
     }

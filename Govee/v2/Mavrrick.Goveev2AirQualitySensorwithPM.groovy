@@ -89,7 +89,6 @@ def logsOff() {
 poll // retrieve device status
 def poll() {
     if (debugLog) {log.info "poll(): Poll Initated"}
-    getDeviceState()    
-//	getDeviceTempHumid()
     if (pollRate > 0) runIn(pollRate,poll)
+    getDeviceState()    
 }	

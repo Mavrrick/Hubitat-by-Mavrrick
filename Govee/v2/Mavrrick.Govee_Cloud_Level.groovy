@@ -24,6 +24,8 @@ def cloudSetLevel(float v,duration = 0){
     }
     if (device.currentValue("cloudAPI") == "Retry") {
         log.error "cloudSetLevel(): CloudAPI already in retry state. Aborting call." 
+    } else if (intv == 0 && duration == 0) {
+        cloudOff()
     } else {
         cloudsetLevel2(intv)
     }

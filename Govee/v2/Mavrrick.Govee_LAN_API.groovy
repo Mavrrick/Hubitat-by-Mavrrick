@@ -17,15 +17,19 @@ library (
 //////////////////////////////
 
 def lanOn() {
-    if (debugLog) log.info "lanOn(): ${device.label} in ${device.currentValue("switch", true)}."
-    if (getApiStatus("apistatus") == "ready") {
-        if (debugLog) log.info "lanOn(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
-        apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingOn"
-        sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
-        runInMillis(250, 'devStatus', [misfire:"ignore"])
-        runInMillis(350, 'lanOnVal', [misfire:"ignore"])
+    if (device.currentValue("switch", true) == "on") { 
+        if (debugLog) log.info "lanOn(): ${device.label} in on state. No Change."
     } else {
-        if (descLog) log.info "lanOn(): ${device.label} is unable to turn on. API Busy ${getApiStatus("apistatus")}"
+        if (debugLog) log.info "lanOn(): ${device.label} in ${device.currentValue("switch", true)}."
+        if (getApiStatus("apistatus") == "ready") {
+            if (debugLog) log.info "lanOn(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
+            apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingOn"
+            sendCommandLan(GoveeCommandBuilder("turn",1, "turn"))
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
+            runInMillis(350, 'lanOnVal', [misfire:"ignore"])
+        } else {
+            if (descLog) log.info "lanOn(): ${device.label} is unable to turn on. API Busy ${getApiStatus("apistatus")}"
+        }
     }
 }
 
@@ -49,15 +53,19 @@ def lanOnVal() {
 
 
 def lanOff() {
-    if (debugLog) log.info "lanOff(): ${device.label} in ${device.currentValue("switch", true)}."
-    if (getApiStatus("apistatus") == "ready") {
-        if (debugLog) log.info "lanOff(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
-        apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingOff"
-        sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
-        runInMillis(250, 'devStatus', [misfire:"ignore"])
-        runInMillis(350, 'lanOffVal', [misfire:"ignore"])
+    if (device.currentValue("switch", true) == "off") {
+        if (debugLog) log.info "lanOff(): ${device.label} in off state. No Change."
     } else {
-        if (descLog) log.info "lanOff(): ${device.label} is unable to turn off. API Busy ${getApiStatus("apistatus")}"
+        if (debugLog) log.info "lanOff(): ${device.label} in ${device.currentValue("switch", true)}."
+        if (getApiStatus("apistatus") == "ready") {
+            if (debugLog) log.info "lanOff(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
+            apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingOff"
+            sendCommandLan(GoveeCommandBuilder("turn",0, "turn"))
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
+           runInMillis(350, 'lanOffVal', [misfire:"ignore"])
+        } else {
+            if (descLog) log.info "lanOff(): ${device.label} is unable to turn off. API Busy ${getApiStatus("apistatus")}"
+        }
     }
 } 
 
@@ -80,23 +88,34 @@ def lanOffVal() {
 }
  
 def lanCT(value, level, transitionTime) {
-    int intvalue = value.toInteger()
-    if (getApiStatus("apistatus") == "ready") {
-        if (debugLog) log.info "lanCT(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
-        apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingCT"
-        sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
-        if (level != null && level >= 1) lanSetLevel(level,transitionTime);
-        sendEvent(name: "colorMode", value: "CT")
-        runInMillis(250, 'devStatus', [misfire:"ignore"])        
-        runInMillis(350, 'lanCTVal', [data: intvalue, misfire:"ignore"])
-        if (effectNum != 0){
-            sendEvent(name: "effectNum", value: 0)
-            sendEvent(name: "effectName", value: "None") 
-        }
+    if (level == 0 && (transitionTime == 0 || transitionTime == null )) {
+        lanOff()
     } else {
-        if (descLog) log.info "lanCT(): ${device.label} is unable to change Color Temp. API Busy ${getApiStatus("apistatus")}"
+        if (device.currentValue("colorTemperature", true) == intvalue && device.currentValue("colorMode", true) == "CT") {
+            if (debugLog) log.info "lanCT(): Color Temp is already at requested value ."
+        } else {
+            int intvalue = value.toInteger()
+            if (getApiStatus("apistatus") == "ready") {
+                if (debugLog) log.info "lanCT(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
+                apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingCT"
+                sendCommandLan(GoveeCommandBuilder("colorwc",value, "ct"))
+                runInMillis(250, 'devStatus', [misfire:"ignore"])        
+                runInMillis(350, 'lanCTVal', [data: intvalue, misfire:"ignore"])
+                if (effectNum != 0){
+                    sendEvent(name: "effectNum", value: 0)
+                    sendEvent(name: "effectName", value: "None") 
+                }                
+            } else {
+                if (descLog) log.info "lanCT(): ${device.label} is unable to change Color Temp. API Busy ${getApiStatus("apistatus")}"
+            }
+            setCTColorName(intvalue)
+        }
+        if (level == null || device.currentValue("level", true) == level) {
+            if (debugLog) log.info "lanCT(): Level is not changing ."
+        } else {
+            if (level != null && level >= 1) lanSetLevel(level,transitionTime)
+        }
     }
-	setCTColorName(intvalue)
 }
 
 def lanCTVal(intvalue) {
@@ -120,7 +139,7 @@ def lanCTVal(intvalue) {
 }
 
 
-def lanSetLevel(float v,duration = 0){
+def lanSetLevel(float v, duration = 0){
     int intv = v.toInteger()
     switch(true) {
         case intv > 100:
@@ -132,7 +151,7 @@ def lanSetLevel(float v,duration = 0){
             intv = 0;
         break;
         default: 
-            if (debugLog) {log.debug ("lanSetLevel(): Setting Level to ${v}")};
+            if (debugLog) {log.debug ("lanSetLevel(): Setting Level to ${v}, Duration is ${duration}")};
         break;
     } 
     if (duration>0){
@@ -140,39 +159,37 @@ def lanSetLevel(float v,duration = 0){
         runInMillis(500, 'devStatus', [misfire:"ignore"])
         fade(intv,intduration)
     }
-    else if (intv == 0 && duration == 0) {
+    else if (intv == 0 && (duration == 0 || duration == null )) {
         lanOff()
     } else {
- //       if (device.currentValue("colorMode") == "RGB") {
-//            lanSetHsb(device.currentValue("hue"),device.currentValue("saturation"),v)
-//        } else {
-            lanSetLevel2(intv)
-//        }
+        lanSetLevel2(intv)
     }
 }
 
 def lanSetLevel2(int v){
     if (debugLog) log.info "lanSetLevel2(): ${device.label} in ${device.currentValue("level", true)}."
-    if (getApiStatus("apistatusLevel") == "ready") {
-        apiStatus."${device.deviceNetworkId}"["apistatusLevel"] = "pendingLevel"
-        
-        if (device.currentValue("colorMode") == "RGB") {
-            if (debugLog) log.info "lanSetLevel2(): Setting level for ${device.label} in RGB mode current level is ${device.currentValue("level", true)}."           
-            lanSetHsb(device.currentValue("hue"),device.currentValue("saturation"),v)
-        } else {
-            sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        }
-        
-        
-//        sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
-        runInMillis(250, 'devStatus', [misfire:"ignore"])
-        runInMillis(350, 'lanSetLevel2Val', [data: v, misfire:"ignore"])
+    if (device.currentValue("level", true) == v) {
+        if (debugLog) log.info "lanSetLevel2(): ${device.label} Level is not changing."
     } else {
-        if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${getApiStatus("apistatusLevel")}"
+        if (getApiStatus("apistatusLevel") == "ready") {
+            apiStatus."${device.deviceNetworkId}"["apistatusLevel"] = "pendingLevel"
+        
+            if (device.currentValue("colorMode") == "RGB") {
+                if (debugLog) log.info "lanSetLevel2(): Setting level for ${device.label} in RGB mode current level is ${device.currentValue("level", true)}."           
+                lanSetHsb(device.currentValue("hue"),device.currentValue("saturation"),v)
+            } else {
+                sendCommandLan(GoveeCommandBuilder("brightness",v, "level"))
+            }
+        
+            runInMillis(250, 'devStatus', [misfire:"ignore"])
+            runInMillis(350, 'lanSetLevel2Val', [data: v, misfire:"ignore"])
+        } else {
+            if (descLog) log.info "lanSetLevel2(): ${device.label} is unable to change Level. API Busy ${getApiStatus("apistatusLevel")}"
+        }
     }
 }
 
-def lanSetLevel2Val(int v) {
+def lanSetLevel2Val (v) {
         devStatusWait()
         pauseExecution(250)
         if (device.currentValue("level", true) == v) {
@@ -214,6 +231,9 @@ def lanSetColor(value) {
 }
 
 def lanSetHsb(h,s,b) {
+    if (Math.abs(device.currentValue("hue", true) - h) <= 1  && Math.abs(device.currentValue("saturation", true) - s) <= 1  && device.currentValue("saturation", true) == "RGB") {
+        if (debugLog) log.info "lanSetHsb(): Color is already set. not submitting command ."
+    }
     if (getApiStatus("apistatus") == "ready") {
         if (debugLog) log.info "lanSetHsb(): ${device.label} apiStatus is ${getApiStatus("apistatus")} ."
         apiStatus."${device.deviceNetworkId}"["apistatus"] = "pendingColor"
@@ -869,7 +889,9 @@ def devStatusRetry() {
     if (getApiStatus("statusUpd") == "active" && getApiStatus("statusUpdCount").toInteger() <= retryLimit ) {
         sendCommandLan(GoveeCommandBuilder("devStatus", null , "status"))
         runInMillis(timeout, 'devStatusRetry', [misfire:"ignore"])        
-    }  else { 
+    } else if (getApiStatus("statusUpd") == "ready") {
+        if (debugLog) {log.info("devStatusRetry() Update completed. Retry not needed. ")} 
+    } else {
         if (debugLog) {log.info("devStatusRetry() Max Retries reached. ")}
         apiStatus."${device.deviceNetworkId}"["statusUpd"] = "ready"
         unschedule(devStatusRetry)
