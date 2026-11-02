@@ -18,7 +18,6 @@ import groovy.json.JsonBuilder
 /*** Static Lists and Settings ***/
 // @Field static Map scenes =  [:]
 // @Field static Map diyScenes =  [:]
-@Field static String encAPIKey = ""
 
 def commandPort() { "4003" } 
 
@@ -120,8 +119,6 @@ def updated() {
 
 def initialize(){
     if (debugLog) {log.warn "initialize(): Driver Initializing"}    
-    encAPIKey = parent.apiKeyRetrieve()
-    log.warn "Encrypted API key has been obtained from parent: ${encAPIKey} Decrypted: ${decrypt(encAPIKey)}"
     if (device.currentValue("cloudAPI") == "Retry") {
         if (debugLog) {log.error "initialize(): Cloud API in retry state. Reseting "}
         sendEvent(name: "cloudAPI", value: "Initialized")
