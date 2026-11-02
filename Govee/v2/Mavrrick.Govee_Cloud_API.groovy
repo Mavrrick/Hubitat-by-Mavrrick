@@ -35,8 +35,8 @@ def cloudCT(value, level, transitionTime){
          } else {  
            	int intvalue = value.toInteger()
             sendEvent(name: "cloudAPI", value: "Pending")
-            if (level != null) setLevel(level, transitionTime);
 		    sendCommand("colorTemperatureK", intvalue,"devices.capabilities.color_setting")
+            if (level != null) setLevel(level, transitionTime);
        }
 }
 
@@ -52,12 +52,12 @@ private def sendCommand(String command, payload2, type) {
     def params = [
         uri   : "https://openapi.api.govee.com",
         path  : '/router/api/v1/device/control',
-        headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+        headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
         contentType: "application/json",   
         body: bodyParm,
         timeout: 60
             ]  
-    if (debugLog) { log.debug "sendCommand(): ${command}, ${type}, ${params}"}
+//    if (debugLog) { log.debug "sendCommand(): ${command}, ${type}, ${params}"} // removed because of expore of token. in params
     long startTime = now()
     long respTime = now()
     try {
@@ -354,7 +354,7 @@ def getDeviceState(){
         def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/state',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+			headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
             body: bodyParm,
             timeout: 60
         ]
@@ -579,7 +579,7 @@ def retrieveScenes2(){
 		def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/scenes',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+			headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
             body: bodyParm,
             timeout: 60
         ]
@@ -635,7 +635,7 @@ def retrieveDIYScenes(){
 		def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/diy-scenes',
-			headers: ["Govee-API-Key": device.getDataValue("apiKey"), "Content-Type": "application/json"],
+			headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
             body: bodyParm,
             timeout: 60
         ]
@@ -748,19 +748,6 @@ void setModeDescription(mode=null) {
     sendEvent(name: "modeDescription", value: WorkModeName )
 }
 
-def apiKeyUpdate() {
-    if (parent.label == "Govee v2 Device Manager") {
-        if (device.getDataValue("apiKey") != parent?.getDataValue("apiKey")) {
-            if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
-            device.updateDataValue("apiKey", parent?.getDataValue("apiKey"))
-        }
-    }
-    else if (device.getDataValue("apiKey") != parent?.APIKey) {
-        if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
-    }
-}
-
 def checkDevData() {
     def device = device.getDataValue("deviceID")
     def goveeAppAPI = parent.retrieveGoveeAPI(device)
@@ -856,7 +843,6 @@ def randomOffset(int pollRateInt){
     if (debugLog) {log.debug "randomOffset(): Entered random offset Calc with ${pollRateInt}"} 
     Random random = new Random()
     offset = random.nextInt(pollRateInt) // see explanation below
-//    int number = random.nextInt(pollRateInt) + start; // see explanation below
     if (debugLog) {log.debug "randomOffset(): random offset is ${offset}"}    
     return offset
 }
@@ -893,24 +879,42 @@ void recState(){
 }
 
 void loadState(){
-    if (state.previousState.switch == "on" ) {
-        if (state.previousState.colorMode == "CT") {
-            setColorTemperature(state.previousState.colorTemperature,state.previousState.level,transitionTime = null)
-//            setLevel(float v,duration = 0)
-        } else if (state.previousState.colorMode == "RGB") {
-            setLevel(100,duration = 0)
-            setHsb(state.previousState.hue,state.previousState.saturation,100)
-        } else if (state.previousState.colorMode == "EFFECTS") {
-            setLevel(state.previousState.level,duration = 0)
-            setEffect(state.previousState.effectNum)
-        } else if (state.previousState.colorMode == "DIY_EFFECTS") {
-            setLevel(state.previousState.level,duration = 0)
-            activateDIY(state.previousState.effectNum)
-        } else if (state.previousState.colorMode == "Snapshot_EFFECTS") {
-            setLevel(state.previousState.level,duration = 0)
-            snapshot(state.previousState.effectNum)
+    if (lanControl) {
+        if (state.previousState.switch == "on" ) {
+            if (state.previousState.colorMode == "CT") {
+                lanCT(state.previousState.colorTemperature,state.previousState.level,transitionTime = null)
+            } else if (state.previousState.colorMode == "RGB") {
+                lanSetLevel(100,duration = 0)
+                lanSetHsb(state.previousState.hue,state.previousState.saturation,100)
+            } else if (state.previousState.colorMode == "EFFECTS") {
+                lanSetLevel(state.previousState.level,duration = 0)
+                lanSetEffect(state.previousState.effectNum)
+            } else if (state.previousState.colorMode == "DIY_EFFECTS") {
+                lanSetLevel(state.previousState.level,duration = 0)
+                lanActivateDIY(state.previousState.effectNum)
+            }
+        }   else {
+            lanOff()
         }
-    }   else {
-        off()
+    } else { 
+        if (state.previousState.switch == "on" ) {
+            if (state.previousState.colorMode == "CT") {
+                cloudCT(state.previousState.colorTemperature,state.previousState.level,transitionTime = null)
+            } else if (state.previousState.colorMode == "RGB") {
+                cloudSetLevel(100,duration = 0)
+                cloudSetHsb(state.previousState.hue,state.previousState.saturation,100)
+            } else if (state.previousState.colorMode == "EFFECTS") {
+                cloudSetLevel(state.previousState.level,duration = 0)
+                cloudSetEffect(state.previousState.effectNum)
+            } else if (state.previousState.colorMode == "DIY_EFFECTS") {
+                cloudSetLevel(state.previousState.level,duration = 0)
+                cloudActivateDIY(state.previousState.effectNum)
+            } else if (state.previousState.colorMode == "Snapshot_EFFECTS") {
+                cloudSetLevel(state.previousState.level,duration = 0)
+                snapshot(state.previousState.effectNum)
+            }
+        }   else {
+            cloudOff()
+        }
     }
 }

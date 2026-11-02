@@ -368,4 +368,3 @@ def setCTColorName(int value)
 			sendEvent(name: "colorName", value: "Cool White")
 		}	
 }
-

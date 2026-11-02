@@ -169,7 +169,7 @@ def mainPage() {
                 "you can only setup local LAN API api devices, and they will not be able to retrieve status from Govee. Additional options will " +
                 "appear once the api key is entered and saved by clicking done at the bottom of the window"
             }
-            input 'APIKey', 'string', title: 'Enter Your API Key', required: false
+            input 'APIKey', 'password', title: 'Enter Your API Key', required: false
             
         }
         section('<b>Govee Device Management</b>') {
@@ -303,7 +303,7 @@ def deviceSelect2() {
 def deviceLanManual() {
     Map options = [:] 
     lanApiDevices = getChildDevice('Govee_v2_Device_Manager').retrieveApiDevices()
-    if (lanApiDevices != null) {
+    if (lanApiDevices != null && !lanApiDevices.containsKey("dummy")) {
         lanApiDevicesId = lanApiDevices.keySet() as List
         logger("deviceLanManual()  Device id's to match with ${lanApiDevicesId}", 'debug')
             lanApiDevices.keySet().each {
@@ -320,7 +320,7 @@ def deviceLanManual() {
     {
         section('<b>***Warning***</b> Using the manual Addd option will potentially severaly limit your use of the device. This should be a last resort and only used if the device does not support adding with the normal method using the Cloud API. LAN API control can be enable on traditionally added devices as well.')
         {
-            if (lanApiDevices != null) {
+            if (lanApiDevices != null && !lanApiDevices.containsKey("dummy")) {
                 paragraph 'Please enter the needed parameters below to create your device '
                 input(name: 'goveeDevName', type: 'string', required:false, title: 'Name of device.', description: 'E.g. Bedroom Lights')
                 input(name: 'goveeManSelection', type: 'enum', required:false, description: 'Please select the devices you wish to integrate.', multiple:false,
@@ -741,14 +741,16 @@ def updated() {
          ])
     }
     state.loggingLevelIDE = (settings.configLoggingLevelIDE) ? settings.configLoggingLevelIDE.toInteger() : 3
-    if (settings.APIKey != state.APIKey ) {
-        child.each {
+    if (settings.APIKey != decrypt(state.APIKey) ) {
+        mqttDevice = getChildDevice('Govee_v2_Device_Manager')
+        mqttDevice.apiKeyUpdate(settings.APIKey)
+/*        child.each {
             if (it != null ) {
                 logger("updated() API key has been updated. Calling child devices: ${it} to udpate", 'debug')            
                 it.apiKeyUpdate()
             }
-        }
-        state?.APIKey = settings.APIKey
+        } */
+        state?.APIKey = encrypt(settings.APIKey)
     }
     if (!state.goveeAppAPI && settings.APIKey) {
         retrieveGoveeAPIData()
@@ -1446,7 +1448,7 @@ private def appButtonHandler(button) {
                 headers: ['Content-Type': 'application/json'],
                 body: bodyParm
             ]
-            logger("appButtonHandler(): parms to be passed:  ${params}", 'trace')
+//            logger("appButtonHandler(): parms to be passed:  ${params}", 'trace') removed due to potentially exposing password
             try {
                 httpPost(params) { resp ->
                     logger("appButtonHandler(): response is ${resp.data}", 'trace')
@@ -1456,8 +1458,8 @@ private def appButtonHandler(button) {
                     if (status == 200) {
                         state.goveeHomeToken = resp.data.data.token
                         state.goveeHomeExpiry = resp.data.data.expiredAt.value
-                        logger("appButtonHandler(): response is ${resp.data}", 'trace')
-                        logger("appButtonHandler(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'info')
+//                        logger("appButtonHandler(): response is ${resp.data}", 'trace')
+//                        logger("appButtonHandler(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'info')
                     } else {
                         logger("appButtonHandler(): Login failed check error above and correct", 'info')
                     }

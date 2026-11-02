@@ -14,6 +14,7 @@ import groovy.transform.Field
 @Field static final String GOVEE_PREFIX = "Govee_"    
 @Field static def ipx = [:]
 @Field static def goveeAppAPIFull = [:]    
+@Field static String encAPIKey = null    
 
 
 metadata {
@@ -58,6 +59,10 @@ def installed(){
 def initialize() {
     disconnect()
     updateGoveeAPI()
+    encAPIKey = encrypt(parent?.APIKey)
+    log.warn "Encrypted API key has been obtained from parent: ${encAPIKey}"
+    cleanupDataValue()
+    log.warn "Cleanup of Data Values has been completed."
     pauseExecution(1000)
     if (disableMQTT == true) {
         mqttConnectionAttempt()
@@ -403,7 +408,7 @@ def addMQTTDeviceHelper(String driver, String deviceId, String deviceName, Strin
 	Map deviceTypeBak = [:]
 	String devModel = deviceModel
     String dni = GOVEE_PREFIX + deviceId
-	Map properties = [name: driver, label: deviceName, deviceID: deviceId, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, capTypes: capType]
+	Map properties = [name: driver, label: deviceName, deviceID: deviceId, deviceModel: deviceModel, commands: commands, capTypes: capType]
 	if (debugLog) "Creating Child Device"
 
 	def childDev
@@ -432,7 +437,7 @@ def addLightDeviceHelper(String driver, String deviceId, String deviceName, Stri
     } else if (state.lanApiDevices.containsKey(deviceId)) {
         ip = state.lanApiDevices."${deviceId}".ip
     }
-	Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: ctMin, ctMax: ctMax, capTypes: capType]
+	Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, commands: commands, ctMin: ctMin, ctMax: ctMax, capTypes: capType]
 	if (debugLog) "Creating Child Device"
 
 	def childDev
@@ -460,7 +465,7 @@ def addLightDeviceHelper(String driver, String deviceId, String deviceName, Stri
     } else if (state.lanApiDevices.containsKey(deviceId)) {
         ip = state.lanApiDevices."${deviceId}".ip
     }
-	Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, apiKey: parent.APIKey, commands: commands, ctMin: 2000, ctMax: 9000, capTypes: capType]
+	Map properties = [name: driver, label: deviceName, deviceID: deviceId, IP: ip, deviceModel: deviceModel, commands: commands, ctMin: 2000, ctMax: 9000, capTypes: capType]
 	if (debugLog) "Creating Child Device"
 
 	def childDev
@@ -603,16 +608,28 @@ def allSceneReload() {
 }
 
 
-def apiKeyUpdate() {
-    if (device.getDataValue("apiKey") != parent?.APIKey) {
+def apiKeyUpdate(APIKey) {
+    if (decrypt(endAPIKey) != parent?.APIKey) {
         if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
-        device.updateDataValue("apiKey", parent?.APIKey)
-        child = getChildDevices()
-        child.each {
-            if (debugLog) {log.debug ("apiKeyUpdate(): ${it.label} is being updated with new APIKey")}
-            it.apiKeyUpdate()
-        }
+        encAPIKey = encrypt(APIKey)
     }
+}
+
+def cleanupDataValue() {
+    removeDataValue("apiKey")
+    child = getChildDevices()
+        child.each {
+            if (debugLog) {log.debug ("cleanDataValue(): cleanup of API Key initiated.")}
+            it.removeDataValue("apiKey")
+        }
+}
+
+def apiKeyRetrieve() {
+    if (endAPIKey == null) {
+        encAPIKey = encrypt(parent?.APIKey)
+    }       
+    String key = encAPIKey
+    return key    
 }
 
 ////////////////////////////////////////////////
