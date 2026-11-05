@@ -10,7 +10,8 @@
 #include Mavrrick.Govee_Cloud_MQTT
 
 import groovy.json.JsonSlurper 
-import java.util.Random 
+import java.util.Random
+import groovy.transform.Field
 
 metadata {
 	definition(name: "Govee v2 Humidifier Driver", namespace: "Mavrrick", author: "Mavrrick") {

@@ -7,6 +7,7 @@
 #include Mavrrick.Govee_Cloud_API
 
 import groovy.json.JsonSlurper 
+import groovy.transform.Field
 
 metadata {
 	definition(name: "Govee v2 Fan Driver", namespace: "Mavrrick", author: "Mavrrick") {

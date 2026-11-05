@@ -7,6 +7,7 @@
 #include Mavrrick.Govee_Cloud_MQTT
 
 import groovy.json.JsonSlurper 
+import groovy.transform.Field
 
 metadata {
 	definition(name: "Govee v2 Leak Sensor", namespace: "Mavrrick", author: "Mavrrick") {

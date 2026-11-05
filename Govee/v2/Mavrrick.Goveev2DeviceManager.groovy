@@ -59,7 +59,8 @@ def installed(){
 def initialize() {
     disconnect()
     updateGoveeAPI()
-    encAPIKey = encrypt(parent?.APIKey)
+//    encAPIKey = encrypt(parent?.APIKey)
+    apiKeyRetrieve()
     log.warn "Encrypted API key has been obtained from parent: ${encAPIKey}"
     cleanupDataValue()
     log.warn "Cleanup of Data Values has been completed."
@@ -110,8 +111,8 @@ def mqttConnectionAttempt() {
 		try {   
 			interfaces.mqtt.connect("ssl://mqtt.openapi.govee.com:8883",
 							   "hubitat_${getHubId()}", 
-                               device.getDataValue("apiKey"), 
-							   device.getDataValue("apiKey"),
+                               decrypt(encAPIKey), 
+							   decrypt(encAPIKey),
                                cleanSession: true)    
 
 			// delay for connection
@@ -134,7 +135,7 @@ def mqttConnectionAttempt() {
 }
 
 def subscribe() {
-    mqttTopic = 'GA/'+device.getDataValue("apiKey")
+    mqttTopic = 'GA/'+decrypt(encAPIKey)
     if (!interfaces.mqtt.isConnected()) {
         connect()
     }
@@ -144,7 +145,7 @@ def subscribe() {
 }
 
 def unsubscribe() {
-    mqttTopic = 'GA/'+device.getDataValue("apiKey")
+    mqttTopic = 'GA/'+decrypt(encAPIKey)
     if (!interfaces.mqtt.isConnected()) {
         connect()
     }
@@ -360,7 +361,7 @@ def publishMqtt(topic, payload, qos = 0, retained = true) {
         mqttConnectionAttempt()
     }
     
-    mqttTopic = 'GA/'+device.getDataValue("apiKey")
+    mqttTopic = 'GA/'+decrypt(encAPIKey)
     
     try {
         interfaces.mqtt.publish(mqttTopic, payload, qos, retained) //'GA/'+device.getDataValue("apiKey")
@@ -609,9 +610,14 @@ def allSceneReload() {
 
 
 def apiKeyUpdate(APIKey) {
-    if (decrypt(endAPIKey) != parent?.APIKey) {
+    if (endAPIKey != parent?.APIKey) {
         if (debugLog) {log.debug "apiKeyUpdate(): Detected new API Key. Applying"}
-        encAPIKey = encrypt(APIKey)
+        encAPIKey = APIKey
+        child = getChildDevices()
+        child.each {
+            if (debugLog) {log.debug ("apiKeyUpdate(): submit update api key to child devices.")}
+            it.apiKeyRetrieve()
+        }
     }
 }
 
@@ -624,13 +630,14 @@ def cleanupDataValue() {
         }
 }
 
+
 def apiKeyRetrieve() {
     if (encAPIKey == null) {
-        encAPIKey = encrypt(parent?.APIKey)
+        encAPIKey = parent?.APIKey
     }       
     String key = encAPIKey
     return key    
-}
+} 
 
 ////////////////////////////////////////////////
 // LAN API Multisocket Helpers                //

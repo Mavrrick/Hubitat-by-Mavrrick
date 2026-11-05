@@ -46,13 +46,23 @@ def cloudCT(value, level, transitionTime){
 // Helper methods to retrieve data or send command //
 /////////////////////////////////////////////////////
 
+@Field static String APIKey = null
+
+def apiKeyRetrieve() {
+    if (APIKey == null) {
+        APIKey = parent.apiKeyRetrieve()
+    }       
+    String key = APIKey
+    return key    
+} 
+
 private def sendCommand(String command, payload2, type) {
     requestID = randomUUID()    
     String bodyParm = '{"requestId": "'+requestID+'", "payload": {"sku": "'+device.getDataValue("deviceModel")+'", "device": "'+device.getDataValue("deviceID")+'", "capability": {"type":  "'+type+'", "instance": "'+command+'", "value":'+payload2+'}}}'
     def params = [
         uri   : "https://openapi.api.govee.com",
         path  : '/router/api/v1/device/control',
-        headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
+        headers: ["Govee-API-Key": apiKeyRetrieve(), "Content-Type": "application/json"],
         contentType: "application/json",   
         body: bodyParm,
         timeout: 60
@@ -354,7 +364,7 @@ def getDeviceState(){
         def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/state',
-			headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
+			headers: ["Govee-API-Key": apiKeyRetrieve(), "Content-Type": "application/json"],
             body: bodyParm,
             timeout: 60
         ]
@@ -579,7 +589,7 @@ def retrieveScenes2(){
 		def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/scenes',
-			headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
+			headers: ["Govee-API-Key": apiKeyRetrieve(), "Content-Type": "application/json"],
             body: bodyParm,
             timeout: 60
         ]
@@ -635,7 +645,7 @@ def retrieveDIYScenes(){
 		def params = [
 			uri   : "https://openapi.api.govee.com",
 			path  : '/router/api/v1/device/diy-scenes',
-			headers: ["Govee-API-Key": decrypt(parent.apiKeyRetrieve()), "Content-Type": "application/json"],
+			headers: ["Govee-API-Key": apiKeyRetrieve(), "Content-Type": "application/json"],
             body: bodyParm,
             timeout: 60
         ]

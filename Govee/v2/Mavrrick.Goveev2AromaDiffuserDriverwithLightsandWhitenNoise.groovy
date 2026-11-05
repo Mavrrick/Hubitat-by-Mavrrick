@@ -8,6 +8,7 @@
 import hubitat.helper.InterfaceUtils
 import hubitat.helper.HexUtils
 import groovy.json.JsonSlurper
+import groovy.transform.Field
 
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_MQTT 
