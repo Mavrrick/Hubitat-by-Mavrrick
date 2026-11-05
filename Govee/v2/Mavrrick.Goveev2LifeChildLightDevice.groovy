@@ -10,6 +10,7 @@
 // #include Mavrrick.Govee_Cloud_Life
 
 import groovy.json.JsonSlurper 
+import groovy.transform.Field
 
 metadata {
 	definition(name: "Govee v2 Life Child Light Device", namespace: "Mavrrick", author: "Mavrrick") {
