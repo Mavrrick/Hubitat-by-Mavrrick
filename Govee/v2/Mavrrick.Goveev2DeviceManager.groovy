@@ -625,7 +625,7 @@ def cleanupDataValue() {
 }
 
 def apiKeyRetrieve() {
-    if (endAPIKey == null) {
+    if (encAPIKey == null) {
         encAPIKey = encrypt(parent?.APIKey)
     }       
     String key = encAPIKey
