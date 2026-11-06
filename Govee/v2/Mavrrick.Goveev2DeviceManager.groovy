@@ -61,7 +61,7 @@ def initialize() {
     updateGoveeAPI()
 //    encAPIKey = encrypt(parent?.APIKey)
     apiKeyRetrieve()
-    log.warn "Encrypted API key has been obtained from parent: ${encAPIKey}"
+//    log.warn "Encrypted API key has been obtained from parent: ${encAPIKey}"
     cleanupDataValue()
     log.warn "Cleanup of Data Values has been completed."
     pauseExecution(1000)
