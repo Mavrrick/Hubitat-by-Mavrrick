@@ -1329,7 +1329,7 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
     ]
 
     state.goveeAppAPI.each { apiDevice -> // Renamed 'it' to 'apiDevice' for clarity
-        def dniCompare = "Govee_${apiDevice.device}"
+        String dniCompare = "Govee_${apiDevice.device}"
         def deviceName = apiDevice.deviceName
 
         if (!childDNIset.contains(dniCompare)) {
