@@ -145,7 +145,7 @@ def subscribe() {
 }
 
 def unsubscribe() {
-    mqttTopic = 'GA/'+decrypt(encAPIKey)
+    mqttTopic = 'GA/'+encAPIKey
     if (!interfaces.mqtt.isConnected()) {
         connect()
     }
@@ -361,7 +361,7 @@ def publishMqtt(topic, payload, qos = 0, retained = true) {
         mqttConnectionAttempt()
     }
     
-    mqttTopic = 'GA/'+decrypt(encAPIKey)
+    mqttTopic = 'GA/'+encAPIKey
     
     try {
         interfaces.mqtt.publish(mqttTopic, payload, qos, retained) //'GA/'+device.getDataValue("apiKey")
