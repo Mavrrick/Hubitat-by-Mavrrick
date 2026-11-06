@@ -111,8 +111,8 @@ def mqttConnectionAttempt() {
 		try {   
 			interfaces.mqtt.connect("ssl://mqtt.openapi.govee.com:8883",
 							   "hubitat_${getHubId()}", 
-                               decrypt(encAPIKey), 
-							   decrypt(encAPIKey),
+                               encAPIKey, 
+							   encAPIKey,
                                cleanSession: true)    
 
 			// delay for connection
@@ -135,7 +135,7 @@ def mqttConnectionAttempt() {
 }
 
 def subscribe() {
-    mqttTopic = 'GA/'+decrypt(encAPIKey)
+    mqttTopic = 'GA/'+encAPIKey
     if (!interfaces.mqtt.isConnected()) {
         connect()
     }
