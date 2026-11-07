@@ -513,7 +513,7 @@ def sceneExtract() {
 
     logger('sceneExtract() DEVICE INFORMATION', 'debug')
     if (state.goveeHomeToken != null) {
-    String goveeHomeToken = "Bearer " + state.goveeHomeToken
+    String goveeHomeToken = "Bearer " + decrypt(state.goveeHomeToken)
 
     def params = [
             uri   : 'https://app2.govee.com',
@@ -1333,6 +1333,7 @@ def goveeDevAdd() { // AI Enhanced code for Govee Device add process
         def deviceName = apiDevice.deviceName
 
         if (!childDNIset.contains(dniCompare)) {
+            logger("goveeDevAdd(): ChildDNI Set is ${childDNIset} . Compared to ${dniCompare}.", 'debug')
             logger("goveeDevAdd(): ${deviceName} is a new DNI. Passing to driver setup if selected.", 'debug')
 
             if (devices.contains(deviceName)) {
@@ -1456,7 +1457,7 @@ private def appButtonHandler(button) {
                     msg = resp.data.message
                     logger("appButtonHandler(): status is ${status}: Message ${msg}", 'info')
                     if (status == 200) {
-                        state.goveeHomeToken = resp.data.data.token
+                        state.goveeHomeToken = encrypt(resp.data.data.token)
                         state.goveeHomeExpiry = resp.data.data.expiredAt.value
 //                        logger("appButtonHandler(): response is ${resp.data}", 'trace')
 //                        logger("appButtonHandler(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'info')
