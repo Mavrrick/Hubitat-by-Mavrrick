@@ -50,7 +50,7 @@
       "betaLocation": "https://github.com/Mavrrick/Hubitat-by-Mavrrick/raw/beta/Govee/v2/Mavrrick.Goveev2LifeChildLightDevice.groovy",
       "required": true,
       "version": "2.2.2",
-      "betaVersion": "2.2.2"
+      "betaVersion": "2.2.3"
     },
     {
       "id": "58b52301-4351-4bf2-afdb-8397089de0d8",
