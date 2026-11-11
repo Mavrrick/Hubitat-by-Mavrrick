@@ -42,6 +42,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.Field
 import hubitat.helper.HexUtils
+import java.security.MessageDigest
 
 @Field static List child = []
 @Field static List childDNI = []
@@ -51,6 +52,7 @@ import hubitat.helper.HexUtils
 @Field static final String goveeDIYScenesFile = "GoveeLanDIYScenes.json"
 @Field static String statusMessage = ""
 @Field static String BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+@Field final String NAMESPACE_DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 
 @Field static final Map deviceTag =  // a300 line device specific codes
 	["H6008":"01",
@@ -1501,6 +1503,7 @@ private def appButtonHandler(button) {
                       log.info "response: ${resp.data}"
                       log.info "Account login status ${status}"
                       if (status == 200) {
+                          state.respStatus = status
                           state.goveeHomeToken   = encrypt(resp.data.client.token)
                           long cycle = (resp.data.client.token_expire_cycle ?: 0) as long
                           state.goveeHomeExpiry  = now() + (cycle > 0 ? cycle * 1000L : 43200000L)
