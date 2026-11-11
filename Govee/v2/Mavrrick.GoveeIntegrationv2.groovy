@@ -390,6 +390,7 @@ def sceneManagement() {
     app.clearSetting("sceneName")
     app.clearSetting("sceneNum")
     app.clearSetting("command")
+    app.clearSetting("govee2faCode")
     dynamicPage(name: 'sceneManagement', title: 'Govee Scene Management menu', uninstall: false, install: false, submitOnChange: false, nextPage: "mainPage")
     {
         section('<b>Govee Home Creds</b>')
@@ -397,10 +398,10 @@ def sceneManagement() {
             paragraph "Please provide your gove home token."
             href 'sceneExtract2', title: 'Govee Home Creds', description: 'Setup Gove Home Creds to obtain token'
             if (now() > state.goveeHomeExpiry) {                
-            paragraph "Token has <mark>expired</mark>. Attempting to auto-renew"
-            appButtonHandler("goveeHomeLogin")    
+            paragraph "Token has <mark>expired</mark>. Open the Govee Home Creds page, obtain a new 2fa, and authenticate your session."
             } else {
-                paragraph "Token is <mark>valid</mark>"
+                Date dateExpire = new Date(state.goveeHomeExpiry)
+                paragraph "Token is <mark>valid</mark>. Your token will expire ${dateExpire}"
             }
         }
         section('<b>Govee Home Group</b>')
@@ -518,7 +519,7 @@ def sceneExtract() {
     def params = [
             uri   : 'https://app2.govee.com',
             path  : '/bff-app/v1/exec-plat/home',
-            headers: ['Authorization': goveeHomeToken, 'Content-Type': 'application/json', 'appVersion': '5.6.01'],
+            headers: ['Authorization': goveeHomeToken, 'Content-Type': 'application/json', 'appVersion': '7.9.11', 'clientId': '1', 'clientType': '1', 'iotVersion': '0', 'timestamp': now(), 'User-Agent': 'GoveeHome/7.9.11' ],
         ]
         logger("sceneExtract(): Calling HTTP server", 'debug')
     try {
@@ -648,30 +649,37 @@ def sceneExtract() {
 def sceneExtract2() {
 
     logger('sceneExtract2() Credential Controll', 'debug')
-    dynamicPage(name: 'sceneExtract2', title: 'API Credential configuration', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
+    dynamicPage(name: 'sceneExtract2', title: 'Govee Home Creds and Token Setup', uninstall: false, install: false, submitOnChange: true, nextPage: "sceneManagement")
     {
         section('Govee Home Creds')
         {
-            paragraph "Please provide your gove home token."
+            paragraph "Please enter the fields below to obtain your Govee Home API Token."
             input 'goveeEmail', 'string', title: 'Please enter your Email used to log into Govee Home', required: false, submitOnChange: true
             input 'goveePassword', 'password', title: 'Please enter your Govee Home password', required: false, submitOnChange: true
+            input "govee2faRequest", "button", title: "Request a Govee 2FA code to my email. This is only valid for 15 min."
+            input "govee2faCode", "string", title: "2FA code (from email associated with your Govee home Account). Only valid for 15 min. Click on Save to the right of the field to ensure the value is stored.", required: false, submitOnChange: true 
             input "goveeHomeLogin" , "button",  title: "Click here to attempt login"
             if (settings.goveeEmail && settings.goveePassword) {
                 if (now() > state.goveeHomeExpiry) {
-                    paragraph "Token has <mark>not valid</mark>. Please Login"
-                } else {
+                    paragraph "Token is <mark>not valid</mark>. Please obtain a 2fa code and Login"
+                } else if (state.respStatus == 200) {
                     Date dateExpire = new Date(state.goveeHomeExpiry)
-                paragraph "Token is <mark>valid</mark>"
-                paragraph "Token expires on ${dateExpire}"
+                    paragraph "Token is <mark>valid</mark>"
+                    paragraph "Token expires on ${dateExpire}"
+                } else if (state.respStatus == 454) {
+                    paragraph "Login failed. Please provide retrieve, add, and save a 2fa Code and try again" 
+                }  else if (state.respStatus == 455) {
+                    paragraph "Login failed. Invalid 2fa code provided. Please obtain a new 2fa Code and try again"
                 }
             } else {
-                paragraph "Please add a Email and Password to Obtain your Govee Home Token"
+                paragraph "<b>Please add a Email and Password to Obtain your 2fa code and obtain Govee Home Token</b>"
             }
             paragraph "To clear token clear Email address and password and then click button below to clear token"
             input "goveeHomeTokenClear" , "button",  title: "Click here to reset Govee Home token"
         }
     }
 }
+
 
 def sceneExtract3() {
     
@@ -1439,39 +1447,73 @@ private def appButtonHandler(button) {
     if (button == "sceneDIYInitialize") {
         state?.diyEffects = [:]
         writeDIYFile()
+    } else if (button == "govee2faRequest") {
+          if (settings.goveeEmail) {
+              def clientId = uuid5hex(NAMESPACE_DNS, settings.goveeEmail)
+              def body = new groovy.json.JsonBuilder()
+              body { type 8; email settings.goveeEmail }
+              def params = [
+                  uri     : 'https://app2.govee.com',
+                  path    : '/account/rest/account/v1/verification',
+                  headers : ['Content-Type':'application/json','appVersion':'7.7.11',
+                             'clientId':clientId,'clientType':'1','iotVersion':'0',
+                             'User-Agent':'GoveeHome/7.7.11 (com.govee.home; build:2; Android 14) Alamofire/5.6.4'],
+                  body    : body.toString()
+              ]
+              httpPost(params) { resp ->
+                  def s = resp.data.status
+                  log.info "2FA request status ${s} message ${resp.data.message}"
+                  if (s == 200) {
+                      log.info "2FA code sent to ${settings.goveeEmail}. Check email (and spam). Valid ~15 min."
+                  } else {
+                      log.warn "2FA request failed: ${resp.data}"
+                  }
+              }
+          }                
     } else if (button == "goveeHomeLogin") {
-        if (settings.goveeEmail && settings.goveePassword) {
-            bodyParm = '{"email": "'+settings.goveeEmail+'", "password": "'+settings.goveePassword+'"}'
-            logger("appButtonHandler(): bodyparm to be passed:  ${bodyParm}", 'trace')
-            def params = [
-                uri   : 'https://community-api.govee.com',
-                path  : '/os/v1/login',
-                headers: ['Content-Type': 'application/json'],
-                body: bodyParm
-            ]
-//            logger("appButtonHandler(): parms to be passed:  ${params}", 'trace') removed due to potentially exposing password
-            try {
-                httpPost(params) { resp ->
-                    logger("appButtonHandler(): response is ${resp.data}", 'trace')
-                    status = resp.data.status
-                    msg = resp.data.message
-                    logger("appButtonHandler(): status is ${status}: Message ${msg}", 'info')
-                    if (status == 200) {
-                        state.goveeHomeToken = encrypt(resp.data.data.token)
-                        state.goveeHomeExpiry = resp.data.data.expiredAt.value
-//                        logger("appButtonHandler(): response is ${resp.data}", 'trace')
-//                        logger("appButtonHandler(): token is ${state.goveeHomeToken} and expires at ${state.goveeHomeExpiry}", 'info')
-                    } else {
-                        logger("appButtonHandler(): Login failed check error above and correct", 'info')
-                    }
-                }
-                } catch (groovyx.net.http.HttpResponseException e) {
-                    logger("appButtonHandler(): Error: e.statusCode ${e.statusCode}", 'error')
-                    logger("appButtonHandler(): ${e}", 'error')
-
-                return 'unknown'
-            }
-        }        
+          if (settings.goveeEmail && settings.goveePassword) {
+              def clientId = uuid5hex(NAMESPACE_DNS, settings.goveeEmail)   
+              def body = new groovy.json.JsonBuilder()
+              body {
+                  email    settings.goveeEmail
+                  password settings.goveePassword
+                  client   clientId
+                  code     settings.govee2faCode
+              }
+              def params = [
+                  uri     : 'https://app2.govee.com',
+                  path    : '/account/rest/account/v2/login',
+                  headers : [
+                      'Content-Type' : 'application/json',
+                      'appVersion'   : '7.7.11',
+                      'clientId'     : clientId,
+                      'clientType'   : '1',
+                      'iotVersion'   : '0',
+                      'timestamp'    : (now() as String),
+                      'User-Agent'   : 'GoveeHome/7.7.11 (com.govee.home; build:2; Android 14) Alamofire/5.6.4'
+                  ],
+                  body    : body.toString()
+              ]
+              logger("appButtonHandler(): parms to be passed:  ${params}", 'trace') //removed due to potentially exposing password
+              try {
+                  httpPost(params) { resp ->
+                      def status = resp.data.status
+                      log.info "response: ${resp.data}"
+                      log.info "Account login status ${status}"
+                      if (status == 200) {
+                          state.goveeHomeToken   = encrypt(resp.data.client.token)
+                          long cycle = (resp.data.client.token_expire_cycle ?: 0) as long
+                          state.goveeHomeExpiry  = now() + (cycle > 0 ? cycle * 1000L : 43200000L)
+                          log.info "Account token acquired, expires ${new Date(state.goveeHomeExpiry)}"
+                      } else {
+                          state.respStatus = status
+                          log.error "Account login failed: status ${status} message ${resp.data.message}"
+                      }
+                  }
+              } catch (groovyx.net.http.HttpResponseException e) {
+                  log.error "Account login HTTP error ${e.statusCode}"
+              }
+          } 
     } else if (button == "goveeHomeTokenClear") {
         state?.goveeHomeToken = null
         state?.goveeHomeExpiry = 0
@@ -1726,3 +1768,15 @@ def isWholeNumber(number) {
     }
     return number == number.intValue() // Compare to int value
 }
+
+def uuid5hex(String nsHex, String name) {
+    def ns = nsHex.replace("-", "").decodeHex()          // 16 namespace bytes
+    def md = MessageDigest.getInstance("SHA-1")
+    md.update(ns)                                        // feed namespace bytes
+    md.update(name.bytes)                                // feed name bytes
+    def b = md.digest()[0..15] as byte[]                 // first 128 bits of SHA-1
+    b[6] = ((b[6] & 0x0F) | 0x50) as byte                // version = 5
+    b[8] = ((b[8] & 0x3F) | 0x80) as byte                // RFC 4122 variant
+    return b.collect { String.format("%02x", it) }.join()
+} 
+
