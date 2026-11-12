@@ -616,6 +616,7 @@ def apiKeyUpdate(APIKey) {
         child = getChildDevices()
         child.each {
             if (debugLog) {log.debug ("apiKeyUpdate(): submit update api key to child devices.")}
+			it.encAPIKey = null
             it.apiKeyRetrieve()
         }
     }
