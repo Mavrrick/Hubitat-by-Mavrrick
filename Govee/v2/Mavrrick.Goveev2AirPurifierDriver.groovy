@@ -9,6 +9,7 @@
 #include Mavrrick.Govee_Cloud_Life
 
 import groovy.json.JsonSlurper 
+import groovy.transform.Field
 
 metadata {
 	definition(name: "Govee v2 Air Purifier Driver", namespace: "Mavrrick", author: "Mavrrick") {

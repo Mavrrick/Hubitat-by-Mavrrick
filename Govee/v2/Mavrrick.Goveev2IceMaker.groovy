@@ -7,7 +7,8 @@
 #include Mavrrick.Govee_Cloud_API
 #include Mavrrick.Govee_Cloud_MQTT
 
-import groovy.json.JsonSlurper 
+import groovy.json.JsonSlurper
+import groovy.transform.Field
 
 metadata {
 	definition(name: "Govee v2 Ice Maker", namespace: "Mavrrick", author: "Mavrrick") {
